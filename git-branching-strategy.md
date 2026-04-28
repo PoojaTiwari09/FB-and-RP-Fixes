@@ -141,6 +141,7 @@ This section defines the physical layout of the monorepo and how each of the 10 
 The repository is organized into **six top-level directories**, each with a distinct responsibility. No module team should place code outside their designated directory without a cross-team review.
 
 
+```text
 r-revenue-intelligence/ # 🏠 Root of the monorepo
 │
 ├── apps/ # 🖥️ Deployable applications
@@ -253,6 +254,7 @@ r-revenue-intelligence/ # 🏠 Root of the monorepo
 ├── tsconfig.base.json # Base TypeScript config
 ├── .env.example # Environment variable template
 └── README.md # Platform overview & quick start
+```
 
 
 ---
