@@ -77,6 +77,7 @@ After evaluating both approaches, the R-Revenue Intelligence Platform adopts a *
 | **Code visibility** | All teams see all modules — promotes alignment | Siloed visibility per team |
 
 ### Repository Root Structure
+```text
 r-revenue-intelligence/
 ├── apps/
 │ ├── web/ # Next.js frontend
@@ -103,6 +104,7 @@ r-revenue-intelligence/
 │ └── CODEOWNERS # Branch ownership per module
 ├── package.json
 └── README.md
+```
 
 
 
@@ -400,9 +402,11 @@ Supporting branches are **temporary** — they are created for a specific purpos
 - Deleted after merging
 - Naming format: `release/vMAJOR.MINOR.PATCH`
 - Examples:
+```text
 release/v1.0.0
 release/v1.1.0
 release/v2.0.0-beta
+```
 
 - Triggers deployment to the **staging / UAT environment** automatically
 
@@ -419,9 +423,11 @@ release/v2.0.0-beta
 - Deleted after merging
 - Naming format: `hotfix/vMAJOR.MINOR.PATCH-<short-description>`
 - Examples:
+```text
 hotfix/v1.0.1-fix-auth-token-expiry
 hotfix/v1.1.2-fix-transcription-crash
 hotfix/v2.0.1-fix-compliance-audit-log
+```
 
 - Requires **immediate review** from Tech Lead and DevOps — SLA: reviewed within 2 hours
 
@@ -437,6 +443,7 @@ hotfix/v2.0.1-fix-compliance-audit-log
 - Module Tech Lead is responsible for this branch's stability
 - Naming format: `module/mX-<module-slug>`
 - Full list:
+```text
 module/platform-core
 module/m1-capture
 module/m2-conversation
@@ -448,6 +455,7 @@ module/m7-dashboards
 module/m8-engagement
 module/m9-coaching
 module/m10-compliance
+```
 
 
 ---
@@ -462,12 +470,14 @@ module/m10-compliance
 - Merges back into the parent `module/mX-*` branch via Pull Request
 - Naming format: `feature/mX-<ticket-id>-<short-description>`
 - Examples:
+```text
 feature/m1-RRI-101-call-transcription-api
 feature/m1-RRI-102-deepgram-connector
 feature/m2-RRI-210-ai-topic-tagger
 feature/m3-RRI-310-ask-anything-endpoint
 feature/m4-RRI-401-deals-board-ui
 feature/m8-RRI-801-email-composer-integration
+```
 
 
 ---
@@ -481,9 +491,11 @@ feature/m8-RRI-801-email-composer-integration
 - Merges back into its source branch via Pull Request
 - Naming format: `bugfix/mX-<ticket-id>-<short-description>`
 - Examples:
+```text
 bugfix/m1-RRI-115-fix-transcription-timeout
 bugfix/m4-RRI-445-deal-score-null-pointer
 bugfix/m10-RRI-1021-compliance-log-missing-fields
+```
 
 
 ---
@@ -496,11 +508,13 @@ bugfix/m10-RRI-1021-compliance-log-missing-fields
 - Does not require QA sign-off but must pass all CI checks
 - Naming format: `chore/mX-<short-description>` or `chore/<scope>-<short-description>`
 - Examples:
+```text
 chore/m1-update-deepgram-sdk
 chore/m3-refactor-summary-service
 chore/infra-upgrade-node-20
 chore/docs-update-branching-guide
 chore/shared-add-missing-type-exports
+```
 
 
 ---
@@ -582,8 +596,7 @@ gitGraph
 
 ### Branch Hierarchy Summary
 
-
-
+```text
 main ← 🔴 Production (permanent, protected)
 │
 ├── release/vX.Y.Z ← 🟠 Release stabilization (temporary)
@@ -608,6 +621,7 @@ develop ← 🟡 Integration (permanent, protected)
 
 main
 └── hotfix/vX.Y.Z-* ← 🔴 Emergency production fixes (short-lived)
+```
 
 
 
@@ -641,7 +655,9 @@ Each module follows the same branching lifecycle: features are developed on `fea
 
 ### Module Integration Branch
 
+```text
 module/platform-core
+```
 
 
 
@@ -674,7 +690,9 @@ module/platform-core
 
 ### Module Integration Branch
 
+```text
 module/m1-capture
+```
 
 
 
@@ -709,7 +727,9 @@ module/m1-capture
 
 ### Module Integration Branch
 
+```text
 module/m2-conversation
+```
 
 
 
@@ -742,7 +762,9 @@ module/m2-conversation
 
 ### Module Integration Branch
 
+```text
 module/m3-genai
+```
 
 
 
@@ -775,7 +797,9 @@ module/m3-genai
 
 ### Module Integration Branch
 
+```text
 module/m4-deals
+```
 
 
 
@@ -807,7 +831,9 @@ module/m4-deals
 
 ### Module Integration Branch
 
+```text
 module/m5-accounts
+```
 
 
 
@@ -839,7 +865,9 @@ module/m5-accounts
 
 ### Module Integration Branch
 
+```text
 module/m6-forecasting
+```
 
 
 
@@ -872,7 +900,9 @@ module/m6-forecasting
 
 ### Module Integration Branch
 
+```text
 module/m7-dashboards
+```
 
 
 
@@ -906,7 +936,9 @@ module/m7-dashboards
 
 ### Module Integration Branch
 
+```text
 module/m8-engagement
+```
 
 
 
@@ -972,7 +1004,9 @@ module/m9-coaching
 
 ### Module Integration Branch
 
+```text
 module/m10-compliance
+```
 
 
 
@@ -1047,26 +1081,34 @@ Consistent branch naming is critical in a monorepo with 10 modules and multiple 
 
 #### Core Branches (Permanent — names are fixed)
 
+```text
 main
 develop
+```
 
 
 #### Module Integration Branches
 
+```text
 Format : module/<module-slug>
 Pattern : module/(platform-core|m1-capture|m2-conversation|m3-genai|m4-deals|
 m5-accounts|m6-forecasting|m7-dashboards|m8-engagement|
 m9-coaching|m10-compliance)
+```
 
 
 #### Feature Branches
+```text
 Format : feature/<module-prefix>-<ticket-id>-<short-description>
 Pattern : feature/(core|m1|m2|m3|m4|m5|m6|m7|m8|m9|m10)-RRI-[0-9]+-[a-z-]+
+```
 
 
 #### Bugfix Branches
+```text
 Format : bugfix/<module-prefix>-<ticket-id>-<short-description>
 Pattern : bugfix/(core|m1|m2|m3|m4|m5|m6|m7|m8|m9|m10)-RRI-[0-9]+-[a-z-]+
+```
 
 
 #### Chore Branches
@@ -1077,14 +1119,18 @@ Pattern : chore/(core|m1|m2|...|m10|infra|shared|docs)-[a-z-]+
 
 
 #### Release Branches
+```text
 Format : release/v<MAJOR>.<MINOR>.<PATCH>
 Pattern : release/v[0-9]+.[0-9]+.[0-9]+(-[a-z]+)?
+```
 
 
 #### Hotfix Branches
 
+```text
 Format : hotfix/v<MAJOR>.<MINOR>.<PATCH>-<short-description>
 Pattern : hotfix/v[0-9]+.[0-9]+.[0-9]+-[a-z-]+
+```
 
 
 ---
@@ -1114,10 +1160,13 @@ Pattern : hotfix/v[0-9]+.[0-9]+.[0-9]+-[a-z-]+
 
 ### Core Branches
 
+```text
 main
 develop
+```
 
 ### Module Integration Branches
+```text
 module/platform-core
 module/m1-capture
 module/m2-conversation
@@ -1129,11 +1178,13 @@ module/m7-dashboards
 module/m8-engagement
 module/m9-coaching
 module/m10-compliance
+```
 
 
 ### Feature Branches
 
 Platform Core
+```text
 feature/core-RRI-001-auth-service
 feature/core-RRI-002-api-gateway
 feature/core-RRI-003-event-bus
@@ -1190,11 +1241,13 @@ M10 — Data & Compliance
 feature/m10-RRI-1001-revenue-graph-api
 feature/m10-RRI-1005-pii-redaction-pipeline
 feature/m10-RRI-1008-gdpr-dsar-handler
+```
 
 
 ### Bugfix Branches
 
 Module-specific bugs found during development or QA
+```text
 bugfix/m1-RRI-115-fix-transcription-timeout
 bugfix/m1-RRI-118-fix-zoom-connector-auth-failure
 bugfix/m2-RRI-225-fix-topic-tagger-null-response
@@ -1206,11 +1259,13 @@ bugfix/m7-RRI-715-fix-dashboard-csv-export-encoding
 bugfix/m8-RRI-834-fix-email-unsubscribe-not-honoured
 bugfix/m9-RRI-908-fix-scorecard-missing-rep-data
 bugfix/m10-RRI-1025-fix-audit-log-missing-timestamp
+```
 
 
 ### Chore Branches
 
  Module-scoped chores
+```text
 chore/m1-update-deepgram-sdk-v3
 chore/m2-refactor-langgraph-agent-structure
 chore/m3-add-prompt-versioning-system
@@ -1227,25 +1282,30 @@ Documentation chores
 chore/docs-update-branching-guide
 chore/docs-add-m4-api-reference
 chore/docs-fix-broken-architecture-links
+```
 
 
 ### Release Branches
 
+```text
 release/v1.0.0 # First production release (Platform Core + M1 + M2)
 release/v1.1.0 # M3 + M4 release
 release/v1.2.0 # M5 + M6 release
 release/v2.0.0 # Major version — full platform GA
 release/v2.0.0-beta # Beta release for early access
 release/v2.1.0 # M8 + M9 incremental release
+```
 
 
 ### Hotfix Branches
 
+```text
 hotfix/v1.0.1-fix-auth-token-expiry
 hotfix/v1.0.2-fix-transcription-pipeline-crash
 hotfix/v1.1.1-fix-deal-sync-data-loss
 hotfix/v2.0.1-fix-compliance-audit-log-gap
 hotfix/v2.1.1-fix-email-composer-injection-vuln
+```
 
 
 ---
@@ -1319,7 +1379,7 @@ The following are **real examples of bad branch names** and the correct alternat
 
 ### Quick Reference Card
 
-
+```text
 ✅ feature/m3-RRI-302-ask-anything-endpoint
 ✅ bugfix/m6-RRI-621-fix-forecast-snapshot-timezone
 ✅ chore/infra-upgrade-node-20
@@ -1333,6 +1393,7 @@ The following are **real examples of bad branch names** and the correct alternat
 ❌ wip
 ❌ hotfix/auth-bug
 ❌ feature/m1-m2-combined-work
+```
 
 
 ---
@@ -1350,14 +1411,17 @@ Every line of code that enters `develop` or `main` must pass through a Pull Requ
 
 All PR titles must follow the **Conventional Commits** format so they are machine-readable for changelog generation and release notes:
 
+```text
 <type>(<scope>): <short description>
 
 Types : feat | fix | chore | refactor | test | docs | perf | ci
 Scope : core | m1 | m2 | m3 | m4 | m5 | m6 | m7 | m8 | m9 | m10 | shared | infra
+```
 
 
 **Examples:**
 
+```text
 feat(m1): add deepgram real-time transcription connector
 fix(m4): resolve null pointer in deal health score calculation
 chore(infra): upgrade Node.js runtime to v20
@@ -1366,6 +1430,7 @@ test(m9): add unit tests for AI trainer recommendation engine
 docs(core): update API gateway configuration reference
 perf(m7): optimise revenue dashboard aggregation query
 ci(core): add module-affected checks to PR pipeline
+```
 
 
 ---
@@ -1489,11 +1554,13 @@ Different branch transitions use different merge strategies depending on the his
 
 When squashing a `feature/*` or `bugfix/*` PR, the resulting squash commit message must follow this format:
 
+```text
 <type>(<scope>): <description> (#PR_NUMBER)
 
 feat(m1): add deepgram real-time transcription connector (#47)
 fix(m4): resolve null pointer in deal health score calculation (#112)
 chore(infra): upgrade Node.js runtime to v20 (#89)
+```
 
 
 GitHub will auto-populate this if the PR title is correctly formatted — which is why PR title format enforcement via `commitlint` is mandatory.
@@ -1598,6 +1665,7 @@ Rules:
 The `.github/CODEOWNERS` file assigns automatic review requirements based on which files are changed in a PR:
 
 
+```text
 Global fallback — Engineering Lead reviews everything
 @r-revenue/engineering-lead
 
@@ -1636,6 +1704,7 @@ Shared code — requires cross-team review
 
 Compliance — always requires M10 team sign-off
 /modules/m10-compliance/ @r-revenue/m10-team @r-revenue/engineering-lead
+```
 
 
 ---
@@ -1662,7 +1731,7 @@ Draft PRs are a tool for **early visibility and async collaboration** — they s
 
 ### Draft PR Lifecycle
 
-
+```text
 Engineer opens Draft PR from feature/* → module/mX-*
 ↓
 
@@ -1691,6 +1760,7 @@ PR merged using the appropriate merge strategy
 ↓
 
 Source branch deleted automatically after merge
+```
 
 
 ---
@@ -1904,7 +1974,7 @@ Production deployments are intentionally pinned to **AWS `ap-south-1` (Mumbai)**
 
 ### Promotion Flow Overview
 
-
+```text
 Developer Machine
 │
 │ git push feature/mX-RRI-XXX-description
@@ -1947,6 +2017,7 @@ Production Environment (AWS)
 ● AWS CloudFront CDN — frontend delivery
 ● AWS Secrets Manager — all production secrets
 ● Full observability: CloudWatch + Datadog
+```
 
 
 
@@ -2095,23 +2166,19 @@ The table below shows which events each module **produces** and which modules **
 The following sequence **must** be followed when merging `module/mX-*` branches into `develop`. This is enforced by the Engineering Lead during sprint integration windows:
 
 
-┌─────────────────────────────────────────────────────────┐
-│ INTEGRATION SEQUENCE INTO develop │
-├──────┬──────────────────────────┬───────────────────────┤
-│ Step │ Branch │ Gate Before Merging │
-├──────┼──────────────────────────┼───────────────────────┤
-│ 1 │ module/platform-core │ Auth + Event Bus tests │
-│ 2 │ module/m1-capture │ call.transcribed event │
-│ 3 │ module/m2-conversation │ call.analyzed event │
-│ 4 │ module/m3-genai │ call.summarized event │
-│ 5 │ module/m4-deals │ deal.updated event │
-│ 6 │ module/m5-accounts │ account.health event │
-│ 7 │ module/m6-forecasting │ forecast.updated event │
-│ 8 │ module/m7-dashboards │ Dashboard API tests │
-│ 9 │ module/m8-engagement │ Email + workflow tests │
-│ 10 │ module/m9-coaching │ Coaching insight tests │
-│ 11 │ module/m10-compliance │ Audit log + PII tests │
-└──────┴──────────────────────────┴───────────────────────┘
+| Step | Branch | Gate Before Merging |
+|------|--------|---------------------|
+| 1 | `module/platform-core` | Auth + Event Bus tests |
+| 2 | `module/m1-capture` | `call.transcribed` event |
+| 3 | `module/m2-conversation` | `call.analyzed` event |
+| 4 | `module/m3-genai` | `call.summarized` event |
+| 5 | `module/m4-deals` | `deal.updated` event |
+| 6 | `module/m5-accounts` | `account.health` event |
+| 7 | `module/m6-forecasting` | `forecast.updated` event |
+| 8 | `module/m7-dashboards` | Dashboard API tests |
+| 9 | `module/m8-engagement` | Email + workflow tests |
+| 10 | `module/m9-coaching` | Coaching insight tests |
+| 11 | `module/m10-compliance` | Audit log + PII tests |
 
 
 
@@ -2122,6 +2189,7 @@ While the **merge order** into `develop` is sequential, **development** can happ
 
 Sprint Timeline Example:
 
+```text
 Week 1-2: Platform Core development → merged into develop at end of Week 2
 ↓ (unblocks all modules)
 
@@ -2149,6 +2217,7 @@ Week 13-14: M10 development
 M10 merged into develop end of Week 14
 ↓
 release/v1.0.0 cut from develop
+```
 
 
 ---
@@ -2194,8 +2263,10 @@ Cross-module PRs are **only acceptable** in the following cases:
 2. **Title the scope clearly** — cross-module PRs must use `shared` or `core` as the scope in the PR title:
 
 
+```text
 feat(shared): add CallTranscript shared type consumed by M1, M2, M3
 fix(core): update event bus payload schema for call.transcribed event
+```
 
 
 3. **Tag all affected module teams** — manually add all affected CODEOWNERS as reviewers even if GitHub doesn't auto-request them
@@ -2203,9 +2274,11 @@ fix(core): update event bus payload schema for call.transcribed event
 4. **Define merge dependency** — if the cross-module PR must be merged before module-specific PRs, state this explicitly in the PR description:
 
 
+```text
 ⚠️ This PR must be merged before:
 - #PR_NUMBER (feature/m2-RRI-206-conversation-events)
 - #PR_NUMBER (feature/m3-RRI-306-genai-events)
+```
   
 
 5. **Test all affected modules locally** — the PR author must run the test suites for every affected module before marking the PR as ready:
@@ -2228,7 +2301,7 @@ pnpm turbo test --filter=@r-revenue/m3-genai
 
 If two module teams are working on changes that conflict — for example, both M4 and M5 need to modify the same shared type — the following resolution process applies:
 
-
+```text
 Either team discovers the conflict during development
 ↓
 
@@ -2249,6 +2322,7 @@ The shared change PR is merged first into develop
 ↓
 
 Module-specific PRs are merged in dependency order
+```
 
 
 ---
@@ -2264,12 +2338,13 @@ A disciplined release strategy ensures that every version of the R-Revenue Intel
 
 The platform follows **Semantic Versioning 2.0.0** (semver.org) for all releases. Every production deployment is tagged with a version number in the format:
 
-
+```text
 v MAJOR . MINOR . PATCH
 │ │ │
 │ │ └── Bug fixes, patches, hotfixes — backward compatible
 │ └────────── New features — backward compatible
 └─────────────────── Breaking changes — not backward compatible
+```
 
 
 ---
@@ -2288,19 +2363,20 @@ v MAJOR . MINOR . PATCH
 
 For versions that are not yet production-ready, append a label after the version number:
 
-
+```text
 v2.0.0-alpha # Early internal build — unstable, not for external use
 v2.0.0-beta # Feature-complete, being tested — may have known issues
 v2.0.0-rc.1 # Release Candidate 1 — code frozen, final validation
 v2.0.0-rc.2 # Release Candidate 2 — only critical fixes from rc.1
 v2.0.0 # Stable production release — no label
+```
 
 
 ---
 
 ### Platform Version Roadmap Example
 
-
+```text
 v0.1.0 Platform Core + M1 — internal alpha
 v0.2.0 + M2 Conversation Intelligence — internal alpha
 v0.3.0 + M3 AI Summaries & GenAI — internal beta
@@ -2310,6 +2386,7 @@ v1.1.0 + M4 Deal Intelligence + M5 Account Intelligence
 v1.2.0 + M6 Forecasting + M7 Revenue Dashboards
 v1.3.0 + M8 Sales Engagement + M9 Coaching & Training
 v2.0.0 + M10 Data & Compliance — full platform GA
+```
 
 
 ---
@@ -2318,7 +2395,7 @@ v2.0.0 + M10 Data & Compliance — full platform GA
 
 ### Step-by-Step Release Process
 
-
+```text
 Step 1 — Release Decision
 Engineering Lead confirms release scope with Product Manager
 Determines which modules / features are included in this release
@@ -2397,6 +2474,7 @@ Merged using Merge Commit — backports all stabilisation fixes
 Step 12 — Post-Release
 Release branch deleted after both merges complete
 Deployment confirmation posted to #releases Slack channel
+```
 Release notes published to customer changelog
 Monitoring dashboards watched for 24 hours post-release
 
@@ -2429,10 +2507,12 @@ A **Platform-level Release** ships changes from multiple modules together as a c
 - Announced externally to customers
 
 
+```text
 Example: v1.1.0
 Includes: M4 Deal Intelligence + M5 Account Intelligence
 All prior modules (M1, M2, M3) re-regression tested
 Full platform deployed as a single release
+```
 
 
 ---
@@ -2448,11 +2528,13 @@ A **Module-level Release** ships changes from a single module with minimal risk 
 - May or may not be announced externally depending on impact
 
 
+```text
 Example: v1.1.1
 Includes: M4 fix for deal health score calculation
 Only M4 regression tested
 Smoke tests run on M1, M2, M3, M5 to confirm no regressions
 Deployed as a patch release
+```
 
 
 ---
@@ -2553,12 +2635,15 @@ Every merge to `main` must be immediately followed by a Git tag. Tags are create
 
 #### Tag Format
 
+```text
 v<MAJOR>.<MINOR>.<PATCH>
 v<MAJOR>.<MINOR>.<PATCH>-<pre-release-label>
+```
 
 
 #### Tag Message Format
 
+```text
 git tag -a v1.1.0 -m "Release v1.1.0
 
 Modules: M4 Deal Intelligence, M5 Account Intelligence
@@ -2574,10 +2659,12 @@ AI Data Extractor (MEDDIC/BANT)
 Account Boards and Competitor Alerts
 
 Full changelog: https://github.com/r-revenue/r-revenue-intelligence/blob/main/CHANGELOG.md#v110"
+```
 
 
 #### Full Tag History Example
 
+```text
 v0.1.0 — Platform Core + M1 (internal alpha)
 v0.2.0 — + M2 (internal alpha)
 v0.3.0 — + M3 (internal beta)
@@ -2590,6 +2677,7 @@ v1.2.0 — M6 + M7
 v1.3.0 — M8 + M9
 v2.0.0-beta — Full platform beta
 v2.0.0 — Full platform GA (M10 + compliance)
+```
 
 
 ---
@@ -2658,7 +2746,7 @@ Not every production bug warrants a hotfix. Use the following severity criteria 
 
 ### Hotfix Decision Flowchart
 
-
+```text
 Production issue reported
 ↓
 Is it affecting production (main)?
@@ -2671,6 +2759,7 @@ Can it be fixed within 4 hours?
 NO → Initiate incident response protocol (beyond scope of this doc)
 YES ↓
 CREATE HOTFIX BRANCH from main
+```
 
 
 ---
@@ -2679,7 +2768,7 @@ CREATE HOTFIX BRANCH from main
 
 ### Step-by-Step Hotfix Process
 
-
+```text
 Step 1 — Declare the Hotfix
 Engineering Lead or on-call engineer declares a hotfix
 Creates a P0/P1 ticket: e.g., RRI-089
@@ -2745,6 +2834,7 @@ Post resolution summary to #incidents Slack channel
 Schedule a blameless post-mortem within 48 hours
 Update CHANGELOG.md with patch entry
 Delete hotfix branch after both merges complete
+```
 
 
 
@@ -2793,18 +2883,19 @@ Every hotfix merged into `main` **must** be backported to `develop`. This ensure
 
 Without backporting, the following scenario can occur:
 
-
+```text
 main ── v1.0.0 ── hotfix/v1.0.1 ── v1.0.1 (fix is here)
 │
 develop ── M4 ── M5 ── M6 ──────────── release/v1.1.0
 │
 v1.1.0 shipped WITHOUT the hotfix
 ← BUG REINTRODUCED IN PRODUCTION ❌
+```
 
 
 Backporting prevents this regression:
 
-
+```text
 main ── v1.0.0 ── v1.0.1 (hotfix merged)
 │
 └─── backport PR ──→ develop
@@ -2812,13 +2903,14 @@ main ── v1.0.0 ── v1.0.1 (hotfix merged)
 develop ── M4 ── M5 ── M6 ── [hotfix] ── release/v1.1.0
 │
 v1.1.0 ships WITH the fix ✅
+```
 
 
 ---
 
 ### Backport Process
 
-
+```text
 Step 1 — Open Backport PR simultaneously with the hotfix → main PR
 (Do not wait for main merge — open it in parallel to save time)
 
@@ -2848,6 +2940,7 @@ Merge strategy: Merge Commit
 Step 4 — Confirm develop is Healthy
 After backport merge, confirm develop CI is fully green
 If develop CI breaks after backport, treat as P1 and fix immediately
+```
 
 
 ---
@@ -2903,7 +2996,7 @@ The CI/CD pipeline is the automated backbone that enforces code quality, runs te
 
 ### Pipeline File Overview
 
-
+```text
 .github/workflows/
 ├── ci.yml # PR validation — runs on every PR open/update
 ├── cd-dev.yml # Dev/QA deploy — runs on merge to develop
@@ -2913,6 +3006,7 @@ The CI/CD pipeline is the automated backbone that enforces code quality, runs te
 ├── module-checks.yml # Module integration checks — runs on push to module/*
 ├── nightly.yml # Nightly full regression suite on develop
 └── release-tag.yml # Auto-tag and changelog update on main merge
+```
 
 
 ---
@@ -3396,6 +3490,7 @@ Quality gates are non-negotiable checkpoints that a branch must pass before it c
 In rare cases, a gate may need to be overridden (e.g., a known flaky test is blocking a critical release). The following policy applies:
 
 
+```text
 Override Request Process:
 
 Engineer raises override request in #engineering-leads Slack
@@ -3414,6 +3509,7 @@ Override is NEVER allowed for:
 ❌ Critical security vulnerabilities
 ❌ Production deployment (main) with type errors
 ❌ GDPR/compliance-related failures in M10
+```
 
 
 ---
@@ -3460,6 +3556,7 @@ Each module has a designated owning team. The owning team is responsible for:
 The `.github/CODEOWNERS` file enforces automatic review requests based on which paths are changed in a PR. GitHub evaluates rules top-to-bottom — the last matching rule takes precedence.
 
 
+```text
 .github/CODEOWNERS
 Format: <path-pattern> <@owner-or-team>
 Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
@@ -3561,6 +3658,7 @@ Any change to root config requires Engineering Lead + DevOps
 /.eslintrc.js @r-revenue/engineering-lead
 /.prettierrc @r-revenue/engineering-lead
 /CHANGELOG.md @r-revenue/engineering-lead
+```
 
 
 ---
@@ -3707,6 +3805,7 @@ A **breaking change** is any commit that introduces an incompatible API or schem
 2. Add a `Breaking-Change:` footer in the commit body describing what changed and what migration steps are required
 
 
+```text
 feat(core)!: rename auth token from accessToken to access_token
 
 The JWT response payload key has been renamed from accessToken (camelCase)
@@ -3718,6 +3817,7 @@ property access from response.accessToken to response.access_token.
 Breaking-Change: JWT response key renamed accessToken → access_token
 Refs: #RRI-047
 Migration: Update all token access patterns in apps/web and any external API consumers
+```
 
 
 ---
@@ -3836,7 +3936,9 @@ The `scope` in a commit message must always correspond to the module or area of 
 If a change genuinely spans two scopes (e.g., updating a shared type AND the module that owns it), list both scopes separated by a comma:
 
 
+```text
 feat(shared,m2): add CallAnalysis shared type and wire into conversation module
+```
 
 
 
@@ -3849,7 +3951,7 @@ feat(shared,m2): add CallAnalysis shared type and wire into conversation module
 
 ### Feature Commits
 
-
+```text
 feat(m1): add deepgram real-time transcription connector
 
 Integrated Deepgram's streaming WebSocket API to enable real-time
@@ -3883,13 +3985,14 @@ Model achieves 78% accuracy vs 61% baseline (rep-submitted forecast).
 Integrated into FastAPI /predict endpoint with sub-200ms p95 latency.
 
 Refs: #RRI-601
+```
 
 
 ---
 
 ### Bug Fix Commits
 
-
+```text
 fix(m1): resolve transcription timeout on calls longer than 90 minutes
 
 Deepgram connector was using a fixed 90-second socket timeout inherited
@@ -3923,13 +4026,14 @@ Reordered middleware chain to allow /auth/refresh to bypass
 the expiry check.
 
 Refs: #RRI-089
+```
 
 
 ---
 
 ### Refactor Commits
 
-
+```text
 refactor(m2): restructure LangGraph agent into composable nodes
 
 The monolithic call analysis agent was becoming difficult to test
@@ -3944,13 +4048,14 @@ Each node is independently testable and can be swapped without
 affecting the others.
 
 Refs: #RRI-267
+```
 
 
 ---
 
 ### Chore Commits
 
-
+```text
 chore(infra): upgrade Node.js runtime from v18 to v20
 
 Node.js v18 reaches end of life in April 2025. Upgrading to v20 LTS
@@ -3968,13 +4073,14 @@ connector implementation to use the new TranscriptionConfig interface.
 All existing transcription tests pass with the updated SDK.
 
 Refs: #RRI-118
+```
 
 
 ---
 
 ### Breaking Change Commits
 
-
+```text
 feat(core)!: replace custom RBAC with permission-based access control
 
 The previous role-based system (Admin/Manager/Rep) was too coarse
@@ -3992,13 +4098,14 @@ All consumers of GET /auth/me must update their role checks.
 
 Migration: Run pnpm prisma migrate deploy before deploying this version.
 Refs: #RRI-CORE-005
+```
 
 
 ---
 
 ### Release & Version Bump Commits
 
-
+```text
 chore(release): bump version to v1.1.0
 
 Release includes:
@@ -4008,13 +4115,14 @@ M4: Deal Intelligence (Deals Boards, AI Data Extractor, Deal Drivers)
 M5: Account Intelligence (Account Boards, Orchestrate, Competitor Alerts)
 
 Refs: RRI-RELEASE-110
+```
 
 
 ---
 
 ### Revert Commits
 
-
+```text
 revert: feat(m6): add AI revenue predictor using XGBoost model
 
 Reverts commit a3f9c21 due to model producing systematically
@@ -4023,6 +4131,7 @@ insufficient historical data. Will re-introduce after retraining
 with data quality filters applied.
 
 Refs: #RRI-634
+```
 
 
 ---
