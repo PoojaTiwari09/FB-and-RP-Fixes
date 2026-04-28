@@ -904,7 +904,7 @@ CREATE POLICY accounts_tenant_delete ON revenuegraph.accounts
 | `call.transcription.completed` | Listens | When a call transcript is ready and must be linked to the correct account, contact, and deal. [file:3] |
 | `crm.fields.extracted` | Listens | When AI-extracted CRM fields are available for writeback or enrichment. [file:3] |
 | `email.sent` | Listens | When outbound email activity should be added to the Revenue Graph. [file:3] |
-| `revenuegraph.entity.linked` | Emits | After a call or interaction has been linked to the correct account, deal, and contact. [file:3] |
+| `revenue_graph.entity.linked` | Emits | After a call or interaction has been linked to the correct account, deal, and contact. [file:3] |
 | `deal.stage.changed` | Emits | After a deal stage is updated through CRM synchronization or detected stage movement. [file:3] |
 
 M-03 is both a consumer and a publisher at the center of the event model, which is why it is the main dependency for M-04, M-05, M-06, M-07, M-08, and M-10 context access patterns. [file:3]
@@ -1146,7 +1146,7 @@ CREATE POLICY scorecards_tenant_delete ON conversationintelligence.scorecards
 | Event Name | Direction | Trigger |
 |------------|-----------|---------|
 | `call.transcription.completed` | Listens | When a transcript becomes available and scoring/topic-tagging jobs can be queued. [file:3] |
-| `revenuegraph.entity.linked` | Listens | When deal/account context is available and scoring can be finalized with business context. [file:3] |
+| `revenue_graph.entity.linked` | Listens | When deal/account context is available and scoring can be finalized with business context. [file:3] |
 | `call.scored` | Emits | After a call review result is written. [file:3] |
 | `call.topics.tagged` | Emits | After topic tags are generated for a call. [file:3] |
 
@@ -1322,7 +1322,7 @@ CREATE POLICY trackers_tenant_delete ON smarttracking.trackers
 | Event Name | Direction | Trigger |
 |------------|-----------|---------|
 | `call.transcription.completed` | Listens | When a transcript is ready and tracker detection jobs can be queued. [file:3] |
-| `revenuegraph.entity.linked` | Listens | When deal/account/contact context is available to enrich detections. [file:3] |
+| `revenue_graph.entity.linked` | Listens | When deal/account/contact context is available to enrich detections. [file:3] |
 | `call.topics.tagged` | Listens | When M-04 topic-tag output is available and can improve signal understanding. [file:3] |
 | `email.sent` | Listens | When outbound email activity may also need tracker-based signal detection. [file:3] |
 | `tracker.detection.created` | Emits | After a tracker detection record is written. [file:3] |

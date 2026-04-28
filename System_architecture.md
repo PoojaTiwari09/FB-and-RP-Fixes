@@ -400,6 +400,8 @@ in Phase 3 (Section 4). Currently (Phase 1-2), all modules deploy together as a 
 
 A customer can license individual modules without requiring the full platform.
 
+> **Note on Naming:** The internal architecture uses technical names (M-01 Data Ingestion). For the canonical mapping to product feature names (e.g., M-01 Capture and Transcription), see the **Canonical Naming Reference in Section 9.7**.
+
 | #    | Module Name                 | Lifecycle Stage | Features Included                                                                                    | What This Module Produces                                                                                                       | Phase 1-2 Status | Phase 3 Goal              |
 | ---- | --------------------------- | --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------- |
 | M-01 | Data Ingestion              | Capture         | Call Transcription, Native Connectors, AI Data Extractor                                             | Speaker-labeled transcripts, structured CRM fields from conversations, connected integrations                                   | Deployed         | Independent service       |
@@ -473,13 +475,17 @@ with. **Do not build a module that reads from a module that is not yet deployed.
 
 ```mermaid
 flowchart TD
+  classDef deployed fill:#c8e6c9,stroke:#2e7d32,color:#000
+  classDef extraction1 fill:#fff3e0,stroke:#e65100,color:#000
+  classDef extraction2 fill:#ffebee,stroke:#c62828,color:#000
+  classDef extraction3 fill:#e3f2fd,stroke:#1565c0,color:#000
+  classDef planned fill:#f5f5f5,stroke:#9e9e9e,color:#000
+
   subgraph LEGEND
-    direction LR
-    L1["Priority 1 Extraction"]:::extraction1
-    L2["Priority 2 Extraction"]:::extraction2
-    L3["Priority 3 Extraction"]:::extraction3
-    L4["Deployed"]:::deployed
-    L5["Planned"]:::planned
+    L1["Priority 1 Extraction"]:::extraction1 ~~~ L2["Priority 2 Extraction"]:::extraction2
+    L2 ~~~ L3["Priority 3 Extraction"]:::extraction3
+    L3 ~~~ L4["Deployed"]:::deployed
+    L4 ~~~ L5["Planned"]:::planned
   end
 
   M01["M-01 Data Ingestion (DEPLOYED)"] --> M03["M-03 Revenue Graph (Priority 1)"]
@@ -493,18 +499,11 @@ flowchart TD
   M09 --> M10["M-10 Performance and Coaching"]
   M02["M-02 Sales Engagement (PLANNED)"] -.-> M03
 
-  classDef deployed fill:#c8e6c9,stroke:#2e7d32,color:#000
-  classDef extraction1 fill:#fff3e0,stroke:#e65100,color:#000
-  classDef extraction2 fill:#ffebee,stroke:#c62828,color:#000
-  classDef extraction3 fill:#e3f2fd,stroke:#1565c0,color:#000
-  classDef plain fill:#f9f9f9,stroke:#ccc,color:#000
-  classDef planned fill:#f5f5f5,stroke:#9e9e9e,color:#000
-
   class M01 deployed
   class M03 extraction1
   class M05 extraction2
   class M07 extraction3
-  class M02,M04,M06,M08,M09,M10 plain
+  class M02,M04,M06,M08,M09,M10 planned
 ```
 
 > **🚨 COMMERCIAL DEPLOYMENT CONSTRAINTS**
@@ -532,9 +531,9 @@ flowchart TD
 > | --------------- | ------------------------------- | ------------------- |
 > | M-01            | `call.transcription.completed`  | M-03 Revenue Graph  |
 > | M-03            | `revenue_graph.entity.linked`   | M-04, M-05          |
-> | M-04            | `call.review.scored`            | M-05                |
+> | M-04            | `call.scored`            | M-05                |
 > | M-05            | `tracker.detection.created`     | M-06, M-08          |
-> | M-06            | `insight.summary.ready`         | M-07, M-08          |
+> | M-06            | `call.summary.generated`         | M-03, M-07, M-08, M-10 |
 > | M-07            | `deal.stage.changed`            | M-08, M-09          |
 > 
 
@@ -596,7 +595,7 @@ code level.
 
 | Event                            | Published By          | Consumed By        | Schema Owner | **Status**                 |
 | -------------------------------- | --------------------- | ------------------ | ------------ | -------------------------------- |
-| `call.transcription.completed` | M-01 Data Ingestion   | M-03 Revenue Graph | M-01         | 🔴**Required for Phase 2** |
+| `call.transcription.completed` | M-01 Data Ingestion   | M-02, M-03, M-04, M-05, M-06 | M-01         | 🔴**Required for Phase 2** |
 | `revenue_graph.entity.linked`  | M-03 Revenue Graph    | M-04, M-05         | M-03         | 🔴**Required for Phase 2** |
 | `tracker.detection.created`    | M-05 Smart Tracking   | M-06, M-08         | M-05         | 🟡 Planned                       |
 | `deal.stage.changed`           | M-07 Deal Management  | M-08, M-09         | M-07         | 🟡 Planned                       |
@@ -921,7 +920,7 @@ flowchart LR
 
 **✅ Section 3 FIXED.** Now includes webhook security, failure modes, and concrete mitigations.
 
-### 3.3 External Actors
+### 3.5 External Actors
 
 External actors are the humans who interact with R-Revenue Intelligence through
 the product UI or via notifications and alerts.
@@ -940,7 +939,7 @@ the product UI or via notifications and alerts.
 
 ---
 
-### 3.4 External Systems
+### 3.6 External Systems
 
 External systems are the tools that R-Revenue Intelligence integrates with to capture
 data, sync records, and deliver outputs. **R-Revenue Intelligence does not own or host
@@ -994,19 +993,8 @@ any of these systems.**
 
 ---
 
-### 3.5 External AI/ML Services
 
-| Service                 | Purpose                               | **Called By**            | **Input**               | **Output**           | **Fallback**        | **Phase Status** |
-| ----------------------- | ------------------------------------- | ------------------------------ | ----------------------------- | -------------------------- | ------------------------- | ---------------------- |
-| **OpenAI API**    | LLM inference (summaries, Q&A, email) | M-06, M-02, M-10               | Transcripts, prompts, context | Structured JSON            | **LiteLLM routing** | ✅**Phase 1**    |
-| **Whisper (ASR)** | Speech-to-text transcription          | **M-01** (critical path) | Raw audio files               | Raw transcript text        | **AssemblyAI**      | ✅**Phase 1**    |
-| **AssemblyAI**    | Speaker diarization + backup ASR      | M-01                           | Raw audio files               | Speaker-labeled transcript | None                      | ✅**Phase 1**    |
-
-> **🚨 M-01 → OpenAI/Whisper is the critical revenue path.** 90% of value comes from transcription → AI processing.
->
-> **Guaranteed Phase 1:** Webhook → Whisper → transcript storage = working end-to-end.
-
-### 3.5 External AI and ML Services
+### 3.7 External AI and ML Services
 
 External AI services are third-party APIs that R-Revenue Intelligence calls to perform
 AI processing. **These are called exclusively from Python AI services — never from
@@ -1029,7 +1017,7 @@ TypeScript product services directly** (see Principle 4 in Section 2.4).
 
 ---
 
-### 3.6 What Flows In and Out of the Platform
+### 3.8 What Flows In and Out of the Platform
 
 This section summarizes **every data flow across the platform boundary**. Use this as the
 definitive reference when designing an integration or ingestion pipeline.
@@ -1061,7 +1049,7 @@ definitive reference when designing an integration or ingestion pipeline.
 
 ---
 
-### 3.7 **Platform Boundary Rules** (Non-Negotiable)
+### 3.9 **Platform Boundary Rules** (Non-Negotiable)
 
 | Rule                     | **What We Do NOT Own**                 | **What We Do Own** |
 | ------------------------ | -------------------------------------------- | ------------------------ |
@@ -1091,7 +1079,7 @@ definitive reference when designing an integration or ingestion pipeline.
 
 ---
 
-### 3.7 Platform Boundary Rules
+### 3.10 Platform Boundary Rules — Developer Enforcement
 
 These rules define what is **inside** and **outside** the R-Revenue Intelligence system
 boundary. **Every developer must know these before building any feature.**
@@ -5882,7 +5870,7 @@ flowchart TD
 
   M02 -->|"email.sent"| BUS
 
-  M03 -->|"revenuegraph.entity.linked"| BUS
+  M03 -->|"revenue_graph.entity.linked"| BUS
   M03 -->|"deal.stage.changed"| BUS
 
   M04 -->|"call.topics.tagged"| BUS
@@ -5906,8 +5894,8 @@ flowchart TD
   BUS -->|"email.sent"| M05
   BUS -->|"email.sent"| M07
 
-  BUS -->|"revenuegraph.entity.linked"| M04
-  BUS -->|"revenuegraph.entity.linked"| M05
+  BUS -->|"revenue_graph.entity.linked"| M04
+  BUS -->|"revenue_graph.entity.linked"| M05
 
   BUS -->|"deal.stage.changed"| M07
   BUS -->|"deal.stage.changed"| M08
@@ -5951,7 +5939,7 @@ flowchart TD
 | `call.transcription.completed`  | M-01         | M-02, M-03, M-04, M-05, M-06 | High (1)  | 3           | Exponential 30s | `call.transcription.completed.dlq` |
 | `crm.fields.extracted`          | M-01         | M-03                       | Normal (2)   | 3           | Exponential 30s | `crm.fields.extracted.dlq`          |
 | `email.sent`                    | M-02         | M-03, M-05, M-07           | Normal (2)   | 3           | Exponential 30s | `email.sent.dlq`                    |
-| `revenuegraph.entity.linked`    | M-03         | M-04, M-05                 | High (1)     | 3           | Exponential 30s | `revenuegraph.entity.linked.dlq`    |
+| `revenue_graph.entity.linked`    | M-03         | M-04, M-05                 | High (1)     | 3           | Exponential 30s | `revenue_graph.entity.linked.dlq`    |
 | `deal.stage.changed`            | M-03         | M-07, M-08, M-09           | High (1)     | 2           | Fixed 30s       | `deal.stage.changed.dlq`            |
 | `call.topics.tagged`            | M-04         | M-05, M-06                 | Normal (2)   | 3           | Exponential 60s | `call.topics.tagged.dlq`            |
 | `call.scored`                   | M-04         | M-10                       | Normal (2)   | 3           | Exponential 60s | `call.scored.dlq`                   |
@@ -6066,15 +6054,15 @@ on success.
 
 ---
 
-#### `revenuegraph.entity.linked`
+#### `revenue_graph.entity.linked`
 
 | **Field**       | **Value**                                                         |
 | --------------- | ----------------------------------------------------------------- |
-| Queue name      | `revenuegraph.entity.linked`                                      |
+| Queue name      | `revenue_graph.entity.linked`                                      |
 | Producer        | M-03 Revenue Graph                                                |
 | Consumers       | M-04 Conversation Intelligence, M-05 Smart Tracking               |
 | Priority        | High (1)                                                          |
-| DLQ             | `revenuegraph.entity.linked.dlq`                                  |
+| DLQ             | `revenue_graph.entity.linked.dlq`                                  |
 | Retry policy    | 3 retries, exponential backoff 30s → 60s → 120s                  |
 
 ```json
@@ -6307,22 +6295,22 @@ formally registered and must be implemented before the modules that depend on th
 
 | **Event**                   | **Producer** | **Consumers**              | **Why Added**                                                    |
 | --------------------------- | ------------ | -------------------------- | ---------------------------------------------------------------- |
-| `call.review.scored`        | M-04         | M-05                       | M-05 had no trigger to start tracker detection after call review |
+| `call.scored`        | M-04         | M-05                       | M-05 had no trigger to start tracker detection after call review |
 | `call.themes.detected`      | M-04         | M-06                       | M-06 had no trigger from theme detection output                  |
-| `insight.summary.ready`     | M-06         | M-07, M-08                 | M-07 and M-08 had no defined trigger from summary generation     |
+| `call.summary.generated`     | M-06         | M-03, M-07, M-08, M-10 | M-07, M-08 had no defined trigger from summary generation, M-03 links summaries, M-10 uses it for coaching |
 
 **Event flow additions:**
 
-M-04 → call.review.scored → M-05 (tracker detection trigger)
+M-04 → call.scored → M-05 (tracker detection trigger)
 M-04 → call.themes.detected → M-06 (insight generation trigger)
-M-06 → insight.summary.ready → M-07 (deal board enrichment)
-M-06 → insight.summary.ready → M-08 (automation trigger)
+M-06 → call.summary.generated → M-07 (deal board enrichment)
+M-06 → call.summary.generated → M-08 (automation trigger)
 
 
 
 > **Registry rule:** These events must be added to the full registry entries above
 > (with complete payload schemas) before any TDD references them. A PR that adds a
-> `queue.add('call.review.scored', ...)` call without a full registry entry will not
+> `queue.add('call.scored', ...)` call without a full registry entry will not
 > be merged.
 
 ---
@@ -6378,7 +6366,7 @@ All BullMQ queues follow a strict naming convention:
 call.transcription.completed
 crm.fields.extracted
 email.sent
-revenuegraph.entity.linked
+revenue_graph.entity.linked
 deal.stage.changed
 call.topics.tagged
 call.scored
@@ -6425,7 +6413,7 @@ crm.sync.full.dlq
 
 | **Priority Level** | **BullMQ Value** | **Events**                                                                                        | **Processing Guarantee**                                  |
 | ------------------ | ---------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| High               | 1                | `call.transcription.completed`, `revenuegraph.entity.linked`, `deal.stage.changed`, `tracker.detection.created` | Processed immediately ahead of all lower-priority jobs |
+| High               | 1                | `call.transcription.completed`, `revenue_graph.entity.linked`, `deal.stage.changed`, `tracker.detection.created` | Processed immediately ahead of all lower-priority jobs |
 | Normal             | 2                | `crm.fields.extracted`, `email.sent`, `call.topics.tagged`, `call.scored`, `call.summary.generated` | Processed in FIFO order after all High jobs are drained |
 | Low                | 3                | `forecast.submitted`                                                                              | Processed after Normal jobs — suitable for non-time-critical updates |
 

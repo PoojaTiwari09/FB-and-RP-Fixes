@@ -950,7 +950,7 @@ M-03 publishes events when revenue linkage and context construction are complete
 
 Primary published events:
 
-- `revenuegraph.entity.linked`
+- `revenue_graph.entity.linked`
 - `revenuegraph.context.updated`
 - `datacloud.export.completed`
 
@@ -962,7 +962,7 @@ Published event ownership rules:
 
 Key event notes:
 
-- `revenuegraph.entity.linked` is the critical downstream trigger for M-04 and M-05
+- `revenue_graph.entity.linked` is the critical downstream trigger for M-04 and M-05
 - Data Cloud export events are owned by M-03 because customer-export capability belongs to the Revenue Graph boundary
 
 #### Consumed Events
@@ -1078,7 +1078,7 @@ If M-03 fails:
 
 Important rule:
 
-- If `revenuegraph.entity.linked` is not published, M-04 and M-05 must treat the interaction as not yet modeled
+- If `revenue_graph.entity.linked` is not published, M-04 and M-05 must treat the interaction as not yet modeled
 
 #### Testing Boundary
 
@@ -1213,7 +1213,7 @@ M-04 publishes events when conversation analysis outputs become available for do
 
 Primary published events:
 
-- `call.review.scored`
+- `call.scored`
 - `topics.tagged`
 - `themes.detected`
 - `transcript.corrected`
@@ -1227,7 +1227,7 @@ Published event ownership rules:
 
 Key event notes:
 
-- `call.review.scored` is already identified as an upstream event for M-05
+- `call.scored` is already identified as an upstream event for M-05
 - Topic, theme, correction, and translation events may be consumed by M-05 or M-06 depending on final processing design
 
 #### Consumed Events
@@ -1236,7 +1236,7 @@ M-04 consumes modeled context and linked interactions from upstream modules.
 
 Primary consumed events include:
 
-- `revenuegraph.entity.linked`
+- `revenue_graph.entity.linked`
 
 Consumed event notes:
 
@@ -1343,7 +1343,7 @@ M-04 testing must validate its owned workflows independently while mocking M-03 
 
 Testing scope includes:
 
-- Consumption of `revenuegraph.entity.linked`
+- Consumption of `revenue_graph.entity.linked`
 - Scorecard evaluation workflow
 - Topic tagging persistence and retrieval
 - Theme analysis orchestration
@@ -1485,16 +1485,16 @@ M-05 consumes upstream context and conversation-understanding outputs needed to 
 
 Primary consumed events include:
 
-- `revenuegraph.entity.linked`
-- `call.review.scored`
+- `revenue_graph.entity.linked`
+- `call.scored`
 - `topics.tagged`
 - `themes.detected`
 - `email.sent`
 
 Consumed event notes:
 
-- `revenuegraph.entity.linked` provides the deal, account, and contact context needed for enrichment
-- `call.review.scored`, topic, and theme outputs improve filtering, indexing, and signal interpretation
+- `revenue_graph.entity.linked` provides the deal, account, and contact context needed for enrichment
+- `call.scored`, topic, and theme outputs improve filtering, indexing, and signal interpretation
 - `email.sent` allows tracker detection to run on outbound email content where applicable
 
 #### Allowed Dependencies
@@ -1725,7 +1725,7 @@ M-06 publishes events when AI-generated synthesis outputs become available or ar
 
 Primary published events:
 
-- `insight.summary.ready`
+- `call.summary.generated`
 - `call.summary.generated`
 - `deal.brief.generated`
 - `account.brief.generated`
@@ -1751,7 +1751,7 @@ Primary consumed events include:
 - `tracker.detection.created`
 - `topics.tagged`
 - `themes.detected`
-- `call.review.scored`
+- `call.scored`
 - `revenuegraph.context.updated`
 
 Consumed event notes:
@@ -1858,7 +1858,7 @@ If M-06 fails:
 Important rule:
 
 - A failure in M-06 must not corrupt upstream context, tracker detections, or conversation analysis outputs
-- If `insight.summary.ready` is not published, downstream modules must treat the synthesis output as unavailable
+- If `call.summary.generated` is not published, downstream modules must treat the synthesis output as unavailable
 
 #### Testing Boundary
 
@@ -1895,7 +1895,7 @@ Packaging notes:
 
 | # | Decision / Question | Owner | Target Date | Status |
 |---|---|---|---|---|
-| 1 | `insight.summary.ready` remains the canonical downstream trigger; summary variants are typed payload categories in one family. | Tech Lead | 2026-05-15 | Resolved |
+| 1 | `call.summary.generated` remains the canonical downstream trigger; summary variants are typed payload categories in one family. | Tech Lead | 2026-05-15 | Resolved |
 | 2 | Source citations are stored as compact references (source IDs and offsets) and expanded at read time. | Backend Lead | 2026-05-22 | Resolved |
 | 3 | Regeneration is event-driven: upstream material changes enqueue refresh with version increment and supersession markers. | AI Lead | 2026-05-15 | Resolved |
 | 4 | Quick summaries may be synchronous on request; deep research and board-level briefs remain asynchronous jobs. | Product Manager | 2026-05-08 | Resolved |
@@ -2019,7 +2019,7 @@ Primary consumed events include:
 - `tracker.detection.created`
 - `call.summary.generated`
 - `email.sent`
-- `insight.summary.ready`
+- `call.summary.generated`
 
 Consumed event notes:
 
@@ -2280,13 +2280,13 @@ Primary consumed events include:
 
 - `tracker.detection.created`
 - `deal.stage.changed`
-- `insight.summary.ready`
+- `call.summary.generated`
 - `call.summary.generated`
 
 Consumed event notes:
 
 - `tracker.detection.created` is the core trigger for signal-based automations and competitor alerts
-- `deal.stage.changed` is already identified as an M-07 event consumed by M-08
+- `deal.stage.changed` is owned by M-03 Revenue Graph (detected via CRM sync) and consumed by M-08
 - Summary outputs may trigger recommended next steps, follow-up tasks, or guided play progression
 
 #### Allowed Dependencies
@@ -2795,13 +2795,13 @@ M-10 consumes upstream forecasting and performance-related events needed for opt
 Primary consumed events include:
 
 - `forecast.submitted`
-- `call.review.scored`
+- `call.scored`
 - `deal.health.updated`
 - `account.engagement.updated`
 
 Consumed event notes:
 
-- The event registry explicitly identifies `forecast.submitted` and `call.review.scored` as upstream inputs to M-10
+- The event registry explicitly identifies `forecast.submitted` and `call.scored` as upstream inputs to M-10
 - M-10 may also use approved APIs from M-03, M-04, and M-09 to retrieve historical or comparative context for dashboards and coaching
 - M-10 should consume aggregated or managed-state outputs, not raw low-level capture events unless explicitly approved
 
@@ -2948,18 +2948,17 @@ Packaging notes:
 | `call.transcription.completed` | M-01 | M-02, M-03, M-04, M-05, M-06 | Active |
 | `crm.fields.extracted` | M-01 | M-03 | Active |
 | `email.sent` | M-02 | M-03, M-05, M-07 | Active |
-| `revenuegraph.entity.linked` | M-03 | M-04, M-05 | Active |
+| `revenue_graph.entity.linked` | M-03 | M-04, M-05 | Active |
 | `revenuegraph.context.updated` | M-03 | M-06 | Active (Versioned Family) |
-| `call.review.scored` | M-04 | M-05, M-10 | Active |
+| `call.scored` | M-04 | M-05, M-10 | Active |
 | `topics.tagged` | M-04 | M-05, M-06 | Active |
 | `themes.detected` | M-04 | M-05, M-06 | Active |
 | `transcript.corrected` | M-04 | M-05, M-06 | Active |
 | `translation.completed` | M-04 | M-06 | Active |
 | `tracker.detection.created` | M-05 | M-06, M-07, M-08 | Active |
 | `dealdrivers.snapshot.generated` | M-05 | M-06, M-07 | Active |
-| `insight.summary.ready` | M-06 | M-07, M-08, M-10 | Active |
-| `call.summary.generated` | M-06 | M-03, M-07 | Active |
-| `deal.stage.changed` | M-07 | M-08, M-09 | Active |
+| `call.summary.generated` | M-06 | M-03, M-07, M-08, M-10 | Active |
+| `deal.stage.changed` | M-03 | M-08, M-09 | Active |
 | `deal.health.updated` | M-07 | M-09, M-10 | Active |
 | `account.engagement.updated` | M-07 | M-10 | Active |
 | `workflow.executed` | M-08 | M-09 | Active |

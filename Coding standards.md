@@ -3194,10 +3194,10 @@ Every event name follows this exact pattern — no exceptions:
 ```ts
 // ✅ CORRECT event names
 'call.transcription.completed'       // M-01 finished transcribing a call
-'revenuegraph.entity.linked'         // M-03 linked an entity to the revenue graph
-'call.review.scored'                 // M-04 finished scoring a call
+'revenue_graph.entity.linked'         // M-03 linked an entity to the revenue graph
+'call.scored'                 // M-04 finished scoring a call
 'tracker.detection.created'          // M-05 detected a tracker signal
-'insight.summary.ready'              // M-06 generated a summary
+'call.summary.generated'              // M-06 generated a summary
 'deal.stage.changed'                 // M-07 deal moved to a new stage
 'email.sent'                         // M-02 sent an email
 'forecast.submitted'                 // M-09 rep submitted a forecast
@@ -3223,10 +3223,10 @@ in the system must be registered here and in `packages/event-contracts/src/`.
 | Event Name | Published By | Consumed By | Phase | Status |
 |---|---|---|---|---|
 | `call.transcription.completed` | M-01 Data Ingestion | M-03 Revenue Graph | Phase 1 | ✅ Required |
-| `revenuegraph.entity.linked` | M-03 Revenue Graph | M-04, M-05 | Phase 2 | ✅ Required |
-| `call.review.scored` | M-04 Conv. Intelligence | M-05 | Phase 2 | Planned |
+| `revenue_graph.entity.linked` | M-03 Revenue Graph | M-04, M-05 | Phase 2 | ✅ Required |
+| `call.scored` | M-04 Conv. Intelligence | M-05 | Phase 2 | Planned |
 | `tracker.detection.created` | M-05 Smart Tracking | M-06, M-08 | Phase 2 | Planned |
-| `insight.summary.ready` | M-06 Insight Generation | M-07, M-08 | Phase 2 | Planned |
+| `call.summary.generated` | M-06 Insight Generation | M-07, M-08 | Phase 2 | Planned |
 | `deal.stage.changed` | M-07 Deal Management | M-08, M-09 | Phase 3 | Planned |
 | `email.sent` | M-02 Sales Engagement | M-03, M-07 | Phase 2 | Planned |
 | `forecast.submitted` | M-09 Forecasting | M-10 | Phase 3 | Planned |

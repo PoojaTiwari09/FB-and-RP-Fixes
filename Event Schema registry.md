@@ -730,12 +730,12 @@ Only events listed in this section are considered approved platform contracts. I
 | `call.transcription.completed` | Workflow | M-01 Data Ingestion | M-02, M-03, M-04, M-05, M-06 | High | 3 retries | Exponential: 30s, 60s, 120s | `call.transcription.completed.dlq` |
 | `crm.fields.extracted` | Workflow | M-01 Data Ingestion | M-03 Revenue Graph | Normal | 3 retries | Exponential: 30s, 60s, 120s | `crm.fields.extracted.dlq` |
 | `email.sent` | Integration | M-02 Sales Engagement | M-03, M-05, M-07 | Normal | 3 retries | Exponential: 30s, 60s, 120s | `email.sent.dlq` |
-| `revenuegraph.entity.linked` | Domain | M-03 Revenue Graph | M-04, M-05 | High | 3 retries | Exponential: 30s, 60s, 120s | `revenuegraph.entity.linked.dlq` |
+| `revenue_graph.entity.linked` | Domain | M-03 Revenue Graph | M-04, M-05 | High | 3 retries | Exponential: 30s, 60s, 120s | `revenue_graph.entity.linked.dlq` |
 | `deal.stage.changed` | Integration | M-03 Revenue Graph | M-07, M-08, M-09 | High | 2 retries | Fixed: 30s, 30s | `deal.stage.changed.dlq` |
 | `call.topics.tagged` | Workflow | M-04 Conversation Intelligence | M-05, M-06 | Normal | 3 retries | Exponential: 60s | `call.topics.tagged.dlq` |
 | `call.scored` | Domain | M-04 Conversation Intelligence | M-10 Performance Coaching | Normal | 3 retries | Exponential: 60s | `call.scored.dlq` |
 | `tracker.detection.created` | Domain | M-05 Smart Tracking | M-06, M-07, M-08 | High | 3 retries | Exponential: 30s, 60s, 120s | `tracker.detection.created.dlq` |
-| `call.summary.generated` | Domain | M-06 Insight Generation | M-03, M-07 | Normal | 2 retries | Fixed: 30s, 30s | `call.summary.generated.dlq` |
+| `call.summary.generated` | Domain | M-06 Insight Generation | M-03, M-07, M-08, M-10 | Normal | 2 retries | Fixed: 30s, 30s | `call.summary.generated.dlq` |
 | `forecast.submitted` | Domain | M-09 Forecasting | M-10 Performance Coaching | Low | 2 retries | Fixed: 30s, 30s | `forecast.submitted.dlq` |
 
 ### 8.2 Registry table rules
@@ -875,7 +875,7 @@ The detailed schemas should be documented in the following order:
 1. `call.transcription.completed`
 2. `crm.fields.extracted`
 3. `email.sent`
-4. `revenuegraph.entity.linked`
+4. `revenue_graph.entity.linked`
 5. `deal.stage.changed`
 6. `call.topics.tagged`
 7. `call.scored`
@@ -1692,7 +1692,7 @@ Each event must have a designated DLQ owner responsible for:
 | `call.transcription.completed` | M-01 Data Ingestion | 4 hours | Platform Core → Tech Lead |
 | `crm.fields.extracted` | M-01 Data Ingestion | 4 hours | Platform Core → Tech Lead |
 | `email.sent` | M-02 Sales Engagement | 2 hours | M-02 Lead → Platform Core |
-| `revenuegraph.entity.linked` | M-03 Revenue Graph | 4 hours | M-03 Lead → Platform Core |
+| `revenue_graph.entity.linked` | M-03 Revenue Graph | 4 hours | M-03 Lead → Platform Core |
 | `deal.stage.changed` | M-03 Revenue Graph | 2 hours | M-03 Lead → Platform Core |
 
 ### 15.3.2 DLQ Resolution Process
