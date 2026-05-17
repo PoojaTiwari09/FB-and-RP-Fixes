@@ -1,0 +1,16 @@
+{
+  "name": "r-revenue-intelligence",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "db:migrate": "pnpm --filter database prisma migrate dev",
+    "db:seed": "pnpm --filter database prisma db seed",
+    "db:generate": "pnpm --filter database prisma generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.0.0"
+  }
+}

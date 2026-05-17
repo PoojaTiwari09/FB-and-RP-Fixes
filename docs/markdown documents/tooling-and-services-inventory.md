@@ -941,6 +941,36 @@ Use the table with these rules:
 | Testing | Prompt versioning | Governance practice | Yes | Partial | N/A | No | No | Prompt change tracking | Track and compare prompt revisions | AI Lead | Medium | Required for reproducibility |
 | Testing | Confidence-score gating | AI safety control | Yes | Partial | N/A | No | No | Output safety routing | Route low-confidence results to review | AI Lead | High - handles customer data | Required for high-risk AI outputs |
 | Testing | Human review workflows | QA process | Yes | Partial | N/A | No | Possible | High-risk output review | Manual checks for sensitive actions | AI Lead / QA Lead | High - handles customer data | Required in governed workflows |
+| AI / ML | LangChain | Library | Yes | Yes | N/A | No | No | AI Orchestration | Prompt chains, context building, memory management | AI Lead | High - handles customer data | AI Layer standard |
+| AI / ML | Groq (Llama 3.3 70B) | Hosted inference | No | No | Yes | No | Possible | High-performance AI | Ultra-fast inference for real-time scoring and chat | AI Lead | High - handles customer data | Ultra-fast inference |
+| AI / ML | Google Gemini (gemini-pro) | Hosted AI API | No | No | Yes | No | Possible | Multimodal AI | Alternative provider evaluation | AI Lead | High - handles customer data | Evaluation only |
+| AI / ML | Kokoro TTS | TTS model/library | Yes | Yes | N/A | No | Possible | Text-to-Speech | AI-generated audio and voice responses | AI Lead | Medium | Local TTS capability |
+| AI / ML | whisper.cpp | Local runtime | Yes | Yes | N/A | No | No | Local transcription | High-performance C++ implementation of Whisper | AI Lead | High - handles customer data | Optimized for local/edge |
+| AI / ML | CatBoost | ML library | Yes | Yes | N/A | No | Possible | Tabular ML | Alternative ML benchmarking for forecasting | AI Lead | Medium | Gradient boosting for tabular data |
+| AI / ML | SHAP | ML explainability | Yes | Yes | N/A | No | No | Model explainability | Identify top deal risk factors and explain predictions | AI Lead | Low | Model transparency |
+| AI / ML | ARIMA | Stats library | Yes | Yes | N/A | No | No | Time-series forecasting | Statistical baseline for revenue forecasting | AI Lead | Low | Stats baseline |
+| AI / ML | CrewAI | Agent framework | Yes | Yes | N/A | No | Possible | Multi-agent orchestration | Autonomous sales research and workflow agents | AI Lead | High - handles customer data | Agentic AI layer |
+| AI / ML | PyTorch | ML framework | Yes | Yes | N/A | No | No | Deep learning foundation | Model training and inference backbone | AI Lead | Medium | AI research foundation |
+| AI / ML | Transformers.js | Library | Yes | Yes | N/A | No | No | Browser-side AI | Local NLP and sentiment analysis in the browser | AI Lead | Medium | Frontend AI experiments |
+| Frontend | Axios | Library | Yes | Yes | N/A | No | No | HTTP Client | Frontend-backend API communication | Frontend Lead | Medium | Standard HTTP client |
+| Frontend | Lucide React | Icon library | Yes | Yes | N/A | No | No | UI Icons | Consistent enterprise iconography | Frontend Lead | Low | Approved UI icons |
+| Frontend | Framer Motion | Animation library | Yes | Yes | N/A | No | No | UI Animations | Premium micro-animations and transitions | Frontend Lead | Low | Premium UX enhancement |
+| Frontend | SheetJS | Library | Yes | Yes | N/A | No | No | Spreadsheet processing | Client-side Excel/CSV export and import | Frontend Lead | Medium | Data utility |
+| Frontend | jsPDF / html2canvas | Library | Yes | Yes | N/A | No | No | PDF Generation | Downloadable AI-powered deal reports | Frontend Lead | Medium | Reporting utility |
+| Backend | Socket.io / WebSocket | Library | Yes | Yes | N/A | No | No | Real-time communication | Live updates, masked LLM streaming, and chat | Backend Lead | High - handles customer data | Real-time standard |
+| Backend | Multer | Library | Yes | Yes | N/A | No | No | File upload | Handling audio and document uploads | Backend Lead | High - handles customer data | Upload utility |
+| Backend | Nodemailer | Library | Yes | Yes | N/A | No | No | Email delivery | AI-generated email drafting and sending | Backend Lead | High - handles customer data | Email utility |
+| Backend | Bcrypt | Library | Yes | Yes | N/A | No | No | Security | Secure password hashing | Security Owner | High - handles credentials | Security standard |
+| AI / ML | SQLAlchemy / Alembic | ORM / Migrations | Yes | Yes | N/A | No | No | Python DB access | AI service data persistence and schema control | AI Lead | High - handles customer data | Python DB standard |
+| AI / ML | Pydantic | Data validation | Yes | Yes | N/A | No | No | Schema enforcement | Data validation for FastAPI endpoints | AI Lead | Medium | AI contract validation |
+| AI / ML | Pandas / NumPy | Data processing | Yes | Yes | N/A | No | No | Data science utility | Data preprocessing and feature engineering | AI Lead | Medium | ML utility standard |
+| Integration | SendGrid | Email service | No | No | Yes | Yes | Yes | Email delivery | Transactional email delivery for notifications | Integrations | High - handles customer data | Email provider |
+| Integration | Clearbit / Bombora | Intelligence APIs | No | No | No | No | Yes | Sales Intelligence | B2B enrichment and intent data | Integrations | High - handles customer data | Paid intelligence |
+| Integration | Gong / Chorus | Conversation Intelligence | No | No | No | No | Yes | Data source | Enterprise meeting and call ingestion | Integrations | High - handles customer data | Data source |
+| Integration | HubSpot API | CRM API | No | No | Yes | Yes | Yes | CRM Sync | Sync and push deals into HubSpot pipelines | Integrations | High - handles customer data | Core integration |
+| Utilities | compromise / fuse.js / natural | NLP Libraries | Yes | Yes | N/A | No | No | Deterministic NLP | PII masking, fuzzy matching, and deduplication | AI Lead | Medium | NLP utilities |
+| Utilities | python-docx / pdfkit / Jinja2 | Generation tools | Yes | Yes | N/A | No | No | Document generation | Generating proposals and reports | AI Lead | Medium | Generation utilities |
+
 ## 8. Free Offline AI Tools
 
 This section lists AI tools that can run locally on a developer machine, workstation, or internal server without depending on a cloud API for every request. These tools are extremely valuable during development because they help reduce API cost, support private experimentation, improve resilience, and give the team a fallback path when external services are unavailable. Our architecture already supports self-hosted or local-first thinking in important areas such as transcription and planned fallback inference, so offline AI should be treated as a serious part of the development toolbox, not just a side experiment. 
@@ -1555,11 +1585,33 @@ Frontend testing is important because this product contains many interactive scr
   - rendering conditions
 - **Why it matters:** It catches issues early before they become full end-to-end failures.
 
-#### Testing principle
-- Use component or unit tests for local UI behavior.
-- Use Playwright for full user journeys.
-- Do not test backend business rules in frontend tests.
-- Do not move product logic into the frontend just to make testing easier. 
+- **Why it matters:** It catches issues early before they become full end-to-end failures.
+
+### 10.7 Specialized Frontend Utilities
+
+#### Axios
+- **Type:** HTTP Client
+- **Why we use it:** Standard library for making HTTP requests from the frontend to the backend services.
+- **Primary use:** API communication.
+- **Why it matters:** Provides a consistent and feature-rich interface for handling requests and responses.
+
+#### Lucide React
+- **Type:** Icon library
+- **Why we use it:** Provides a comprehensive set of clean, consistent icons for the enterprise UI.
+- **Primary use:** UI iconography.
+- **Why it matters:** Ensures a professional and unified look across the application.
+
+#### Framer Motion
+- **Type:** Animation library
+- **Why we use it:** Used to implement smooth, premium micro-animations and transitions to enhance the user experience.
+- **Primary use:** UI animations and dynamic transitions.
+- **Why it matters:** Elevates the product's aesthetic quality and feel.
+
+#### jsPDF and html2canvas
+- **Type:** Document generation libraries
+- **Why we use it:** Used to generate downloadable PDF reports from dashboard views and AI-generated insights.
+- **Primary use:** Report generation.
+- **Why it matters:** Allows users to export AI findings for offline use or sharing.
 
 ## 11. Backend Tools
 
@@ -1609,6 +1661,15 @@ Why this matters in development:
   - schema evolution
   - migration workflows
 - **Why it matters:** It reduces raw-query errors and makes database access easier to reason about for both experienced and junior engineers. 
+
+#### SQLAlchemy and Alembic
+- **Type:** Python ORM and migration tool
+- **Why we use it:** For AI services that require persistent state or complex relational data management in the Python layer.
+- **Primary use:** AI service data persistence.
+- **Key use cases:**
+  - Storing AI insights and intermediate deal analytics
+  - Managing schema migrations for AI-specific data
+- **Why it matters:** Standardizes database access in the Python/FastAPI layer.
 
 ### 11.2 API and Validation
 
@@ -2102,7 +2163,48 @@ AI testing matters because the architecture requires structured outputs, confide
   - validate low-confidence summaries
   - inspect uncertain extracted fields
   - tune prompts with reviewer feedback
-- **Why it matters:** It improves trust in the system and supports safer rollout. 
+- **Why it matters:** It improves trust in the system and supports safer rollout.
+
+### 12.10 Specialized AI Tools and Libraries
+
+#### LangChain
+- **Type:** AI orchestration framework
+- **Why we use it:** LangChain is used for building complex AI chains, managing memory, and orchestrating multi-step LLM interactions where LangGraph might be too heavy or for specific sub-tasks.
+- **Primary use:** Context building and prompt chain management.
+- **Key use cases:**
+  - Stakeholder power mapping
+  - Negotiation simulation
+  - Deep personalization outreach
+- **Why it matters:** It provides a rich set of utilities for context management that complements LangGraph.
+
+#### Groq (Llama 3.3 70B & 3.1 70B)
+- **Type:** High-performance inference provider
+- **Why we use it:** Groq provides ultra-fast inference for Llama models, which is critical for real-time features like chat and scoring.
+- **Primary use:** Real-time AI interactions.
+- **Key use cases:**
+  - Real-time scoring and chat
+  - Fast context extraction
+  - Latency-sensitive summarization
+- **Why it matters:** Speed is a feature in conversational intelligence.
+
+#### Kokoro TTS
+- **Type:** Text-to-Speech library/model
+- **Why we use it:** Used to generate high-quality voice responses for AI coaching and simulation features.
+- **Primary use:** Conversational AI voice output.
+- **Key use cases:**
+  - Negotiation simulator voice
+  - AI coach feedback
+- **Why it matters:** Improves immersion in training simulations.
+
+#### scikit-learn, XGBoost, and CatBoost
+- **Type:** Machine Learning libraries
+- **Why we use it:** These libraries are used for predictive modeling on tabular data, which is often more efficient than using LLMs for numerical forecasting.
+- **Primary use:** Win probability prediction and revenue forecasting.
+- **Key use cases:**
+  - Deal win probability prediction (XGBoost/CatBoost)
+  - Revenue forecasting (ARIMA/scikit-learn)
+  - Identifying top deal risk factors (SHAP)
+- **Why it matters:** Enterprise forecasting requires high accuracy and explainability.
 
 ### 12.9 AI service operating depth (FastAPI, LiteLLM, LangGraph, spaCy, sentence-transformers)
 
@@ -2507,7 +2609,22 @@ Local development must stay as close as possible to the real architecture while 
   - safe local environment setup
   - controlled rotation
   - fewer accidental credential leaks
-- **Why it matters:** This is a basic but critical DevOps hygiene rule. 
+- **Why it matters:** This is a basic but critical DevOps hygiene rule.
+
+### 14.7 Required API Keys and Credentials
+
+The platform requires several external API keys and connection endpoints for its core functionality. These must be managed securely via Doppler.
+
+| Environment Variable | Service | Primary Use Case |
+|----------------------|---------|------------------|
+| `GROQ_API_KEY` | Groq Cloud | Powers high-performance AI models (LLaMA 3.3) |
+| `SUPABASE_URL` | Supabase | Database and managed services endpoint |
+| `SUPABASE_KEY` | Supabase | Authentication and data access credentials |
+| `OPENAI_API_KEY` | OpenAI | Primary LLM inference and embeddings |
+| `ASSEMBLYAI_API_KEY` | AssemblyAI | Fallback ASR and diarization |
+| `SENDGRID_API_KEY` | SendGrid | Transactional email delivery |
+| `HUBSPOT_ACCESS_TOKEN`| HubSpot | CRM integration and sync |
+| `SALESFORCE_CLIENT_ID`| Salesforce | CRM integration and sync |
 
 ### 14.6 CDN / WAF / Edge Services
 
@@ -3229,8 +3346,15 @@ Use this table with the following meaning:
 | Hugging Face hosted inference | No | No | No | Yes | No | AI Lead | Model experiments | Prototype and evaluation [page:3] |
 | openai npm package in TypeScript services | No | No | No | No | Yes | Tech Lead | Direct LLM calls from product services | Explicitly forbidden by architecture  |
 | LangChain in TypeScript product services | No | No | No | No | Yes | Tech Lead | AI logic inside product layer | Explicitly forbidden by architecture  |
-| Direct cross-module DB access | No | No | No | No | Yes | Tech Lead | Shortcut data sharing | Violates module ownership rules  |
+| direct cross-module DB access | No | No | No | No | Yes | Tech Lead | Shortcut data sharing | Violates module ownership rules  |
 | Raw SMTP / custom email server | No | No | No | No | Yes | Tech Lead / Security Owner | Direct email infrastructure ownership | Explicitly outside platform boundary  |
+| LangChain | Yes | Yes | No | No | No | AI Lead | AI Orchestration | Approved for AI Layer |
+| Axios | Yes | Yes | No | No | No | Frontend Lead / Backend Lead | HTTP Client | Standard communication tool |
+| Socket.io | Yes | Yes | No | No | No | Backend Lead | Real-time comms | Real-time standard |
+| Framer Motion | Yes | Yes | No | No | No | Frontend Lead | UX Animations | Approved for premium UI |
+| CatBoost / XGBoost | Yes | Yes | No | No | No | AI Lead | Tabular ML | Approved for forecasting |
+| CrewAI | Yes | No | Yes | No | No | AI Lead | Agentic workflows | Planned for autonomous agents |
+
 
 ## 19. Payment Planning
 
@@ -3357,6 +3481,12 @@ This section lists the major libraries, frameworks, and core tools used across t
 | React Hook Form | Frontend | Form state handling  |
 | Zod | Frontend / Shared contracts | Form and payload validation, schema validation  |
 | Recharts | Frontend | Dashboard charts and KPI visualizations |
+| Axios | Frontend | Standard HTTP client for API calls |
+| Lucide React | Frontend | Enterprise UI iconography |
+| Framer Motion | Frontend | High-end UI animations and transitions |
+| SheetJS | Frontend | Client-side spreadsheet processing |
+| jsPDF / html2canvas | Frontend | On-the-fly report generation |
+| Transformers.js | Frontend | Local NLP and sentiment analysis |
 
 ### Backend libraries
 
@@ -3369,6 +3499,11 @@ This section lists the major libraries, frameworks, and core tools used across t
 | BullMQ | Backend | Queueing, async processing, inter-module events  |
 | Redis | Backend infra | Queue backing store, caching, temporary operational state  |
 | Supabase Auth SDK / JWT tools | Backend auth | Authentication and guarded access  |
+| Axios | Backend | HTTP client for service-to-service calls |
+| Socket.io | Backend | Real-time events and streaming |
+| Multer | Backend | File and audio upload handling |
+| Nodemailer | Backend | Programmatic email delivery |
+| Bcrypt | Backend | Secure credential hashing |
 | Swagger or OpenAPI tooling | Backend docs | API discoverability and contract documentation |
 
 ### AI and ML libraries
@@ -3385,7 +3520,14 @@ This section lists the major libraries, frameworks, and core tools used across t
 | pyannote.audio | AI/ML | Speaker diarization  |
 | sentence-transformers | AI/ML | Local embeddings and semantic similarity workflows  |
 | scikit-learn | AI/ML | Baseline ML, preprocessing, structured predictive models |
-| XGBoost | AI/ML | Forecasting and tabular prediction experiments |
+| XGBoost / CatBoost | AI/ML | Forecasting and tabular prediction |
+| SHAP | AI/ML | Model explainability and risk factor analysis |
+| ARIMA | AI/ML | Statistical time-series forecasting |
+| CrewAI | AI/ML | Multi-agent autonomous workflows |
+| PyTorch | AI/ML | Deep learning framework foundation |
+| SQLAlchemy / Alembic | AI/ML | Python DB access and migrations |
+| Pydantic | AI/ML | FastAPI data validation and schema enforcement |
+| Pandas / NumPy | AI/ML | Data science and preprocessing utilities |
 | OpenAI API client libraries | AI/ML | Managed LLM inference through Python services only  |
 
 ### Data and search libraries / tools
@@ -3438,6 +3580,13 @@ This section lists the major libraries, frameworks, and core tools used across t
 | Microsoft Teams webhooks / APIs | Integration | Meeting ingestion  |
 | Slack API / webhooks | Integration | Notifications and reminders  |
 | LinkedIn Sales Navigator APIs | Integration | Prospect and sales context enrichment  |
+| Clearbit / Bombora | Integration | B2B enrichment and intent data |
+| SendGrid SDK | Integration | Transactional email delivery |
+| Gong / Chorus | Integration | Conversation intelligence data source |
+| HubSpot API | Integration | CRM sync and deal insertion |
+| Slack Bolt SDK | Integration | Slack bot and app interactions |
+| Google Calendar SDK | Integration | Calendar event synchronization |
+
 
 ### Important architecture note
 - **No AI npm libraries in TypeScript product services.** The architecture explicitly forbids putting AI inference logic into the TypeScript product layer. AI and ML belong only in Python services. 
