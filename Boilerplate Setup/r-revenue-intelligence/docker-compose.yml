@@ -54,6 +54,21 @@ services:
   # -------------------------
   # Application Services
   # -------------------------
+  web:
+    build: 
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: rri_web
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    env_file:
+      - .env
+
   api:
     build: 
       context: .
