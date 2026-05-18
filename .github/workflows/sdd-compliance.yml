@@ -66,7 +66,7 @@ jobs:
       - name: Validate Python and JSON AST
         run: |
           # Execute our custom syntax and AST validator script
-          python "Boilerplate Setup/syntax_validator.py"
+          python "boilerplate code/syntax_validator.py"
 
   database-and-compilation:
     name: Prisma Schema & Build Validation
@@ -87,12 +87,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd "Boilerplate Setup/r-revenue-intelligence"
+          cd "boilerplate code/r-revenue-intelligence"
           pnpm install
 
       - name: Validate Prisma Database Models
         run: |
-          cd "Boilerplate Setup/r-revenue-intelligence"
+          cd "boilerplate code/r-revenue-intelligence"
           # Ensure tenantId is defined on all models (except allowed join/global models)
           SCHEMA_FILE="packages/database/prisma/schema.prisma"
           echo "Auditing Prisma schema models for Tenant Isolation..."
