@@ -80,28 +80,30 @@ After evaluating both approaches, the R-Revenue Intelligence Platform adopts a *
 ```text
 r-revenue-intelligence/
 ├── apps/
-│ ├── web/ # Next.js frontend
-│ ├── api/ # NestJS core backend
-│ └── ai-services/ # FastAPI AI/ML services
-├── modules/
-│ ├── platform-core/ # Auth, API Gateway, Event Bus, CI/CD
-│ ├── m1-capture/ # Capture & Transcription
-│ ├── m2-conversation/ # Conversation Intelligence
-│ ├── m3-genai/ # AI Summaries & GenAI
-│ ├── m4-deals/ # Deal Intelligence
-│ ├── m5-accounts/ # Account Intelligence
-│ ├── m6-forecasting/ # Forecasting & Prediction
-│ ├── m7-dashboards/ # Revenue Dashboards
-│ ├── m8-engagement/ # Sales Engagement
-│ ├── m9-coaching/ # Coaching & Training
-│ └── m10-compliance/ # Data & Compliance
-├── shared/ # Shared utilities, types, constants
-├── infra/ # Infrastructure as Code (Terraform, Docker)
-├── docs/ # All documentation including this file
+│ ├── web/                     # Next.js 14 frontend SPA
+│ ├── api/                     # NestJS Core Backend (Modular Monolith wrapper)
+│ └── ai-services/             # FastAPI Python AI/ML endpoints & consolidated transcription pipelines
+├── modules/                   # Root-level Decoupled Monorepo Workspaces
+│ ├── platform-core/           # Platform core utilities, JWT, guards, database base service
+│ ├── m01-capture-transcription/
+│ ├── m02-conversation-intelligence/
+│ ├── m03-ai-summaries-genai/
+│ ├── m04-deal-intelligence/
+│ ├── m05-account-intelligence/
+│ ├── m06-forecasting-prediction/
+│ ├── m07-revenue-dashboards/
+│ ├── m08-sales-engagement/
+│ ├── m09-coaching-training/
+│ └── m10-data-compliance/
+├── packages/
+│ ├── database/                # Centralized database governance base schema
+│ └── shared-types/            # Shared Zod types & Event Bus core schemas
+├── infra/                     # Infrastructure configuration (Terraform, Docker compose)
+├── docs/                      # Engineering documents and specs
 │ └── git-branching-strategy.md
 ├── .github/
-│ ├── workflows/ # GitHub Actions CI/CD pipelines
-│ └── CODEOWNERS # Branch ownership per module
+│ ├── workflows/               # Unified CI/CD workflow actions
+│ └── CODEOWNERS               # Team directory ownership mappings
 ├── package.json
 └── README.md
 ```
@@ -136,157 +138,112 @@ This section defines the physical layout of the monorepo and how each of the 10 
 
 ---
 
-## 2.1 Monorepo Folder Layout
-
-The repository is organized into **six top-level directories**, each with a distinct responsibility. No module team should place code outside their designated directory without a cross-team review.
-
-
-```text
+## 2.1```text
 r-revenue-intelligence/ # 🏠 Root of the monorepo
 │
-├── apps/ # 🖥️ Deployable applications
+├── apps/ # 🖥️ Deployable Applications
 │ ├── web/ # Next.js 14 — Frontend SPA
 │ │ ├── src/
 │ │ │ ├── app/ # App router pages
 │ │ │ ├── components/ # Shared UI components
-│ │ │ ├── modules/ # Per-module UI pages & components
-│ │ │ │ ├── m1-capture/
-│ │ │ │ ├── m2-conversation/
-│ │ │ │ ├── m3-genai/
-│ │ │ │ ├── m4-deals/
-│ │ │ │ ├── m5-accounts/
-│ │ │ │ ├── m6-forecasting/
-│ │ │ │ ├── m7-dashboards/
-│ │ │ │ ├── m8-engagement/
-│ │ │ │ ├── m9-coaching/
-│ │ │ │ └── m10-compliance/
-│ │ │ ├── hooks/ # Global React hooks
-│ │ │ ├── store/ # Global state (Zustand / Redux)
-│ │ │ └── styles/ # Global CSS / Tailwind config
+│ │ │ └── modules/ # Frontend module pages (m1-capture to m10-compliance)
 │ │ ├── public/
 │ │ ├── next.config.ts
 │ │ └── package.json
 │ │
-│ ├── api/ # NestJS — Core Backend (Modular Monolith)
+│ ├── api/ # NestJS — Core Backend (Modular Monolith wrapper)
 │ │ ├── src/
-│ │ │ ├── main.ts # App entry point
-│ │ │ ├── app.module.ts # Root module
-│ │ │ ├── modules/ # NestJS module imports (M1–M10)
-│ │ │ ├── common/ # Guards, interceptors, filters, pipes
-│ │ │ ├── config/ # Environment config & validation
-│ │ │ └── events/ # Event Bus publishers & listeners
+│ │ │ ├── main.ts # API entry point
+│ │ │ └── app.module.ts # Root Module imports and events coordination
 │ │ ├── test/
 │ │ ├── nest-cli.json
 │ │ └── package.json
 │ │
-│ └── ai-services/ # FastAPI — Python AI/ML Services
-│ ├── src/
-│ │ ├── main.py # FastAPI entry point
-│ │ ├── routers/ # Per-module AI endpoints
-│ │ │ ├── transcription.py # M1
-│ │ │ ├── conversation.py # M2
-│ │ │ ├── summaries.py # M3
-│ │ │ ├── deals.py # M4
-│ │ │ ├── forecasting.py # M6
-│ │ │ └── coaching.py # M9
-│ │ ├── agents/ # LangGraph AI agents
-│ │ ├── pipelines/ # Transcription & processing pipelines
-│ │ └── models/ # Pydantic schemas
-│ ├── tests/
-│ ├── requirements.txt
-│ └── Dockerfile
+│ └── ai-services/ # FastAPI — Python AI/ML Inference & Consolidated Transcription Services
+│   ├── app/
+│   │   ├── main.py # FastAPI entry point serving LLM tasks and ASR/transcribe paths
+│   │   └── routers/ # AI endpoints (/health, /v1/summarize, /v1/score-call, /v1/transcribe)
+│   ├── Dockerfile
+│   └── requirements.txt
 │
-├── modules/ # 🧩 Product Module Implementations
-│ ├── platform-core/ # ⚙️ Foundation (not sold)
-│ ├── m1-capture/ # M1 — Capture & Transcription
-│ ├── m2-conversation/ # M2 — Conversation Intelligence
-│ ├── m3-genai/ # M3 — AI Summaries & GenAI
-│ ├── m4-deals/ # M4 — Deal Intelligence
-│ ├── m5-accounts/ # M5 — Account Intelligence
-│ ├── m6-forecasting/ # M6 — Forecasting & Prediction
-│ ├── m7-dashboards/ # M7 — Revenue Dashboards
-│ ├── m8-engagement/ # M8 — Sales Engagement
-│ ├── m9-coaching/ # M9 — Coaching & Training
-│ └── m10-compliance/ # M10 — Data & Compliance
+├── modules/ # 📦 Root-level Monorepo Decoupled Workspaces (NestJS + Local DB schemas)
+│ ├── platform-core/ # Core foundation: database prisma module, jwt validation, guards, event bus
+│ ├── m01-capture-transcription/
+│ ├── m02-conversation-intelligence/
+│ ├── m03-ai-summaries-genai/
+│ ├── m04-deal-intelligence/
+│ ├── m05-account-intelligence/
+│ ├── m06-forecasting-prediction/
+│ ├── m07-revenue-dashboards/
+│ ├── m08-sales-engagement/
+│ ├── m09-coaching-training/
+│ └── m10-data-compliance/
 │
-├── shared/ # 🔗 Shared Code (used across modules)
-│ ├── types/ # Global TypeScript interfaces & enums
-│ ├── utils/ # Reusable utility functions
-│ ├── constants/ # Platform-wide constants
-│ ├── decorators/ # Custom NestJS decorators
-│ └── dto/ # Shared Data Transfer Objects
+├── packages/ # 🧩 Monorepo Workspace Shared Packages
+│ ├── database/ # Centralized database management (Prisma client & migrations base)
+│ │ ├── prisma/
+│ │ │   └── schema.prisma # Baseline central shared schema
+│ │ └── package.json
+│ │
+│ └── shared-types/ # Shared runtime validation & Event Bus definitions
+│   ├── src/
+│   │   ├── events/
+│   │   │   └── base.event.ts # Canonical Event Bus class
+│   │   └── index.ts
+│   └── package.json
 │
-├── infra/ # 🏗️ Infrastructure as Code
-│ ├── terraform/ # AWS provisioning (prod)
-│ ├── docker/ # Dockerfiles per service
-│ │ ├── web.Dockerfile
-│ │ ├── api.Dockerfile
-│ │ └── ai-services.Dockerfile
-│ ├── railway/ # Railway deployment configs (dev/staging)
-│ └── nginx/ # Reverse proxy config
+├── infra/ # 🏗️ Containerization & Cloud Deployment Setup
+│ ├── docker-compose.yml # Dev/Staging environment (Postgres pgvector, Redis, Meilisearch, ClickHouse)
+│ ├── .doppler.yaml # Doppler secret configuration registry
+│ └── docker/ # Dockerfiles per service
 │
-├── docs/ # 📚 All Platform Documentation
-│ ├── git-branching-strategy.md # ← THIS DOCUMENT
-│ ├── system-architecture.md
-│ ├── api-reference.md
-│ ├── module-specs/ # Per-module feature specifications
-│ │ ├── m1-capture.md
-│ │ ├── m2-conversation.md
-│ │ └── ...
+├── docs/ # 📚 Platform Specifications
 │ └── adr/ # Architecture Decision Records
 │
-├── .github/ # 🤖 GitHub Configuration
-│ ├── workflows/ # GitHub Actions CI/CD pipelines
-│ │ ├── ci.yml # PR validation (lint, test, build)
-│ │ ├── cd-staging.yml # Deploy to staging on release/*
-│ │ ├── cd-production.yml # Deploy to production on main
-│ │ └── module-checks.yml # Per-module affected checks
-│ ├── CODEOWNERS # Module ownership rules
-│ ├── pull_request_template.md # Standardized PR template
-│ └── ISSUE_TEMPLATE/ # Bug report & feature request templates
+├── .github/ # 🤖 CI/CD Automations
+│ └── workflows/ # Automated test, lint, validation checks
 │
-├── .husky/ # 🐶 Git Hooks (pre-commit, commit-msg)
-├── .eslintrc.js # Linting rules
-├── .prettierrc # Code formatting rules
-├── turbo.json # Turborepo task pipeline config
-├── pnpm-workspace.yaml # pnpm monorepo workspace config
+├── turbo.json # Turborepo task orchestrator configuration
+├── pnpm-workspace.yaml # pnpm workspace layout definition
 ├── package.json # Root package.json
-├── tsconfig.base.json # Base TypeScript config
-├── .env.example # Environment variable template
-└── README.md # Platform overview & quick start
-```
+└── README.md # Setup & contribution guide
+
 
 
 ---
 
-## 2.2 Module Directory Mapping (M1–M10 + Platform Core)
+## 2.2 Module Directory Mapping (m01–m10 + Platform Core)
 
-Each module under `modules/` follows an **identical internal structure** to ensure consistency across teams. Below is the standard layout every module must follow, followed by the mapping of all 11 modules.
+Each module workspace under `/modules/m0X-<module-slug>/` follows an **identical internal structure** to ensure consistent layout and operational boundaries across teams. Below is the standard layout every module workspace must follow:
 
-### Standard Module Internal Structure
-
+### Standard Module Workspace Internal Structure
 
 ```text
-modules/mX-<module-name>/
+modules/m0X-<module-slug>/
 │
-├── src/
-│   ├── controllers/    # HTTP route handlers (NestJS controllers)
-│   ├── services/       # Business logic layer
-│   ├── repositories/    # Database access layer (Prisma / TypeORM)
-│   ├── dto/            # Module-specific Data Transfer Objects
-│   ├── entities/       # Database entity definitions
-│   ├── events/         # Event publishers and listeners (Event Bus)
-│   ├── interfaces/     # TypeScript interfaces for this module
-│   └── <module>.module.ts # NestJS module definition
-│
-├── tests/
-│   ├── unit/           # Unit tests (Jest)
-│   └── integration/    # Integration tests
-│
-├── migrations/         # Database migrations specific to this module
-├── seeds/              # Test/dev seed data
-├── README.md           # Module overview, setup, and API reference
-└── CHANGELOG.md        # Module-level changelog
+├── controllers/
+│   └── m0X.controller.ts     # HTTP REST endpoint router with TenantGuard and Zod DTO
+├── services/
+│   └── m0X.service.ts        # Business logic coordinator; publishes BullMQ events
+├── repositories/
+│   └── m0X.repository.ts     # Data transactions via local PrismaService
+├── workers/
+│   └── m0X.worker.ts         # BullMQ async queue background worker processor
+├── schemas/
+│   └── m0X.schema.ts         # Zod payload/DTO validation schemas
+├── database/
+│   ├── prisma.service.ts     # Local Prisma service client wrapper
+│   └── prisma.module.ts      # Local database initialization provider module
+├── prisma/
+│   └── schema.prisma         # Local database schema mapping owned by this module
+├── entities/                 # Database entity stubs
+├── events/                   # Local event stubs
+├── interfaces/               # Shared interface contracts
+├── migrations/               # Local schema migration history
+├── seeds/                    # Local seed fixtures
+├── CHANGELOG.md              # Localized release history
+├── SDD.md                    # Local System Design Document (events, triggers, logic)
+└── m0X-<module-slug>.module.ts # NestJS Module workspace class linking Bull & local Prisma
 ```
 
 
@@ -296,31 +253,30 @@ modules/mX-<module-name>/
 
 ### Module Directory Map
 
-| Module ID | Directory | Features Housed | Tech Dependency |
+| Module ID | Directory | Features Housed (v1 Core Features) | Tech Dependency |
 |:---:|:---|:---|:---|
-| ⚙️ Platform Core | `modules/platform-core/` | Auth, API Gateway, Event Bus, CI/CD | NestJS, JWT, Redis, BullMQ |
-| M1 | `modules/m1-capture/` | Call Transcription, Native Connectors, AI Transcriber | Deepgram, Whisper, Webhooks |
-| M2 | `modules/m2-conversation/` | AI Call Reviewer, AI Topic Tagger, AI Theme Spotter, Smart Tracker | LangGraph, OpenAI, Python |
-| M3 | `modules/m3-genai/` | AI Smart Summaries, Ask Anything, AI Deep Researcher | LangChain, GPT-4o, RAG |
-| M4 | `modules/m4-deals/` | Deals Boards, View Deal Drivers, AI Data Extractor | NestJS, PostgreSQL, OpenAI |
-| M5 | `modules/m5-accounts/` | Account Boards, Orchestrate, Competitor Alerts | NestJS, Redis, CRM integrations |
-| M6 | `modules/m6-forecasting/` | AI Revenue Predictor, Forecast Boards | Python, scikit-learn, FastAPI |
-| M7 | `modules/m7-dashboards/` | Revenue Dashboards, Data Cloud | Next.js, Recharts, PostgreSQL |
-| M8 | `modules/m8-engagement/` | Email Composer, Engage (To-Do), Workflow Automation | NestJS, SendGrid, BullMQ |
-| M9 | `modules/m9-coaching/` | Sales Coaching Insights, AI Trainer | LangGraph, OpenAI, NestJS |
-| M10 | `modules/m10-compliance/` | Revenue Graph, Configure Compliance, AI Translator | NestJS, Neo4j, i18n, Audit Logs |
+| ⚙️ Platform Core | `modules/platform-core/` | Global Auth, JWT validation, Event Bus queue system, Central Prisma client | NestJS, JWT, Redis, BullMQ, Prisma |
+| M1 | `modules/m01-capture-transcription/` | Call Transcription, Native Connectors, AI Data Extractor | Deepgram, Whisper AI microservice |
+| M2 | `modules/m02-conversation-intelligence/` | AI Call Reviewer, AI Topic Tagger, AI Theme Spotter, Smart Tracker, AI Translator, AI Transcriber, Searchable Conversation Library, Real-Time Call guidance | LangGraph, OpenAI service, BullMQ |
+| M3 | `modules/m03-ai-summaries-genai/` | AI Smart Summaries, Ask Anything, AI Deep Researcher | LangChain, GPT-4o RAG service |
+| M4 | `modules/m04-deal-intelligence/` | Deals Boards, View Deal Drivers | NestJS, PostgreSQL, OpenAI |
+| M5 | `modules/m05-account-intelligence/` | Account Boards | NestJS, Redis, CRM integrations |
+| M6 | `modules/m06-forecasting-prediction/` | AI Revenue Predictor, Forecast Boards | Python, FastAPI, scikit-learn |
+| M7 | `modules/m07-revenue-dashboards/` | Revenue Dashboards | Next.js, Recharts, PostgreSQL |
+| M8 | `modules/m08-sales-engagement/` | Email Composer, Engage (To-Do), Orchestrate, Workflow Automation | NestJS, SendGrid, BullMQ |
+| M9 | `modules/m09-coaching-training/` | Sales Coaching Insights, AI Trainer | LangGraph, OpenAI, NestJS |
+| M10 | `modules/m10-data-compliance/` | Revenue Graph, Configure Compliance, Data Export (Data Cloud) | NestJS, PostgreSQL schema, RLS |
 
 ---
 
 ### Key Rules for Module Directories
 
-- ✅ Each module **owns its own database migrations** — no module should modify another module's migration files
-- ✅ Cross-module data sharing happens **only via the Event Bus** — never via direct service imports between modules
-- ✅ Anything used by **2 or more modules** must be moved to `shared/` — not duplicated inside individual modules
-- ✅ Every module **must have a `README.md`** that documents its setup, environment variables, and available API endpoints
-- ✅ Every module package must declare a workspace name in `package.json` using `@r-revenue/<module-slug>` (e.g., `@r-revenue/m1-capture`, `@r-revenue/m3-genai`, `@r-revenue/platform-core`)
-- ❌ No module should import directly from another module's `src/` directory — inter-module communication is **event-driven only**
-- ❌ Do not place environment-specific config files inside module directories — all config lives in `apps/api/src/config/`
+- ✅ Database schemas and migrations are **decentralized** — each module independently owns and governs its own `prisma/schema.prisma` configuration and local migrations folder.
+- ✅ Cross-module data sharing happens **only via the Event Bus** or async queues — never via direct cross-module service dependencies.
+- ✅ Common types and event structures used across multiple modules must live centrally inside the `packages/shared-types` workspace package.
+- ✅ Every module **must have a local `SDD.md`** that documents its event triggers, routing endpoints, payload schemas, and worker definitions.
+- ❌ No NestJS module should import directly from another NestJS module's service classes — communication is strictly decoupled and event-driven.
+- ❌ Do not place uvicorn FastAPI config files inside NestJS module directories — uvicorn configuration lives in the Python `apps/ai-services` container.
 
 ---
 
@@ -447,16 +403,16 @@ hotfix/v2.0.1-fix-compliance-audit-log
 - Full list:
 ```text
 module/platform-core
-module/m1-capture
-module/m2-conversation
-module/m3-genai
-module/m4-deals
-module/m5-accounts
-module/m6-forecasting
-module/m7-dashboards
-module/m8-engagement
-module/m9-coaching
-module/m10-compliance
+module/m01-capture-transcription
+module/m02-conversation-intelligence
+module/m03-ai-summaries-genai
+module/m04-deal-intelligence
+module/m05-account-intelligence
+module/m06-forecasting-prediction
+module/m07-revenue-dashboards
+module/m08-sales-engagement
+module/m09-coaching-training
+module/m10-data-compliance
 ```
 
 
@@ -606,16 +562,16 @@ main ← 🔴 Production (permanent, protected)
 develop ← 🟡 Integration (permanent, protected)
 │
 ├── module/platform-core ← 🔵 Platform Core integration (per-sprint)
-├── module/m1-capture ← 🔵 M1 module integration (per-sprint)
-├── module/m2-conversation ← 🔵 M2 module integration (per-sprint)
-├── module/m3-genai ← 🔵 M3 module integration (per-sprint)
-├── module/m4-deals ← 🔵 M4 module integration (per-sprint)
-├── module/m5-accounts ← 🔵 M5 module integration (per-sprint)
-├── module/m6-forecasting ← 🔵 M6 module integration (per-sprint)
-├── module/m7-dashboards ← 🔵 M7 module integration (per-sprint)
-├── module/m8-engagement ← 🔵 M8 module integration (per-sprint)
-├── module/m9-coaching ← 🔵 M9 module integration (per-sprint)
-└── module/m10-compliance ← 🔵 M10 module integration (per-sprint)
+├── module/m01-capture-transcription ← 🔵 M1 module integration (per-sprint)
+├── module/m02-conversation-intelligence ← 🔵 M2 module integration (per-sprint)
+├── module/m03-ai-summaries-genai ← 🔵 M3 module integration (per-sprint)
+├── module/m04-deal-intelligence ← 🔵 M4 module integration (per-sprint)
+├── module/m05-account-intelligence ← 🔵 M5 module integration (per-sprint)
+├── module/m06-forecasting-prediction ← 🔵 M6 module integration (per-sprint)
+├── module/m07-revenue-dashboards ← 🔵 M7 module integration (per-sprint)
+├── module/m08-sales-engagement ← 🔵 M8 module integration (per-sprint)
+├── module/m09-coaching-training ← 🔵 M9 module integration (per-sprint)
+└── module/m10-data-compliance ← 🔵 M10 module integration (per-sprint)
 │
 ├── feature/mX-* ← 🟢 Individual features (short-lived)
 ├── bugfix/mX-* ← 🟣 Bug fixes found in dev/QA (short-lived)
@@ -685,7 +641,7 @@ module/platform-core
 
 ## 4.2 M1 — Capture & Transcription 🎙️
 
-**Directory:** `modules/m1-capture/`
+**Directory:** `modules/m01-capture-transcription/`
 **Standalone Value:** "Record and read every call"
 **Owner:** Backend + AI/ML Team
 **Depends On:** Platform Core (Auth, API Gateway, Event Bus)
@@ -693,7 +649,7 @@ module/platform-core
 ### Module Integration Branch
 
 ```text
-module/m1-capture
+module/m01-capture-transcription
 ```
 
 
@@ -712,17 +668,17 @@ module/m1-capture
 | `feature/m1-RRI-107-speaker-diarization` | AI Transcriber | Speaker identification and labelling |
 | `feature/m1-RRI-108-transcript-storage` | Call Transcription | Store and retrieve transcript segments in PostgreSQL |
 | `feature/m1-RRI-109-transcription-events` | Event Publishing | Emit `call.transcribed` event to Event Bus |
-| `feature/m1-RRI-110-transcript-ui` | Frontend | Call transcript viewer in `apps/web/modules/m1-capture/` |
+| `feature/m1-RRI-110-transcript-ui` | Frontend | Call transcript viewer in `apps/web/src/modules/m1-capture/` |
 
 ### Branch Rules
 - `feature/m1-RRI-109-transcription-events` must be completed before any M2 feature branch is created — M2 consumes the `call.transcribed` event
-- Transcription pipeline changes must include updated integration tests in `modules/m1-capture/tests/integration/`
+- Transcription pipeline changes must include updated integration tests in `modules/m01-capture-transcription/tests/` or `apps/ai-services/tests/`
 
 ---
 
 ## 4.3 M2 — Conversation Intelligence
 
-**Directory:** `modules/m2-conversation/`
+**Directory:** `modules/m02-conversation-intelligence/`
 **Standalone Value:** "Understand what's happening in calls"
 **Owner:** AI/ML Team
 **Depends On:** Platform Core, M1 (`call.transcribed` event)
@@ -730,7 +686,7 @@ module/m1-capture
 ### Module Integration Branch
 
 ```text
-module/m2-conversation
+module/m02-conversation-intelligence
 ```
 
 
@@ -757,7 +713,7 @@ module/m2-conversation
 
 ## 4.4 M3 — AI Summaries & GenAI
 
-**Directory:** `modules/m3-genai/`
+**Directory:** `modules/m03-ai-summaries-genai/`
 **Standalone Value:** "Get instant answers from your calls"
 **Owner:** AI/ML Team
 **Depends On:** Platform Core, M1, M2 (`call.analyzed` event)
@@ -765,7 +721,7 @@ module/m2-conversation
 ### Module Integration Branch
 
 ```text
-module/m3-genai
+module/m03-ai-summaries-genai
 ```
 
 
@@ -792,7 +748,7 @@ module/m3-genai
 
 ## 4.5 M4 — Deal Intelligence
 
-**Directory:** `modules/m4-deals/`
+**Directory:** `modules/m04-deal-intelligence/`
 **Standalone Value:** "See health of every deal"
 **Owner:** Backend Team
 **Depends On:** Platform Core, M1, M2, M3 (consumes `call.summarized` event, CRM data)
@@ -800,7 +756,7 @@ module/m3-genai
 ### Module Integration Branch
 
 ```text
-module/m4-deals
+module/m04-deal-intelligence
 ```
 
 
@@ -826,7 +782,7 @@ module/m4-deals
 
 ## 4.6 M5 — Account Intelligence
 
-**Directory:** `modules/m5-accounts/`
+**Directory:** `modules/m05-account-intelligence/`
 **Standalone Value:** "Manage your accounts strategically"
 **Owner:** Backend Team
 **Depends On:** Platform Core, M1, M2, M4 (`deal.updated` event, CRM account data)
@@ -834,7 +790,7 @@ module/m4-deals
 ### Module Integration Branch
 
 ```text
-module/m5-accounts
+module/m05-account-intelligence
 ```
 
 
@@ -860,7 +816,7 @@ module/m5-accounts
 
 ## 4.7 M6 — Forecasting & Prediction
 
-**Directory:** `modules/m6-forecasting/`
+**Directory:** `modules/m06-forecasting-prediction/`
 **Standalone Value:** "Predict revenue accurately"
 **Owner:** AI/ML + Backend Team
 **Depends On:** Platform Core, M4, M5 (`deal.updated`, `account.health.changed` events, CRM pipeline data)
@@ -868,7 +824,7 @@ module/m5-accounts
 ### Module Integration Branch
 
 ```text
-module/m6-forecasting
+module/m06-forecasting-prediction
 ```
 
 
@@ -893,9 +849,9 @@ module/m6-forecasting
 
 ---
 
-## 4.8 M7 — Revenue Dashboards
+## 4.8 M7 — R-Revenue Dashboards 📊
 
-**Directory:** `modules/m7-dashboards/`
+**Directory:** `modules/m07-revenue-dashboards/`
 **Standalone Value:** "Visualize performance"
 **Owner:** Frontend + Backend Team
 **Depends On:** Platform Core, M4, M5, M6 (consumes multiple events and aggregated data)
@@ -903,7 +859,7 @@ module/m6-forecasting
 ### Module Integration Branch
 
 ```text
-module/m7-dashboards
+module/m07-revenue-dashboards
 ```
 
 
@@ -929,9 +885,9 @@ module/m7-dashboards
 
 ---
 
-## 4.9 M8 — Sales Engagement
+## 4.9 M8 — Sales Engagement ✉️
 
-**Directory:** `modules/m8-engagement/`
+**Directory:** `modules/m08-sales-engagement/`
 **Standalone Value:** "Execute outreach consistently"
 **Owner:** Backend + Frontend Team
 **Depends On:** Platform Core, M2, M4, M5 (call insights, deal and account context)
@@ -939,7 +895,7 @@ module/m7-dashboards
 ### Module Integration Branch
 
 ```text
-module/m8-engagement
+module/m08-sales-engagement
 ```
 
 
@@ -965,15 +921,18 @@ module/m8-engagement
 
 ---
 
-## 4.10 M9 — Coaching & Training
+## 4.10 M9 — Coaching & Training 🎓
 
-**Directory:** `modules/m9-coaching/`
+**Directory:** `modules/m09-coaching-training/`
 **Standalone Value:** "Develop every rep"
 **Owner:** AI/ML + Backend Team
 **Depends On:** Platform Core, M1, M2, M3 (transcripts, call scores, summaries)
 
 ### Module Integration Branch
-module/m9-coaching
+
+```text
+module/m09-coaching-training
+```
 
 
 
@@ -997,9 +956,9 @@ module/m9-coaching
 
 ---
 
-## 4.11 M10 — Data & Compliance
+## 4.11 M10 — Data & Compliance 🛡️
 
-**Directory:** `modules/m10-compliance/`
+**Directory:** `modules/m10-data-compliance/`
 **Standalone Value:** "Govern data and stay compliant"
 **Owner:** Backend + Platform Engineering Team
 **Depends On:** Platform Core, all modules (cross-cutting data governance and audit)
@@ -1007,7 +966,7 @@ module/m9-coaching
 ### Module Integration Branch
 
 ```text
-module/m10-compliance
+module/m10-data-compliance
 ```
 
 
@@ -1041,16 +1000,16 @@ The following sequence must be respected when integrating module branches into `
 
 
 Step 1: module/platform-core → develop (foundation — must be first)
-Step 2: module/m1-capture → develop (all modules need call data)
-Step 3: module/m2-conversation → develop (depends on M1 transcripts)
-Step 4: module/m3-genai → develop (depends on M1 + M2 analysis)
-Step 5: module/m4-deals → develop (depends on M1 + M2 + M3 + CRM)
-Step 6: module/m5-accounts → develop (depends on M4 deal data)
-Step 7: module/m6-forecasting → develop (depends on M4 + M5)
-Step 8: module/m7-dashboards → develop (depends on M4 + M5 + M6)
-Step 9: module/m8-engagement → develop (depends on M2 + M4 + M5)
-Step 10: module/m9-coaching → develop (depends on M1 + M2 + M3)
-Step 11: module/m10-compliance → develop (cross-cutting — integrated last)
+Step 2: module/m01-capture-transcription → develop (all modules need call data)
+Step 3: module/m02-conversation-intelligence → develop (depends on M1 transcripts)
+Step 4: module/m03-ai-summaries-genai → develop (depends on M1 + M2 analysis)
+Step 5: module/m04-deal-intelligence → develop (depends on M1 + M2 + M3 + CRM)
+Step 6: module/m05-account-intelligence → develop (depends on M4 deal data)
+Step 7: module/m06-forecasting-prediction → develop (depends on M4 + M5)
+Step 8: module/m07-revenue-dashboards → develop (depends on M4 + M5 + M6)
+Step 9: module/m08-sales-engagement → develop (depends on M2 + M4 + M5)
+Step 10: module/m09-coaching-training → develop (depends on M1 + M2 + M3)
+Step 11: module/m10-data-compliance → develop (cross-cutting — integrated last)
 
 > ⚠️ **Note:** Steps 5–10 may be developed in parallel once their upstream dependencies (Steps 1–4) are stable in `develop`. The sequence above reflects merge order into `develop`, not development start order.
 
@@ -1672,22 +1631,22 @@ Global fallback — Engineering Lead reviews everything
 @r-revenue/engineering-lead
 
 Platform Core
-/modules/platform-core/ @r-revenue/platform-core-team
+/apps/api/src/platform-core/ @r-revenue/platform-core-team
 /apps/api/src/config/ @r-revenue/platform-core-team
 /.github/workflows/ @r-revenue/devops-team
 /infra/ @r-revenue/devops-team
 
 Module Teams
-/modules/m1-capture/ @r-revenue/m1-team
-/modules/m2-conversation/ @r-revenue/m2-team
-/modules/m3-genai/ @r-revenue/m3-team
-/modules/m4-deals/ @r-revenue/m4-team
-/modules/m5-accounts/ @r-revenue/m5-team
-/modules/m6-forecasting/ @r-revenue/m6-team
-/modules/m7-dashboards/ @r-revenue/m7-team
-/modules/m8-engagement/ @r-revenue/m8-team
-/modules/m9-coaching/ @r-revenue/m9-team
-/modules/m10-compliance/ @r-revenue/m10-team
+/apps/api/src/modules/m01-capture/ @r-revenue/m1-team
+/apps/api/src/modules/m04-conversation-intelligence/ @r-revenue/m2-team
+/apps/api/src/modules/m05-smart-tracking/ @r-revenue/m2-team @r-revenue/m4-team
+/apps/api/src/modules/m06-insight-generation/ @r-revenue/m3-team
+/apps/api/src/modules/m07-deal-account/ @r-revenue/m4-team @r-revenue/m5-team
+/apps/api/src/modules/m09-forecasting/ @r-revenue/m6-team
+/apps/api/src/modules/m10-coaching/ @r-revenue/m7-team @r-revenue/m9-team
+/apps/api/src/modules/m02-sales-engagement/ @r-revenue/m8-team
+/apps/api/src/modules/m08-execution/ @r-revenue/m8-team
+/apps/api/src/modules/m03-revenue-graph/ @r-revenue/m10-team
 
 Frontend — module UI folders
 /apps/web/src/modules/m1-capture/ @r-revenue/m1-team
@@ -1701,11 +1660,12 @@ Frontend — module UI folders
 /apps/web/src/modules/m9-coaching/ @r-revenue/m9-team
 /apps/web/src/modules/m10-compliance/ @r-revenue/m10-team
 
-Shared code — requires cross-team review
-/shared/ @r-revenue/engineering-lead @r-revenue/platform-core-team
+Shared packages — requires platform team review
+/packages/database/ @r-revenue/engineering-lead @r-revenue/platform-core-team
+/packages/shared-types/ @r-revenue/engineering-lead @r-revenue/platform-core-team
 
-Compliance — always requires M10 team sign-off
-/modules/m10-compliance/ @r-revenue/m10-team @r-revenue/engineering-lead
+Compliance / Audits — always requires M10 team sign-off
+/apps/api/src/modules/m03-revenue-graph/ @r-revenue/m10-team @r-revenue/engineering-lead
 ```
 
 
@@ -2171,16 +2131,16 @@ The following sequence **must** be followed when merging `module/mX-*` branches 
 | Step | Branch | Gate Before Merging |
 |------|--------|---------------------|
 | 1 | `module/platform-core` | Auth + Event Bus tests |
-| 2 | `module/m1-capture` | `call.transcribed` event |
-| 3 | `module/m2-conversation` | `call.analyzed` event |
-| 4 | `module/m3-genai` | `call.summarized` event |
-| 5 | `module/m4-deals` | `deal.updated` event |
-| 6 | `module/m5-accounts` | `account.health` event |
-| 7 | `module/m6-forecasting` | `forecast.updated` event |
-| 8 | `module/m7-dashboards` | Dashboard API tests |
-| 9 | `module/m8-engagement` | Email + workflow tests |
-| 10 | `module/m9-coaching` | Coaching insight tests |
-| 11 | `module/m10-compliance` | Audit log + PII tests |
+| 2 | `module/m01-capture-transcription` | `call.transcribed` event |
+| 3 | `module/m02-conversation-intelligence` | `call.analyzed` event |
+| 4 | `module/m03-ai-summaries-genai` | `call.summarized` event |
+| 5 | `module/m04-deal-intelligence` | `deal.updated` event |
+| 6 | `module/m05-account-intelligence` | `account.health` event |
+| 7 | `module/m06-forecasting-prediction` | `forecast.updated` event |
+| 8 | `module/m07-revenue-dashboards` | Dashboard API tests |
+| 9 | `module/m08-sales-engagement` | Email + workflow tests |
+| 10 | `module/m09-coaching-training` | Coaching insight tests |
+| 11 | `module/m10-data-compliance` | Audit log + PII tests |
 
 
 
@@ -3443,7 +3403,6 @@ Quality gates are non-negotiable checkpoints that a branch must pass before it c
 ---
 
 ### Gate 3 — Test Coverage
-
 | Branch Target | Minimum Coverage | Scope | Enforced By |
 |--------------|-----------------|-------|------------|
 | `feature/*` → `module/mX-*` | 80% line coverage | Changed files only | Codecov PR check |
@@ -3537,18 +3496,18 @@ Each module has a designated owning team. The owning team is responsible for:
 
 | Module | GitHub Team | Tech Lead Role | Directories Owned |
 |--------|------------|---------------|------------------|
-| Platform Core | `@r-revenue/platform-core-team` | Platform Tech Lead | `modules/platform-core/` `apps/api/src/config/` `.github/workflows/` `infra/` |
-| M1 — Capture & Transcription | `@r-revenue/m1-team` | M1 Tech Lead | `modules/m1-capture/` `apps/web/src/modules/m1-capture/` `apps/ai-services/src/routers/transcription.py` |
-| M2 — Conversation Intelligence | `@r-revenue/m2-team` | M2 Tech Lead | `modules/m2-conversation/` `apps/web/src/modules/m2-conversation/` `apps/ai-services/src/routers/conversation.py` |
-| M3 — AI Summaries & GenAI | `@r-revenue/m3-team` | M3 Tech Lead | `modules/m3-genai/` `apps/web/src/modules/m3-genai/` `apps/ai-services/src/routers/summaries.py` |
-| M4 — Deal Intelligence | `@r-revenue/m4-team` | M4 Tech Lead | `modules/m4-deals/` `apps/web/src/modules/m4-deals/` `apps/ai-services/src/routers/deals.py` |
-| M5 — Account Intelligence | `@r-revenue/m5-team` | M5 Tech Lead | `modules/m5-accounts/` `apps/web/src/modules/m5-accounts/` |
-| M6 — Forecasting & Prediction | `@r-revenue/m6-team` | M6 Tech Lead | `modules/m6-forecasting/` `apps/web/src/modules/m6-forecasting/` `apps/ai-services/src/routers/forecasting.py` |
-| M7 — Revenue Dashboards | `@r-revenue/m7-team` | M7 Tech Lead | `modules/m7-dashboards/` `apps/web/src/modules/m7-dashboards/` |
-| M8 — Sales Engagement | `@r-revenue/m8-team` | M8 Tech Lead | `modules/m8-engagement/` `apps/web/src/modules/m8-engagement/` |
-| M9 — Coaching & Training | `@r-revenue/m9-team` | M9 Tech Lead | `modules/m9-coaching/` `apps/web/src/modules/m9-coaching/` `apps/ai-services/src/routers/coaching.py` |
-| M10 — Data & Compliance | `@r-revenue/m10-team` | M10 Tech Lead | `modules/m10-compliance/` `apps/web/src/modules/m10-compliance/` |
-| Shared Utilities | `@r-revenue/engineering-lead` | Engineering Lead | `shared/` |
+| Platform Core | `@r-revenue/platform-core-team` | Platform Tech Lead | `apps/api/src/platform-core/` `apps/api/src/config/` `.github/workflows/` `infra/` |
+| M1 — Capture & Transcription | `@r-revenue/m1-team` | M1 Tech Lead | `apps/api/src/modules/m01-capture/` `apps/web/src/modules/m1-capture/` `apps/transcription-service/` |
+| M2 — Conversation Intelligence | `@r-revenue/m2-team` | M2 Tech Lead | `apps/api/src/modules/m04-conversation-intelligence/` `apps/api/src/modules/m05-smart-tracking/` `apps/web/src/modules/m2-conversation/` `apps/ai-services/app/routers/` |
+| M3 — AI Summaries & GenAI | `@r-revenue/m3-team` | M3 Tech Lead | `apps/api/src/modules/m06-insight-generation/` `apps/web/src/modules/m3-genai/` `apps/ai-services/app/routers/` |
+| M4 — Deal Intelligence | `@r-revenue/m4-team` | M4 Tech Lead | `apps/api/src/modules/m07-deal-account/` `apps/api/src/modules/m05-smart-tracking/` `apps/web/src/modules/m4-deals/` |
+| M5 — Account Intelligence | `@r-revenue/m5-team` | M5 Tech Lead | `apps/api/src/modules/m07-deal-account/` `apps/web/src/modules/m5-accounts/` |
+| M6 — Forecasting & Prediction | `@r-revenue/m6-team` | M6 Tech Lead | `apps/api/src/modules/m09-forecasting/` `apps/web/src/modules/m6-forecasting/` `apps/ai-services/app/routers/` |
+| M7 — Revenue Dashboards | `@r-revenue/m7-team` | M7 Tech Lead | `apps/api/src/modules/m10-coaching/` `apps/web/src/modules/m7-dashboards/` |
+| M8 — Sales Engagement | `@r-revenue/m8-team` | M8 Tech Lead | `apps/api/src/modules/m02-sales-engagement/` `apps/api/src/modules/m08-execution/` `apps/web/src/modules/m8-engagement/` |
+| M9 — Coaching & Training | `@r-revenue/m9-team` | M9 Tech Lead | `apps/api/src/modules/m10-coaching/` `apps/web/src/modules/m9-coaching/` `apps/ai-services/app/routers/` |
+| M10 — Data & Compliance | `@r-revenue/m10-team` | M10 Tech Lead | `apps/api/src/modules/m03-revenue-graph/` `apps/web/src/modules/m10-compliance/` |
+| Shared Packages | `@r-revenue/engineering-lead` | Engineering Lead | `packages/database/` `packages/shared-types/` |
 | DevOps / Infrastructure | `@r-revenue/devops-team` | DevOps Lead | `infra/` `.github/` `**/Dockerfile` |
 
 ---
@@ -3571,7 +3530,7 @@ Engineering Lead reviews everything not matched below
 ─────────────────────────────────────────────
 PLATFORM CORE
 ─────────────────────────────────────────────
-/modules/platform-core/ @r-revenue/platform-core-team
+/apps/api/src/platform-core/ @r-revenue/platform-core-team
 /apps/api/src/config/ @r-revenue/platform-core-team
 /apps/api/src/common/ @r-revenue/platform-core-team
 /apps/api/src/events/ @r-revenue/platform-core-team
@@ -3586,24 +3545,25 @@ DEVOPS & INFRASTRUCTURE
 /pnpm-workspace.yaml @r-revenue/devops-team
 
 ─────────────────────────────────────────────
-SHARED UTILITIES
-Any change to shared/ requires Engineering Lead sign-off
+SHARED PACKAGES
+Any change to workspace packages requires Engineering Lead sign-off
 ─────────────────────────────────────────────
-/shared/ @r-revenue/engineering-lead @r-revenue/platform-core-team
+/packages/database/ @r-revenue/engineering-lead @r-revenue/platform-core-team
+/packages/shared-types/ @r-revenue/engineering-lead @r-revenue/platform-core-team
 
 ─────────────────────────────────────────────
 MODULE BACKEND OWNERSHIP
 ─────────────────────────────────────────────
-/modules/m1-capture/ @r-revenue/m1-team
-/modules/m2-conversation/ @r-revenue/m2-team
-/modules/m3-genai/ @r-revenue/m3-team
-/modules/m4-deals/ @r-revenue/m4-team
-/modules/m5-accounts/ @r-revenue/m5-team
-/modules/m6-forecasting/ @r-revenue/m6-team
-/modules/m7-dashboards/ @r-revenue/m7-team
-/modules/m8-engagement/ @r-revenue/m8-team
-/modules/m9-coaching/ @r-revenue/m9-team
-/modules/m10-compliance/ @r-revenue/m10-team @r-revenue/engineering-lead
+/apps/api/src/modules/m01-capture/ @r-revenue/m1-team
+/apps/api/src/modules/m04-conversation-intelligence/ @r-revenue/m2-team
+/apps/api/src/modules/m05-smart-tracking/ @r-revenue/m2-team @r-revenue/m4-team
+/apps/api/src/modules/m06-insight-generation/ @r-revenue/m3-team
+/apps/api/src/modules/m07-deal-account/ @r-revenue/m4-team @r-revenue/m5-team
+/apps/api/src/modules/m09-forecasting/ @r-revenue/m6-team
+/apps/api/src/modules/m10-coaching/ @r-revenue/m7-team @r-revenue/m9-team
+/apps/api/src/modules/m02-sales-engagement/ @r-revenue/m8-team
+/apps/api/src/modules/m08-execution/ @r-revenue/m8-team
+/apps/api/src/modules/m03-revenue-graph/ @r-revenue/m10-team @r-revenue/engineering-lead
 
 ─────────────────────────────────────────────
 MODULE FRONTEND OWNERSHIP
@@ -3915,20 +3875,20 @@ The `scope` in a commit message must always correspond to the module or area of 
 
 | Scope | Maps To | Example Usage |
 |-------|---------|--------------|
-| `core` | `modules/platform-core/` `apps/api/src/config/` `apps/api/src/common/` | Auth, API Gateway, Event Bus, RBAC |
-| `m1` | `modules/m1-capture/` `apps/web/src/modules/m1-capture/` `apps/ai-services/.../transcription.py` | Capture & Transcription features |
-| `m2` | `modules/m2-conversation/` `apps/web/src/modules/m2-conversation/` `apps/ai-services/.../conversation.py` | Conversation Intelligence features |
-| `m3` | `modules/m3-genai/` `apps/web/src/modules/m3-genai/` `apps/ai-services/.../summaries.py` | AI Summaries & GenAI features |
-| `m4` | `modules/m4-deals/` `apps/web/src/modules/m4-deals/` `apps/ai-services/.../deals.py` | Deal Intelligence features |
-| `m5` | `modules/m5-accounts/` `apps/web/src/modules/m5-accounts/` | Account Intelligence features |
-| `m6` | `modules/m6-forecasting/` `apps/web/src/modules/m6-forecasting/` `apps/ai-services/.../forecasting.py` | Forecasting & Prediction features |
-| `m7` | `modules/m7-dashboards/` `apps/web/src/modules/m7-dashboards/` | Revenue Dashboards features |
-| `m8` | `modules/m8-engagement/` `apps/web/src/modules/m8-engagement/` | Sales Engagement features |
-| `m9` | `modules/m9-coaching/` `apps/web/src/modules/m9-coaching/` `apps/ai-services/.../coaching.py` | Coaching & Training features |
-| `m10` | `modules/m10-compliance/` `apps/web/src/modules/m10-compliance/` | Data & Compliance features |
-| `shared` | `shared/` | Shared types, utilities, constants, DTOs |
+| `core` | `apps/api/src/platform-core/` `apps/api/src/config/` `apps/api/src/common/` | Auth, API Gateway, Event Bus, RBAC |
+| `m1` | `apps/api/src/modules/m01-capture/` `apps/web/src/modules/m1-capture/` `apps/transcription-service/` | Capture & Transcription features |
+| `m2` | `apps/api/src/modules/m04-conversation-intelligence/` `apps/api/src/modules/m05-smart-tracking/` `apps/web/src/modules/m2-conversation/` `apps/ai-services/app/routers/` | Conversation Intelligence features |
+| `m3` | `apps/api/src/modules/m06-insight-generation/` `apps/web/src/modules/m3-genai/` `apps/ai-services/app/routers/` | AI Summaries & GenAI features |
+| `m4` | `apps/api/src/modules/m07-deal-account/` `apps/api/src/modules/m05-smart-tracking/` `apps/web/src/modules/m4-deals/` | Deal Intelligence features |
+| `m5` | `apps/api/src/modules/m07-deal-account/` `apps/web/src/modules/m5-accounts/` | Account Intelligence features |
+| `m6` | `apps/api/src/modules/m09-forecasting/` `apps/web/src/modules/m6-forecasting/` `apps/ai-services/app/routers/` | Forecasting & Prediction features |
+| `m7` | `apps/api/src/modules/m10-coaching/` `apps/web/src/modules/m7-dashboards/` | Revenue Dashboards features |
+| `m8` | `apps/api/src/modules/m02-sales-engagement/` `apps/api/src/modules/m08-execution/` `apps/web/src/modules/m8-engagement/` | Sales Engagement features |
+| `m9` | `apps/api/src/modules/m10-coaching/` `apps/web/src/modules/m9-coaching/` `apps/ai-services/app/routers/` | Coaching & Training features |
+| `m10` | `apps/api/src/modules/m03-revenue-graph/` `apps/web/src/modules/m10-compliance/` | Data & Compliance features |
+| `shared` | `packages/database/` `packages/shared-types/` | Shared database, types, events |
 | `infra` | `infra/` `.github/workflows/` `**/Dockerfile` | Infrastructure, CI/CD, deployment |
-| `docs` | `docs/` `**/README.md` `**/CHANGELOG.md` | Documentation updates |
+| `docs` | `docs/` `**/README.md` `**/SDD.md` | Documentation updates |
 | `release` | Version bumps, CHANGELOG updates | Release commits only |
 
 ---

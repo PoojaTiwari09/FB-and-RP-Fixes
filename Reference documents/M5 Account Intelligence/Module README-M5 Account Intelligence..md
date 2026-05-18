@@ -1,392 +1,219 @@
 # M5 Account Intelligence — Module README
 
-## 1. Module Overview
+## 1. Document Control
+
+- **Document Title:** Module README — M5 Account Intelligence
+- **Module Name:** M5 Account Intelligence
+- **Workspace Directory:** `modules/m05-account-intelligence/`
+- **Owner:** Product Engineering — M5
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
+
+---
+
+## 2. Module Overview
 
 ### What this module does
+M5 Account Intelligence helps sales, success, and RevOps teams manage customer accounts strategically through a unified workspace centered on **Account Boards**. 
 
-M5 Account Intelligence helps teams manage customer accounts strategically through a unified workspace centered on **Account Boards**.   
-The module brings together CRM account data, engagement activity, conversation-derived signals, and AI-generated account context so users can understand account status and take action from one place. 
+The module aggregates CRM-linked account metadata, recent customer interaction records, conversation-derived objections or risk signals, and AI-generated brief recaps into a high-performance single screen. Users can inspect portfolio health, review renewal likelihoods, identify expansion vectors, and organize accounts from a single execution cockpit.
 
 ### Why this module matters
+Without a unified account workspace, account owners must jump between isolated CRM tabs, email clients, call recording archives, and manual note sheets to construct a complete picture of customer engagement. M5 reduces this fragmentation by consolidating operational data with real-time AI risk scoring, offering a streamlined operational cockpit for proactive customer management.
 
-Without a unified account workspace, teams must jump between CRM records, call tools, email activity, and notes to understand account health, renewal risk, or expansion potential.   
-M5 reduces that fragmentation and helps Sales, Customer Success, and RevOps teams manage renewals, expansions, prioritization, and account health faster and with better context. 
+### Lifecycle Stage
+This module belongs to Stage 5 (**Execute**) of the Revenue Intelligence Lifecycle, surfacing upstream AI data and scoring pipelines into interactive workspaces.
 
-### Lifecycle stage
-
-This module belongs to the **Execute** stage of the Revenue Intelligence Lifecycle, where upstream AI insights are surfaced into operational workflows used by reps and managers.   
-In the architecture, the implementation owner is **M-07 Deal and Account Management**, which serves both Deals Boards and Account Boards as workflow-facing execution surfaces. 
-
-### Core outputs
-
-The main output of M5 is the **Account Board workspace**, including:
-- Account board rows for portfolio review. 
-- Account detail views with contacts, deals, activities, and AI brief context. 
-- Account health and engagement indicators. 
-- Renewal and prioritization signals. 
-- Recommended next actions shown in the account workspace. 
-
-### Naming note
-
-There are two valid names used in docs:
-- **M5 Account Intelligence** = product-facing module name used in planning and packaging. 
-- **M-07 Deal and Account Management** = engineering and architecture owner module. 
-
-If you are a fresher, remember this simple rule: **M5 is the product name, M-07 is the implementation owner**. 
+### Core Outputs
+The primary outputs of the M5 module are:
+1. **Account Board Rows:** A portfolio grid displaying customer lists scoped by rep, tier, or territory.
+2. **Account Detail Workspace:** Hydrated summaries containing activity timelines, linked open deals, mapped contacts, and AI account briefs.
+3. **Engagement Scores:** Standardized indices (0.0 to 1.0) reflecting recency, volume, and quality of customer touchpoints.
+4. **Renewal/Expansion Signals:** Derived warnings (e.g., champion departed, competitive expansion blocking) displayed in the account workspace.
+5. **Next Best Actions:** Prescriptive workspace recommendations identifying immediate tasks.
 
 ---
 
-## 2. Features in This Module
+## 3. Features in This Module
 
-### Primary feature
+### Primary Feature
+*   **Account Boards:** An interactive pipeline-style or grid-based portfolio workspace. It merges base CRM account attributes with active activity indicators, pgvector-derived smart tracker flags, and AI-generated briefings.
 
-This module currently contains one main feature:
-
-- **Account Boards** — a centralized workspace that gives go-to-market teams a unified view of customer accounts by combining CRM data, engagement activity, conversation insights, and AI-generated context into one structured board. 
-
-### What Account Boards supports
-
-Account Boards is designed for:
-- Sales teams managing renewals and expansions. 
-- Customer Success teams tracking account health and customer engagement. 
-- RevOps teams monitoring portfolio coverage, saved views, and account prioritization workflows. 
+### Supported Workflows
+- **Renewal Inspection:** Identifies early-stage renewal risks through low-engagement warnings.
+- **Expansion Discovery:** Signals opportunities by tracking positive conversation trends, new stakeholder inclusions, and expansion objections resolved.
+- **Portfolio Prioritization:** Enables RevOps and Success managers to dynamically sort and filter accounts by engagement score, industry, ARR value, or risk severity.
 
 ---
 
-## 3. Module Boundaries
+## 4. Module Boundaries
 
-### What M5 owns as a product module
+### What M5 owns as a physical module
+At the code level, M5 represents an independent, decoupled physical monorepo workspace located at `modules/m05-account-intelligence/`. It is the sole owner of:
+- **Account Boards UI & APIs:** The presentation layer and serving endpoints.
+- **Persisted View Configuration:** User-defined saved views, custom columns, and active filters.
+- **Engagement Scores Read-Model:** Precomputed metrics scoring logs and trend indicators.
+- **Renewal/Expansion Signal Log:** Persisted analytics signals driving portfolio prioritization.
+- **Next Best Action Priority Rules:** Evaluator logic mapping risk metrics to workspace alerts.
 
-At product level, M5 owns the **account intelligence user experience** for strategic account management.   
-That includes:
-- Account portfolio board views. 
-- Account detail workspace views. 
-- Account health and engagement presentation. 
-- Prioritization and next-action presentation. 
-- User-facing account filters, saved board config, and workspace refresh behavior. 
+### What M5 does NOT own
+To preserve strict decoupling, M5 does not directly manage or write to:
+- **CRM Synced Core Entities:** M10 (Data & Compliance / Revenue Graph) owns transactional tables (`accounts`, `contacts`, `deals`, `activities`). M5 reads these exclusively via public REST APIs.
+- **Keyword & Tracker Detection:** M2 (Conversation Intelligence) owns the keyword dictionary and publishes match triggers.
+- **AI Summary Execution:** M3 (AI Summaries & GenAI) manages execution workflows generating summaries and deep research briefs.
+- **Pipeline Stage Management:** M4 (Deal Intelligence) manages Deals Boards and opportunity state transitions.
+- **Forecast Rollups:** M6 (Forecasting & Prediction) owns forecast aggregation workflows.
 
-### What M5 does not own
+### Upstream Dependencies
 
-M5 does **not** own:
-- CRM ingestion and CRM entity sync. 
-- Revenue Graph linking logic. 
-- Raw conversation intelligence generation. 
-- Smart Tracker detection logic. 
-- AI summary generation and account brief creation. 
-- Forecasting logic and forecast board behavior. 
-- Workflow orchestration and automation logic. 
-- Deal-board-specific pipeline stage management except where deal data appears as supporting account context. 
+| Upstream Module | What M5 Uses | Integration Pattern |
+| :--- | :--- | :--- |
+| **M10 Data & Compliance** | Mapped accounts, contacts, deals, activities. | REST API queries over shared read-models. |
+| **M2 Conversation Intelligence** | Smart tracker detections, objection signals. | BullMQ subscription to `tracker.detection.created`. |
+| **M3 AI Summaries & GenAI** | Account summaries and deep research briefs. | REST API call to `/api/v1/m03-ai-summaries-genai`. |
+| **M8 Sales Engagement** | Email dispatch signals. | BullMQ subscription to `email.sent` to update engagement scores. |
 
-### Upstream dependencies
-
-M5 depends on upstream modules to produce the account-linked data it needs.   
-The most important dependency is **M-06 Insight Generation**, because Account Boards uses upstream AI-generated account context and account briefs inside the workspace. 
-
-#### Key upstream modules
-
-| Upstream Module | What M5 Uses | Why It Matters |
-|---|---|---|
-| M-03 Revenue Graph | Linked accounts, contacts, deals, activities, CRM context  | Provides the connected account data foundation required to build the board.  |
-| M-05 Smart Tracking and Search | Tracker detections and conversation-derived signals  | Helps identify account health issues, engagement patterns, and warning signals.  |
-| M-06 Insight Generation | Account briefs and AI-generated account context  | Supplies the AI summary layer visible in account rows and account detail views.  |
-| M-02 Sales Engagement | Email activity signals such as `email.sent` updates  | Contributes to engagement recency and activity rollups.  |
-
-### Adjacent modules
-
-M5 is closely related to other execution and prediction modules, but it must stay within its own boundaries. 
+### Adjacent Modules
 
 | Adjacent Module | Relationship to M5 |
-|---|---|
-| Deals Boards | Also owned under M-07, but focused on pipeline/deal execution rather than account-centric workspace.  |
-| Forecasting | Uses downstream execution data and belongs to M-09 Predict stage, not M5.  |
-| Orchestrate | Lives in M-08 and turns insights into guided workflows; M5 may show next actions, but does not own orchestration logic.  |
+| :--- | :--- |
+| **M4 Deal Intelligence** | Deals Boards focus on transactional pipeline stages and deal health. M5 focuses on broad account-level metrics and renewal/expansion logs. |
+| **M6 Forecasting & Prediction** | Consumes portfolio trends to compute long-term quota projections. |
+| **M8 Sales Engagement** | Provides the outbound workspace where reps execute the next-best-action alerts generated by M5. |
 
 ---
 
-## 4. Architecture Snapshot
+## 5. Architecture Snapshot
 
-### Main components
-
-The M5 product experience is implemented using the **M-07 DealAccountModule** in the modular monolith architecture.   
-The main components involved are:
-- Frontend account board UI. 
-- `DealAccountModule` in NestJS with API prefix `/api/v1/deal-management`. 
-- M-07-owned tables such as `account_board_configs`, `engagement_scores`, and `renewal_signals`. 
-- Public upstream APIs from M-03 and M-06. 
-- Platform Core for tenant context, auth, and RBAC. 
-
-### Account board read path
-
-The normal read path is:
-1. Frontend calls `GET /api/v1/deal-management/account-boards`. 
-2. M-07 loads the user’s board config from `account_board_configs`. 
-3. M-07 assembles rows using account-linked CRM data, contacts, deals, activities, latest engagement scores, and renewal signals. 
-4. M-07 returns a read-optimized board response for the frontend. 
-
-This is a **read-heavy UI-serving path**, so the module should prefer stored or precomputed account signals instead of expensive synchronous recomputation on every request. 
-
-### AI context refresh path
-
-AI-generated context for account views comes from **M-06 Insight Generation**, especially account briefs.   
-When upstream summaries or account signals change, M5 should mark relevant account rows or detail sections stale and refresh the displayed AI context through async or next-read refresh behavior rather than tightly coupling the board to M-06 internals. 
-
-### CRM and engagement data dependencies
-
-Account Boards depends on:
-- CRM-linked account and contact data. 
-- Linked deals and activity records. 
-- Engagement scoring artifacts in M-07. 
-- Renewal/account signals derived from upstream stages. 
-- AI-generated account context from M-06. 
-
-The board is only as good as its upstream chain, so M5 should not be treated as independently usable unless M-03 and M-06 outputs are flowing correctly. 
-
----
-
-## 5. APIs
-
-### Account board listing endpoints
-
-| Method | Endpoint | Auth | Caller | Purpose |
-|---|---|---|---|---|
-| GET | `/api/v1/deal-management/account-boards` | JWT  | Frontend  | Returns Account Board rows with engagement scores and renewal signals.  |
-
-### Account detail endpoints
-
-| Method | Endpoint | Auth | Caller | Purpose |
-|---|---|---|---|---|
-| GET | `/api/v1/deal-management/account-boards/:id` | JWT  | Frontend  | Returns account detail including contacts, deals, activities, and brief context.  |
-
-### Saved view or filter endpoints
-
-The SAD explicitly lists config endpoints for Deals Board and a persisted config table for Account Board, so the recommended M5 contract is to expose account config endpoints using the same pattern.   
-Recommended endpoints for Account Boards:
-- `GET /api/v1/deal-management/account-boards/config` 
-- `PATCH /api/v1/deal-management/account-boards/config` 
-
-These endpoints should read and write user-level saved config from `account_board_configs`, including visible columns and saved filters. 
-
-### Auth model and caller types
-
-All Account Board endpoints require **JWT-based authentication** and are called by the frontend application.   
-Access is tenant-scoped and enforced through Platform Core tenant injection, user identity, and RBAC rules. 
-
----
-
-## 6. Events
-
-### Events consumed from upstream modules
-
-M5 is implemented inside M-07, which is mainly a read-heavy UI-serving module and does not publish standard platform events for Account Boards.   
-It consumes or reacts to upstream changes indirectly through stored data, public APIs, and selected upstream events. 
-
-Relevant upstream events and effects include:
-
-| Event | Produced By | Relevance to M5 |
-|---|---|---|
-| `email.sent` | M-02  | Updates activity recency and engagement-related account context.  |
-| `tracker.detection.created` | M-05  | Can contribute to account-level signals or stale markers for refresh.  |
-| `call.summary.generated` | M-06  | Indicates AI-generated summary context may be newer and account brief-related data may need refresh.  |
-
-### Recompute or refresh triggers
-
-Account Boards should refresh or mark data stale on:
-- User-requested board load. 
-- User-requested detail load. 
-- Manual refresh action. 
-- New activity or engagement-affecting input such as email activity updates. 
-- New or changed upstream AI insight context. 
-- Scheduled stale-signal recomputation windows. 
-
-### Event ownership and retry notes
-
-M5 does not own the upstream event contracts it reacts to. Event contracts are owned by the publisher module, and M5 must handle schema evolution safely as a consumer.   
-Any async refresh process introduced for Account Boards must be idempotent and follow platform retry patterns using BullMQ-style retries and DLQ handling where applicable. 
-
----
-
-## 7. Data Ownership
-
-### Records and cached views owned here
-
-At engineering level, M-07 owns the main data artifacts used by M5:
-- `account_board_configs` 
-- `engagement_scores` 
-- `renewal_signals` 
-
-These are the M5-facing data artifacts that support account board rendering, saved user views, and account health presentation. 
-
-### Account health and engagement artifacts
-
-M5 relies on M-07-owned engagement and renewal artifacts rather than recomputing everything at request time.   
-This keeps the board fast and stable for large account portfolios while still allowing refresh on upstream changes. 
-
-### Tenant isolation
-
-All records must be tenant-scoped using the shared multi-tenant PostgreSQL model with row-level security.   
-Every read and write must include tenant context, and no board config, score, or signal may leak across tenants. 
-
-### Retention and lifecycle
-
-Retention rules are inherited from platform data governance patterns described in the SAD, while M5-specific cached artifacts should be safe to recompute if needed from upstream data sources.   
-This means configs are user-owned persistent preferences, while engagement and signal artifacts are refreshable read models tied to account activity and AI context freshness. 
-
----
-
-## 8. Local Development
-
-### Prerequisites
-
-Before working on M5 locally, you should have:
-- The main modular monolith running in local dev mode. 
-- Access to PostgreSQL with tenant-scoped seed data. 
-- Platform Core auth working or mocked. 
-- Access to upstream mock or seeded data for accounts, contacts, deals, activities, engagement scores, and AI account brief context. 
-- Basic understanding of NestJS, TypeScript, JWT auth, and tenant-based access patterns. 
-
-### Setup steps
-
-1. Start the core backend application that includes the `DealAccountModule`.   
-2. Run database migrations for M-07-owned tables including `account_board_configs`, `engagement_scores`, and `renewal_signals`.   
-3. Seed one or more tenants with:
-   - accounts
-   - contacts
-   - account-contact links
-   - deals
-   - activities
-   - engagement scores
-   - renewal signals
-   - mock or real account brief payloads   
-4. Start frontend and sign in with a tenant-scoped test user.   
-5. Validate board listing, account detail, filters, and stale-state handling. 
-
-### Recommended seed data
-
-For useful local development, seed at least:
-- 10 to 20 accounts across multiple owners. 
-- Mixed health states: healthy, watch, at-risk. 
-- Activities across calls, emails, and meetings. 
-- At least 3 accounts with renewal signals. 
-- At least 3 accounts with linked AI brief content. 
-- At least 1 tenant boundary test case to confirm RLS and auth behavior. 
-
-### Run and test commands
-
-Use the standard backend and frontend commands defined by the platform repository and local service conventions.   
-At minimum, developers should be able to:
-- run backend server
-- run frontend server
-- run unit tests
-- run integration tests
-- run linting
-- run seed scripts
-
-Recommended generic command placeholders:
-```bash
-pnpm install
-pnpm db:migrate
-pnpm db:seed
-pnpm dev
-pnpm test
-pnpm test:integration
-pnpm lint
+```
+   ┌────────────────────────────────────────────────────────┐
+   │                  Frontend Client App                   │
+   └───────────────────────────┬────────────────────────────┘
+                               │ HTTP REST Requests
+                               v
+   ┌────────────────────────────────────────────────────────┐
+   │                M5 Account Intelligence                 │
+   │           (modules/m05-account-intelligence)           │
+   └───────┬───────────────────┬────────────────────┬───────┘
+           │                   │                    │
+           │ DB Reads          │ API Calls          │ BullMQ Events
+           v                   v                    v
+   ┌───────────────┐   ┌───────────────┐   ┌────────────────┐
+   │  PostgreSQL   │   │  M10 Revenue  │   │  Redis/BullMQ  │
+   │  m05_account  │   │  Graph API    │   │  (Async score  │
+   │  schema       │   │  (CRM Data)   │   │   recomputes)  │
+   └───────────────┘   └───────────────┘   └────────────────┘
 ```
 
-Adjust exact commands to the repository standard if they differ. 
+### Main Components
+- **`AccountBoardsController`:** Exposes public endpoint groups under the `/api/v1/m05-account-intelligence` prefix.
+- **`EngagementScoreService`:** Processes background activity metrics scoring, maintaining cached read-models.
+- **`M5 Background Workers:`** BullMQ queues consuming activity events to refresh account state.
+- **PostgreSQL Schema namespace `m05_account_intelligence`:** Physically holds saved views, columns mapping, engagement metrics, and renewal records.
+
+### Account Board Read Path
+1. The client requests a portfolio via `GET /api/v1/m05-account-intelligence/boards`.
+2. M5 loads the user's view configurations from `m05_account_intelligence.account_board_views`.
+3. M5 calls the **M10 Data & Compliance** REST API to fetch the core tenant-scoped account records matching active filters.
+4. M5 joins these accounts with local cached snapshots from `m05_account_intelligence.account_drivers`.
+5. The unified, hydrated payload is returned to the client in under 500ms.
+
+### Context Freshness & Async Recomputation
+Computing multi-source activity scores synchronously during HTTP request flows violates platform performance goals. M5 implements the **Precomputed Read-Model Pattern**:
+- HTTP requests pull pre-calculated metrics from `m05_account_intelligence.account_drivers` ensuring low-latency reads.
+- When an `email.sent` or `tracker.detection.created` event is consumed, the background worker enqueues a debounced scoring task.
+- The scoring results are stored in `m05_account_intelligence.account_drivers`, flagging rows as refreshed.
 
 ---
 
-## 9. Configuration
+## 6. API Specification
 
-### Required env vars
+All endpoints are hosted under the unified prefix: `/api/v1/m05-account-intelligence`.
 
-M5 depends on standard platform configuration plus module-specific board refresh and auth configuration.   
-The exact variable list should live in the dedicated **M5 Environment Variables Registry** document, but likely required categories include:
-- database connection
-- JWT/auth config
-- tenant enforcement config
-- Redis/queue config for refresh jobs
-- feature flags for Account Boards
-- upstream service base URLs for M-06 access if service-separated 
+### GET /api/v1/m05-account-intelligence/boards
+- **Description:** Retrieve available account board configurations for the tenant.
+- **Headers:** `Authorization: Bearer <token>`, `X-Tenant-ID: <uuid>`
+- **Response Payload (`200 OK`):**
+  ```json
+  [
+    {
+      "boardId": "uuid",
+      "tenantId": "uuid",
+      "name": "Key CS Renewal Board",
+      "boardType": "renewal_review",
+      "createdAt": "2026-05-18T12:00:00Z"
+    }
+  ]
+  ```
 
-### Optional env vars
+### GET /api/v1/m05-account-intelligence/boards/:id
+- **Description:** Retrieve the hydrated list of customer accounts matching the board configuration.
+- **Query Params:** `viewId` (optional saved view filter), `page`, `pageSize`, `sortBy`
+- **Response Payload (`200 OK`):**
+  ```json
+  {
+    "boardId": "uuid",
+    "tenantId": "uuid",
+    "name": "Key CS Renewal Board",
+    "rows": [
+      {
+        "accountId": "uuid",
+        "crmAccountId": "ACT-9901",
+        "accountName": "Acme Corp",
+        "ownerUserId": "uuid",
+        "segment": "Enterprise",
+        "industry": "SaaS",
+        "arr": 150000.00,
+        "lastActivityAt": "2026-05-17T14:30:00Z",
+        "engagementScore": 0.85,
+        "engagementLabel": "healthy",
+        "healthStatus": "healthy",
+        "renewalSignals": ["expansion_opportunity"],
+        "openDealCount": 2,
+        "primaryContacts": [
+          {
+            "contactId": "uuid",
+            "name": "Jane Doe",
+            "role": "Sponsor"
+          }
+        ],
+        "aiContextSummary": "Strong adoption metrics; renewal discussion initiated.",
+        "nextBestAction": "Schedule QBR meeting",
+        "dataFreshness": {
+          "activityAt": "2026-05-17T14:30:00Z",
+          "scoreAt": "2026-05-18T02:00:00Z",
+          "briefAt": "2026-05-18T02:05:00Z",
+          "stale": false
+        }
+      }
+    ]
+  }
+  ```
 
-Optional configuration may include:
-- board default page size
-- score freshness thresholds
-- AI brief TTL
-- refresh debounce values
-- stale badge visibility
-- debug logging flags 
-
-### Secret sources
-
-The SAD references managed secret handling patterns such as Doppler/API-key-managed service secrets for external systems, and tenant-safe configuration should follow the same secret management approach used across the platform.   
-Do not hardcode credentials, tokens, or service secrets in local source files. 
-
-### Link to env registry
-
-See: **Doc #18 — Environment Variables Registry: M5 Account Intelligence**. 
-
----
-
-## 10. Operational Notes
-
-### Common failure modes
-
-Common M5 issues include:
-- missing CRM-linked account records. 
-- missing activity joins. 
-- stale engagement scores. 
-- stale or unavailable AI account briefs. 
-- account rows missing due to tenant/RBAC mismatch. 
-- board config load failures for a user. 
-
-### Troubleshooting stale boards
-
-If a board looks stale:
-1. Check whether upstream account brief or signal timestamps are older than freshness thresholds. 
-2. Confirm latest activities were linked to the correct account in upstream data. 
-3. Verify `engagement_scores` has a recent row for the affected account. 
-4. Verify `renewal_signals` exists and is tenant-scoped correctly. 
-5. Confirm the frontend is not reading an outdated saved filter or view config. 
-
-### Replay and refresh guidance
-
-For account-level refresh issues:
-- re-run account score recomputation for the affected tenant/account pair. 
-- re-fetch latest account brief from M-06 or mark it stale and reload on next request. 
-- replay relevant upstream signal events only if event ownership and idempotency rules are preserved. 
-
-Do not patch another module’s internal tables directly to “fix” M5 output, because the architecture explicitly forbids bypassing module ownership boundaries. 
-
-### Support ownership
-
-Primary support ownership sits with the **M-07 Deal and Account Management engineering owner**, with coordination from:
-- M-03 owner for linked entity issues. 
-- M-05 owner for tracker-derived signals. 
-- M-06 owner for AI brief/account context issues. 
-- Platform Core owner for auth, tenant context, and RBAC issues. 
-
----
-
-## 11. Related Docs
-
-Use these documents together:
-
-- **System Architecture Document (SAD)** — platform-wide architecture, boundaries, lifecycle stages, module ownership, and integration rules. 
-- **TDD — Account Boards** — feature-level design for the Account Boards implementation in M5/M-07. 
-- **Sequence Diagrams — M5 complex flows** — request/read/refresh flows for Account Boards. 
-- **API docs** — request/response payloads and endpoint details for account board and account detail APIs. 
-- **Runbooks** — operational support notes for stale data, refresh failures, and tenant-scoped troubleshooting. 
+### GET /api/v1/m05-account-intelligence/boards/:id/accounts/:accountId
+- **Description:** Retrieve detailed account workspace panel data including contacts, deals, activities, and AI briefs.
+- **Response Payload (`200 OK`):**
+  ```json
+  {
+    "accountId": "uuid",
+    "accountName": "Acme Corp",
+    "engagementScoreHistory": [
+      { "score": 0.85, "computedAt": "2026-05-18T02:00:00Z" }
+    ],
+    "aiBrief": {
+      "summary": "Acme Corp has maintained high activity levels...",
+      "keyRisks": "None identified",
+      "computedAt": "2026-05-18T02:05:00Z"
+    }
+  }
+  ```
 
 ---
 
-## Quick summary for new engineers
+## 7. Operational & Security Policies
 
-If you remember only five things, remember these:
-1. M5 has one main feature: **Account Boards**. 
-2. M5 is product-facing, but the engineering owner is **M-07 Deal and Account Management**. 
-3. M5 is in the **Execute** stage and depends heavily on **M-06 outputs** plus linked CRM and engagement context. 
-4. M5 must consume upstream data only through approved APIs/events and never by bypassing module boundaries. 
-5. Every account read and write must remain tenant-scoped under RLS and RBAC rules. 
+- **Row-Level Security (RLS):** Enabled and forced on all tables inside the `m05_account_intelligence` namespace. Database sessions must bind `app.current_tenant_id` at initialization.
+- **Tenant Scoping Guardrail:** RLS prevents query leakage, but every endpoint handler must explicitly validate tenant parameters in the incoming JWT context, returning a `403 Forbidden` on mismatched context.
+- **Partial Hydration Fallback:** If upstream dependencies (such as M3 AI summaries) become unavailable, the board must successfully load base account and engagement records, replacing AI blocks with `aiContextSummary = null` and appropriate data freshness markers.
+- **Secrets Management:** Doppler is the exclusive manager for service tokens and database connections. No secrets are stored in code or committed environments.

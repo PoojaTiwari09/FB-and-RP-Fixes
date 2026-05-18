@@ -1,91 +1,120 @@
-# M8 Sales Engagement
+# Module README — M8 Sales Engagement
 
-## Overview
+## 1. Document Control
 
-M8 Sales Engagement is the **product grouping** for execution-facing seller workflows such as email drafting, rep task management, guided plays, and workflow automation. In the product mapping, M8 includes **Email Composer**, **Engage To-Do**, **Orchestrate**, and **Workflow Automation**. 
+- **Document Title:** Module Specification README — M8 Sales Engagement
+- **Module Name:** M8 Sales Engagement
+- **Technical Workspace:** `modules/m08-sales-engagement/`
+- **Platform Lifecycle Stage:** Stage 5 — `Execute`
+- **Owner:** Product Engineering — M8
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
-At the architecture level, however, these features do **not** belong to a single engineering module. The SAD explicitly identifies a conflict because the product-facing M8 grouping spans both **M-02 Sales Engagement** and **M-08 Execution and Automation**, which creates TDD misrouting risk if the boundary is not made explicit. 
+---
 
-## Boundary
+## 2. Business & Feature Context
 
-This folder groups the product documentation for M8 Sales Engagement, but engineering ownership is split across two architecture modules. **Email Composer** and **Engage To-Do** belong to **M-02 Sales Engagement**, while **Orchestrate** and **Workflow Automation** belong to **M-08 Execution and Automation**. 
+### What This Module Is
+M8 **Sales Engagement** is the execution-facing productivity engine of the R-Revenue Intelligence platform. It provides role-based workspaces and automation triggers to streamline outbound communications, rep task management, guided GTM playbooks, and event-driven sales automations. 
 
-The SAD requires this ambiguity to be resolved through a formal architectural decision. Until the naming is fully cleaned up in the canonical module map, every TDD and PR under this product area must state which architecture module owns the feature implementation. 
+By unifying day-to-day seller workflows, M8 ensures sales teams execute consistent follow-up motions, maintain outreach continuity, and reduce manual administrative burdens. M8 contains four key core product features:
+1. **Email Composer:** Composing, personalizing, and scheduling outbound emails based on deal context.
+2. **Engage To-Do:** Centralized, prioritized rep working task list.
+3. **Orchestrate:** Defining, executing, and measuring structured GTM playbooks.
+4. **Workflow Automation:** Complex branching event-driven automation rules.
 
-## Feature Map
+---
 
-| Feature | Product Group | Architecture Owner | Purpose |
-|---|---|---|---|
-| Email Composer | M8 Sales Engagement  | M-02 Sales Engagement  | Compose, send, and schedule AI-personalized sales emails using interaction and deal context.  |
-| Engage To-Do | M8 Sales Engagement  | M-02 Sales Engagement  | Centralized rep task list that prioritizes emails, calls, LinkedIn actions, and follow-ups.  |
-| Orchestrate | M8 Sales Engagement  | M-08 Execution and Automation  | Define, execute, and measure GTM sales plays with guided next-best-action steps.  |
-| Workflow Automation | M8 Sales Engagement  | M-08 Execution and Automation  | Automate complex branching sales processes using event-driven trigger rules and actions.  |
+## 3. What This Module Owns
 
-## Why split ownership
+### 3.1 Responsibilities
+M8 is the execution and transactional hub for day-to-day outreach. It owns:
+1. **Outbound Task & Queue Services:** Orchestrating task priority queues for rep workspaces.
+2. **AI Email Personalization Pipelines:** Preparation, composition, scheduling, and delegated delivery of sales emails.
+3. **Playbooks and Sequences Engine:** Enforcing and tracking state progressions of active deal plays.
+4. **Event-Driven Branching Evaluator:** Executing automated workflow actions (notifications, enrollments, state requests) in response to platform signals.
 
-The split exists because the product view is optimized for customer understanding, while the system architecture is optimized for clean service boundaries, schema ownership, and future independent deployment. The SAD says modules must communicate through events or approved public APIs, never by directly querying another module’s schema or importing internal logic. 
+### 3.2 Database Schema Ownership
+M8 owns all tables under the `m08_sales_engagement` PostgreSQL schema namespace in **`snake_case`**:
 
-This means M8 should be treated as a **documentation umbrella**, not as a single backend module. If a fresher starts coding from the product list alone, they can easily put Orchestrate logic inside M-02 or put task logic inside M-08, which is exactly the kind of boundary mistake this README is meant to prevent. 
+- **Email Composer Tables:**
+  - `m08_sales_engagement.email_drafts`: Stores AI-generated or manual outbound email drafts.
+  - `m08_sales_engagement.email_sends`: Stores logs of outbound dispatch attempts.
+  - `m08_sales_engagement.email_templates`: Stores reusable outreach template definitions.
+  - `m08_sales_engagement.email_flows`: Stores sequenced email cadences.
+  - `m08_sales_engagement.email_flow_enrollments`: Tracks deal/contact state inside cadences.
+- **Engage To-Do Tables:**
+  - `m08_sales_engagement.tasks`: Stores rep prioritized follow-up and outbound action items.
+- **Orchestrate Tables:**
+  - `m08_sales_engagement.sales_plays`: Stores GTM playbook structures, steps, and triggers.
+  - `m08_sales_engagement.play_enrollments`: Tracks active deal progress inside sales plays.
+  - `m08_sales_engagement.play_step_completions`: Logs rep completions of specific playbook steps.
+- **Workflow Automation Tables:**
+  - `m08_sales_engagement.workflows`: Stores tenant branching automation definitions.
+  - `m08_sales_engagement.workflow_runs`: Logs run attempts and results with idempotency protections.
 
-## Architecture mapping
+---
 
-### M-02 Sales Engagement
+## 4. Upstream & Downstream Module Boundaries
 
-M-02 owns the sales engagement data and APIs for rep-facing email and task execution. The SAD says M-02 produces prioritized rep task queues, AI-generated emails, automated email sequences, and CRM activity logs, and its schema includes tables such as `email_drafts`, `email_sends`, `email_templates`, `email_flows`, `email_flow_enrollments`, and `tasks`. 
+M8 relies strictly on event-driven queues to execute actions and maintain boundaries:
 
-Features implemented in M-02 for this product group:
-- Email Composer. 
-- Engage To-Do. 
+### 4.1 Events Consumed (Upstream Signals)
+- **`call.transcription.completed` (from M1 Capture & Transcription):**
+  - Evaluates transcribed text to idempotently create AI-suggested email follow-up tasks inside `m08_sales_engagement.tasks`.
+- **`tracker.detection.created` (from M2 Conversation Intelligence):**
+  - Triggers competitor risk plays, automated alerts, and playbook enrollments.
+- **`call.summary.generated` (from M2 Conversation Intelligence):**
+  - Resolves active meeting items and play steps.
+- **`deal.stage.changed` (from M10 Data & Compliance):**
+  - Triggers stage-based play enrollments and automated branching workflows.
 
-### M-08 Execution and Automation
+### 4.2 Events Emitted (Outbound Signals)
+- **`email.sent`:**
+  - Published to the platform event bus upon successful outbound email dispatch, notifying downstream modules like **M10 Data & Compliance** (to log activity history) and **M2 Conversation Intelligence** (for tracking).
 
-M-08 owns execution logic that reacts to signals and drives guided or automated follow-through. The SAD says M-08 produces activated sales plays with guided next steps, automated branching workflows, and real-time competitor mention alerts, and its schema includes `sales_plays`, `play_enrollments`, `play_step_completions`, `workflows`, and `workflow_runs`. 
+---
 
-Features implemented in M-08 for this product group:
-- Orchestrate. 
-- Workflow Automation. 
+## 5. Standard REST API Endpoints
 
-## Documents in this folder
+All M8 endpoints reside under the unified prefix: `/api/v1/m08-sales-engagement`.
 
-- `tdd-email-composer.md` — TDD for Email Composer, owned by M-02. 
-- `tdd-engage-todo.md` — TDD for Engage To-Do, owned by M-02. 
-- `tdd-orchestrate.md` — TDD for Orchestrate, owned by M-08. 
-- `tdd-workflow-automation.md` — TDD for Workflow Automation, owned by M-08. 
+### 5.1 Email Composer
+- `POST /api/v1/m08-sales-engagement/emails/generate` — Generate AI email drafts.
+- `POST /api/v1/m08-sales-engagement/emails/send` — Dispatch outbound email immediately.
+- `POST /api/v1/m08-sales-engagement/emails/schedule` — Enqueue delayed email sending via BullMQ.
+- `GET /api/v1/m08-sales-engagement/emails` — Retrieve paginated sending history.
+- `GET /api/v1/m08-sales-engagement/templates` — Fetch reusable templates.
+- `POST /api/v1/m08-sales-engagement/templates` — Create custom email templates.
 
-If a new feature is added under the M8 product grouping, the first question must be: **does it belong to M-02 or M-08?** That decision should be made before code, migration, or API work begins. 
+### 5.2 Engage To-Do
+- `GET /api/v1/m08-sales-engagement/tasks` — Retrieve sorted prioritized tasks list.
+- `POST /api/v1/m08-sales-engagement/tasks` — Create manual to-do actions.
+- `PATCH /api/v1/m08-sales-engagement/tasks/:id` — Complete, snooze, or edit tasks.
 
-## Event model
+### 5.3 Orchestrate
+- `GET /api/v1/m08-sales-engagement/plays` — Retrieve active sales plays catalog.
+- `POST /api/v1/m08-sales-engagement/plays` — Create new sales play definitions.
+- `POST /api/v1/m08-sales-engagement/plays/:id/enroll` — Enroll a deal inside a playbook.
+- `GET /api/v1/m08-sales-engagement/plays/enrollments` — Fetch rep active playbooks progress.
+- `PATCH /api/v1/m08-sales-engagement/plays/enrollments/:id/step` — Complete active step in a play.
 
-M8 product features depend heavily on the platform event bus. The SAD defines key events used across these features, including `call.transcription.completed`, `email.sent`, `tracker.detection.created`, `deal.stage.changed`, and `insight.summary.ready`. 
+### 5.4 Workflow Automation
+- `GET /api/v1/m08-sales-engagement/workflows` — Fetch all branching workflows.
+- `POST /api/v1/m08-sales-engagement/workflows` — Register branching automation trigger rules.
+- `GET /api/v1/m08-sales-engagement/workflows/:id/runs` — Fetch executions log.
+- `PATCH /api/v1/m08-sales-engagement/workflows/:id` — Enable/disable active automation rules.
 
-These events are consumed differently depending on ownership:
-- M-02 uses `call.transcription.completed` to create follow-up email tasks and uses `email.sent` as its own outbound event for downstream consumers. 
-- M-08 uses `tracker.detection.created`, `deal.stage.changed`, and `insight.summary.ready` to trigger play enrollment, workflow automation evaluation, and next-best-action behavior. 
+---
 
-## Rules for engineers
+## 6. Critical Domain Rules
 
-- Do not use the product label **M8** as the code ownership answer by itself. Always map the feature to **M-02** or **M-08** first. 
-- Do not query another module’s schema directly. Use events or approved public APIs only. 
-- Keep business logic in TypeScript product services, and keep AI inference in Python AI services. 
-- Make all event consumers idempotent because the SAD explicitly says duplicate event delivery is possible through BullMQ retries. 
-- Every new TDD, migration, queue consumer, and PR in this area must state the architecture owner module clearly. 
+### 6.1 SendGrid Integration Sandboxing Rule
+Outbound emails sent via M8 must strictly integrate with user connected Gmail or Outlook OAuth2 delegations. In other scenarios or when utilizing SendGrid API relays, all dispatches are **automatically validated and must use a strictly isolated sandbox mode** (`M08_SENDGRID_SANDBOX_MODE = true`) unless explicitly toggled for production by the organizational tenant settings.
 
-## Suggested folder note
+### 6.2 Centralized Platform Notification Service Abstraction
+To avoid direct Slack API coupling, M8 **does not interact with the Slack API directly**. Instead, all automation actions that request a notification dispatch publish a standardized `notification.alert.requested` event. This is consumed by a dedicated platform-level Notification Service, keeping M8 decoupled from external messaging networks.
 
-A simple rule for this folder is:
-
-- If the feature is about **email drafting, scheduling, sending, templates, flows, or rep tasks**, it likely belongs to **M-02**. 
-- If the feature is about **guided plays, branching automation, trigger rules, next-best-action orchestration, or signal-driven execution**, it likely belongs to **M-08**. 
-
-This shortcut is not a replacement for architecture review, but it is a very useful first filter for interns and freshers. 
-
-## Open architecture note
-
-The SAD explicitly says this M-02 versus M-08 overlap is a **critical conflict** and requires:
-- exact feature boundary definition,
-- canonical naming updates,
-- an ADR documenting the decision (Drafted: [ADR-001: M8 Product vs Architecture Boundary](ADR-001-M8-Product-vs-Architecture-Boundary.md)),
-- and updates to the module descriptions after resolution. 
-
-Until that ADR is finalized, this README should remain at the top of the M8 docs folder so nobody assumes M8 is one backend module. 
-
+### 6.3 Task Idempotency Guards
+To prevent duplicate task creation from retried BullMQ events, any event consumer creating tasks (such as post-call follow-ups) must perform a deterministic check in `m08_sales_engagement.tasks` against the unique composite key `(tenant_id, source, source_id)`.

@@ -100,13 +100,17 @@ describe('MxxService', () => {
 
 Integration tests verify that your code successfully interacts with real databases (PostgreSQL/ClickHouse) and queue components (Redis/BullMQ).
 
-### 3.1 Prerequisite: Start Local Docker Infrastructure
-Before running integration tests, developers must start the local services container via Docker:
+### 3.1 Prerequisite: Start Local Database Infrastructure (Docker or Native)
+Before running integration tests, developers must ensure the supporting database and queue instances are active:
 
-```bash
-# Start Postgres, Redis, Meilisearch, ClickHouse in the background
-docker compose up -d postgres redis meilisearch clickhouse
-```
+* **Method A: Via Docker Compose (Recommended)**:
+  ```bash
+  # Start Postgres, Redis, Meilisearch, ClickHouse in the background
+  docker compose up -d postgres redis meilisearch clickhouse
+  ```
+
+* **Method B: Via Native Services (Non-Docker)**:
+  Ensure your native host **Postgres** and **Redis** services are running locally, and your root `.env` holds the valid database string (`DATABASE_URL`) and Redis host mapping.
 
 ### 3.2 Integration Test Template (`mXX.integration.spec.ts`)
 This test performs real queries and event emissions:

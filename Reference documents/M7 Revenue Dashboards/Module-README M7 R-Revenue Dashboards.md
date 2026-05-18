@@ -1,318 +1,112 @@
-# M7 — R-Revenue Dashboards
+# Module README — M7 Revenue Dashboards
 
-## 1. What This Module Is
+## 1. Document Control
 
-M7 **R-Revenue Dashboards** is the module that provides customizable dashboards to visualize revenue growth and performance for reps, managers, and revenue leaders.  
-Dashboards combine metrics and targets into widgets so teams can monitor and analyze business performance in one place, with fast reads from ClickHouse and PostgreSQL fallback when needed.
-
-In the architecture, the Revenue Dashboards feature sits under **M-10 Coaching and Training** in the **Optimize** stage of the Revenue Intelligence Lifecycle, but is packaged as module **M7 R-Revenue Dashboards** in the product roadmap.
+- **Document Title:** Module Specification README — M7 Revenue Dashboards
+- **Module Name:** M7 Revenue Dashboards
+- **Technical Workspace:** `modules/m07-revenue-dashboards/` at monorepo root
+- **Platform Lifecycle Stage:** Stage 7 — `Optimize`
+- **Owner:** Product Engineering — M7
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
 ---
 
-## 2. What This Module Owns
+## 2. Business & Feature Context
 
-### 2.1 Responsibilities
+### What This Module Is
+M7 **Revenue Dashboards** is the analytical visualization engine of the R-Revenue Intelligence platform. It provides role-based, customizable grid interfaces to visualize revenue growth, pipeline health, win rates, sales activities, and attainment metrics. 
+
+By grouping raw analytical events into pre-rendered KPI blocks, time-series charts, and leaderboards, M7 enables sales teams to analyze business performance instantly. To guarantee high responsiveness under heavy data volumes, M7 implements a multi-tiered data retrieval model backed by high-performance **ClickHouse Columnar Storage** as the primary query path, and an automatic **PostgreSQL Failover Fallback** mechanism.
+
+---
+
+## 3. What This Module Owns
+
+### 3.1 Responsibilities
+M7 is strictly a **read-heavy reporting module**. It does **not** own core transactional write-paths for upstream entities (like deals, accounts, or forecast submissions); instead, it reads aggregated views of those entities to compose widgets.
 
 M7 owns:
+1. **The Revenue Dashboard APIs:** Serving user layouts, configurations, and widget calculations.
+2. **Dashboard Configuration Schema:** Storing layout states, grid coordinate details, and custom metric definitions.
+3. **The ClickHouse/PostgreSQL Query Dispatcher:** Dynamically resolving queries based on ClickHouse database availability.
+4. **Dashboard Layout Persistence:** Managing per-user, per-tenant layout grids, date range defaults, and active filters.
 
-- The **Revenue Dashboard APIs** used by the frontend to load and configure performance dashboards.
-- The **dashboards schema** in PostgreSQL, including configuration and snapshot tables.
-- The logic for deciding when to use **ClickHouse** vs **PostgreSQL** for metric reads.
-- Per-user, per-tenant dashboard layout and configuration, including date ranges and filters.
+### 3.2 Database Schema Ownership
+M7 owns the `m07_revenue_dashboards` PostgreSQL schema containing three core tables:
 
-The module is responsible for **exposing read-optimized views of performance**; it does not own upstream data like deals, calls, or forecasts, but reads them via their owning modules or their replicated ClickHouse tables.
+- `m07_revenue_dashboards.dashboard_configs`: Stores per-user widget positions, grid layouts, default filters, and active configurations.
+- `m07_revenue_dashboards.custom_metrics`: Stores custom metric formulas and filters created by RevOps or system administrators.
+- `m07_revenue_dashboards.dashboard_snapshots`: Stores pre-computed metric values for fast loading and database load mitigation.
 
-### 2.2 Database Ownership
-
-M7 owns the `dashboards` schema with at least these tables:
-
-- `dashboards.dashboard_configs`
-  - Per-user Revenue Dashboard widget layout and configuration.
-- `dashboards.custom_metrics`
-  - Custom revenue metric definitions created by RevOps or admins.
-- `dashboards.dashboard_snapshots`
-  - Pre-computed dashboard metric values for fast UI loading.
-
-All tables include `tenantid` and are protected by **row-level security (RLS)** for multi-tenant isolation.
+*Note: All tables include `tenant_id` and are strictly protected by PostgreSQL **Row-Level Security (RLS)**.*
 
 ---
 
-## 3. Upstream Dependencies
+## 4. Upstream Boundaries & Dependencies
 
-M7 does **not** compute core business data itself; it reads from upstream modules and the shared analytics store.
+M7 operates as a downstream consumer of the platform's transactional data. It consumes events and queries data from the following modules:
 
-### 3.1 Modules Read By M7
+- **M10 Data & Compliance (Revenue Graph):**
+  - Reads transactional deal entities (stage, close date, won/lost state), accounts (ARR, segments), and logged activities (calls, emails, meetings).
+- **M2 Conversation Intelligence:**
+  - Reads call scorecards, topic tagging volumes, and theme counts.
+- **M6 Forecasting & Prediction:**
+  - Reads forecast period quotas, rep manual submissions, and AI predictive snapshots.
 
-M7 reads:
-
-- **M-03 Revenue Graph (Model)**
-  - Deals: stage, value, close date, owner, outcome (won/lost).
-  - Activities: calls, emails, meetings, engagement scores.
-  - Accounts: ARR, segment, health, renewal signals.
-
-- **M-04 Conversation Intelligence (Understand)**
-  - Call scores and scorecards.
-  - Topic and theme distributions per call, account, or segment.
-
-- **M-09 Forecasting (Predict)**
-  - Forecast periods and revenue targets.
-  - Forecast submissions by reps/managers.
-  - AI forecast snapshots, pipeline coverage metrics, historical conversion rates.
-
-Most of this data is also replicated into **ClickHouse** as time-series tables (e.g., `call_events`, `activity_events`, `call_score_events`, `forecast_submission_events`) and used by the dashboards for fast aggregations.
-
-### 3.2 External Services
-
-M7 relies on:
-
-- **PostgreSQL** as the primary system of record (core modules’ schemas plus `dashboards` schema).
-- **ClickHouse** as the analytics store for heavy dashboard queries.
-- Platform core components:
-  - Auth (shared users/roles).
-  - API Gateway / routing.
-  - Observability stack (logging, metrics, tracing).
+*Most transactional data is replicated asynchronously into ClickHouse tables (e.g., `call_events`, `activity_events`, `call_score_events`, `forecast_submission_events`) to allow high-speed BI aggregations.*
 
 ---
 
-## 4. APIs Exposed by This Module
+## 5. APIs Exposed by This Module
 
-The SAD defines API endpoints for Coaching and Training that include Revenue Dashboards.  
-M7 owns (at minimum) the following endpoints:
+All endpoints are hosted under the unified prefix: `/api/v1/m07-revenue-dashboards`.
 
-### 4.1 `GET /api/v1/coaching/dashboards`
+### 5.1 GET /api/v1/m07-revenue-dashboards
+- **Purpose:** Retrieve the current user's dashboard configuration and computed widget metrics.
+- **Used by:** Frontend dashboard page load.
+- **Behavior:**
+  1. Resolves `tenant_id` and `user_id` from the JWT claims context.
+  2. Queries `m07_revenue_dashboards.dashboard_configs` for layout properties.
+  3. Translates widget items into metric queries.
+  4. Attempts to load fresh precalculated results from `m07_revenue_dashboards.dashboard_snapshots`.
+  5. If missing or stale, queries ClickHouse (preferred) or PostgreSQL (fallback).
+  6. Returns a structured dashboard payload with widgets, grid layouts, and values.
 
-**Purpose**: Return the current user’s Revenue Dashboard configuration plus computed widgets (metrics, charts, KPIs).  
-**Used by**: Frontend dashboard page load and widget refresh.
-
-High-level behavior:
-
-- Resolves `tenantid` and `userid` from auth.
-- Loads the user’s config from `dashboards.dashboard_configs` or creates a default config if missing.
-- Builds metric requests for each widget.
-- Reads snapshot values from `dashboards.dashboard_snapshots` where possible; otherwise queries ClickHouse and falls back to PostgreSQL if ClickHouse is unavailable.
-- Returns a structured dashboard object (date range, filters, widgets with values).
-
-### 4.2 `PATCH /api/v1/coaching/dashboards/config`
-
-**Purpose**: Save or update the user’s dashboard layout and default configuration (widgets, positions, default filters, default date range).  
-**Used by**: Frontend when the user rearranges widgets, toggles visibility, or updates default filters.
-
-High-level behavior:
-
-- Validates widget definitions and allowed metric types.
-- Enforces RBAC: normal users edit only their own config; admins/RevOps may edit shared templates if implemented.
-- Updates `dashboard_configs` with new layout and defaults.
-
-> For detailed API contracts (payload structure, response JSON, error codes), see `tdd-revenue-dashboards.md`.
+### 5.2 PATCH /api/v1/m07-revenue-dashboards/config
+- **Purpose:** Save or update the active user's dashboard grid layouts and default filters.
+- **Used by:** Frontend drag-and-drop or widget configuration panel.
+- **Behavior:**
+  1. Validates layouts JSON schema and widget coordinate structures via Zod.
+  2. Verifies that all metric references reside in the custom metrics registry or built-in models.
+  3. Enforces RBAC checks (preventing standard sales reps from modifying organization or team layouts).
+  4. Updates the configuration row inside `m07_revenue_dashboards.dashboard_configs`.
 
 ---
 
-## 5. How User Layout Configuration Works
+## 6. ClickHouse Primary Path & PostgreSQL Fallback
 
-### 5.1 Per-Tenant, Per-User Configuration
-
-Each user’s layout is stored per tenant in `dashboards.dashboard_configs`:
-
-- `tenantid`: ensures multi-tenant isolation.
-- `userid`: identifies the owner of the layout.
-- `layout`: JSON defining widget placements and grid positions.
-- `visiblewidgets`: list of widget IDs shown for this user.
-- `daterangedefault`: default time range (e.g., `LAST_30_DAYS`).
-- `filtersdefault`: default filters for team/region/segment, etc.
-
-The **combination of `tenantid` + `userid` is unique**, so each user has exactly one config row per tenant.
-
-### 5.2 Read Flow
-
-On dashboard load:
-
-1. Backend reads `dashboard_configs` for `(tenantid, userid)`.
-2. If none exists:
-   - Create a default layout for standard metrics (e.g., total revenue, win rate, forecast vs target) and insert it.
-3. Use the stored layout and defaults to build metric queries for widgets.
-
-### 5.3 Write Flow
-
-When the user updates layout:
-
-1. Frontend sends a `PATCH /api/v1/coaching/dashboards/config` request with new layout and defaults.
-2. Backend validates:
-   - Widget IDs/types.
-   - Metric IDs (built-in or custom).
-   - Limits such as max widgets.
-3. Backend updates the `dashboard_configs` row for `(tenantid, userid)`.
-
----
-
-## 6. ClickHouse Read Path and PostgreSQL Fallback
+To protect operational database throughput and guarantee high performance:
 
 ### 6.1 Normal Path: ClickHouse
+For high-volume analytical aggregations, M7 targets **ClickHouse** as the primary data engine. ClickHouse is fed via real-time Kafka/Debezium Change Data Capture (CDC) streams from PostgreSQL.
+- **Queries Computed:** Total revenue trends, sales conversion funnels, activity leaderboards, and historical forecast accuracy charts.
 
-For heavy aggregations, M7 reads from **ClickHouse**, which is fed by Debezium/Kafka CDC streams from PostgreSQL tables.
-
-Typical tables:
-
-- `call_events` (from call records).
-- `activity_events` (from activities).
-- `call_score_events` (from call scores).
-- `forecast_submission_events` (from forecast submissions).
-
-Dashboards use ClickHouse to compute:
-
-- Revenue and pipeline metrics over time.
-- Activity volumes per rep/team.
-- Call scores and topic metrics.
-- Forecast submission trends and accuracy.
-
-### 6.2 Fallback Path: PostgreSQL
-
-If ClickHouse is unavailable (connection failure, timeout, health check down):
-
-- The dashboard service recomputes metrics by querying PostgreSQL tables directly:
-  - `revenuegraph` schema for deals, activities, accounts.
-  - `conversationintelligence` schema for call scores and topics.
-  - `forecasting` schema for submissions and AI forecast snapshots.
-- Fallback behavior is:
-  - Maintain correctness of metrics.
-  - Accept slower query performance.
-  - Emit alerts so SREs know ClickHouse is down.
-
-The SAD explicitly states that **Revenue Dashboards must remain available through PostgreSQL even when ClickHouse is down**, with alerting to highlight the degraded mode.
+### 6.2 Degraded Fallback: PostgreSQL
+If the ClickHouse cluster becomes unavailable (due to timeouts, native driver failures, or healthcheck down alerts):
+1. **Automatic Failover:** The dashboard query dispatcher intercepts the failure, switches active database queries to PostgreSQL, and recomputes the metrics using raw transactional schemas (`m10_data_compliance.*`, `m02_conversation_intelligence.*`, `m06_forecasting_prediction.*`).
+2. **PII & Alert Logging:** The system instantly dispatches a high-priority, redacted warning alert to **Better Stack** notifying SREs of ClickHouse down status.
+3. **DB Resource Protection (Throttling):** To prevent database starvation under fallback SQL loads:
+   - Non-essential dashboard widget renderings (such as deep competitor theme trends or sub-metric tables) are automatically **throttled and disabled** (returning a `429 Too Many Requests` or simplified placeholder blocks).
+   - Date range boundaries are truncated to a maximum of **90 days** to avoid heavy full table scans.
 
 ---
 
-## 7. Observability and Monitoring
+## 7. Security and RBAC
 
-M7 participates in the platform’s observability strategy.
-
-Key telemetry:
-
-- **Metrics**
-  - Dashboard load latency (p50, p95, p99) for `GET /api/v1/coaching/dashboards`.
-  - Error rate per endpoint.
-  - ClickHouse → PostgreSQL fallback rate.
-  - Snapshot refresh job duration and failure counts.
-
-- **Logs**
-  - Request logs (tenant, user, endpoint, date range, widget count).
-  - Warnings when using fallback.
-  - Errors for failed queries, invalid configs, or broken upstream calls.
-
-- **Alerts**
-  - High fallback rate suggests ClickHouse outage.
-  - Consistently high dashboard latency.
-  - Snapshot job failures leading to stale data.
-
----
-
-## 8. Security and RBAC
-
-### 8.1 Multi-Tenancy
-
-M7 follows the platform’s shared-PostgreSQL, RLS-based multi-tenant model:
-
-- All tables (`dashboard_configs`, `custom_metrics`, `dashboard_snapshots`) have `tenantid`.
-- RLS ensures a tenant can only see its own data.
-- All queries must include `tenantid` filters; this is enforced in code and validated through automated tests.
-
-### 8.2 Access Control
-
-Roles (example mapping):
-
-- **Rep**
-  - Can read their own dashboard.
-  - Can update their own layout and filters.
-- **Manager**
-  - Can read dashboards aggregated by their team.
-  - May have access to team-level dashboards, depending on RBAC settings.
-- **Admin / RevOps**
-  - Can define `custom_metrics`.
-  - Can manage organization-wide templates or defaults, if implemented in future versions.
-
-API layer must check:
-
-- User is authenticated and part of the requested tenant.
-- User is authorized for the dashboard scope (self vs team vs org).
-
----
-
-## 9. How to Work on This Module (For Engineers)
-
-### 9.1 When You Touch M7
-
-Typical tasks for engineers:
-
-- Add a new widget type or new metric.
-- Adjust default date ranges or filter behavior.
-- Tune performance of dashboard queries (ClickHouse and fallback).
-- Extend config schema (e.g., add support for multiple dashboards per user).
-
-Before you start, you should:
-
-1. Read `tdd-revenue-dashboards.md` for internal logic and contracts.
-2. Review relevant sections of the System Architecture Document:
-   - Module architecture and Revenue Graph.
-   - Database architecture and ClickHouse replication.
-   - Non-functional requirements (performance, availability).
-
-### 9.2 Local Setup Checklist
-
-To work on M7 locally, you typically need:
-
-- PostgreSQL with:
-  - `dashboards` schema.
-  - Required upstream schemas (or at least sample tables/views from M-03, M-04, M-09).
-- Optional but recommended:
-  - Local ClickHouse or a mocked ClickHouse adapter.
-- Required environment variables:
-  - ClickHouse connection settings.
-  - Flags/variables for fallback and snapshot behavior.
-  - Observability (e.g., API keys/URLs for logging/monitoring).
-
-The full variable list is in `docs/modules/m07/env-registry.md` (see that file for details).
-
----
-
-## 10. Related Documents
-
-For full understanding, pair this README with:
-
-- **Feature TDD**
-  - `docs/modules/m07/tdd-revenue-dashboards.md`
-  - Deep dive into:
-    - Widget definitions and catalog.
-    - Data model (`dashboard_configs`, `custom_metrics`, `dashboard_snapshots`).
-    - Date-range behavior and filter persistence.
-    - Snapshot refresh and stale-data handling.
-    - Detailed API contracts and test strategy.
-
-- **Sequence diagrams**
-  - `docs/modules/m07/sequence-dashboard-read-flow.md`
-    - Dashboard page load flow (frontend → API → ClickHouse/PostgreSQL → response).
-  - `docs/modules/m07/sequence-save-dashboard-config.md`
-    - Save/update layout and config flow.
-  - `docs/modules/m07/sequence-clickhouse-fallback.md`
-    - Fallback behavior when ClickHouse is unavailable.
-
-- **Env Registry**
-  - `docs/modules/m07/env-registry.md`
-  - All environment variables that influence M7 behavior (APIs, snapshot refresh, ClickHouse connectivity, PostgreSQL fallback, observability).
-
----
-
-## 11. Quick Mental Model (For Freshers)
-
-If you are new to this codebase, think of M7 as:
-
-- A **read-heavy “reporting” module** that:
-  - Reads from multiple upstream sources (deals, calls, forecasts).
-  - Combines them into easy-to-understand widgets.
-  - Stores only configuration and cached metrics for speed.
-
-- A module that **never owns core transactional data** like deals or calls; it just reads those through stable APIs or analytics tables.
-
-When in doubt:
-
-1. Ask “who owns this data?” and call that module’s API or view instead of querying its tables directly.
-2. Keep all layout and user-specific preferences inside `dashboard_configs`.
-3. Use ClickHouse for heavy aggregations, and PostgreSQL only as a safe fallback.
+- **Multi-Tenancy:** All queries are parameterized with `tenant_id` and validated via application Prisma middleware and database-level RLS policies.
+- **Access Control Roles:**
+  - **Sales Reps:** Can view personal dashboards and edit their own private configs.
+  - **Sales Managers:** Can view team-level aggregations and layout defaults.
+  - **Admins & RevOps:** Can define new global `custom_metrics` formulas and publish shared dashboard templates.

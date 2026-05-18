@@ -6,13 +6,13 @@
 - **Feature Name:** Call Transcription
 - **Module Name:** M-01 Capture & Transcription
 - **Document ID:** DOC-11A-M01-CALL-TRANSCRIPTION
-- **Version:** v0.1
-- **Status:** Draft
+- **Version:** v3.0
+- **Status:** Approved
 - **Owner:** Tech Lead / Backend Lead
 - **Reviewers:** AI Lead, Platform Lead, DevOps Lead, Security Owner, QA Lead
-- **Last Updated:** 2026-04-29
+- **Last Updated:** 2026-05-18
 - **Primary Upstream References:** System Architecture Document (SAD), M-01 module mapping, Tooling and Services Inventory
-- **Primary Downstream Consumers:** M-03 Revenue Graph, M-04 Conversation Intelligence, M-05 Smart Tracking, M-06 Insight Generation
+- **Primary Downstream Consumers:** M2 Conversation Intelligence, M3 AI Summaries & GenAI, M8 Sales Engagement, M10 Data & Compliance
 
 ### 1.1 Purpose of this document
 
@@ -130,10 +130,10 @@ Primary production path is the provider completion webhook followed by async pro
 ### 4.3 Entry points
 
 Possible entry points:
-- `POST /api/v1/ingestion/webhook/zoom`
-- `POST /api/v1/ingestion/webhook/teams`
-- `POST /api/v1/ingestion/webhook/meet`
-- `POST /api/v1/ingestion/webhook/dialer`
+- `POST /api/v1/m01-capture-transcription/webhook/zoom`
+- `POST /api/v1/m01-capture-transcription/webhook/teams`
+- `POST /api/v1/m01-capture-transcription/webhook/meet`
+- `POST /api/v1/m01-capture-transcription/webhook/dialer`
 - Internal reprocess job endpoint or admin workflow
 - BullMQ worker callback handler for transcription completion
 
@@ -157,7 +157,7 @@ Before processing begins:
 1. Provider sends call completion webhook to the relevant M-01 endpoint.
 2. M-01 verifies authenticity using HMAC or provider-specific verification.
 3. M-01 performs idempotency check using provider call identity and tenant context.
-4. M-01 creates `m01.callrecordings` row with initial status such as `pending`.
+4. M-01 creates `m01_capture_transcription.calls` row with initial status such as `pending`.
 5. M-01 downloads the recording or validates provider recording availability.
 6. M-01 uploads raw audio to approved object storage and updates the call record.
 7. M-01 enqueues a BullMQ transcription job with `callId`, `tenantId`, `audioUrl`, `durationSeconds`, and provider hint.
@@ -166,7 +166,7 @@ Before processing begins:
 10. The transcription service runs ASR using Whisper as primary and falls back to AssemblyAI when needed.
 11. The transcription service performs diarization and timestamp alignment.
 12. The transcription service returns transcript payload to the M-01 internal callback endpoint.
-13. M-01 stores transcript data in `m01.transcripts`.
+13. M-01 stores transcript data in `m01_capture_transcription.transcripts`.
 14. M-01 updates the call record status to `completed`.
 15. M-01 emits `call.transcription.completed` with the canonical event payload.
 16. Downstream modules independently consume the event through BullMQ.
@@ -258,7 +258,7 @@ Primary event emitted by this feature:
 #### `call.transcription.completed`
 
 **Publisher:** M-01  
-**Consumers:** M-03, M-04, M-05, M-06  
+**Consumers:** M2 Conversation Intelligence, M3 AI Summaries & GenAI, M8 Sales Engagement, M10 Data & Compliance  
 **Purpose:** Signals that a transcript is available and safe for downstream processing.
 
 **Canonical payload**
@@ -297,11 +297,11 @@ Primary event emitted by this feature:
 
 ### 7.1 Tables used
 
-Primary M-01 owned tables:
-- `m01.callrecordings`
-- `m01.transcripts`
-- `m01.transcriptcorrections` (related but not core to first transcription write)
-- `m01.ingestionsources` (read for source config and secrets)
+Primary M-01 owned tables under the schema namespace `m01_capture_transcription`:
+- `m01_capture_transcription.calls`
+- `m01_capture_transcription.transcripts`
+- `m01_capture_transcription.transcript_corrections` (related but not core to first transcription write)
+- `m01_capture_transcription.ingestion_sources` (read for source config and secrets)
 
 ### 7.2 Table ownership
 
@@ -309,27 +309,27 @@ M-01 owns the recording and transcript persistence for this feature. No other mo
 
 ### 7.3 Core fields
 
-#### `m01.callrecordings`
-- `callId` UUID primary key
-- `tenantId` UUID not null
-- `sourcePlatform` varchar
-- `audioFileUrl` text
-- `durationSeconds` integer
+#### `m01_capture_transcription.calls`
+- `call_id` UUID primary key
+- `tenant_id` UUID not null
+- `source_platform` varchar
+- `audio_url` text
+- `duration` integer
 - `status` varchar
-- `createdAt` timestamptz
+- `created_at` timestamptz
 
-#### `m01.transcripts`
-- `transcriptId` UUID primary key
-- `callId` UUID foreign key
-- `tenantId` UUID not null
-- `rawText` text
-- `speakerLabeledSegments` jsonb
+#### `m01_capture_transcription.transcripts`
+- `transcript_id` UUID primary key
+- `call_id` UUID foreign key
+- `tenant_id` UUID not null
+- `raw_text` text
+- `speaker_labeled_segments` jsonb
 - `timestamps` jsonb
 - `language` varchar
-- `confidenceScore` float
-- `flaggedForReview` boolean
-- `providerUsed` varchar
-- `createdAt` timestamptz.
+- `confidence_score` float
+- `flagged_for_review` boolean
+- `provider_used` varchar
+- `created_at` timestamptz
 
 ### 7.4 Validation rules
 
@@ -453,13 +453,15 @@ The service returns structured output only:
 ### 9.5 Confidence handling
 
 - Confidence score must be persisted with the transcript.
-- Low confidence outputs should be flagged for review rather than silently treated as fully trusted.
-- Confidence thresholds should be configurable, but the architecture uses `0.7` as the important review threshold in multiple M-01 patterns.
+- Low confidence outputs should be flagged for review or excluded rather than silently treated as fully trusted.
+- System enforces a three-tier pipeline utilizing `M01_EXTRACTION_CONFIDENCE_REVIEW_THRESHOLD` (0.80) and `M01_EXTRACTION_CONFIDENCE_EXCLUDE_THRESHOLD` (0.70).
 
 ### 9.6 Human review rules
 
 Minimum rule for Phase 1:
-- Flag transcript for review if `confidenceScore < 0.7`.
+- Automatically sync extracted Opportunity CRM fields to CRM endpoints if confidence $\geq$ `M01_EXTRACTION_CONFIDENCE_REVIEW_THRESHOLD` (0.80).
+- Save to tables with `flagged_for_review = true` and hold for manual approval if confidence is between `M01_EXTRACTION_CONFIDENCE_EXCLUDE_THRESHOLD` (0.70) and `M01_EXTRACTION_CONFIDENCE_REVIEW_THRESHOLD` (0.80).
+- Silently exclude and drop from synchronizations if confidence $<$ `M01_EXTRACTION_CONFIDENCE_EXCLUDE_THRESHOLD` (0.70).
 - Flag transcript for review if diarization quality is below accepted threshold.
 - Flag transcript for review if language detection is unsupported or uncertain.
 - Do not block event emission unless product policy says the transcript is unusable.

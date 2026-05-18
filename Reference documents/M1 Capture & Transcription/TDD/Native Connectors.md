@@ -6,11 +6,11 @@
 - **Feature Name:** Native Connectors
 - **Module Name:** M-01 Capture & Transcription
 - **Document ID:** DOC-11B-M01-NATIVE-CONNECTORS
-- **Version:** v0.1
-- **Status:** Draft
+- **Version:** v3.0
+- **Status:** Approved
 - **Owner:** Tech Lead / Integrations Lead
 - **Reviewers:** Backend Lead, Security Owner, AI Lead, DevOps Lead, QA Lead, RevOps Product Owner
-- **Last Updated:** 2026-04-29
+- **Last Updated:** 2026-05-18
 - **Primary Upstream References:** System Architecture Document (SAD), M-01 feature mapping, Tooling and Services Inventory
 - **Primary Downstream Dependencies Enabled By This Feature:** Call Transcription, AI Data Extractor, Revenue Graph ingestion readiness, future email/calendar and CRM sync flows
 
@@ -137,14 +137,14 @@ This feature starts when one of the following happens:
 ### 4.3 Entry points
 
 Typical entry points:
-- `POST /api/v1/ingestion/sources`
-- `GET /api/v1/ingestion/sources`
+- `POST /api/v1/m01-capture-transcription/sources`
+- `GET /api/v1/m01-capture-transcription/sources`
 - OAuth callback routes
 - Provider webhook registration or verification callback routes
 - Internal scheduled sync job trigger
 - Admin reconnect/disconnect action endpoints
 
-The architecture explicitly lists `POST /api/v1/ingestion/sources` and `GET /api/v1/ingestion/sources` as M-01 endpoints for source connection and status listing.
+The architecture explicitly lists `POST /api/v1/m01-capture-transcription/sources` and `GET /api/v1/m01-capture-transcription/sources` as M-01 endpoints for source connection and status listing.
 
 ### 4.4 Preconditions
 
@@ -166,7 +166,7 @@ Before a connector can be used:
 2. User selects a source type such as Zoom, Teams, Meet, dialer, Salesforce, HubSpot, Dynamics, Gmail, or Outlook.
 3. M-01 validates that the connector type is supported and available in the current phase.
 4. User authenticates using OAuth2 or enters required source configuration details, depending on the provider.
-5. M-01 stores a tenant-scoped source record in `m01.ingestionsources`.
+5. M-01 stores a tenant-scoped source record in `m01_capture_transcription.ingestion_sources`.
 6. If the provider supports or requires webhooks, M-01 registers the webhook endpoint and generates or stores verification secrets.
 7. M-01 performs initial connection verification, such as token exchange, test API call, or webhook challenge handling.
 8. Source status is set to `connected` if validation succeeds.
@@ -268,8 +268,8 @@ These events are primarily for platform observability and async repair workflows
 ### 6.4 APIs exposed or consumed
 
 **Exposed by M-01**
-- `POST /api/v1/ingestion/sources`
-- `GET /api/v1/ingestion/sources`
+- `POST /api/v1/m01-capture-transcription/sources`
+- `GET /api/v1/m01-capture-transcription/sources`
 - reconnect/disconnect endpoints
 - OAuth callback endpoints
 - provider webhook endpoints for supported conferencing and telephony systems
@@ -287,26 +287,26 @@ These events are primarily for platform observability and async repair workflows
 ### 7.1 Tables used
 
 Primary M-01 table for Native Connectors:
-- `m01.ingestionsources`
+- `m01_capture_transcription.ingestion_sources`
 
 Related read/write tables depending on downstream actions:
-- `m01.callrecordings` for call-producing connectors
+- `m01_capture_transcription.calls` for call-producing connectors
 - platform audit logs through Core service
 - future connector state or token tables if design is later normalized further.
 
 ### 7.2 Table ownership
 
-Native Connectors owns source connection records in M-01. Other modules may consume connector outcomes through events or public APIs but must not write directly into `m01.ingestionsources`.
+Native Connectors owns source connection records in M-01. Other modules may consume connector outcomes through events or public APIs but must not write directly into `m01_capture_transcription.ingestion_sources`.
 
 ### 7.3 Current core fields from architecture
 
-#### `m01.ingestionsources`
-- `sourceId` UUID primary key
-- `tenantId` UUID not null
+#### `m01_capture_transcription.ingestion_sources`
+- `source_id` UUID primary key
+- `tenant_id` UUID not null
 - `platform` varchar
-- `connectionStatus` varchar
-- `lastSyncedAt` timestamptz
-- `webhookSecret` text
+- `connection_status` varchar
+- `last_synced_at` timestamptz
+- `webhook_secret` text
 
 The architecture explicitly shows this table as the M-01 source registry for connected platforms and webhook secret management.
 
@@ -460,7 +460,7 @@ This is an operational review path, not an AI review path.
 
 ### 10.1 Tenant isolation
 
-Every connector must be tenant-scoped. Every row in `m01.ingestionsources` must include `tenantId`, and every query must enforce tenant filtering through the approved RLS and application-level protections.
+Every connector must be tenant-scoped. Every row in `m01_capture_transcription.ingestion_sources` must include `tenant_id`, and every query must enforce tenant filtering through the approved RLS and application-level protections.
 
 ### 10.2 Access control
 
@@ -691,8 +691,8 @@ Must cover:
 ### 14.2 Integration tests
 
 Must cover:
-- `POST /api/v1/ingestion/sources`
-- `GET /api/v1/ingestion/sources`
+- `POST /api/v1/m01-capture-transcription/sources`
+- `GET /api/v1/m01-capture-transcription/sources`
 - OAuth callback handling
 - provider webhook verification
 - source persistence in PostgreSQL
@@ -754,7 +754,7 @@ No Native Connectors change should merge unless:
 ## 15. Open Questions
 
 1. Which exact provider list is in Phase 1 GA versus Phase 2 planned for Native Connectors?
-2. Should CRM, email, and calendar connectors be managed in the same `m01.ingestionsources` table, or split later by subtype?
+2. Should CRM, email, and calendar connectors be managed in the same `m01_capture_transcription.ingestion_sources` table, or split later by subtype?
 3. Where should encrypted provider refresh tokens live: encrypted DB column, secrets manager reference, or both?
 4. What exact reconnect UX should product expose for `reauth_required` state?
 5. **[RESOLVED]** Connector lifecycle events will remain internal-only and will not be formalized in the shared platform event registry.

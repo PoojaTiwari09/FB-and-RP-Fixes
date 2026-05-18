@@ -4,7 +4,7 @@
 
 M-01 is the **Capture-stage** foundation of the platform. It is the first operational module in the revenue intelligence lifecycle and is responsible for bringing raw interaction data into the system, turning call audio into transcripts, and producing structured extraction outputs that downstream modules can use.
 
-This module matters because almost every later capability depends on it. If M-01 does not ingest calls, produce transcripts, and emit its completion events reliably, downstream modules such as Revenue Graph, Conversation Intelligence, Smart Tracking, and Insight Generation have no trusted input to work with.
+This module matters because almost every later capability depends on it. If M-01 does not ingest calls, produce transcripts, and emit its completion events reliably, downstream modules such as Conversation Intelligence (M2), AI Summaries & GenAI (M3), Deal Intelligence (M4), Account Intelligence (M5), Forecasting & Prediction (M6), and Data & Compliance (M10) have no trusted input to work with.
 
 **Lifecycle stage:** Capture.
 
@@ -39,13 +39,13 @@ A new engineer should think of these three features as one pipeline: **connect s
 
 ### What M-01 owns
 
-M-01 owns the entry boundary for call and audio ingestion under `/api/v1/ingestion`, the source connector setup for supported capture systems, the transcription orchestration flow, transcript persistence, and CRM-field extraction outputs derived from conversations.
+M-01 owns the entry boundary for call and audio ingestion under `/api/v1/m01-capture-transcription`, the source connector setup for supported capture systems, the transcription orchestration flow, transcript persistence, and CRM-field extraction outputs derived from conversations.
 
-It also owns the event contracts it publishes, especially `call.transcription.completed` and `crm.fields.extracted`, and it owns the M-01 tables used to track recordings, transcripts, corrections, connected sources, and extracted CRM fields.
+It also owns the event contracts it publishes, especially `call.transcription.completed` and `crm.fields.extracted`, and it owns the M-01 tables (schema `m01_capture_transcription`) used to track calls, transcripts, corrections, connected sources, and extracted CRM fields.
 
 ### What M-01 does not own
 
-M-01 does not own CRM system-of-record sync, account/deal/contact linking, forecast logic, scorecards, summaries, or downstream analytics. Those belong to later modules such as M-03 Revenue Graph, M-04 Conversation Intelligence, M-05 Smart Tracking, and M-06 Insight Generation.
+M-01 does not own CRM system-of-record sync, account/deal/contact linking, forecast logic, scorecards, summaries, or downstream analytics. Those belong to later modules such as M2 Conversation Intelligence, M3 AI Summaries & GenAI, M4 Deal Intelligence, M5 Account Intelligence, M6 Forecasting & Prediction, and M10 Data & Compliance.
 
 M-01 also does not own auth, RBAC, platform audit implementation, or cross-module data writes. Platform Core owns auth and shared governance, and every downstream module must consume M-01 through public APIs or events rather than direct DB coupling.
 
@@ -67,7 +67,7 @@ The safe rule for freshers is simple: if the shortcut bypasses tenancy, events, 
 
 ### Main components
 
-M-01 is implemented as the NestJS `DataIngestionModule` with API prefix `/api/v1/ingestion`. It works with a separate FastAPI transcription service, PostgreSQL for transactional storage, Supabase Storage or equivalent object storage for audio artifacts, and BullMQ on Redis for queues and event delivery.
+M-01 is implemented as the NestJS `CaptureTranscriptionModule` with API prefix `/api/v1/m01-capture-transcription`. It works with a separate FastAPI transcription service, PostgreSQL for transactional storage, Supabase Storage or equivalent object storage for audio artifacts, and BullMQ on Redis for queues and event delivery.
 
 ### Request flow
 
@@ -83,7 +83,7 @@ M-01 talks to Python services over internal APIs. The transcription path uses th
 
 ### Storage and DB
 
-Audio files live in object storage, while operational records live in PostgreSQL. The main M-01 tables are `callrecordings`, `transcripts`, `transcriptcorrections`, `ingestionsources`, and `crmextractedfields`.
+Audio files live in object storage, while operational records live in PostgreSQL. The main tables under schema namespace `m01_capture_transcription` are `calls`, `transcripts`, `transcript_corrections`, `ingestion_sources`, and `crm_extracted_fields`.
 
 ## 5. APIs
 
@@ -91,15 +91,15 @@ The main public endpoints exposed by M-01 are listed in the architecture below.
 
 | Method | Endpoint | Auth | Primary caller | Purpose |
 |---|---|---|---|---|
-| POST | `/api/v1/ingestion/webhook/zoom` | HMAC-SHA256. | Zoom. | Receive call-completed webhook and enqueue transcription job. |
-| POST | `/api/v1/ingestion/webhook/teams` | HMAC-SHA256. | Microsoft Teams. | Receive call-completed webhook and enqueue transcription job. |
-| POST | `/api/v1/ingestion/webhook/meet` | HMAC-SHA256. | Google Meet. | Receive call-completed webhook and enqueue transcription job. |
-| POST | `/api/v1/ingestion/webhook/dialer` | HMAC-SHA256. | Telephony provider. | Receive call-completed webhook and enqueue transcription job. |
-| POST | `/api/v1/ingestion/internal/callback` | Internal Auth. | Transcription Service | Receive internal transcription job result callback. |
-| GET | `/api/v1/ingestion/calls` | JWT. | Frontend. | Paginated call list for the tenant. |
-| GET | `/api/v1/ingestion/calls/:id/transcript` | JWT. | Frontend. | Full transcript for a call. |
-| POST | `/api/v1/ingestion/sources` | JWT, RevOps role. | Frontend. | Connect a new call source. |
-| GET | `/api/v1/ingestion/sources` | JWT, RevOps role. | Frontend. | List connected sources and sync status. |
+| POST | `/api/v1/m01-capture-transcription/webhook/zoom` | HMAC-SHA256. | Zoom. | Receive call-completed webhook and enqueue transcription job. |
+| POST | `/api/v1/m01-capture-transcription/webhook/teams` | HMAC-SHA256. | Microsoft Teams. | Receive call-completed webhook and enqueue transcription job. |
+| POST | `/api/v1/m01-capture-transcription/webhook/meet` | HMAC-SHA256. | Google Meet. | Receive call-completed webhook and enqueue transcription job. |
+| POST | `/api/v1/m01-capture-transcription/webhook/dialer` | HMAC-SHA256. | Telephony provider. | Receive call-completed webhook and enqueue transcription job. |
+| POST | `/api/v1/m01-capture-transcription/internal/callback` | Internal Auth. | Transcription Service | Receive internal transcription job result callback. |
+| GET | `/api/v1/m01-capture-transcription/calls` | JWT. | Frontend. | Paginated call list for the tenant. |
+| GET | `/api/v1/m01-capture-transcription/calls/:id/transcript` | JWT. | Frontend. | Full transcript for a call. |
+| POST | `/api/v1/m01-capture-transcription/sources` | JWT, RevOps role. | Frontend. | Connect a new call source. |
+| GET | `/api/v1/m01-capture-transcription/sources` | JWT, RevOps role. | Frontend. | List connected sources and sync status. |
 
 A beginner-friendly way to remember the API surface is: **webhooks bring calls in, source endpoints manage connectors, and call endpoints expose captured results**.
 
@@ -108,12 +108,38 @@ A beginner-friendly way to remember the API surface is: **webhooks bring calls i
 ### Events emitted
 
 M-01 emits two key platform events:
-- `call.transcription.completed`.
-- `crm.fields.extracted`.
+- `call.transcription.completed`
+- `crm.fields.extracted`
 
-`call.transcription.completed` carries fields such as `eventId`, `callId`, `transcriptId`, `tenantId`, `durationSeconds`, `participantCount`, `sourcePlatform`, `languageDetected`, `confidenceScore`, and `providerUsed`.
+#### Standard Event Envelope Compliance
+All events emitted into the platform message bus must carry the standard `EventEnvelopeSchema` wrapper:
+```typescript
+{
+  eventId: string;          // UUID v4
+  eventName: string;        // E.g., "call.transcription.completed"
+  eventVersion: "v1";       // Fixed version literal
+  tenantId: string;         // UUID of the organization tenant
+  producer: string;         // E.g., "m01-capture-transcription"
+  occurredAt: string;       // ISO 8601 datetime format
+  publishedAt: string;      // ISO 8601 datetime format
+  correlationId: string;    // UUID tracking workflow lineage
+  traceId?: string;         // Optional OpenTelemetry context
+  payload: Record<string, any>; // Event-specific data payload
+}
+```
 
-`crm.fields.extracted` carries `eventId`, `callId`, `tenantId`, `occurredAt`, extracted fields, and flagged count for downstream CRM enrichment handling.
+*   `call.transcription.completed` payload carries:
+    *   `callId`: UUID reference to the call record.
+    *   `transcriptStorageUrl`: Location in Supabase storage bucket.
+    *   `durationSeconds`: Length of the recording.
+    *   `participantCount`: Diarized speakers count.
+    *   `sourcePlatform`: Zoom, Teams, Meet, Dialer.
+    *   `languageDetected`: Detected spoken language.
+    *   `confidenceScore`: Overall ASR confidence metric.
+*   `crm.fields.extracted` payload carries:
+    *   `callId`: UUID reference.
+    *   `extractedFields`: Structured JSON containing key-value entity pairs.
+    *   `flaggedCount`: Number of fields flagged for review.
 
 ### Events consumed
 
@@ -121,8 +147,12 @@ The architecture states that M-01 is the **entry point** of the pipeline and doe
 
 ### Downstream consumers
 
-- `call.transcription.completed` is consumed by M-03, M-04, M-05, and M-06.
-- `crm.fields.extracted` is consumed by M-03 Revenue Graph.
+- `call.transcription.completed` is consumed by:
+  - **M2 (Conversation Intelligence):** Runs scoring models & trackers.
+  - **M3 (AI Summaries & GenAI):** Computes executive briefs.
+  - **M8 (Sales Engagement):** Generates outbound follow-up drafts.
+  - **M10 (Data & Compliance):** Registers interaction timelines.
+- `crm.fields.extracted` is consumed by **M10 (Data & Compliance / Revenue Graph)** to record CRM opportunity entities.
 
 ### Event ownership and idempotency
 
@@ -132,15 +162,21 @@ For a fresher: publish once, but always code as if the same event may arrive aga
 
 ## 7. Data Ownership
 
-M-01 owns the following key tables in PostgreSQL.
+M-01 owns the following key tables in PostgreSQL under the schema namespace `m01_capture_transcription`.
 
 | Table | Purpose | Key notes |
 |---|---|---|
-| `m01.callrecordings` | Stores call-level ingestion records. | Includes `callId`, `tenantId`, source platform, audio URL, duration, status, and timestamps. |
-| `m01.transcripts` | Stores completed transcript outputs. | Includes raw text, speaker-labeled segments, timestamps, language, confidence score, review flag (`flagged_for_review`), and provider used. |
-| `m01.transcriptcorrections` | Stores vocabulary correction history. | Supports business-term cleanup in transcripts. |
-| `m01.ingestionsources` | Stores connected source metadata. | Tracks platform, status, last sync time, and webhook secret. |
-| `m01.crmextractedfields` | Stores extracted structured CRM-ready fields. | Tracks field name, value, confidence, push status, and review flag (`flagged_for_review`). |
+| `m01_capture_transcription.calls` | Stores call-level ingestion records. | Includes `call_id` (UUID PK), `tenant_id` (UUID), `source_platform`, `audio_url`, `duration`, `status`, and `created_at`. |
+| `m01_capture_transcription.transcripts` | Stores completed transcript outputs. | Includes raw text, speaker-labeled segments, timestamps, language, confidence score, review flag (`flagged_for_review`), and provider used. |
+| `m01_capture_transcription.transcript_corrections` | Stores vocabulary correction history. | Supports business-term cleanup in transcripts. |
+| `m01_capture_transcription.ingestion_sources` | Stores connected source metadata. | Tracks platform, status, last sync time, and webhook secret. |
+| `m01_capture_transcription.crm_extracted_fields` | Stores extracted structured CRM-ready fields. | Tracks field name, value, confidence, push status, and review flag (`flagged_for_review`). |
+
+### Confidence Gating & Three-Tier Pipelines
+For CRM extracted fields (`crm_extracted_fields`), M-01 enforces a three-tier validation rule:
+1. **Auto-Push (`Score >= 0.80`):** Eligible for automated downstream push to CRM endpoints.
+2. **Review Required (`0.70 <= Score < 0.80`):** Saved to local tables with `flagged_for_review = true` to await manual manager authorization.
+3. **Excluded (`Score < 0.70`):** Silently excluded and deleted from the sync pipeline.
 
 ### Data retention notes
 
@@ -152,11 +188,11 @@ Every M-01 record must include `tenantId`, and row-level security is mandatory. 
 
 ## 8. Folder Structure
 
-A simple suggested folder layout for freshers is below. The exact naming can vary, but the separation of responsibilities should stay clear and boring.
+A simple suggested folder layout for freshers is below, mapped to the root of the decoupled physical monorepo `/modules/m01-capture-transcription/`.
 
 ```text
-src/modules/m01-capture-transcription/
-├── m01-data-ingestion.module.ts
+/modules/m01-capture-transcription/
+├── m01-capture-transcription.module.ts
 ├── controllers/
 │   ├── webhook.controller.ts
 │   ├── calls.controller.ts
@@ -319,7 +355,7 @@ New joiners should keep these documents open while working on M-01.
 - Feature TDD — Native Connectors.
 - Feature TDD — AI Data Extractor.
 - Event registry and sequence-flow sections in the architecture, especially the call-ingestion flow and M-01 event definitions.
-- API docs or Swagger pages for `/api/v1/ingestion` once generated in the codebase.
+- API docs or Swagger pages for `/api/v1/m01-capture-transcription` once generated in the codebase.
 - Runbooks for webhook failures, queue backlog, transcription fallback, and reprocessing.
 
 A practical onboarding tip is to read the docs in this order: **SAD -> this README -> Call Transcription TDD -> Native Connectors TDD -> AI Data Extractor TDD -> codebase**.

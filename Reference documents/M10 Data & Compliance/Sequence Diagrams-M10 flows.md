@@ -1,186 +1,180 @@
 # M10 Flows — Sequence Diagrams
 
-This document contains the key sequence diagrams for the M10 product-facing grouping: **Revenue Graph**, **Configure Compliance Settings**, and **Data Cloud / Data Export**. M10 is grouped together at the product level, but the actual runtime ownership is split: Revenue Graph and Data Cloud align mainly to the model/data platform, while Configure Compliance Settings is a cross-cutting governance capability enforced across platform actions.[1][2]
+| Field | Value |
+| --- | --- |
+| **Document ID** | Doc #11-Seq |
+| **Module** | M10 Data & Compliance |
+| **Technical Workspace** | `modules/m10-data-compliance/` |
+| **Canonical API Prefix** | `/api/v1/m10-data-compliance` |
+| **Owned Table Schema** | `m10_data_compliance` |
+| **Status** | Approved |
+| **Version** | v3.0 |
+| **Last Updated** | 2026-05-18 |
+| **Owner** | Technical Architecture Team & Relanto Engineering |
 
-These flows are written to help backend engineers, QA engineers, PMs, and freshers understand where events begin, where ownership changes, and where enforcement or export decisions are made. The architecture requires event-driven module communication, strict tenant isolation, idempotent jobs, and customer-owned data export without manual Relanto.ai intervention.[2]
+---
 
-## Flow 1 — Captured interaction to Revenue Graph entity linking
+## 1. Introduction
 
-This flow shows how raw captured interaction data becomes structured revenue context. The system architecture places Revenue Graph in the model stage, where captured interaction records are cleaned, normalized, and connected to accounts, contacts, deals, and other revenue entities so downstream modules can use business context instead of disconnected raw data.[1][2]
+This document houses the core sequence diagrams for the unified **M10 Data & Compliance** monorepo package workspace (`modules/m10-data-compliance/`). 
+
+These flows represent the runtime boundaries between **M10**, the platform core, and peer modules. They enforce key architectural rules, including:
+*   **Separation of TypeScript Logic and Python AI helper services**
+*   **Decoupled event-driven module borders using BullMQ**
+*   **Row-Level Security (RLS) database isolation**
+*   **The Deals Board Stage-Change Pattern (ADR-005)**
+*   **The Daily Synchronization Lock (02:00 UTC sync_id Redis key)**
+
+---
+
+## 2. Sequence Flows
+
+### Flow 1 — Captured Interaction to Revenue Graph Entity Linking
+
+This flow demonstrates how raw interaction recordings are converted into structured business relationships without direct cross-module database coupling.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant EXT as External System
-    participant M01 as M-01 Capture / Connectors
-    participant BUS as Event Bus
-    participant M03 as Revenue Graph Service
-    participant CRM as CRM Context Adapter
-    participant AI as AI Entity Resolution Service
-    participant DB as Tenant-scoped DB
-    participant DOWN as Downstream Modules
+    participant EXT as External Platform (Zoom/Meet/SMTP)
+    participant M1 as M1 Capture & Transcription
+    participant BUS as Upstash Redis (BullMQ Event Bus)
+    participant M10 as M10 Data & Compliance Service
+    participant CRM as CRM External Adapter
+    participant AI as Private Python AI Helper Service
+    participant DB as Supabase PostgreSQL (m10_data_compliance)
+    participant DOWN as Downstream Modules (M2-M9)
 
-    EXT->>M01: Call / email / meeting / CRM activity arrives
-    M01->>DB: Store raw interaction with tenant_id
-    M01->>BUS: Publish call.transcription.completed or equivalent event
-    BUS->>M03: Deliver capture-complete event
-    M03->>DB: Load interaction + tenant-safe source context
-    M03->>CRM: Fetch account / contact / deal candidates
-    CRM-->>M03: CRM entities and mapping hints
-    M03->>AI: Resolve entity matches using transcript + CRM context
-    AI-->>M03: account_id / deal_id / contact_id candidates
-    M03->>M03: Apply mapping rules and confidence thresholds
-    M03->>DB: Persist linked entities in Revenue Graph tables
-    M03->>BUS: Publish revenue_graph.entity.linked
-    BUS->>DOWN: Notify M-04, M-05, M-06, M-07, M-08 consumers
+    EXT->>M1: Call recording / Email arrives
+    M1->>M1: Transcribe audio & extract participants
+    M1->>BUS: Publish call.transcription.completed event
+    BUS->>M10: Deliver call.transcription.completed event to intake queue
+    M10->>DB: Load interaction record + tenant_id context
+    M10->>CRM: GET /api/v1/crm/candidates (emails/domains)
+    CRM-->>M10: Return CRM account & deal candidates
+    M10->>AI: POST /api/v1/ai/entity-resolution (RAG metadata matching)
+    AI-->>M10: Return match candidate recommendations + confidence score
+    M10->>M10: Evaluate deterministic rules & confidence thresholds
+    M10->>DB: INSERT into m10_data_compliance.interaction_links (tenant_id check)
+    M10->>BUS: Publish revenue_graph.entity.linked event
+    BUS->>DOWN: Notify M2 (CI), M3 (Briefs), M4 (Deals), M7 (Dashboards), M9 (Coaching)
 ```
 
-### Notes
+### Flow 2 — Admin Policy Update to Outreach Enforcement
 
-- M-01 is the capture entry point and M-03 is the model-stage owner that turns raw interaction records into linked business context.[1][2]
-- Downstream modules should consume the published event or public contracts rather than directly querying internal ownership logic, because the platform architecture requires event-driven boundaries between modules.[2]
-- Every write must stay tenant-scoped, because the architecture mandates shared PostgreSQL with RLS and no cross-tenant mixing of client data.[2]
-
-## Flow 2 — Admin policy update to outreach enforcement
-
-This flow shows how an admin configuration change becomes a real runtime enforcement decision for email or call actions. The product mapping defines Configure Compliance Settings as admin-configured email and call compliance rules, and the architecture requires the platform to enforce CRM opt-outs and regional policies through shared governance controls.[1][2]
+This flow details how compliance rules are administered and subsequently enforced at runtime prior to dispatching outbound communications.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant ADMIN as Tenant Admin / RevOps
-    participant UI as Admin Console
-    participant API as Compliance Policy API
-    participant DB as Compliance Schema
-    participant AUD as Audit Service
-    participant ENG as Email / Call / Workflow Service
-    participant POL as Policy Evaluation Service
-    participant CRM as CRM Opt-out / Consent Source
-    participant ACT as Action Executor
+    participant UI as M10 Admin Console
+    participant M10 as M10 Data & Compliance Service
+    participant DB as PostgreSQL (m10_data_compliance)
+    participant AUD as Platform Core Audit Service
+    participant M8 as M8 Sales Engagement (Email Composer / Playbooks)
+    participant CRM as CRM Opt-out / Consent Store
+    participant SMTP as Action Executor (SendGrid Sandbox)
 
-    ADMIN->>UI: Create or update compliance policy
-    UI->>API: Submit tenant-scoped policy change
-    API->>DB: Save policy version and active config
-    API->>AUD: Log policy create / update / activate event
-    API-->>UI: Return success + policy summary
+    ADMIN->>UI: Create or update communication policy
+    UI->>M10: POST /api/v1/m10-data-compliance/policies (tenant-scoped)
+    M10->>DB: INSERT into m10_data_compliance.compliance_policies (active status)
+    M10->>AUD: Log policy_updated event to audit table
+    M10-->>UI: Return 201 Created + policy summary
 
-    ENG->>POL: Evaluate planned email / call / workflow action
-    POL->>DB: Load active tenant compliance policies
-    POL->>CRM: Load opt-out, consent, and region context
-    CRM-->>POL: Return communication restriction signals
-    POL->>POL: Apply tenant policy + regional rules
+    M8->>M10: POST /api/v1/m10-data-compliance/evaluate (email_send request)
+    M10->>DB: Load active compliance policies for tenant
+    M10->>CRM: Query contact opt-out and legal region (GDPR/CCPA)
+    CRM-->>M10: Return communication restriction flags
+    M10->>M10: Apply opt-out overrides + region rules
 
-    alt Action allowed
-        POL-->>ENG: allow + reason code
-        ENG->>ACT: Execute send / call / workflow step
-        ENG->>AUD: Log allow decision
-    else Action blocked
-        POL-->>ENG: block + reason code
-        ENG->>AUD: Log blocked decision
-        ENG-->>UI: Return readable block reason to user
+    alt Action is ALLOWED
+        M10-->>M8: Return 200 OK (allow decision + reason code)
+        M8->>SMTP: Dispatch outbound email
+        M8->>AUD: Log allow decision to audit_logs
+    else Action is BLOCKED
+        M10-->>M8: Return 403 Forbidden (block decision + reason code)
+        M8->>AUD: Log blocked decision with reason (e.g. GDPR_CONSENT_REQUIRED)
+        M8-->>ADMIN: Display readable block explanation in UI
     end
 ```
 
-### Notes
+### Flow 3 — Scheduled Data Cloud Export with Daily Sync Lock
 
-- Compliance configuration is not enough by itself; enforcement must happen at runtime immediately before outreach or governed actions execute.[2]
-- The main runtime inputs are tenant policy, CRM opt-out state, consent information, and region-aware rules such as GDPR- and CCPA-oriented restrictions.[1][2]
-- Audit logging is required both for policy changes and for allow/block decisions, because this feature affects governance-sensitive platform actions.[2]
-
-## Flow 3 — Scheduled Data Cloud export and retry
-
-This flow shows how customer-owned platform data moves to a client-owned warehouse. The product mapping defines Data Cloud as a structured export capability for conversations, deal insights, forecast data, user activity, and AI insights, while the architecture requires daily sync, supported warehouse destinations, idempotent jobs, and customer ownership of exported data.[1][2]
+This flow maps the scheduled daily extraction of platform records to client-owned destinations, showing the critical **02:00 UTC Redis sync_id lock** prevention check.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant SCH as Scheduler / Queue Trigger
-    participant ORCH as Data Cloud Orchestrator
-    participant CFG as Connection Config Store
-    participant CP as Checkpoint Store
-    participant SRC as Revenue Graph + Source Datasets
-    participant XFORM as Export Transformer
-    participant WH as Customer Warehouse
-    participant RUN as Export Run Log
-    participant DLQ as Retry / Dead-letter Flow
+    participant CRON as Platform Core Scheduler
+    participant M10 as M10 Data & Compliance Service
+    participant REDIS as Upstash Redis (Shared Lock Cache)
+    participant DB as PostgreSQL (m10_data_compliance)
+    participant AUD as Platform Core Audit Service
+    participant WH as Customer Warehouse (Snowflake/BigQuery/S3)
 
-    SCH->>ORCH: Trigger scheduled daily export for tenant
-    ORCH->>CFG: Load tenant destination config + secrets reference
-    CFG-->>ORCH: Destination type and active connection
-    ORCH->>CP: Load last successful checkpoint
-    CP-->>ORCH: Return dataset cursors / last sync timestamps
-    ORCH->>RUN: Create export run with idempotency key
-    ORCH->>SRC: Read tenant-scoped changed data
-    SRC-->>ORCH: Structured source rows
-    ORCH->>XFORM: Build export schema payloads
-    XFORM-->>ORCH: Warehouse-ready batches
-    ORCH->>WH: Upsert / append export batches
-
-    alt Export success
-        WH-->>ORCH: Success
-        ORCH->>CP: Advance checkpoints
-        ORCH->>RUN: Mark run successful
-    else Export failure
-        WH-->>ORCH: Error / partial write failure
-        ORCH->>RUN: Mark run failed or partial_failed
-        ORCH->>DLQ: Queue retry / replay action
+    CRON->>M10: Trigger daily scheduled export (At 02:00 UTC strictly)
+    M10->>REDIS: GET sync_id (Check if active export is running)
+    
+    alt Lock already exists
+        REDIS-->>M10: Lock active (sync_id present)
+        M10->>AUD: Log warning "Export execution blocked: Parallel run detected"
+        M10-->>CRON: Terminate execution safely (No-op)
+    else Lock is empty
+        REDIS-->>M10: Lock free
+        M10->>REDIS: SET sync_id with TTL (Acquire Daily Sync Lock)
+        M10->>DB: Load tenant connector config & secrets reference
+        M10->>DB: Load last watermarked checkpoints
+        M10->>DB: SELECT incremental dataset rows where updated_at > checkpoint
+        M10->>M10: Transform rows into destination schema batches
+        M10->>WH: Upsert/Append data batches (Idempotent Merge check)
+        
+        alt Export SUCCESS
+            WH-->>M10: Return 200 OK Success
+            M10->>DB: UPDATE checkpoints table with new cursor watermark
+            M10->>DB: INSERT into m10_data_compliance.data_cloud_export_runs (status = success)
+            M10->>REDIS: DEL sync_id (Release Daily Sync Lock)
+        else Export FAILURE
+            WH-->>M10: Return error (Connection Timeout / Credential Error)
+            M10->>DB: INSERT into m10_data_compliance.data_cloud_export_runs (status = failed)
+            M10->>REDIS: DEL sync_id (Release lock to support immediate replay retry)
+            M10->>AUD: Trigger PagerDuty operational alert
+        end
     end
 ```
 
-### Notes
+### Flow 4 — Deals Board Stage-Change Pattern (ADR-005)
 
-- Data Cloud belongs to the customer-ownership story: clients must be able to export all of their data, in full, to supported client-owned destinations such as Snowflake, BigQuery, Databricks, S3, and Redshift.[2]
-- Export runs must be idempotent and safe to retry, because the architecture explicitly marks Data Cloud jobs as idempotent and daily sync as the required baseline behavior.[2]
-- Source reads and destination writes must remain tenant-scoped, because cross-tenant data access is forbidden across the platform.[2]
-
-## Flow 4 — Consent change or deletion to governance and export enforcement
-
-This flow shows how a consent revocation or deletion request affects both compliance behavior and exported data behavior. The architecture requires client data deletion to be automated, forbids shared-model training use without explicit consent, and treats Configure Compliance Settings plus Data Cloud as enforcement points for customer-controlled data usage.[2]
+This flow documents how UI-triggered pipeline stage updates are coordinated through M10 to maintain CRM synchronization integrity.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant SRC as CRM / Admin / Privacy Request Source
-    participant GOV as Governance Intake Service
-    participant DB as Compliance / Core Data Store
-    participant BUS as Event Bus
-    participant POL as Policy Evaluation Service
-    participant ENG as Outreach Services
-    participant DC as Data Cloud Orchestrator
-    participant AUD as Audit Service
+    participant UI as M4 Deals Board UI
+    participant M4 as M4 Deal Intelligence Service
+    participant BUS as Redis Queue (BullMQ Event Bus)
+    participant M10 as M10 Data & Compliance Service
+    participant CRM as External CRM Platform (Salesforce/HubSpot)
+    participant M8 as M8 Sales Engagement (Sequence Workflows)
+    participant M6 as M6 Forecasting (Coverage Pipelines)
 
-    SRC->>GOV: Consent revoked or deletion request submitted
-    GOV->>DB: Persist consent change or deletion state
-    GOV->>AUD: Log governance event
-    GOV->>BUS: Publish consent.updated or deletion.request.completed
-
-    BUS->>POL: Notify compliance enforcement layer
-    POL->>DB: Refresh policy-relevant consent / deletion state
-    POL-->>ENG: Future governed actions now blocked or restricted
-
-    BUS->>DC: Notify export pipeline of updated governance state
-    DC->>DB: Resolve affected datasets / tombstones / exclusions
-    DC->>AUD: Log export-governance adjustment
-    DC-->>DC: Apply next export behavior (exclude, tombstone, or delete marker)
+    UI->>M4: Sales rep drags deal card to new stage
+    M4->>M4: Perform optimistic local DB update
+    M4->>BUS: Publish internal deal.stage.update.requested message
+    BUS->>M10: Deliver update request message to coordinate queue
+    M10->>CRM: PATCH /opportunity/:id (Synchronize new stage value)
+    CRM-->>M10: Sync successful (200 OK response committed)
+    M10->>M10: Commit change to m10_data_compliance.deals table
+    M10->>BUS: Publish public platform event deal.stage.changed
+    BUS->>M4: Consume event to lock card position on Board
+    BUS->>M8: Consume event to trigger stage-based auto-playbooks
+    BUS->>M6: Consume event to recalculate quarterly forecast predictions
 ```
 
-### Notes
+---
 
-- The architecture explicitly says no AI training pipeline may read client data unless an explicit consent record exists, so consent changes are governance events, not just profile updates.[2]
-- Client data deletion must be an automated operation, and future exports must reflect deletion-aware behavior rather than relying on manual cleanup.[2]
-- This flow touches both cross-cutting governance and Data Cloud, which is why it should stay in a shared M10 flows document rather than inside only one feature TDD.[2]
+## 3. Diagram Usage & Review Guidelines
 
-## Diagram usage rules
-
-Use these sequence diagrams as **cross-feature flow references**, not as replacements for feature TDDs. The system architecture says feature-specific internal logic belongs in the relevant TDD, while shared infrastructure, data-flow understanding, and module interaction patterns belong in architecture and sequence documentation.[2]
-
-### Recommended mapping
-
-| Diagram | Primary owner | Supporting docs |
-|---|---|---|
-| Captured interaction to Revenue Graph entity linking | Revenue Graph / M-03 | `tdd-revenue-graph.md` |
-| Admin policy update to outreach enforcement | Platform Core / Governance | `tdd-configure-compliance-settings.md` |
-| Scheduled Data Cloud export and retry | Data Platform / M-03 | `tdd-data-cloud.md` |
-| Consent change or deletion to governance and export enforcement | Shared: Governance + Data Cloud | `tdd-configure-compliance-settings.md`, `tdd-data-cloud.md` |
-
-The best way to maintain M10 documentation is to keep **one README, three feature TDDs, and one shared flows file**. That keeps the product grouping understandable for freshers while preserving the real architecture ownership boundaries needed by engineers and reviewers.[1][2]
+*   **Engineering Implementation Reference**: Developers building M10 backend controllers must structure their code to support the exact event contracts and asynchronous boundaries outlined in these diagrams.
+*   **At-Least-Once Delivery**: Downstream modules consuming `revenue_graph.entity.linked` or `deal.stage.changed` must implement standard idempotency checks to tolerate duplicate event deliveries safely.
+*   **Doppler Secrets Context**: Database adapters and CRM integration services depicted in Flows 1, 2, and 3 must retrieve their API keys and connection strings dynamically via Doppler secrets mapping, never referencing plaintext strings in code.

@@ -1,27 +1,28 @@
 # Sequence Diagram — ClickHouse Fallback to PostgreSQL
 
-This document shows the internal behavior when the dashboard service tries to read metrics from ClickHouse, but ClickHouse is unavailable. Revenue Dashboards must still remain available by falling back to PostgreSQL.
+This document specifies the internal execution sequence when the dashboard service encounters a ClickHouse query failure. To ensure absolute platform resilience, M7 switches database queries to PostgreSQL, dispatches alarms, and enforces resource-throttling limits.
 
-## 1. Actors
+## 1. Document Control
 
-- M7 Dashboard Service
-- ClickHouse (analytics store)
-- PostgreSQL (core + dashboards)
-- Observability / Alerts (logging, metrics, alert manager)
+- **Document Title:** Sequence Diagram — ClickHouse Fallback to PostgreSQL
+- **Feature Name:** ClickHouse Failover Fallback & Resource Protection
+- **Module Name:** M7 Revenue Dashboards
+- **Workspace Directory:** `modules/m07-revenue-dashboards/`
+- **Owner:** Product Engineering — M7
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
-## 2. High-Level Description
+---
 
-When computing metrics for one or more dashboard widgets:
+## 2. Actors & Components
 
-1. The M7 Dashboard Service builds aggregation queries for ClickHouse.
-2. It calls ClickHouse via the analytics client.
-3. If ClickHouse responds successfully, results are used as normal.
-4. If ClickHouse errors (connection error, timeout, health check fails):
-   - The service logs a warning and increments a fallback metric.
-   - It switches to a PostgreSQL query path to recompute the same metrics using core tables.
-   - It may restrict time ranges or row counts to keep performance acceptable.
-   - It sends an alert via the observability stack to signal ClickHouse issues.
-5. The service continues to respond to the API call using PostgreSQL results, keeping dashboards available but potentially slower.
+- **M7 Dashboard Service:** NestJS backend service residing at `modules/m07-revenue-dashboards/`.
+- **ClickHouse:** High-performance columnar database (primary analytics engine).
+- **PostgreSQL:** Transactional database (using namespace schema `m07_revenue_dashboards`).
+- **Better Stack:** Observability, tracing, and alert delivery platform.
+
+---
 
 ## 3. Mermaid Sequence Diagram
 
@@ -30,42 +31,53 @@ sequenceDiagram
     autonumber
 
     participant D as M7 Dashboard Service
-    participant C as ClickHouse
-    participant P as PostgreSQL
-    participant O as Observability
+    participant C as ClickHouse (Analytics)
+    participant P as PostgreSQL (m07_revenue_dashboards)
+    participant B as Better Stack (Observability)
 
-    Note over D: Prepare metric queries for widgets
-
-    D->>C: Run aggregation queries
-    alt ClickHouse healthy
-        C-->>D: Aggregated metric results
-        D->>D: Use ClickHouse results for widgets
-    else ClickHouse error
-        C-->>D: Error or timeout
-
-        Note over D: Enter fallback mode
-
-        D->>D: Log warning and increase fallback counter
-        D->>O: Send metric, trace, and alert
-
-        Note over D: Recompute metrics using PostgreSQL
-
-        D->>P: Aggregate from core tables with limits
-        P-->>D: Aggregated metric results (slower)
-
-        D->>D: Use PostgreSQL results for widgets
+    Note over D: User requests dashboard metrics
+    D->>C: Execute columnar aggregation query
+    
+    alt ClickHouse Healthy
+        C-->>D: Return aggregation metrics (under 500ms SLA)
+        D->>D: Populate widget JSON payload
+    else ClickHouse Connection Failure or Timeout
+        C-->>D: Throw connection exception (or Timeout > 5000ms)
+        
+        Note over D: Enter Degraded Fallback Mode
+        
+        D->>D: Increment fallback counters
+        D->>B: Dispatch high-priority warning alert (PII Redacted)
+        
+        Note over D: Apply PostgreSQL Safety Guards
+        D->>D: Truncate query range to max 90 days
+        D->>D: Throttle & suspend non-essential widgets
+        
+        D->>P: Query aggregated values from m07_revenue_dashboards.dashboard_snapshots
+        alt Cache Available
+            P-->>D: Return cached snapshot results
+        else Cache Missing or Stale
+            D->>P: Query transactional schemas (m10_data_compliance.*, etc.)
+            P-->>D: Return raw transactional aggregate rows (slower query)
+        end
+        
+        D->>D: Populate widget JSON (suspending throttled widgets)
     end
-
-    Note over D: Return response to API caller
+    
+    Note over D: Return aggregated response to Client API
 ```
 
-## 4. Key Notes for Engineers
+---
 
-- Fallback is **transparent to the caller** (the API still returns a valid response), but slower.
-- The service should:
-  - Log a clear message when falling back.
-  - Emit metrics for fallback rate.
-  - Trigger alerts when fallback rate crosses a threshold, so SREs know ClickHouse is unhealthy.
-- PostgreSQL queries in fallback mode should:
-  - Use appropriate indexes and reasonable time ranges.
-  - Avoid unbounded scans for very large tenants.
+## 4. Key Engineering Implementations
+
+1. **Better Stack Integration:** Every fallback incident must trigger a structured telemetry log. The warning payload must carry the `tenant_id` and the raw ClickHouse exception string, with all user PII fields redacted.
+2. **Resource-Throttling Execution:** Non-essential widgets must return a lightweight object structure:
+   ```json
+   {
+     "id": "widget-competitor-theme-trends",
+     "status": "suspended",
+     "message": "This widget is temporarily unavailable due to system optimization. It will restore shortly."
+   }
+   ```
+3. **Optimistic Range Truncation:** Date filters exceeding 90 days are silently truncated to a rolling 90-day window during PostgreSQL aggregation queries to prevent database lockups.

@@ -20,13 +20,13 @@ These are the flows most engineers will touch first because they sit on the crit
 
 ### Purpose
 
-Use this diagram when working on inbound webhook handlers, idempotency, audio fetch preparation, or job enqueue logic in `api/v1/ingestion`. It shows how an external provider event becomes an internal transcription job without mixing sync request handling and long-running processing.
+Use this diagram when working on inbound webhook handlers, idempotency, audio fetch preparation, or job enqueue logic in `/api/v1/m01-capture-transcription`. It shows how an external provider event becomes an internal transcription job without mixing sync request handling and long-running processing.
 
 ### Actors
 
 - External Provider.
 - Cloudflare / Edge protection layer.
-- NestJS M-01 API (`/api/v1/ingestion/webhook/*`).
+- NestJS M-01 API (`/api/v1/m01-capture-transcription/webhook/*`).
 - PostgreSQL.
 - Supabase Storage.
 - BullMQ / Redis.
@@ -46,7 +46,7 @@ Use this diagram when working on inbound webhook handlers, idempotency, audio fe
 2. Edge protection allows the request through rate limiting and public endpoint controls.
 3. M-01 verifies HMAC signature before doing any expensive work.
 4. M-01 checks idempotency using `callId` or provider event identity.
-5. M-01 creates `callrecordings` row with initial status such as `pending`.
+5. M-01 creates `m01_capture_transcription.calls` row with initial status such as `pending`.
 6. M-01 downloads or stages the recording and uploads raw audio reference into storage for transcription processing.
 7. M-01 updates call status to reflect audio stored / ready state.
 8. M-01 enqueues BullMQ transcription job with `callId`, `tenantId`, storage URL, and relevant metadata.
@@ -54,14 +54,14 @@ Use this diagram when working on inbound webhook handlers, idempotency, audio fe
 
 ### Alternate Paths
 
-- Duplicate webhook: M-01 detects existing `callrecordings` entry and returns a safe duplicate-ignored response.
+- Duplicate webhook: M-01 detects existing `m01_capture_transcription.calls` entry and returns a safe duplicate-ignored response.
 - Invalid signature: request is rejected with 401 and no call record is created.
 - Missing recording URL: request is logged, call may move to failed state, and no transcription job is queued.
 - Storage upload failure: queue step is skipped and retry / alert path starts.
 
 ### Postconditions
 
-- `callrecordings` exists for the tenant.
+- `m01_capture_transcription.calls` exists for the tenant.
 - Audio reference is stored or staged for later transcription.
 - A BullMQ transcription job exists in queue.
 - Downstream processing can now happen asynchronously without holding the webhook open.
@@ -85,7 +85,7 @@ sequenceDiagram
     participant Q as BullMQ / Redis
     participant OBS as Audit / Monitoring
 
-    EXT->>EDGE: POST /api/v1/ingestion/webhook/{platform}
+    EXT->>EDGE: POST /api/v1/m01-capture-transcription/webhook/{platform}
     EDGE->>API: Forward verified public request
     API->>API: Verify HMAC signature
 
@@ -98,9 +98,9 @@ sequenceDiagram
             API->>OBS: Log duplicate ignored
             API-->>EXT: 200 duplicate_ignored
         else New webhook
-            API->>DB: Insert callrecordings(status=pending)
+            API->>DB: Insert calls(status=pending)
             API->>ST: Store / stage audio reference
-            API->>DB: Update callrecordings(status=audiostored)
+            API->>DB: Update calls(status=audiostored)
             API->>Q: Enqueue transcription.process
             API->>OBS: Audit webhook receipt + queue success
             API-->>EXT: 202 Accepted
@@ -130,14 +130,14 @@ Use this diagram when working on workers, Python transcription service integrati
 - AssemblyAI fallback / diarization support.
 - PostgreSQL.
 - Event bus via BullMQ.
-- Downstream modules such as M-03, M-04, M-05, M-06.
+- Downstream modules such as M2, M3, M8, M10.
 
 ### Preconditions
 
 - Transcription job already exists in BullMQ.
 - Audio is available through storage URL.
 - Internal network path to transcription service is healthy.
-- Tenant and call metadata exist in `callrecordings`.
+- Tenant and call metadata exist in `m01_capture_transcription.calls`.
 - Provider credentials for Whisper / fallback path are configured.
 
 ### Main Sequence
@@ -149,8 +149,8 @@ Use this diagram when working on workers, Python transcription service integrati
 5. Service runs Whisper as the primary ASR path.
 6. If needed, fallback path uses AssemblyAI and diarization support.
 7. Service produces raw transcript, speaker-labeled segments, detected language, and confidence score.
-8. M-01 persists transcript into `transcripts` table.
-9. M-01 updates `callrecordings.status` to `completed`.
+8. M-01 persists transcript into `m01_capture_transcription.transcripts` table.
+9. M-01 updates `calls.status` to `completed`.
 10. M-01 publishes `call.transcription.completed` with transcript metadata.
 11. Downstream modules consume the event asynchronously for later workflows.
 
@@ -158,13 +158,13 @@ Use this diagram when working on workers, Python transcription service integrati
 
 - Whisper timeout or failure triggers AssemblyAI fallback.
 - Callback or internal response validation fails, causing retry instead of partial transcript storage.
-- Transcript is low-confidence and is marked `flaggedForReview` while still being stored.
+- Transcript is low-confidence and is marked `flagged_for_review = true` while still being stored.
 - Event publish retried if Redis / BullMQ write temporarily fails.
 
 ### Postconditions
 
-- `transcripts` row exists with raw text, speaker segments, language, provider, and confidence score.
-- `callrecordings.status` is updated to `completed` on success.
+- `m01_capture_transcription.transcripts` row exists with raw text, speaker segments, language, provider, and confidence score.
+- `calls.status` is updated to `completed` on success.
 - `call.transcription.completed` is emitted to the platform event bus.
 - Downstream modules now have the official trigger for capture-stage completion.
 
@@ -203,8 +203,8 @@ sequenceDiagram
     end
 
     AI-->>W: rawText, speakerSegments, language, confidence, providerUsed
-    W->>DB: Insert transcripts
-    W->>DB: Update callrecordings(status=completed)
+    W->>DB: Insert m01_capture_transcription.transcripts
+    W->>DB: Update calls(status=completed)
     W->>EVT: Publish call.transcription.completed
     EVT-->>D: Event delivered to subscribers
 ```
@@ -219,7 +219,7 @@ sequenceDiagram
 
 ### Purpose
 
-Use this diagram when working on AI Data Extractor, post-transcription orchestration, confidence gating, or M-01 to M-03 integration boundaries. It shows how transcript data becomes structured CRM-ready fields without direct CRM writes from M-01.
+Use this diagram when working on AI Data Extractor, post-transcription orchestration, confidence gating, or M-01 to M10 integration boundaries. It shows how transcript data becomes structured CRM-ready fields without direct CRM writes from M-01.
 
 ### Alternate Entry Paths
 
@@ -236,7 +236,7 @@ Use this diagram when working on AI Data Extractor, post-transcription orchestra
 - PostgreSQL.
 - FastAPI AI services endpoint `POST /v1/extract-crm-fields`.
 - LiteLLM / approved LLM providers behind Python service.
-- M-03 Revenue Graph downstream consumer.
+- M10 Data & Compliance downstream consumer.
 
 ### Preconditions
 
@@ -253,10 +253,10 @@ Use this diagram when working on AI Data Extractor, post-transcription orchestra
 3. Worker builds extraction payload and calls internal AI service `POST /v1/extract-crm-fields`.
 4. Python AI service runs structured extraction through approved LLM path and returns JSON with field values and confidence scores.
 5. M-01 validates the response shape before any persistence.
-6. M-01 stores extracted rows in `crmextractedfields`.
-7. Low-confidence outputs are marked `flaggedreview = true`.
+6. M-01 stores extracted rows in `m01_capture_transcription.crm_extracted_fields`.
+7. Low-confidence outputs are marked `flagged_for_review = true`.
 8. M-01 publishes `crm.fields.extracted` event.
-9. M-03 Revenue Graph consumes the event and later performs approved CRM enrichment handling.
+9. M10 Data & Compliance / Revenue Graph consumes the event and later performs approved CRM enrichment handling.
 
 ### Alternate Paths
 
@@ -267,7 +267,7 @@ Use this diagram when working on AI Data Extractor, post-transcription orchestra
 
 ### Postconditions
 
-- `crmextractedfields` rows exist for the call.
+- `m01_capture_transcription.crm_extracted_fields` rows exist for the call.
 - Fields have confidence scores and review flags.
 - `crm.fields.extracted` is published for downstream handling.
 - M-01 remains within boundary by publishing structured output instead of directly mutating other modules or CRM systems.
@@ -289,7 +289,7 @@ sequenceDiagram
     participant AI as FastAPI AI Service
     participant LLM as LiteLLM / Model Provider
     participant EVT2 as Event Bus
-    participant RG as M-03 Revenue Graph
+    participant RG as M10 Data & Compliance
 
     EVT->>X: call.transcription.completed
     X->>DB: Load transcripts + call metadata
@@ -297,8 +297,8 @@ sequenceDiagram
     AI->>LLM: Structured extraction request
     LLM-->>AI: JSON fields + confidence
     AI-->>X: Validated extraction response
-    X->>DB: Insert crmextractedfields
-    X->>DB: Mark low-confidence rows flaggedreview=true
+    X->>DB: Insert m01_capture_transcription.crm_extracted_fields
+    X->>DB: Mark low-confidence rows flagged_for_review=true
     X->>EVT2: Publish crm.fields.extracted
     EVT2-->>RG: Deliver extracted CRM field event
 ```
@@ -318,7 +318,7 @@ Use this diagram when working on source connection UX, source registration APIs,
 ### Actors
 
 - RevOps user / frontend.
-- NestJS M-01 API (`POST /api/v1/ingestion/sources`).
+- NestJS M-01 API (`POST /api/v1/m01-capture-transcription/sources`).
 - Platform Core auth / RBAC.
 - PostgreSQL.
 - External provider API / OAuth setup where applicable.
@@ -334,11 +334,11 @@ Use this diagram when working on source connection UX, source registration APIs,
 ### Main Sequence
 
 1. RevOps user submits connect-source form in frontend.
-2. Frontend calls `POST /api/v1/ingestion/sources` with platform and connection details.
+2. Frontend calls `POST /api/v1/m01-capture-transcription/sources` with platform and connection details.
 3. M-01 validates JWT, RBAC, and request schema.
 4. M-01 may call external provider auth / verification flow depending on connector type.
 5. M-01 generates or stores webhook secret / connection metadata.
-6. M-01 inserts `ingestionsources` row with connection status.
+6. M-01 inserts `m01_capture_transcription.ingestion_sources` row with connection status.
 7. API returns source registration result to frontend.
 8. Audit trail records the onboarding action.
 
@@ -350,8 +350,8 @@ Use this diagram when working on source connection UX, source registration APIs,
 
 ### Postconditions
 
-- `ingestionsources` exists for the tenant with platform, connection state, and secret metadata.
-- Frontend can list connected sources using `GET /api/v1/ingestion/sources`.
+- `m01_capture_transcription.ingestion_sources` exists for the tenant with platform, connection state, and secret metadata.
+- Frontend can list connected sources using `GET /api/v1/m01-capture-transcription/sources`.
 - Webhook and ingestion flows can later resolve tenant and source from this registration state.
 
 ### Failure Notes
@@ -373,7 +373,7 @@ sequenceDiagram
     participant OBS as Audit / Monitoring
 
     U->>FE: Submit source connection form
-    FE->>API: POST /api/v1/ingestion/sources
+    FE->>API: POST /api/v1/m01-capture-transcription/sources
     API->>CORE: Validate JWT + role + tenant context
     API->>API: Validate request schema
 
@@ -382,7 +382,7 @@ sequenceDiagram
         EXT-->>API: Verification result
     end
 
-    API->>DB: Insert ingestionsources
+    API->>DB: Insert m01_capture_transcription.ingestion_sources
     API->>OBS: Audit source registration
     API-->>FE: Source connected / status returned
     FE-->>U: Show connected source state
@@ -392,7 +392,7 @@ sequenceDiagram
 
 ## Notes for engineers
 
-- Keep sequence names aligned with real API paths and event names such as `/api/v1/ingestion/webhook/zoom`, `call.transcription.completed`, and `crm.fields.extracted`.
+- Keep sequence names aligned with real API paths and event names such as `/api/v1/m01-capture-transcription/webhook/zoom`, `call.transcription.completed`, and `crm.fields.extracted`.
 - Do not add direct cross-module DB writes to “simplify” these flows; the architecture requires public APIs and events instead.
 - Do not move AI inference into NestJS services; TypeScript orchestrates, Python performs AI work.
 - If a future code change alters any of these steps, update this document in the same PR so the diagram stays trustworthy for freshers and reviewers.

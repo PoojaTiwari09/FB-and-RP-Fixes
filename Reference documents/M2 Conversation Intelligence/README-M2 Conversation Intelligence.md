@@ -5,329 +5,208 @@
 M2 Conversation Intelligence is the **Understand** stage of the Revenue Intelligence lifecycle. It helps teams understand what happened inside customer interactions by turning transcripts and interaction data into structured signals such as call scores, topics, themes, tracked signals, translated outputs, corrected terminology, and searchable conversation archives. 
 
 In the product mapping, M2 includes these user-facing features: AI Call Reviewer, AI Topic Tagger, AI Theme Spotter, AI Smart Tracker, AI Translator, AI Transcriber, and Searchable Conversation Library.   
-Why it matters is simple: this module takes raw conversation data and makes it usable for insight generation, search, coaching, risk detection, and later execution workflows. 
+Why it matters is simple: this module takes raw conversation data and makes it usable for AI summaries, deal search, coaching, risk detection, renewal forecasting, and sales engagement workflows.
 
-### Lifecycle stage
+### Lifecycle Stage
 
-- **Lifecycle stage:** Understand. 
-- **Primary job:** Track what is happening in calls and conversations and convert that into useful signals. 
-- **Upstream dependency:** M-01 Call Transcription and M-03 Revenue Graph context. 
-- **Downstream impact:** Feeds M-06 Insight Generation, M-07 Deal and Account Management, M-08 Execution, and M-09 Coaching and Training. 
+- **Lifecycle Stage:** Stage 3 — `Understand`
+- **Primary Job:** Track what is happening in calls and conversations and convert that into useful, structured, and search-enriched signals.
+- **Upstream Dependency:** **M1 Capture & Transcription** (completed transcripts) and **M10 Data & Compliance** (Revenue Graph context).
+- **Downstream Impact:** Feeds **M3 AI Summaries & GenAI**, **M4 Deal Intelligence**, **M5 Account Intelligence**, **M8 Sales Engagement**, and **M9 Coaching & Training**.
 
-### What M2 does
+### What M2 Does
 
-From a product point of view, M2 analyzes completed conversations and gives users searchable, structured, AI-enriched understanding of those conversations.   
-It helps answer questions like: What topics were discussed, what themes are repeating, what risks appeared, how should this call be scored, and where can I find the right conversation later. 
+From a product and technical point of view, M2 analyzes completed conversations and gives users a searchable, structured, AI-enriched understanding of those interactions.   
+It helps answer critical questions like: What topics were discussed, what themes are repeating, what risks appeared, how should this call be scored, and where can I find the right conversation later.
 
-### Why it matters
+### Why It Matters
 
-Without M2, the platform mostly has captured transcripts and linked CRM context, but not usable intelligence.   
-M2 is the bridge between raw conversation capture and the later analysis, execution, forecasting, and coaching modules. 
+Without M2, the platform mostly has captured transcripts and linked CRM context, but lacks usable, semantic intelligence. M2 is the operational bridge between raw conversation capture (M1) and the downstream forecasting (M6), sales engagement (M8), and coaching (M9) modules.
 
-### Core outputs
+### Core Outputs
 
 The main outputs tied to M2 are call review scores, topic tags, theme analysis results, tracker detections, corrected business terminology, translated transcript outputs, and searchable conversation records.   
-At the architecture level, the most explicit event outputs are `call.scored`, `call.topics.tagged`, and `tracker.detection.created`, which are consumed by later modules. 
+At the architecture level, the most explicit event outputs are `call.scored`, `call.topics.tagged`, and `tracker.detection.created`, which are consumed by downstream modules.
 
 ---
 
 ## 2. Features in This Module
 
-M2 contains the following product-facing features. 
+M2 contains the following product-facing features, all unified within the `/modules/m02-conversation-intelligence/` workspace and backed by the `m02_conversation_intelligence` schema:
 
 ### AI Call Reviewer
-
-AI Call Reviewer evaluates sales or support calls using predefined scorecards and AI-generated insights.   
-In architecture terms, this belongs to M-04 Conversation Intelligence and stores scorecard definitions and call score results. 
+AI Call Reviewer evaluates sales or support calls using predefined admin-managed scorecards and AI-generated insights. It stores scorecard definitions and call score results directly in the module's database tables.
 
 ### AI Topic Tagger
-
-AI Topic Tagger labels key discussion topics in calls, such as pricing, next steps, objections, and product issues, so conversations become structured and searchable.   
-This is part of M-04 and emits `call.topics.tagged` for downstream search and insight workflows. 
+AI Topic Tagger labels key discussion topics in calls, such as pricing, next steps, objections, and product issues, so conversations become structured and searchable. It emits the `call.topics.tagged` event for downstream search and insight workflows.
 
 ### AI Theme Spotter
-
-AI Theme Spotter analyzes many conversations together to detect recurring themes, trends, objections, and patterns that are not obvious from one call alone.   
-This is also implemented inside M-04 Conversation Intelligence through theme analysis jobs and theme result storage. 
+AI Theme Spotter analyzes multiple conversations together to detect recurring themes, trends, objections, and patterns that are not obvious from a single call alone. It is executed via asynchronous batch analysis jobs and stores theme results locally.
 
 ### AI Smart Tracker
-
-AI Smart Tracker detects business signals across calls and emails using semantic intent detection instead of simple keyword matching.   
-Architecturally, this belongs to M-05 Smart Tracking and Search and emits `tracker.detection.created`. 
+AI Smart Tracker detects business signals across calls and emails using semantic intent detection instead of simple keyword matching. It tracks pricing concerns, competitor mentions, and custom intent signals, emitting `tracker.detection.created` upon matches.
 
 ### AI Translator
-
-AI Translator converts transcripts and AI-generated outputs into the preferred language of the user or workspace, helping multilingual teams work from the same source interaction data.   
-In the architecture, translation preference storage is grouped with M-04 Conversation Intelligence. 
+AI Translator converts transcripts and AI-generated outputs into the preferred language of the user or workspace, helping multilingual teams work from the same source interaction data.
 
 ### AI Transcriber
-
-AI Transcriber improves transcript quality by correcting mis-transcribed business-specific terms such as product names, competitor names, acronyms, and jargon.   
-Product-wise it belongs to M2, but correction rules and transcript correction behavior touch transcript-domain ownership and are closely tied to M-04 and M-01 flows in the system design. 
+AI Transcriber improves transcript quality by correcting mis-transcribed business-specific terms such as product names, competitor names, acronyms, and jargon. It works alongside M1 Capture & Transcription to maintain the vocabulary correction registry.
 
 ### Searchable Conversation Library
-
-Searchable Conversation Library lets users find, filter, analyze, and export calls, accounts, and customer interactions using search and AI-enriched metadata.   
-Architecturally, this belongs to M-05 Smart Tracking and Search, which owns the hybrid search APIs and index synchronization logic. 
+Searchable Conversation Library lets users find, filter, analyze, and export calls, accounts, and customer interactions using search and AI-enriched metadata. It manages the hybrid search APIs and search index synchronization logic.
 
 ---
 
 ## 3. Product vs Architecture Mapping
 
-This is the most important section for engineers. 
+### Product Module M2 Scope
+In the product map, M2 is one sellable and understandable module called **Conversation Intelligence**. It groups together all features that help users understand customer conversations after capture. This packaging is useful for product roadmaps, pricing models, UI groupings, and customer communication.
 
-### Product module M2 scope
-
-In the product map, M2 is one sellable and understandable module called **Conversation Intelligence**. It groups together the features that help users understand customer conversations after capture.   
-That packaging is useful for roadmap, pricing, UI grouping, and customer communication. 
-
-### Internal split between M-04 and M-05
-
-Inside the architecture, M2 is not implemented as one backend module. Instead, it is split mainly across: 
-
-- **M-04 Conversation Intelligence**, which owns call scoring, topic tagging, theme spotting, and translation preferences. Vocabulary correction rules (`vocabularycorrections`) are owned by M-01 Data Ingestion, because correction runs post-transcription before storage. 
-- **M-05 Smart Tracking and Search**, which owns smart trackers, tracker detections, searchable conversation library behavior, hybrid search, and related search sync logic. 
-
-### Ownership clarification note
-
-Use this simple rule:
-
-- If the feature is about **scoring, tagging, themes, or translation preferences**, think **M-04**. 
-- If the feature is about **trackers, detections, search, conversation library, or hybrid retrieval**, think **M-05**. 
-- If you are writing a product or module README, you can still refer to the combined experience as **M2 Conversation Intelligence**. 
+### Unified Architecture
+Unlike legacy system drafts where Conversation Intelligence was split across "M-04" and "M-05" packages, the v3.0 architecture unifies the entire backend scope into a single physical monorepo workspace: `/modules/m02-conversation-intelligence/`.
+All data records, APIs, event handlers, and BullMQ workers are managed within this single module boundary under the unified PostgreSQL schema `m02_conversation_intelligence`.
 
 ---
 
 ## 4. Module Boundaries
 
-### What M2 owns from a product point of view
+### What M2 Owns
+M2 owns all features that help users understand captured conversations through AI review, topic understanding, trend detection, tracker detection, translation, transcript cleanup, and library search. It owns the "understand the conversation" experience and persistent intelligence tables.
 
-From a product point of view, M2 owns the features that help users understand captured conversations through AI review, topic understanding, trend detection, tracker detection, translation, transcript cleanup, and library search.   
-It owns the “understand the conversation” experience, not the raw capture itself and not the final analytical summaries. 
+### What M2 Does Not Own
+M2 does **not** own raw transcription generation, call ingestion, CRM syncing, revenue entity linking, executive summary generation, deal boards, forecasting, dashboards, or coaching outputs. Those belong to upstream or downstream modules such as M1, M3, M4, M5, M6, M7, M8, M9, and M10.
 
-### What M2 does not own
-
-M2 does **not** own raw transcription generation, call ingestion, CRM syncing, revenue entity linking, summary generation, deal boards, forecasting, dashboards, or coaching outputs.   
-Those belong to upstream or downstream modules such as M-01, M-03, M-06, M-07, M-08, and M-09. 
-
-### Allowed dependencies
-
+### Allowed Dependencies
 M2 is allowed to depend on:
+- **M1 Capture & Transcription** for completed transcripts and transcript-related source data.
+- **M10 Data & Compliance** for deal, account, contact, and core Revenue Graph context used in scoring and enrichment.
+- **AI Services Layer** (FastAPI) for scoring, theme detection, topic tagging, tracker detection, and embedding generation.
+- **Platform Core** for authentication, tenant context, auditing, and role-based access control (RBAC).
 
-- **M-01 Data Ingestion** for completed transcripts and transcript-related source data. 
-- **M-03 Revenue Graph** for deal, account, and contact context used in scoring and enrichment. 
-- **AI Services Layer** for scoring, theme detection, topic tagging, tracker detection, and embeddings. 
-- **Platform Core** for auth, tenant context, audit, and RBAC. 
-
-### Downstream consumers
-
+### Downstream Consumers
 The main downstream consumers are:
-
-- **M-05** from M-04, especially through `call.topics.tagged`. 
-- **M-06 Insight Generation**, which uses topic tags and tracker detections. 
-- **M-07 Deal and Account Management**, which uses tracker detections and later insights. 
-- **M-08 Execution and Automation** and **M-09 Coaching and Training**, which consume later outputs like detections and scores. 
+- **M3 AI Summaries & GenAI** for structured summaries and RAG queries.
+- **M4 Deal Intelligence** and **M5 Account Intelligence** for deal risk flags and active boards.
+- **M8 Sales Engagement** for automated playbook enrollments and follow-up drafts.
+- **M9 Coaching & Training** for scorecard metrics and skill analysis.
 
 ---
 
 ## 5. Architecture Snapshot
 
-### Main components
+### Main Components
+The main architecture pieces behind M2 are:
+- **M2ConversationIntelligenceModule** with API prefix `/api/v1/m02-conversation-intelligence`.
+- **AI Services Layer** in Python FastAPI, called for scoring, theme detection, topic tagging, tracker detection, and embeddings.
+- **Meilisearch** for full-text search and **pgvector** (via PostgreSQL) for semantic retrieval.
 
-The main architecture pieces behind M2 are: 
+### Queue and Event Flows
+The architecture is event-driven. M2 reacts to upstream events like `call.transcription.completed` and `revenue_graph.entity.linked`, then emits downstream events like `call.scored`, `call.topics.tagged`, and `tracker.detection.created`.
 
-- **M-04 ConversationIntelligenceModule** with API prefix `api/v1/conversation-intelligence`. 
-- **M-05 SmartTrackingModule** with API prefix `api/v1/smart-tracking`. 
-- **AI Services Layer** in Python FastAPI, called for scoring, theme detection, topic tagging, tracker detection, and embeddings. 
-- **Meilisearch** for search and **pgvector** for semantic retrieval. 
-
-### Queue and event flows
-
-The architecture is event-driven, so M2 does not directly pull everything synchronously.   
-It reacts to upstream events like `call.transcription.completed` and `revenuegraph.entity.linked`, then emits downstream events like `call.scored`, `call.topics.tagged`, and `tracker.detection.created`. 
-
-### AI service interactions
-
-TypeScript product services must orchestrate business workflows, while Python AI services handle inference and NLP.   
-For M2, that means NestJS modules call AI endpoints such as `POST /v1/score-call`, `POST /v1/detect-themes`, `POST /v1/tag-topics`, `POST /v1/detect-trackers`, and `POST /v1/embed` instead of embedding AI logic inside product services.
-
-*Note: NestJS calls the AI service at `/internal/<endpoint>`. The `/v1/...` paths in TDDs represent the logical AI service contract name.* 
-
-### Search and storage dependencies
-
-M2 depends on PostgreSQL for persistent records, Redis plus BullMQ for async queues, Meilisearch for fast text search, and pgvector for semantic retrieval.   
-That combination is what makes the searchable conversation library both filterable and AI-aware. 
+### AI Service Interactions
+TypeScript product services orchestrate business workflows, while Python AI services handle inference and NLP. NestJS modules call private AI endpoints such as `POST /internal/score-call`, `POST /internal/detect-themes`, `POST /internal/tag-topics`, `POST /internal/detect-trackers`, and `POST /internal/generate-embeddings`.
 
 ---
 
 ## 6. Events
 
-### Events consumed
+### Events Consumed
+The most important upstream events consumed by the M2 implementation are:
+- `call.transcription.completed` from M1 (Triggers AI scoring, topic tagging, and keyword tracking runs).
+- `revenue_graph.entity.linked` from M10 (Signals that a call record has been mapped to CRM deals; triggers scoring finalization).
+- `email.sent` from M8 (Triggers intent tracking sweeps across outbound outreach content).
 
-The most important upstream events consumed by the M2 implementation are: 
+*Note: M2 must wait for `revenue_graph.entity.linked` before finalizing call scores when scorecard criteria depend on deal value or tier context.*
 
-- `call.transcription.completed` from M-01. 
-- `revenuegraph.entity.linked` from M-03. 
-- `email.sent` for tracker-related M-05 flows. 
-
-A key rule is that M-04 should wait for `revenuegraph.entity.linked` before finalizing call scores when revenue context is needed. 
-
-### Events emitted
-
+### Events Emitted
 The main emitted events are:
+- `call.scored` (Emitted after scorecard evaluation finishes).
+- `call.topics.tagged` (Emitted after topic categorization completes).
+- `tracker.detection.created` (Emitted when dynamic keyword or intent patterns match a transcript or email).
 
-- `call.scored` from M-04. 
-- `call.topics.tagged` from M-04. 
-- `tracker.detection.created` from M-05. 
-
-These events feed M-05, M-06, M-07, M-08, and M-09 depending on the feature flow. 
-
-### Event ownership and idempotency
-
-Each producing module owns its own event contract.   
-Idempotency is required because retries can happen, so handlers must avoid duplicating call scores, tags, tracker detections, or index sync runs. 
+These events carry the verified standard v1 envelope, including `eventId`, `tenantId`, `correlationId`, and `occurredAt`.
 
 ---
 
 ## 7. APIs
 
-### M-04 feature endpoints
+All M2 features are exposed through the canonical `/api/v1/m02-conversation-intelligence` prefix:
 
-M-04 exposes these main endpoints: 
+### Scorecard & Review Endpoints
+- `GET /api/v1/m02-conversation-intelligence/calls/:id/score` (Retrieves call review score)
+- `POST /api/v1/m02-conversation-intelligence/scorecards` (Creates a scorecard definition)
+- `GET /api/v1/m02-conversation-intelligence/scorecards` (Lists all active scorecards)
+- `POST /api/v1/m02-conversation-intelligence/theme-analyses` (Submits a batch theme analysis request)
+- `GET /api/v1/m02-conversation-intelligence/theme-analyses/:id` (Gets status or results of theme analysis)
+- `GET /api/v1/m02-conversation-intelligence/calls/:id/topics` (Gets tagged topics for a call)
+- `POST /api/v1/m02-conversation-intelligence/vocabulary` (Manages tenant vocabulary correction rules)
+- `GET /api/v1/m02-conversation-intelligence/translations/:id` (Retrieves translated transcript content)
 
-- `GET /api/v1/conversation-intelligence/calls/:id/score` 
-- `POST /api/v1/conversation-intelligence/scorecards` 
-- `GET /api/v1/conversation-intelligence/scorecards` 
-- `POST /api/v1/conversation-intelligence/theme-analyses` 
-- `GET /api/v1/conversation-intelligence/theme-analyses/:id` 
-- `GET /api/v1/conversation-intelligence/calls/:id/topics` 
-- `POST /api/v1/conversation-intelligence/vocabulary` 
-- `GET /api/v1/conversation-intelligence/translations/:id` 
-
-### M-05 search and tracker endpoints
-
-M-05 exposes these main endpoints: 
-
-- `GET /api/v1/smart-tracking/trackers` 
-- `POST /api/v1/smart-tracking/trackers` 
-- `GET /api/v1/smart-tracking/trackers/:id/detections` 
-- `GET /api/v1/smart-tracking/conversations/search` 
-- `GET /api/v1/smart-tracking/conversations` 
-- `GET /api/v1/smart-tracking/deal-drivers` 
-- `GET /api/v1/smart-tracking/saved-searches`
-- `POST /api/v1/smart-tracking/saved-searches` 
-
-### Admin configuration endpoints
-
-Admin-style configuration mainly includes scorecards, theme analyses, vocabulary correction rules, and tracker configuration endpoints.   
-These must be RBAC-protected because they affect tenant-wide AI behavior and review logic. 
+### Smart Tracking & Search Endpoints
+- `GET /api/v1/m02-conversation-intelligence/trackers` (Lists all custom Smart Trackers)
+- `POST /api/v1/m02-conversation-intelligence/trackers` (Creates a custom Smart Tracker)
+- `GET /api/v1/m02-conversation-intelligence/trackers/:id/detections` (Retrieves detections for a tracker)
+- `GET /api/v1/m02-conversation-intelligence/conversations/search` (Performs hybrid text + vector search)
+- `GET /api/v1/m02-conversation-intelligence/conversations` (Lists conversation library meta)
+- `GET /api/v1/m02-conversation-intelligence/deal-drivers` (Retrieves deal risk aggregations)
+- `GET /api/v1/m02-conversation-intelligence/saved-searches` (Lists saved filters)
+- `POST /api/v1/m02-conversation-intelligence/saved-searches` (Saves a search query)
 
 ---
 
 ## 8. Data Ownership
 
-### Core tables and indexes
-
-M-04 owns tables such as `scorecards`, `callscores`, `themes`, `themeanalyses`, `topictags`, `topicmodels`, and `translationpreferences`.   
-M-05 owns tables such as `trackers`, `trackerdetections`, `searchindexsynclog`, and `dealdriversnapshots`. 
-
-*M-04 reads corrected transcript content and correction logs from M-01-owned tables (`transcripts.correctedtext`, `speakersegments`, `transcriptcorrections`) through approved cross-module read contracts. M-04 does not own these tables and must not write to them directly.* 
-
-Important indexes include tenant-plus-call indexes for call scores and topic tags, plus tenant-plus-tracker and tenant-plus-deal indexes for tracker detections. 
-
-### Search index ownership
-
-Search index behavior belongs to M-05, with Meilisearch used for full-text search and pgvector used for semantic retrieval support.   
-That means if you are working on searchable conversation library internals, M-05 is the backend owner even though the product feature is shown under M2. 
-
-### Tenant isolation and retention
-
-Every table must include `tenantid`, and row-level security is a non-negotiable platform rule.   
-Conversation and transcript data are tenant-owned, and client data must not be used for shared model training without explicit consent. 
+### Core PostgreSQL Tables
+All M2 tables reside in the isolated `m02_conversation_intelligence` schema in PostgreSQL, secured by Row-Level Security (RLS):
+- `scorecards` (Scorecard rules, version metadata, and evaluation criteria).
+- `call_scores` (Scoring outputs, questions, aggregate confidence, and review flags).
+- `themes` & `theme_analyses` (Batch theme spotter results and query conditions).
+- `topic_tags` & `topic_models` (Topic labels mapped per call, and custom taxonomy models).
+- `translation_preferences` & `translated_texts` (Target translation preferences and localized outputs).
+- `trackers` & `tracker_detections` (Intent tracker definitions and detected snippets).
+- `search_index_sync_log` (Sync trace history tracking Meilisearch and pgvector updates).
+- `deal_driver_snapshots` (Rep-level aggregated risk signals used on the Deal Board).
 
 ---
 
 ## 9. Local Development
 
 ### Prerequisites
+To work locally on M2-related features, you need:
+- Node.js and NestJS backend runtime.
+- Python runtime for running the FastAPI AI Services layer.
+- PostgreSQL with `pgvector` enabled.
+- Upstash Redis or local Redis for BullMQ queues.
+- Meilisearch.
 
-To work locally on M2-related features, developers typically need the standard local stack: Docker, Docker Compose, the NestJS backend, Python AI services, PostgreSQL, Redis, and search dependencies such as Meilisearch.   
-TypeScript is used for product services and Python is used for AI services, so both runtimes matter for M2 work. 
-
-### Setup steps
-
-A normal local setup should start the multi-service stack through Docker Compose so that backend APIs, AI services, database, Redis, and supporting infra run together.   
-This is important because M2 behavior depends heavily on queues, events, and service-to-service calls, not just isolated controller code. 
-
-### Background workers
-
-BullMQ-backed workers must be running locally if you want scoring jobs, tagging jobs, tracker detection, or indexing flows to behave correctly.   
-Without workers, the APIs may enqueue jobs but nothing meaningful will happen after that. 
-
-### Search and index setup
-
-For M2 search-related development, you need Meilisearch available and any required index bootstrapping or seed data ready.   
-If you are testing semantic search, you also need the embedding flow and pgvector-backed data path available. 
-
-### Test commands
-
-Use the approved stack tools for testing: Jest for unit and service tests, Supertest for HTTP integration tests, Playwright for UI flows, Testcontainers for realistic infra-backed tests, and k6 for load or concurrency validation when needed. 
-
----
-
-## 10. Configuration
-
-### Required env vars
-
-The exact env registry is project-managed, but M2 work will depend on the usual backend, AI, queue, database, and search configuration values for PostgreSQL, Redis, Meilisearch, auth, and AI service connectivity.   
-If a feature touches semantic search or AI scoring, environment variables for the AI service and embedding path are also required. 
-
-### Optional env vars
-
-Optional values may include local overrides for search tuning, feature flags, fallback providers, and observability integrations.   
-These should stay out of source control and come from approved secret delivery paths. 
-
-### Secret sources
-
-Secrets must be managed through Doppler and must not be committed into repos or baked into images.   
-This includes API keys, provider credentials, database URLs, and integration secrets. 
-
-### Link to env registry
-
-Use the team-maintained environment registry or secrets inventory defined by the project’s operational setup, not ad hoc local notes.   
-That keeps onboarding cleaner and prevents drift between engineers. 
+### Setup Steps
+1. Start the local database, Redis, Meilisearch, and Python AI service using Docker Compose.
+2. Initialize local prisma clients:
+   ```bash
+   npx prisma generate --schema=./modules/m02-conversation-intelligence/prisma/schema.prisma
+   ```
+3. Run the database migrations locally:
+   ```bash
+   npx prisma migrate dev --schema=./modules/m02-conversation-intelligence/prisma/schema.prisma
+   ```
+4. Start the NestJS background workers:
+   ```bash
+   npm run start:dev m02-worker
+   ```
 
 ---
 
-## 11. Operational Notes
+## 10. Operational & Troubleshooting Notes
 
-### Common failure modes
-
-Common M2 failure modes include missing upstream entity linkage, AI service timeouts, queue backlog growth, Redis issues, search index lag, Meilisearch degradation, and duplicate event delivery.   
-For M-04 specifically, finalization can be delayed if `revenuegraph.entity.linked` has not arrived yet. 
-
-### Reprocessing guidance
-
-Reprocessing may be needed when topic models, vocabulary corrections, tracker logic, or embedding strategies change.   
-Any replay or reindex flow must be idempotent so that old calls are not duplicated and new outputs do not corrupt tenant records. 
-
-### Search reindex guidance
-
-If search documents or ranking logic change materially, M-05-owned search data may need reindexing in Meilisearch and possibly regeneration of semantic retrieval support data.   
-Do this through controlled batch jobs, not manual ad hoc scripts against production data. 
-
-### Support ownership
-
-In practice, support ownership is split by architecture responsibility: M-04 issues go to the Conversation Intelligence backend owner, M-05 issues go to the Smart Tracking and Search owner, and shared AI-service issues go to the AI team.   
-From a product or support desk perspective, however, they can still be grouped under the M2 Conversation Intelligence umbrella. 
+### Common Failure Modes
+- **Scoring Gating Delays:** If `revenue_graph.entity.linked` is delayed, call scoring is queued as a delayed job for up to 5 minutes (`CALL_SCORE_DELAY_MS` = 300,000ms) before scoring with fallback parameters.
+- **AI Service Timeouts:** Model inference endpoints may time out under load. BullMQ is configured with exponential backoff retries to resolve transient errors.
+- **Low-Confidence Suppression:** Detections with confidence scores below `0.70` are silently excluded from downstream Deal Drivers boards, although they remain stored in `tracker_detections`.
 
 ---
 
-## 12. Related Docs
+## 11. Related Docs
 
-Use these as the main follow-up documents for deeper implementation detail: 
-
-- **System Architecture Document (SAD)** for full module boundaries, flows, events, and storage design. 
-- **Feature TDDs** for each M2 feature such as AI Transcriber and Searchable Conversation Library. 
-- **Sequence diagrams and flow docs** for event-driven execution order and async processing. 
-- **API docs and runbooks** for endpoint contracts, operational guidance, and troubleshooting. 
+- **System Architecture Document (SAD):** Core platform patterns, data models, and monorepo workspaces.
+- **M2 Feature TDDs:** Comprehensive engineering designs located in the `/TDD/` subfolder.
+- **Event Schema Registry:** Complete event registries and BullMQ queue definitions.

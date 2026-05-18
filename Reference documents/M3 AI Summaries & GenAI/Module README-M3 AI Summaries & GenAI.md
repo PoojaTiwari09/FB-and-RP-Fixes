@@ -1,307 +1,259 @@
 # Doc #13 — Module README: M3 AI Summaries & GenAI
 
-## 1. Module Overview
+## 1. Document Control
+
+- **Document Title:** Module README — M3 AI Summaries & GenAI
+- **Module:** M3 AI Summaries & GenAI
+- **Workspace Target:** `modules/m03-ai-summaries-genai/`
+- **Owner:** Product Engineering — M3
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
+
+---
+
+## 2. Module Overview
 
 ### What M3 does
-M3 AI Summaries & GenAI converts upstream conversation signals into outputs that humans can directly consume in workflows, such as summaries, briefs, natural-language answers, and deep research reports. In the platform lifecycle, this is the **Analyze** stage: it sits after raw conversations have already been captured, linked, and understood, and before downstream execution modules act on those insights. 
+M3 AI Summaries & GenAI converts upstream conversation signals into structured outputs that human sales professionals can directly consume, such as executive call summaries, deal briefs, account briefs, natural-language answers, and deep research reports. In the platform lifecycle, this represents **Stage 4 — Analyze**: it sits after raw conversations have been captured, linked, and analyzed for structural keywords, and before downstream execution and dashboard modules act on those insights.
 
 ### Why it matters
-Raw transcripts, topic tags, tracker detections, and CRM-linked interaction data are useful, but most users do not want to read or interpret all of that manually. M3 turns those machine-readable signals into business-readable outputs that managers, reps, and RevOps can use immediately. 
+Raw transcripts, topic tags, tracker detections, and CRM-linked interaction data are heavy, low-level data. Most business professionals do not have the time to sift through transcripts manually. M3 turns those machine-readable signals into clear, actionable business summaries and reports that managers, reps, and RevOps can immediately act upon.
 
-### Lifecycle stage
-R-Revenue Intelligence defines a 7-stage lifecycle: Capture, Model, Understand, Analyze, Execute, Predict, and Optimize. M3 belongs to the **Analyze** stage, where structured signals from the Understand stage are synthesized into higher-order outputs such as summaries, briefs, reports, and answers. 
+### Platform Lifecycle Stage
+R-Revenue Intelligence defines a 7-stage lifecycle: Capture, Model, Understand, Analyze, Execute, Predict, and Optimize. M3 is the exclusive owner of **Stage 4 — Analyze**, where raw signals from the earlier stages are synthesized into higher-order, structured artifacts.
 
-### Core outputs
-M3 is responsible for generating:
-- AI-generated call summaries
-- AI-generated deal briefs
-- AI-generated account briefs
-- Ask Anything natural-language answers with cited sources
-- AI Deep Researcher async report outputs
-- Query session history for conversational research and follow-up interactions 
+### Core Outputs
+M3 is responsible for generating and persisting:
+- **AI Call Summaries:** Single-call structured breakdowns.
+- **AI Deal Briefs:** Aggregated momentum and risk reports for active opportunities.
+- **AI Account Briefs:** Consolidated executive briefs tracking client health.
+- **Ask Anything Conversational Answers:** Context-grounded RAG query answers with cited sources.
+- **AI Deep Researcher Reports:** Complex, multi-call async research reports.
 
-### Business interpretation
-A simple way to explain M3 to a fresher is this:  
-- Upstream modules detect **what happened** in conversations.
-- M3 explains **what it means** in a form a human can act on.
-- Downstream workflow modules then use those outputs in boards, tasks, planning, and execution. 
+### Business Interpretation
+- Upstream modules (**M1 Capture & Transcription** and **M2 Conversation Intelligence**) detect **what happened** in customer interactions.
+- **M3 AI Summaries & GenAI** explains **what it means** in a form a human can act on.
+- Downstream workflow and UI modules (**M4 Deal Intelligence**, **M5 Account Intelligence**, and **M8 Sales Engagement**) consume these insights for execution.
 
-## 2. Features in This Module
+---
 
-### AI Smart Summaries
-AI Smart Summaries automatically generate concise call summaries and structured briefs by analyzing conversations, emails, and CRM data, making it easier for users to consume the most important insights quickly. In the architecture, this includes persisted call summaries and related summary-style outputs such as deal briefs and account briefs. 
+## 3. Module Boundaries & Communication Contracts
 
-### Ask Anything
-Ask Anything is the natural-language query interface for users who want quick, contextual answers about calls, emails, deals, accounts, and contacts. It uses a retrieval-and-generation flow so users can ask business questions in plain language and receive grounded answers with supporting sources. 
+### What M3 Owns
+M3 owns the generation, storage, and retrieval of derived business insights. In the PostgreSQL database, it has exclusive write authority over tables under the **`m03_ai_summaries_genai`** schema:
+- `m03_ai_summaries_genai.call_summaries`
+- `m03_ai_summaries_genai.deal_briefs`
+- `m03_ai_summaries_genai.account_briefs`
+- `m03_ai_summaries_genai.research_reports`
+- `m03_ai_summaries_genai.query_sessions`
+- `m03_ai_summaries_genai.query_messages`
+- `m03_ai_summaries_genai.summary_evidence_links`
+- `m03_ai_summaries_genai.summary_history`
 
-### AI Deep Researcher
-AI Deep Researcher is the deeper, report-oriented analysis feature in M3. It goes beyond short Q&A by analyzing large volumes of conversations and generating structured, in-depth reports for complex business questions. 
+### What M3 Does Not Own
+- M3 does **not** own raw call capture, audio storage, or transcript creation (owned by **M1**).
+- M3 does **not** own the generation of topic models, scorecards, or keyword tracker detections (owned by **M2**).
+- M3 does **not** own the CRM entity graph, account/contact syncing, or the direct database mapping of deals (owned by **M10**).
+- M3 does **not** own email composition, outbound sequence triggers, or task lists (owned by **M8**).
 
-## 3. Module Boundaries
+### Upstream Dependencies
+M3 consumes and requires data from:
+- **M1 Capture & Transcription:** Audio transcripts, speaker segments, and call metadata.
+- **M2 Conversation Intelligence:** Topic tags, scorecards, and keyword tracker detections.
+- **M10 Data & Compliance:** CRM deal, account, contact, and relationship context (Revenue Graph).
+- **Platform Core:** Auth verification, tenant context lookup, and BullMQ task scheduling.
 
-### What M3 owns
-M3 owns insight generation outputs and the APIs, events, and storage needed to produce and retrieve them. In the architecture, M-06 owns `callsummaries`, `dealbriefs`, `accountbriefs`, `researchreports`, and `querysessions`, along with the `/api/v1/insights` API surface. 
-
-### What M3 does not own
-M3 does not own raw conversation capture, transcription, CRM sync, topic detection, tracker detection, Revenue Graph entity linking, or execution workflows. It consumes those upstream signals and transforms them into human-readable outputs, but it must not re-implement or bypass upstream module responsibilities. 
-
-### Upstream dependencies
-M3 depends on:
-- M-01 for `call.transcription.completed`
-- M-03 Revenue Graph for deal, account, and contact context
-- M-04 for topic-tagging outputs
-- M-05 for tracker detections and retrieval support
-- Platform Core for auth, tenant isolation, validation, and event handling 
-
-### Downstream consumers
+### Downstream Consumers
 M3 outputs are consumed by:
-- Frontend insight views
-- M-03 Revenue Graph in some summary propagation flows
-- M-07 Deal and Account Management for deal health and board views
-- End users such as reps, managers, and RevOps consuming summaries, briefs, answers, and reports 
+- **M4 Deal Intelligence / M5 Account Intelligence:** For deal card widgets, risk notifications, and stakeholder maps.
+- **M8 Sales Engagement:** To trigger email draft completions and playbooks based on meeting actions.
+- **M10 Data & Compliance:** Asynchronous propagation of meeting notes into external CRMs.
+- **Frontend client applications:** Serving interactive summaries, chat libraries, and PDF report downloads.
 
-### Boundary rule
-M3 must never read another module’s private tables directly unless the architecture explicitly gives it ownership. Cross-module access must happen through APIs or events, preserving the modular boundary that the platform requires from day one. 
+### Non-Circular Communication Rule
+**M10 Data & Compliance** serves as an upstream dependency during summary generation (providing deal metadata via REST API) and acts as an asynchronous downstream consumer (subscribing to `call.summary.generated` to sync meeting summaries to external CRM systems). This relationship is strictly non-blocking: M3 never writes to M10 tables directly, and M10 processes events asynchronously via the message bus, preventing circular runtime locks.
+
+---
 
 ## 4. Architecture Snapshot
 
-### Main components
-The module is implemented as `InsightGenerationModule` in the NestJS API layer, with AI inference delegated to the Python AI Services Layer. Business logic, auth, event orchestration, persistence, and lifecycle handling stay in TypeScript, while summarization, answer generation, embeddings, and research reasoning stay in Python services. 
-
-### Retrieval layer
-M3 uses retrieval over summaries, transcript chunks, and semantic search for features like Ask Anything and Deep Researcher. The architecture uses pgvector for embeddings, structured source data in PostgreSQL, and retrieval orchestration through internal AI endpoints such as `v1/embed` and `v1/answer-query`. 
-
-### AI generation flow
-The standard pattern is:
-1. Receive an event or API request.
-2. Fetch transcript and entity context.
-3. Build structured prompt payload.
-4. Call AI Services Layer.
-5. Validate and store structured output.
-6. Expose result via API or event. 
-
-### Storage and versioning
-M3 stores summaries, briefs, query sessions, and research jobs in its owned tables. Generated summary-style outputs include version fields for regeneration tracking, while research jobs track lifecycle through `queued`, `running`, `completed`, and `failed` states. 
-
-### Event flow
-M3 consumes upstream events such as `call.transcription.completed`, `tracker.detection.created`, and `call.topics.tagged`. It emits downstream events such as `call.summary.generated` after successful summary creation. 
-
-## 5. APIs
-
-### API prefix
-All module APIs are exposed under:
-- ` /api/v1/insights ` 
-
-### Summary generation endpoints
-- `GET /api/v1/insights/calls/:id/summary` — fetch AI-generated call summary.
-- `GET /api/v1/insights/deals/:id/brief` — fetch AI-generated deal brief.
-- `GET /api/v1/insights/accounts/:id/brief` — fetch AI-generated account brief. 
-
-### Ask endpoints
-- `POST /api/v1/insights/ask` — submit a natural-language query.
-- `GET /api/v1/insights/ask/sessions/:id` — fetch full Ask Anything session history. 
-
-### Research job endpoints
-- `POST /api/v1/insights/research` — create AI Deep Researcher async job.
-- `GET /api/v1/insights/research/:id` — fetch research status or completed report result. 
-
-### Auth model and caller types
-All endpoints are JWT-protected and intended primarily for frontend callers acting on behalf of authenticated users. Authorization is enforced through Platform Core using Supabase Auth, JWT guards, RBAC, and tenant-aware request handling. 
-
-## 6. Events
-
-### Events consumed
-M3 consumes these upstream events:
-- `call.transcription.completed`
-- `tracker.detection.created`
-- `call.topics.tagged` 
-
-### What M3 does when events arrive
-- On `call.transcription.completed`, M3 generates and stores call summaries.
-- On `tracker.detection.created`, M3 refreshes affected deal briefs using debounce rules.
-- On `call.topics.tagged`, M3 enriches summary structure with topic information where relevant. 
-
-### Events emitted
-M3 emits:
-- `call.summary.generated` 
-
-### Event ownership and retry rules
-M3 owns the summary-generated event contract and is responsible for idempotent handling of consumed events. For example, duplicate `call.transcription.completed` events must not create duplicate version-1 summaries, and deal brief refreshes are debounced to avoid regeneration storms. 
-
-## 7. Data Ownership
-
-### Owned data
-M3 owns:
-- `callsummaries`
-- `dealbriefs`
-- `accountbriefs`
-- `researchreports`
-- `querysessions` 
-
-### Generated summaries and briefs
-These tables store human-consumable outputs derived from upstream signals, not the upstream signals themselves. That distinction matters because M3 owns the interpretation artifacts, while other modules own the source-of-truth interaction and detection data. 
-
-### Search and retrieval artifacts
-M3 uses retrieval artifacts such as embeddings and transcript chunks, but vector generation and retrieval support are shared platform capabilities rather than M3-exclusive source systems. M3 may consume them for Ask Anything and Deep Researcher, but it should not treat them as a replacement for owned output tables. 
-
-### Research job records
-`researchreports` is the canonical async job record for AI Deep Researcher. It stores the question, filters, status, result text, creator, and created timestamp for long-running report-oriented analysis. 
-
-### Tenant isolation and retention
-All M3 data is tenant-scoped and subject to the platform’s shared PostgreSQL plus RLS model. Every query, write path, and exported output must preserve tenant isolation and follow the broader platform governance rules around customer-owned data. 
-
-## 8. Folder Structure
-
-### Recommended structure
-This module should be easy for a fresher to navigate. Keep controller code thin, service code focused, and worker/retrieval/prompt logic separated clearly. 
-
-```text
-src/modules/m3-insight-generation/
-├── controllers/
-│   ├── call-summary.controller.ts
-│   ├── ask.controller.ts
-│   └── research.controller.ts
-├── services/
-│   ├── summary.service.ts
-│   ├── brief.service.ts
-│   ├── ask-anything.service.ts
-│   └── deep-research.service.ts
-├── retrieval/
-│   ├── vector-search.service.ts
-│   ├── transcript-retrieval.service.ts
-│   └── context-assembly.service.ts
-├── prompt-builders/
-│   ├── summary.prompt.ts
-│   ├── ask.prompt.ts
-│   └── research.prompt.ts
-├── workers/
-│   ├── summary-generation.worker.ts
-│   ├── brief-refresh.worker.ts
-│   └── research.worker.ts
-├── schemas/
-│   ├── ask.schema.ts
-│   ├── research.schema.ts
-│   └── summary.schema.ts
-├── events/
-│   ├── summary-generated.event.ts
-│   └── event-handlers.ts
-├── repositories/
-│   ├── call-summary.repository.ts
-│   ├── brief.repository.ts
-│   └── research-report.repository.ts
-└── tests/
-    ├── unit/
-    ├── integration/
-    └── event-flow/
+```
+   ┌────────────────────────────────────────────────────────┐
+   │                  Public Web Client (UI)                │
+   └───────────────────────────┬────────────────────────────┘
+                               │
+               (HTTPS REST APIs: /api/v1/m03-*)
+                               v
+   ┌────────────────────────────────────────────────────────┐
+   │             modules/m03-ai-summaries-genai/            │
+   │                (NestJS Service Controllers)            │
+   └───────────────┬────────────────────────┬───────────────┘
+                   │                        │
+       (Async jobs via BullMQ)              │ (Grounded RAG Queries)
+                   v                        v
+   ┌───────────────────────────┐    ┌───────────────────────┐
+   │     Background Workers    │    │  Vector Search Engine │
+   │ (Summary & Report Gen)    │    │ (pgvector + Postgres) │
+   └───────────────┬───────────┘    └───────────┬───────────┘
+                   │                            │
+                   ├────────────────────────────┘
+                   │ (Private Internal REST APIs)
+                   v
+   ┌────────────────────────────────────────────────────────┐
+   │                  FastAPI AI Services Layer             │
+   │               (Python Model Inference / LLM)           │
+   └────────────────────────────────────────────────────────┘
 ```
 
-### Folder intent
-- `controllers/` own HTTP entry points only.
-- `services/` own module business orchestration.
-- `retrieval/` owns source fetching and ranking logic.
-- `prompt-builders/` owns payload shaping for AI services.
-- `workers/` own async processing.
-- `schemas/` own validation contracts.
-- `tests/` mirror real usage and event flows. 
+### Main Components
+The module is physically packaged inside `modules/m03-ai-summaries-genai/` in the monorepo:
+1. **NestJS Controllers & Services (TypeScript):** Handles user authorization, tenant query filters, session management, database migrations, and job scheduling.
+2. **BullMQ Background Workers:** Orchestrates long-running summaries and multi-interaction research reports, preventing API thread blocking.
+3. **Retrieval Layer:** Interfaces with PostgreSQL `pgvector` and Meilisearch to execute hybrid search over tenant-isolated embeddings.
+4. **FastAPI Inference Layer (Python):** Private service execution for prompt shaping, structured JSON parsing, and LLM text generation.
 
-## 9. Local Development
+---
 
-### Prerequisites
-Local development should follow the real architecture closely enough to catch integration issues early. The approved local approach uses Docker Compose with the main services running in containers, alongside the approved frontend, NestJS backend, Python AI services, PostgreSQL, and Redis dependencies. 
+## 5. Module APIs
 
-### Setup steps
-1. Clone the monorepo.
-2. Pull environment variables from Doppler or approved secret source.
-3. Start local services with Docker Compose.
-4. Run database migrations.
-5. Seed sample tenant, users, transcripts, and AI fixture data.
-6. Start API, frontend, and AI service containers. 
+All public REST endpoints are exposed strictly under the `/api/v1/m03-ai-summaries-genai` prefix.
 
-### Run commands
-Use one standard command path per service so new engineers do not guess. Exact commands may vary by repo, but the module README should point to the repo-standard commands for:
-- API dev server
-- AI services dev server
-- worker processes
-- test suites
-- local stack startup 
+### Call Summary Endpoints
+- `GET /api/v1/m03-ai-summaries-genai/calls/:id/summary`
+  - Fetches the active AI call summary including next steps, risks, and confidence scores.
+- `POST /api/v1/m03-ai-summaries-genai/calls/:id/summary/regenerate`
+  - Explicitly schedules an asynchronous background job to regenerate the call summary.
 
-### Worker setup
-M3 depends on async workers for summary generation, brief refresh, and research jobs. Local development must include BullMQ-backed workers so event-driven flows and research job lifecycles can be tested properly, not mocked away by default. 
+### Deal & Account Brief Endpoints
+- `GET /api/v1/m03-ai-summaries-genai/deals/:id/brief`
+  - Fetches the latest deal brief combining recent calls, tracker alerts, and deal drivers.
+- `GET /api/v1/m03-ai-summaries-genai/accounts/:id/brief`
+  - Fetches the latest account brief reflecting stakeholder sentiment and health trends.
 
-### Mock data strategy
-Use stable fixtures for:
-- transcripts
-- topic tags
-- tracker detections
-- revenue graph context
-- expected AI JSON outputs 
+### Ask Anything (Conversational RAG) Endpoints
+- `POST /api/v1/m03-ai-summaries-genai/ask`
+  - Submits a natural-language question. Initiates a grounded hybrid search and returns a cited response.
+- `GET /api/v1/m03-ai-summaries-genai/ask/sessions/:id`
+  - Retrieves the complete conversational message history for a query session.
 
-A good fresher-friendly rule is: first make the module work with deterministic fixtures, then test it with real queue and service boundaries. 
+### AI Deep Researcher (Async Analysis) Endpoints
+- `POST /api/v1/m03-ai-summaries-genai/research`
+  - Submits a research query with complex filters. Returns an instant `202 Accepted` with a `reportId`.
+- `GET /api/v1/m03-ai-summaries-genai/research/:id`
+  - Polls the active job status (`queued`, `running`, `completed`, `failed`) and returns the finished report.
 
-## 10. Configuration
+---
 
-### Required env vars
-This module depends on shared platform infrastructure, so the required configuration will normally include:
-- PostgreSQL connection
-- Redis connection
-- AI service base URL
-- auth and JWT config
-- logging and observability config
-- secret manager integration 
+## 6. Message & Event Contracts
 
-### Optional env vars
-Optional configuration may include:
-- feature flags for Ask Anything or Deep Researcher rollout
-- timeout overrides for AI endpoints
-- retrieval depth limits
-- research concurrency limits
-- debug logging toggles 
+Platform components communicate asynchronously using event-driven choreography via **BullMQ** on Redis.
 
-### Secret sources
-Secrets must come from approved centralized secret management, not local committed files. The approved architecture uses Doppler for environment and secret delivery. 
+### Events Consumed
+- **`call.transcription.completed`**
+  - *Trigger:* Emitted by **M1** when a meeting transcript is finalized.
+  - *Action:* M3 immediately enqueues a background summary generation job.
+- **`tracker.detection.created`**
+  - *Trigger:* Emitted by **M2** when a keyword pattern matches a transcript.
+  - *Action:* M3 registers the signal and queues a debounced deal/account brief refresh job.
+- **`call.topics.tagged`**
+  - *Trigger:* Emitted by **M2** when topic taxonomies are generated.
+  - *Action:* M3 appends topic-specific tags and structures to the active call summary metadata.
 
-### Link to env registry
-This README should link to the central environment variable registry or ops documentation rather than duplicating every secret definition inline. That keeps the README lightweight while preserving one source of truth for configuration. 
+### Events Emitted
+- **`call.summary.generated`**
+  - *Payload:* `eventId`, `summaryId`, `callId`, `tenantId`, `confidenceScore`, `flaggedReview`, `generatedAt`.
+  - *Action:* Emitted after a call summary is successfully stored. Consumed by **M10** for CRM notes propagation and **M4/M5** for cards refresh.
+- **`research.report.completed`**
+  - *Payload:* `eventId`, `reportId`, `tenantId`, `createdBy`, `status`, `questionSummary`, `sourceCount`, `generatedAt`.
+  - *Action:* Emitted when a multi-call Deep Researcher report completes and is written to persistent storage.
 
-## 11. Operational Notes
+---
 
-### Common failure modes
-Typical failure modes include:
-- missing transcript or delayed upstream data
-- missing Revenue Graph entity context
-- AI service timeout or malformed structured response
-- duplicate events causing accidental regeneration attempts
-- queue backlog causing stale summary generation
-- low-confidence outputs requiring review instead of blind use 
+## 7. Data Ownership & Schema Layout
 
-### Re-run and regeneration rules
-M3 should treat regeneration as an explicit action, not an accidental side effect of duplicate events. The architecture already notes versioned summary outputs and idempotent handling of duplicate transcription events, which is the correct baseline rule for safe regeneration. 
+All M3 tables reside under the **`m03_ai_summaries_genai`** PostgreSQL schema. Under decentralized db governance, these tables are managed locally in `modules/m03-ai-summaries-genai/prisma/schema.prisma`.
 
-### Cost controls
-This module can become expensive because it combines retrieval, LLM calls, and async report generation. Practical cost controls include bounded retrieval depth, cached outputs where safe, debounce on repeated refreshes, and stronger limits on deep research jobs than on simple summary reads. 
+### Owned Tables
+1. **`call_summaries`:** Stores call executive summaries, next steps, risks, confidence score, and revision versioning.
+2. **`deal_briefs`:** Stores opportunity briefings, competitive signals, and recommended steps.
+3. **`account_briefs`:** Stores overall client account status and sentiment summary.
+4. **`research_reports`:** Stores complex async researcher reports and question parameters.
+5. **`query_sessions`:** Stores individual Ask Anything chat conversation metadata and scopes.
+6. **`query_messages`:** Stores chat conversation turns (user vs assistant) along with cited sources JSON arrays.
+7. **`summary_evidence_links`:** Normalized table map linking summary sections to source calls, transcript snippets, or detections.
+8. **`summary_history`:** Stores previous snapshots of regenerated summaries for audit trails.
 
-### Support ownership
-- Product/API ownership: Backend Lead
-- AI quality and prompt ownership: AI Lead
-- Queue and worker reliability: Backend Lead / Platform team
-- Infra and secret issues: DevOps Lead
-- Cross-module boundary issues: Tech Lead 
+### Shared Platform Tables (Consumed, NOT Owned)
+- **`semantic_embeddings`:** Owned by the platform embedding pipeline (managed under **M1**). M3 reads embeddings through read-only access to this table to perform pgvector similarity lookups.
 
-## 12. Related Docs
+---
 
-### Core references
-- System Architecture Document (SAD)
-- Feature TDD — AI Smart Summaries
-- Feature TDD — Ask Anything
-- Feature TDD — AI Deep Researcher
-- API design docs for `/api/v1/insights`
-- Sequence diagrams for summary, ask, and research flows
-- Runbooks for AI service failures, queue backlog, and regeneration operations 
+## 8. Directory & Folder Layout
 
-### Reading order for new engineers
-Recommended reading order:
-1. SAD sections on lifecycle, module boundaries, and AI services.
-2. M3 Module README.
-3. Feature TDDs for Smart Summaries, Ask Anything, and Deep Researcher.
-4. API docs.
-5. Event flow and operational runbooks. 
+The physical codebase resides strictly under the `modules/m03-ai-summaries-genai/` directory:
+
+```text
+modules/m03-ai-summaries-genai/
+├── prisma/
+│   └── schema.prisma                # Local Prisma migrations & DB schema
+├── src/
+│   ├── controllers/                 # Express/NestJS HTTP route managers
+│   │   ├── call-summary.controller.ts
+│   │   ├── ask.controller.ts
+│   │   └── research.controller.ts
+│   ├── services/                    # Module business orchestration
+│   │   ├── summary.service.ts
+│   │   ├── brief.service.ts
+│   │   ├── ask-anything.service.ts
+│   │   └── deep-research.service.ts
+│   ├── retrieval/                   # pgvector & Meilisearch retrieval
+│   │   ├── hybrid-search.service.ts
+│   │   └── context-assembler.service.ts
+│   ├── prompt-builders/             # LLM prompt composition
+│   │   ├── summary-prompt.ts
+│   │   ├── ask-prompt.ts
+│   │   └── research-prompt.ts
+│   ├── workers/                     # BullMQ background task execution
+│   │   ├── summary-generation.worker.ts
+│   │   └── research-generation.worker.ts
+│   └── dto/                         # Input validation via Zod schemas
+│       ├── ask.dto.ts
+│       └── research.dto.ts
+└── tests/
+    ├── unit/                        # Isolated logic tests
+    └── integration/                 # End-to-end endpoint and event tests
+```
+
+---
+
+## 9. Environment Configuration Summary
+
+All environment settings are loaded dynamically at runtime via Doppler. The key configuration flags include:
+- `M03_ENABLED`: Master feature switch to bootstrap M3 routes and queues.
+- `M03_SUMMARY_ENABLED`: Toggle call summary background workers.
+- `M03_ASK_ENABLED`: Toggle Ask Anything RAG routes.
+- `M03_RESEARCH_ENABLED`: Toggle Deep Researcher async queue processors.
+- `SESSION_RETENTION_DEFAULT_DAYS`: Standard session retention window (Default: `90` days, maximum: `365` days).
+
+*Refer to the [M3 Environment Variables Registry.md](file:///c:/Users/Relanto/Desktop/RevenueIntellegence/Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/M3%20Environment%20Variables%20Registry.md) for full config details.*
+
+---
+
+## 10. Operational Guidelines
+
+### AI Failure Resiliency & Throttling
+- **LLM Timeout Guard:** Synchronous user queries (Ask Anything) time out after 30 seconds (`AI_SERVICE_TIMEOUT_MS_SYNC`). Background jobs have a 5-minute cap (`AI_SERVICE_TIMEOUT_MS_ASYNC`).
+- **Research Concurrency Cap:** To prevent external token exhaustion, a single tenant is restricted to **2 concurrent** AI Deep Researcher workflows. Excess requests are queued in BullMQ.
+- **Low-Confidence Gating:** Call summaries or reports generating a confidence score `< 0.70` are written with `flagged_for_review = true` and blocked from downstream auto-sync to external CRMs.
+
+---
+
+## 11. Related Documentation
+
+- **Feature Technical Design Documents (TDDs):**
+  - [TDD-AI Smart Summaries.md](file:///c:/Users/Relanto/Desktop/RevenueIntellegence/Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/TDD/TDD-AI%20Smart%20Summaries.md)
+  - [TDD-Ask Anything.md](file:///c:/Users/Relanto/Desktop/RevenueIntellegence/Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/TDD/TDD-Ask%20Anything.md)
+  - [TDD-AI Deep Researcher.md](file:///c:/Users/Relanto/Desktop/RevenueIntellegence/Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/TDD/TDD-AI%20Deep%20Researcher.md)
+- **Sequence Flows:**
+  - [M3 Sequence Diagrams.md](file:///c:/Users/Relanto/Desktop/RevenueIntellegence/Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/M3%20Sequence%20Diagrams.md)

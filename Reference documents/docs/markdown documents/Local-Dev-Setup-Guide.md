@@ -245,6 +245,64 @@ A very common first-time issue is that Docker is installed but **Docker Desktop 
 
 ---
 
+## 🔌 Starting the Full Stack Natively (Without Docker)
+
+If you prefer not to use Docker, or if your local machine is running low on memory/CPU resources, you can run all platform services natively on your local operating system.
+
+### Prerequisites for Native Setup
+Ensure you have the following installed on your host system:
+1. **PostgreSQL 16** (locally via PostgresApp/Installer, or point to a remote instance like Supabase/Neon).
+2. **Redis** (locally, or point to a cloud service like Upstash Redis).
+3. **Node.js 20 LTS** & **pnpm**.
+4. **Python 3.11** (required for `apps/ai-services`).
+
+### Steps to Run Natively:
+
+#### 1. Define Local Secrets (.env)
+Instead of Doppler (or in combination with Doppler CLI), create a `.env` file in the root of your repository:
+```env
+# PostgreSQL Connection URL
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/revenue_intel?schema=public"
+
+# Redis Server Configuration
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+
+# AI services link
+AI_SERVICE_URL="http://localhost:8000"
+```
+
+#### 2. Compile Database Client Mappings
+To push models to your native database instance and generate workspace client types:
+```bash
+# Sequential client compilation to prevent file lock conflict on Windows
+pnpm --workspace-concurrency=1 -r db:generate
+
+# Sync models to native/cloud database
+npx prisma db push --schema=packages/database/prisma/schema.prisma
+```
+
+#### 3. Launch Next.js & NestJS Services
+```bash
+# Install root monorepo dependencies
+pnpm install
+
+# Start frontend and NestJS development servers in parallel
+pnpm dev
+```
+
+#### 4. Launch Python FastAPI Services
+Open a separate terminal window and execute:
+```bash
+cd apps/ai-services
+python -m venv venv
+source venv/bin/activate  # (On Windows: venv\Scripts\activate)
+pip install -r requirements.txt
+uvicorn app.main:app --port 8000 --reload
+```
+
+---
+
 ## 🗄️ Database Setup (Prisma Migrations)
 
 The backend uses **Prisma** for database access and schema management. Prisma is part of the approved backend stack because it gives type-safe database queries and a clean migration workflow for PostgreSQL. 

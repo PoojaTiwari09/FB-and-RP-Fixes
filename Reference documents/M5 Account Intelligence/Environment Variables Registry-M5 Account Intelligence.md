@@ -1,318 +1,162 @@
 # Doc #18 — Environment Variables Registry: M5 Account Intelligence
 
-## Document Control
+## 1. Document Control
 
-- **Document name:** Environment Variables Registry — M5 Account Intelligence 
-- **Platform:** R-Revenue Intelligence 
-- **Module name (product):** M5 Account Intelligence 
-- **Implementation owner (engineering):** M-07 Deal and Account Management 
-- **Document type:** Environment Variable Registry 
-- **Version:** 0.1 
-- **Status:** Draft 
-- **Owner:** Tech Lead / Engineering Lead 
-- **Last updated:** April 2026 
-- **Next review date:** July 2026 
-- **Review cadence:** Every 3 months, or immediately after any major architecture or infrastructure change. 
+- **Document Name:** Environment Variables Registry — M5 Account Intelligence
+- **Platform:** R-Revenue Intelligence
+- **Module Name:** M5 Account Intelligence
+- **Workspace Directory:** `modules/m05-account-intelligence/`
+- **Owner:** Product Engineering — M5
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
-## Purpose
+---
 
-This document defines the environment variables required to run **M5 Account Intelligence** safely across local, staging, and production environments.   
-It exists so backend engineers, DevOps engineers, QA engineers, and freshers can know exactly which runtime settings control Account Boards, account detail hydration, async refresh behavior, tenant isolation, upstream context access, and observability. 
+## 2. Purpose
 
-This registry covers:
-- App basics and feature flags. 
-- PostgreSQL and Redis dependencies. 
-- CRM-linked read configuration. 
-- Account scoring and AI context service access. 
-- Board cache and refresh settings. 
-- Observability, logs, and alerts. 
+This document defines the environment variables required to run the **M5 Account Intelligence** module safely across local, staging, and production environments. 
 
-## Usage Rules
+It provides an explicit reference for backend, DevOps, and QA teams regarding runtime configurations that control Account Boards, detail hydrated panels, asynchronous scoring engines, Redis-backed BullMQ workflows, tenant isolations, and upstream API boundaries.
 
-- Environment variables are the **only approved way** to inject deployment-specific runtime configuration into M5 services. 
-- Do not hardcode secrets, tokens, hostnames, queue credentials, or service URLs in source code, test fixtures, Dockerfiles, or frontend bundles. 
-- Secrets must come from the platform-approved secret source, such as Doppler or equivalent centralized secret management. 
-- M5 must follow platform tenancy rules, so any configuration that affects reads, writes, cache keys, or refresh jobs must remain tenant-safe and must not bypass RLS or RBAC enforcement. 
-- If a variable changes runtime behavior for another module boundary, the change must be reviewed by the Tech Lead before production rollout. 
-- Boolean values should be written consistently as `true` or `false`. 
-- Duration values should use an explicit unit convention, either seconds as integers or ISO-like human-readable documented values; this registry uses **seconds** unless noted otherwise. 
+---
 
-## Runtime Groups
+## 3. Usage Rules
 
-M5 variables are grouped by how the module works at runtime. 
+- **Zero Secrets in Git:** Under no circumstances should live API tokens, passwords, database URLs, or security keys reside in raw source files or committed environments. Doppler is the exclusive secret management orchestrator.
+- **Strict Tenancy Safety:** No configuration flag or custom local variable may disable Row-Level Security (RLS) or bypass JWT signature validations in shared or production environments.
+- **Uniform Casing:** Boolean flags must be written as `true` or `false`. Durations and timeouts must use **milliseconds** for API calls and **seconds** for cache TTLs, unless explicitly stated in the variable descriptions.
 
-### Group A — App basics and feature flags
+---
 
-These variables control whether Account Boards is enabled, how the module identifies itself, and whether M5-specific behaviors should run in the current environment. 
+## 4. Runtime Groups
 
-### Group B — PostgreSQL and Redis
+### Group A — App Basics & Feature Flags
+These variables govern service identity, runtime environments, and selective module capability switches.
 
-These variables support M5’s main read models, saved board configuration, account engagement artifacts, renewal signals, and async refresh queue behavior. 
+### Group B — PostgreSQL Schema Mappings
+These variables manage connection pools, timeouts, and transaction configurations for the `m05_account_intelligence` database schema.
 
-### Group C — CRM read configuration
+### Group C — Redis & Queue Configuration
+These variables control BullMQ-backed background workers processing debounced engagement scoring and stale-state refresh tasks.
 
-These variables control how M5 reads approved CRM-linked account context through platform-approved boundaries. 
+### Group D — Upstream Context API Scopes
+These variables define secure connection endpoints for upstream services: **M10 Data & Compliance** (Revenue Graph CRM details) and **M3 AI Summaries & GenAI** (Account Brief recaps).
 
-### Group D — Account scoring and context services
+### Group E — Cache & Refresh Optimization
+These variables tune time-to-live (TTL) thresholds, stale badges, and analytical scoring windows.
 
-These variables define how M5 reaches upstream account context or AI-generated brief providers, especially M-06 and related internal service paths. 
+### Group F — Observability, Logs, & Alerts
+These variables configure structured logging verbosities, Sentry exception targets, and webhook notifications on service outages.
 
-### Group E — Board cache and refresh settings
+---
 
-These variables tune stale thresholds, refresh queue behavior, cache TTLs, refresh debouncing, and safe fallback behavior for fast Account Board reads. 
-
-### Group F — Observability, logs, and alerts
-
-These variables control structured logs, tracing, error reporting, and alert routing for stale boards, refresh failures, and degraded account detail hydration. 
-
-## Variable Registry Table
+## 5. Variable Registry Table
 
 | Variable | Required | Example | Group | Used By | Description |
-|---|---|---|---|---|---|
-| `APP_ENV` | Yes | `local` | App basics | API, workers | Runtime environment name such as `local`, `staging`, or `production`.  |
-| `NODE_ENV` | Yes | `production` | App basics | API, workers | Standard Node runtime mode for TypeScript product services.  |
-| `SERVICE_NAME` | Yes | `m07-deal-account-service` | App basics | API, workers, logs | Service identity used in logs, metrics, and traces.  |
-| `PORT` | Yes | `8080` | App basics | API | HTTP port for the M-07 service process.  |
-| `M5_ACCOUNT_BOARDS_ENABLED` | Yes | `true` | App basics | API, UI integration | Master feature flag for Account Boards capability.  |
-| `M5_ACCOUNT_DETAIL_ENABLED` | Yes | `true` | App basics | API, UI integration | Feature flag for account detail panel endpoints and hydration logic.  |
-| `M5_REFRESH_WORKER_ENABLED` | Yes | `true` | App basics | Worker | Enables async stale refresh processing for accounts.  |
-| `M5_ALLOW_PARTIAL_HYDRATION` | No | `true` | App basics | API | Allows board or detail responses to return partial data when some upstream context is unavailable.  |
-| `M5_DEFAULT_PAGE_SIZE` | No | `50` | App basics | API | Default number of account rows returned when request does not specify page size.  |
-| `M5_MAX_PAGE_SIZE` | No | `200` | App basics | API | Upper limit for account board pagination to protect performance.  |
-| `DATABASE_URL` | Yes | `postgresql://...` | PostgreSQL | API, workers | Primary PostgreSQL connection string for M-07-owned tables and approved reads.  |
-| `DB_POOL_MIN` | No | `5` | PostgreSQL | API, workers | Minimum DB connection pool size.  |
-| `DB_POOL_MAX` | No | `20` | PostgreSQL | API, workers | Maximum DB connection pool size to protect shared database stability.  |
-| `DB_STATEMENT_TIMEOUT_MS` | No | `15000` | PostgreSQL | API, workers | Statement timeout for board queries and refresh jobs.  |
-| `REDIS_URL` | Yes | `redis://...` | Redis | API, workers, queue | Redis connection for BullMQ-backed refresh and cache support.  |
-| `REDIS_TLS_ENABLED` | No | `true` | Redis | API, workers | Enables TLS for managed Redis environments.  |
-| `BULLMQ_PREFIX` | Yes | `ri` | Redis | Workers, queue | Shared queue namespace prefix for the platform.  |
-| `M5_REFRESH_QUEUE_NAME` | Yes | `m5-account-refresh` | Redis | Workers | Queue name for account refresh jobs.  |
-| `M5_REFRESH_CONCURRENCY` | No | `10` | Redis | Workers | Worker concurrency for async account refresh jobs.  |
-| `M5_REFRESH_MAX_RETRIES` | No | `3` | Redis | Workers | Maximum retry count for refresh jobs.  |
-| `M5_REFRESH_BACKOFF_MS` | No | `30000` | Redis | Workers | Base retry backoff for failed refresh jobs.  |
-| `M5_DEAD_LETTER_ENABLED` | No | `true` | Redis | Workers, ops | Enables dead-letter handling for exhausted refresh jobs.  |
-| `CRM_READ_PROVIDER` | Yes | `salesforce` | CRM reads | API, workers | Active primary CRM context provider for the tenant or environment.  |
-| `CRM_READ_TIMEOUT_MS` | No | `8000` | CRM reads | API, workers | Timeout for approved CRM-linked read operations.  |
-| `CRM_READ_RETRY_COUNT` | No | `2` | CRM reads | API, workers | Retry count for transient CRM read failures when synchronous access is allowed by boundary rules.  |
-| `CRM_CONTEXT_API_BASE_URL` | Yes | `http://platform-core-internal` | CRM reads | API, workers | Base URL for approved internal CRM-context or linked-entity read APIs.  |
-| `CRM_CONTEXT_API_TOKEN` | Yes | `secret` | CRM reads | API, workers | Service-to-service auth token for approved internal CRM context reads.  |
-| `M6_INSIGHTS_API_BASE_URL` | Yes | `http://insight-generation-internal` | Context services | API, workers | Base URL for M-06 account brief or related insight reads.  |
-| `M6_INSIGHTS_API_TOKEN` | Yes | `secret` | Context services | API, workers | Service credential for calling approved M-06 public APIs.  |
-| `M5_ACCOUNT_BRIEF_PATH` | No | `/api/v1/insights/accounts/:id/brief` | Context services | API | Relative path template for account brief reads.  |
-| `M5_ENGAGEMENT_SCORE_SOURCE` | No | `internal_table` | Context services | API, workers | Indicates whether engagement score is read from M-07-owned table or another approved read layer.  |
-| `M5_RENEWAL_SIGNAL_SOURCE` | No | `internal_table` | Context services | API, workers | Indicates source for renewal/account signal reads.  |
-| `M5_CONTEXT_FETCH_TIMEOUT_MS` | No | `5000` | Context services | API, workers | Timeout for upstream account context or brief hydration calls.  |
-| `M5_CONTEXT_FETCH_RETRY_COUNT` | No | `1` | Context services | API, workers | Retry count for transient upstream context failures.  |
-| `M5_BOARD_CACHE_ENABLED` | No | `true` | Cache/refresh | API | Enables read-side caching for board listing responses where safe.  |
-| `M5_BOARD_CACHE_TTL_SEC` | No | `120` | Cache/refresh | API | TTL for cached board responses.  |
-| `M5_DETAIL_CACHE_TTL_SEC` | No | `60` | Cache/refresh | API | TTL for account detail hydration responses.  |
-| `M5_STALE_AFTER_SEC` | Yes | `900` | Cache/refresh | API, workers | Age threshold after which board/account state is treated as stale.  |
-| `M5_BRIEF_STALE_AFTER_SEC` | No | `1800` | Cache/refresh | API, workers | Age threshold for AI account brief freshness.  |
-| `M5_REFRESH_DEBOUNCE_SEC` | No | `120` | Cache/refresh | Workers | Prevents repeated refresh jobs for the same account in a short period.  |
-| `M5_FORCE_ASYNC_REFRESH_ONLY` | No | `true` | Cache/refresh | API, workers | Prevents expensive synchronous recomputation during user request flows.  |
-| `M5_MANUAL_REFRESH_ENABLED` | No | `true` | Cache/refresh | API, UI integration | Enables user-triggered refresh action from Account Board or detail panel.  |
-| `M5_PARTIAL_RESPONSE_ON_BRIEF_FAILURE` | No | `true` | Cache/refresh | API | Returns board/detail data even if M-06 brief fetch fails.  |
-| `M5_APPLIED_FILTER_LIMIT` | No | `20` | Cache/refresh | API | Guardrail to prevent extreme saved-filter or request-filter combinations.  |
-| `M5_SORT_FIELD_ALLOWLIST` | No | `name,health,lastActivityAt` | Cache/refresh | API | Explicit allowlist for supported board sort fields.  |
-| `LOG_LEVEL` | Yes | `info` | Observability | API, workers | Structured log verbosity level.  |
-| `LOG_FORMAT` | No | `json` | Observability | API, workers | Preferred log format for centralized ingestion.  |
-| `SENTRY_DSN` | No | `https://...` | Observability | API, workers | Error tracking and exception reporting endpoint.  |
-| `SENTRY_ENVIRONMENT` | No | `production` | Observability | API, workers | Sentry environment tag.  |
-| `METRICS_ENABLED` | No | `true` | Observability | API, workers | Enables metrics export for queue depth, latency, and refresh failures.  |
-| `METRICS_PORT` | No | `9090` | Observability | API, workers | Port for metrics endpoint if exposed separately.  |
-| `TRACE_ENABLED` | No | `true` | Observability | API, workers | Enables distributed tracing across board read and refresh paths.  |
-| `ALERT_WEBHOOK_URL` | No | `https://hooks...` | Observability | Workers, ops | Alert sink for repeated refresh failures, stale spikes, or dependency outages.  |
-| `AUDIT_LOG_ENABLED` | No | `true` | Observability | API | Enables audit logging for config updates and manual refresh operations.  |
-| `AUTH_JWT_ISSUER` | Yes | `https://supabase...` | Security/auth | API | Expected JWT issuer used by the platform auth model.  |
-| `AUTH_JWT_AUDIENCE` | Yes | `authenticated` | Security/auth | API | Expected JWT audience.  |
-| `AUTH_JWT_PUBLIC_KEY` | Yes | `-----BEGIN PUBLIC KEY-----` | Security/auth | API | Public key or JWKS-backed value for JWT verification.  |
-| `TENANT_HEADER_NAME` | No | `x-tenant-id` | Security/auth | API | Header name used by trusted internal systems for tenant context propagation where allowed.  |
-| `RLS_ENFORCEMENT_REQUIRED` | Yes | `true` | Security/auth | API, workers | Startup guardrail requiring tenant-safe DB access mode.  |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`APP_ENV`** | Yes | `production` | App Basics | API, Workers | Active environment name (`local`, `staging`, `production`). |
+| **`NODE_ENV`** | Yes | `production` | App Basics | API, Workers | Standard Node runtime execution environment mode. |
+| **`SERVICE_NAME`** | Yes | `m05-account-intelligence-service` | App Basics | API, Workers | Service identifier utilized in logs, traces, and metrics. |
+| **`PORT`** | Yes | `8080` | App Basics | API | Listening HTTP port for the modular service instance. |
+| **`M05_ENABLED`** | Yes | `true` | App Basics | API, Workers | Master enablement flag for the M5 module. |
+| **`M05_BOARDS_ENABLED`** | Yes | `true` | App Basics | API | Enablement switch for Account Boards grid endpoints. |
+| **`M05_DETAIL_ENABLED`** | Yes | `true` | App Basics | API | Enablement switch for detailed hydration panel endpoints. |
+| **`M05_REFRESH_WORKER_ENABLED`** | Yes | `true` | App Basics | Workers | Enables the BullMQ background worker for scoring and stale updates. |
+| **`M05_ALLOW_PARTIAL_HYDRATION`** | No | `true` | App Basics | API | Allows boards to render empty-state indicators if AI summaries fail. |
+| **`M05_DEFAULT_PAGE_SIZE`** | No | `50` | App Basics | API | Fallback number of account rows returned on requests. |
+| **`M05_MAX_PAGE_SIZE`** | No | `200` | App Basics | API | Maximum pagination limit to protect backend query performance. |
+| **`DATABASE_URL`** | Yes | `postgresql://...` | PostgreSQL | API, Workers | PostgreSQL connection string pointing to the tenant database. |
+| **`DB_POOL_MIN`** | No | `5` | PostgreSQL | API, Workers | Minimum active DB connection pool capacity. |
+| **`DB_POOL_MAX`** | No | `20` | PostgreSQL | API, Workers | Maximum active DB connection pool capacity to prevent connection starvation. |
+| **`DB_STATEMENT_TIMEOUT_MS`** | No | `10000` | PostgreSQL | API, Workers | Hard statement execution timeout for relational queries. |
+| **`REDIS_URL`** | Yes | `redis://...` | Redis | API, Workers | Redis connection string used for caching and BullMQ state storage. |
+| **`REDIS_TLS_ENABLED`** | No | `true` | Redis | API, Workers | Enables secure TLS encryption for managed Redis instances. |
+| **`BULLMQ_PREFIX`** | Yes | `ri` | Redis | Workers | Shared namespace prefix to keep queues isolated on Redis. |
+| **`M05_REFRESH_QUEUE_NAME`** | Yes | `m05-account-refresh` | Redis | Workers | Queue name for async scoring and refresh tasks. |
+| **`M05_REFRESH_CONCURRENCY`** | No | `10` | Redis | Workers | Concurrency level for background scoring execution threads. |
+| **`M05_REFRESH_MAX_RETRIES`** | No | `3` | Redis | Workers | Max retry attempts for transient worker failures. |
+| **`M05_REFRESH_BACKOFF_MS`** | No | `30000` | Redis | Workers | Exponential backoff delay base for failing jobs. |
+| **`M05_DEAD_LETTER_ENABLED`** | No | `true` | Redis | Workers | Routes permanently failing refresh jobs to a Dead-Letter Queue (DLQ). |
+| **`M10_CRM_API_BASE_URL`** | Yes | `http://m10-compliance-internal` | Upstream API | API, Workers | Base URL of M10 Data & Compliance REST API for CRM entity reads. |
+| **`M10_CRM_API_TOKEN`** | Yes | `secret` | Upstream API | API, Workers | Secure token authorizing M5 service requests to M10. |
+| **`M03_SUMMARIES_API_BASE_URL`** | Yes | `http://m03-summaries-internal` | Upstream API | API | Base URL of M3 AI Summaries & GenAI REST API for AI briefs. |
+| **`M03_SUMMARIES_API_TOKEN`** | Yes | `secret` | Upstream API | API | Secure token authorizing M5 service requests to M3. |
+| **`M05_ACCOUNT_BRIEF_PATH`** | No | `/api/v1/m03-ai-summaries-genai/accounts/:id/brief` | Upstream API | API | Relative URI pattern matching M3's account brief endpoint. |
+| **`M05_BOARD_CACHE_ENABLED`** | No | `true` | Cache/Refresh | API | Enables read-side cache for board rows. |
+| **`M05_BOARD_CACHE_TTL_SEC`** | No | `120` | Cache/Refresh | API | TTL for cached board row responses. |
+| **`M05_DETAIL_CACHE_TTL_SEC`** | No | `60` | Cache/Refresh | API | TTL for account detail panel queries. |
+| **`M05_STALE_AFTER_SEC`** | Yes | `900` | Cache/Refresh | API, Workers | Age boundary after which account drivers must be refreshed. |
+| **`M05_BRIEF_STALE_AFTER_SEC`** | No | `1800` | Cache/Refresh | API | Age boundary for AI summary briefs freshness markers. |
+| **`M05_REFRESH_DEBOUNCE_SEC`** | No | `120` | Cache/Refresh | Workers | Minimum debounce window to merge consecutive scoring requests. |
+| **`M05_FORCE_ASYNC_REFRESH_ONLY`** | No | `true` | Cache/Refresh | API | Blocks synchronous score calculations during HTTP requests. |
+| **`LOG_LEVEL`** | Yes | `info` | Observability | API, Workers | Standard structured logging granularity switch (`info`, `debug`). |
+| **`LOG_FORMAT`** | No | `json` | Observability | API, Workers | Output layout for downstream ingestion systems. |
+| **`SENTRY_DSN`** | No | `https://...` | Observability | API, Workers | Destination URL for Sentry logging and exception monitoring. |
+| **`SENTRY_ENVIRONMENT`** | No | `production` | Observability | API, Workers | Environment label tagged to all Sentry events. |
+| **`ALERT_WEBHOOK_URL`** | No | `https://hooks...`| Observability | Workers | Channel webhook for critical queue spikes and database failures. |
+| **`AUTH_JWT_ISSUER`** | Yes | `https://supabase...`| Security/Auth | API | Expected JWT token issuer validating authentications. |
+| **`AUTH_JWT_AUDIENCE`** | Yes | `authenticated` | Security/Auth | API | Target audience verified in incoming token signatures. |
+| **`AUTH_JWT_PUBLIC_KEY`** | Yes | `-----BEGIN PUBLIC KEY-----`| Security/Auth | API | RSA-256 public signature key or JWKS endpoints. |
+| **`RLS_ENFORCEMENT_REQUIRED`**| Yes | `true` | Security/Auth | API, Workers | Startup guardrail blocking database queries without RLS contexts. |
 
-## Minimum Required Variables by Flow
+---
 
-### 1. Account Board listing flow
+## 6. Local Development Environment Example
 
-Minimum variables:
-- `APP_ENV` 
-- `NODE_ENV` 
-- `PORT` 
-- `M5_ACCOUNT_BOARDS_ENABLED` 
-- `DATABASE_URL` 
-- `AUTH_JWT_ISSUER` 
-- `AUTH_JWT_AUDIENCE` 
-- `AUTH_JWT_PUBLIC_KEY` 
-- `RLS_ENFORCEMENT_REQUIRED` 
-
-Needed because board listing is a protected, tenant-scoped read path over M-07-owned records and approved account context reads. 
-
-### 2. Account Board listing with saved view restoration
-
-Minimum variables:
-- All Account Board listing variables. 
-- `M5_DEFAULT_PAGE_SIZE` 
-- `M5_MAX_PAGE_SIZE` 
-- `M5_SORT_FIELD_ALLOWLIST` 
-- `M5_APPLIED_FILTER_LIMIT` 
-
-Needed because saved config, filters, columns, and sort behavior must be guarded and predictable. 
-
-### 3. Account detail hydration flow
-
-Minimum variables:
-- `M5_ACCOUNT_DETAIL_ENABLED` 
-- `DATABASE_URL` 
-- `M6_INSIGHTS_API_BASE_URL` 
-- `M6_INSIGHTS_API_TOKEN` 
-- `M5_CONTEXT_FETCH_TIMEOUT_MS` 
-- `M5_PARTIAL_RESPONSE_ON_BRIEF_FAILURE` 
-
-Needed because account detail requires linked CRM context, engagement state, renewal signals, and AI brief hydration or fallback. 
-
-### 4. Async account refresh flow
-
-Minimum variables:
-- `M5_REFRESH_WORKER_ENABLED` 
-- `REDIS_URL` 
-- `BULLMQ_PREFIX` 
-- `M5_REFRESH_QUEUE_NAME` 
-- `M5_REFRESH_CONCURRENCY` 
-- `M5_REFRESH_MAX_RETRIES` 
-- `M5_REFRESH_BACKOFF_MS` 
-- `M5_STALE_AFTER_SEC` 
-- `M5_REFRESH_DEBOUNCE_SEC` 
-- `DATABASE_URL` 
-
-Needed because async refresh is the preferred runtime behavior for stale account rows and account brief updates. 
-
-### 5. Observability and support flow
-
-Minimum variables:
-- `LOG_LEVEL` 
-- `LOG_FORMAT` 
-- `SENTRY_DSN` 
-- `METRICS_ENABLED` 
-- `ALERT_WEBHOOK_URL` 
-- `AUDIT_LOG_ENABLED` 
-
-Needed because stale boards, failed refreshes, tenant mismatches, and upstream dependency issues must be visible to engineering and support teams. 
-
-## Rotation and Security Notes
-
-- All secrets must be stored in centralized secret management, not in `.env.example` with live values, Git history, CI logs, screenshots, or chat threads. 
-- JWT verification keys and service-to-service tokens must be rotated through the approved secrets workflow with rollback support. 
-- Redis and database credentials must be rotated on suspected leakage, role changes, or environment cloning events. 
-- Any variable containing a token, DSN, secret, password, private key, or signed webhook credential must be masked in logs and debugging output. 
-- Environment-specific variables must remain separated between local, staging, and production; production secrets must never be copied into personal local machines unless explicitly approved. 
-- M5 does not weaken tenant isolation through configuration; no environment variable may disable tenant scoping, RLS expectations, or JWT validation in shared environments. 
-- Feature flags may disable M5 behavior, but they must not create hidden bypasses around auth, audit, or data ownership rules. 
-- Service tokens used to call upstream modules such as M-06 must be scoped narrowly to approved public endpoints. 
-
-## Validation Checklist
-
-Use this checklist before merging env changes or promoting M5 to staging/production. 
-
-### Startup validation
-- `APP_ENV` and `NODE_ENV` are set correctly. 
-- `DATABASE_URL` connects successfully. 
-- `REDIS_URL` connects successfully if refresh worker is enabled. 
-- JWT issuer, audience, and key settings validate correctly. 
-- Required feature flags are present and intentional. 
-
-### Security validation
-- No secret is hardcoded in repo files or Docker image layers. 
-- Tenant-safe mode is enabled and `RLS_ENFORCEMENT_REQUIRED=true`. 
-- Service tokens are scoped and masked in logs. 
-- Production secrets differ from local and staging secrets. 
-
-### Runtime validation
-- Account Board listing endpoint loads successfully with saved view restoration. 
-- Account detail endpoint loads with CRM context and AI context hydration or safe fallback. 
-- Async refresh jobs enqueue and complete successfully. 
-- Stale account state refreshes without forcing synchronous recomputation in request handlers. 
-- Partial hydration behavior is tested for upstream brief failure or timeout. 
-
-### Observability validation
-- Logs are structured and searchable. 
-- Sentry receives test exception events in non-local environments. 
-- Metrics expose board latency, refresh failures, and queue depth. 
-- Alert routing works for repeated refresh failures or stale spikes. 
-
-## Example `.env.example` for local development
+Create a local `.env` inside `modules/m05-account-intelligence/` using this template:
 
 ```bash
 APP_ENV=local
 NODE_ENV=development
-SERVICE_NAME=m07-deal-account-service
+SERVICE_NAME=m05-account-intelligence-service
 PORT=8080
 
-M5_ACCOUNT_BOARDS_ENABLED=true
-M5_ACCOUNT_DETAIL_ENABLED=true
-M5_REFRESH_WORKER_ENABLED=true
-M5_ALLOW_PARTIAL_HYDRATION=true
-M5_DEFAULT_PAGE_SIZE=50
-M5_MAX_PAGE_SIZE=200
+M05_ENABLED=true
+M05_BOARDS_ENABLED=true
+M05_DETAIL_ENABLED=true
+M05_REFRESH_WORKER_ENABLED=true
+M05_ALLOW_PARTIAL_HYDRATION=true
+M05_DEFAULT_PAGE_SIZE=50
+M05_MAX_PAGE_SIZE=200
 
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/revenue_intelligence
 DB_POOL_MIN=5
 DB_POOL_MAX=20
-DB_STATEMENT_TIMEOUT_MS=15000
+DB_STATEMENT_TIMEOUT_MS=10000
 
 REDIS_URL=redis://localhost:6379
 REDIS_TLS_ENABLED=false
 BULLMQ_PREFIX=ri
-M5_REFRESH_QUEUE_NAME=m5-account-refresh
-M5_REFRESH_CONCURRENCY=5
-M5_REFRESH_MAX_RETRIES=3
-M5_REFRESH_BACKOFF_MS=30000
-M5_DEAD_LETTER_ENABLED=true
+M05_REFRESH_QUEUE_NAME=m05-account-refresh
+M05_REFRESH_CONCURRENCY=5
+M05_REFRESH_MAX_RETRIES=3
+M05_REFRESH_BACKOFF_MS=30000
+M05_DEAD_LETTER_ENABLED=true
 
-CRM_READ_PROVIDER=salesforce
-CRM_READ_TIMEOUT_MS=8000
-CRM_READ_RETRY_COUNT=2
-CRM_CONTEXT_API_BASE_URL=http://localhost:8081
-CRM_CONTEXT_API_TOKEN=replace-me
+M10_CRM_API_BASE_URL=http://localhost:8081
+M10_CRM_API_TOKEN=replace-me-with-trusted-m10-token
 
-M6_INSIGHTS_API_BASE_URL=http://localhost:8082
-M6_INSIGHTS_API_TOKEN=replace-me
-M5_ACCOUNT_BRIEF_PATH=/api/v1/insights/accounts/:id/brief
-M5_ENGAGEMENT_SCORE_SOURCE=internal_table
-M5_RENEWAL_SIGNAL_SOURCE=internal_table
-M5_CONTEXT_FETCH_TIMEOUT_MS=5000
-M5_CONTEXT_FETCH_RETRY_COUNT=1
+M03_SUMMARIES_API_BASE_URL=http://localhost:8082
+M03_SUMMARIES_API_TOKEN=replace-me-with-trusted-m03-token
+M05_ACCOUNT_BRIEF_PATH=/api/v1/m03-ai-summaries-genai/accounts/:id/brief
 
-M5_BOARD_CACHE_ENABLED=true
-M5_BOARD_CACHE_TTL_SEC=120
-M5_DETAIL_CACHE_TTL_SEC=60
-M5_STALE_AFTER_SEC=900
-M5_BRIEF_STALE_AFTER_SEC=1800
-M5_REFRESH_DEBOUNCE_SEC=120
-M5_FORCE_ASYNC_REFRESH_ONLY=true
-M5_MANUAL_REFRESH_ENABLED=true
-M5_PARTIAL_RESPONSE_ON_BRIEF_FAILURE=true
-M5_APPLIED_FILTER_LIMIT=20
-M5_SORT_FIELD_ALLOWLIST=name,health,lastActivityAt
+M05_BOARD_CACHE_ENABLED=true
+M05_BOARD_CACHE_TTL_SEC=120
+M05_DETAIL_CACHE_TTL_SEC=60
+M05_STALE_AFTER_SEC=900
+M05_BRIEF_STALE_AFTER_SEC=1800
+M05_REFRESH_DEBOUNCE_SEC=120
+M05_FORCE_ASYNC_REFRESH_ONLY=true
 
 LOG_LEVEL=debug
 LOG_FORMAT=json
 SENTRY_DSN=
 SENTRY_ENVIRONMENT=local
-METRICS_ENABLED=true
-METRICS_PORT=9090
-TRACE_ENABLED=false
 ALERT_WEBHOOK_URL=
-AUDIT_LOG_ENABLED=true
 
 AUTH_JWT_ISSUER=https://example.supabase.co/auth/v1
 AUTH_JWT_AUDIENCE=authenticated
-AUTH_JWT_PUBLIC_KEY=replace-me
-TENANT_HEADER_NAME=x-tenant-id
+AUTH_JWT_PUBLIC_KEY=replace-me-with-rsa-key
 RLS_ENFORCEMENT_REQUIRED=true
 ```
-
-## Notes for freshers
-
-- If you do not know whether a variable is secret, treat it as secret first. 
-- If you are adding a new variable, add it here before using it in code. 
-- If your new variable affects another module boundary, queue behavior, or tenant safety, get Tech Lead review before merge. 
-- For M5, the most important rule is simple: **fast reads, async refresh, strict tenant safety**. 

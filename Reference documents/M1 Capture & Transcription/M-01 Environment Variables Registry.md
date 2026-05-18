@@ -5,13 +5,13 @@
 - **Document Title:** Environment Variables Registry — M-01 Capture & Transcription
 - **Module Name:** M-01 Capture & Transcription
 - **Document ID:** DOC-18-M01-ENV-REGISTRY
-- **Version:** v0.1
-- **Status:** Draft
+- **Version:** v3.0
+- **Status:** Approved
 - **Owner:** Backend Lead
 - **Security Reviewer:** Security Owner
 - **Deployment / Secrets Owner:** DevOps Lead
 - **Approver for env var changes:** Tech Lead + Security Owner for secrets, DevOps Lead for runtime and deployment changes.
-- **Last Updated:** 2026-04-29
+- **Last Updated:** 2026-05-18
 - **Related Secret Management System:** Doppler.
 - **Related Deployment Platform:** Railway for current Phase 1–2 hosting, AWS ECS/Fargate later if scale triggers are met.
 
@@ -221,7 +221,8 @@ Minimum to run transcript to extracted fields path:
 - `AI_EXTRACTOR_SERVICE_URL`
 - `AI_EXTRACTOR_AUTH_TOKEN`
 - `AI_EXTRACTOR_TIMEOUT_MS`
-- `M01_EXTRACTION_CONFIDENCE_THRESHOLD`
+- `M01_EXTRACTION_CONFIDENCE_REVIEW_THRESHOLD`
+- `M01_EXTRACTION_CONFIDENCE_EXCLUDE_THRESHOLD`
 - `FF_M01_EXTRACTION_ENABLED`
 - if downstream auto-push is enabled, relevant CRM client credentials too.
 
@@ -287,12 +288,12 @@ Use this checklist during PR review, release review, and incident review.
 
 ## 9. Related Files
 
-- `m1-readme.md`
-- `TDD/TDD-Call-Transcription.md`
-- `TDD/Native Connectors.md`
-- `TDD/AI Data Extractor.md`
-- `m1-sequence diagram.md`
-- `M-01 Environment Variables Registry.md`.
+- `Reference documents/M1 Capture & Transcription/m1-readme.md`
+- `Reference documents/M1 Capture & Transcription/TDD/TDD-Call-Transcription.md`
+- `Reference documents/M1 Capture & Transcription/TDD/Native Connectors.md`
+- `Reference documents/M1 Capture & Transcription/TDD/AI Data Extractor.md`
+- `Reference documents/M1 Capture & Transcription/m1-sequence diagram.md`
+- `Reference documents/M1 Capture & Transcription/M-01 Environment Variables Registry.md`
 
 ## 10. Notes for Maintainers
 

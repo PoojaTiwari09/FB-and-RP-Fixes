@@ -1,484 +1,548 @@
 # R-Revenue Intelligence — Complete Codebase Knowledge Base
-
-## File Inventory by Folder
-
----
-
-## ROOT
-
-### `README.md`
-- Platform overview: enterprise-grade AI-driven revenue intelligence platform
-- 10 product modules (M1–M10) following the Revenue Intelligence Lifecycle
-- Core principles: Tenant Isolation, Event-Driven, AI/Business Separation, Snake_Case standard
-- Getting started: read SAD → Local Dev Guide → Git Branching Strategy
+**Version:** v3.0  
+**Status:** Approved  
+**Last Updated:** 2026-05-18  
+**Owner:** Technical Architecture Team & Relanto Engineering
 
 ---
 
-## docs/markdown documents/ (14 MD files)
+## 1. Document Control & Governance
 
-### `System_architecture.md` (~630KB)
-- "Single Source of Truth" for the platform
-- 10 architecture modules (M-01 through M-10) in a Modular Monolith (NestJS)
-- Two Python services extracted from Day 1: Transcription Service + AI Services Layer
-- 7-stage Revenue Intelligence Lifecycle: Capture → Model → Understand → Analyze → Execute → Predict → Optimize
-- Event bus: BullMQ on Redis with named queues per event type
+### 1.1 Purpose of This Document
+This document serves as the **Single Source of Truth (SSOT)** and primary engineering reference manual for the R-Revenue Intelligence platform. It synthesizes the System Architecture Document (SAD), Non-Functional Requirements (NFR) Specification, Database Schema Design, API Design Standards, Coding Standards, Event Schema Registry, Tooling and Services Inventory, and individual product module specifications into a single, cohesive, high-fidelity manual.
 
-### `tooling-and-services-inventory.md` (~247KB)
-- Definitive approved tech stack inventory
-- Frontend: Next.js 14, TypeScript
-- Backend: NestJS 10, TypeScript, Prisma ORM
-- AI/ML: FastAPI, Python 3.12, LangGraph, LiteLLM, Whisper, AssemblyAI
-- Data: Supabase/PostgreSQL 16, Redis, Meilisearch, pgvector, ClickHouse
-- Secrets: Doppler | Monitoring: Sentry, BetterStack | Deploy: Railway → AWS ECS
-- Rule: "No new tool without review"
+It is designed to eliminate architectural drift and ensure that all developers, architects, and technical stakeholders—regardless of seniority—operate under the same engineering assumptions, naming conventions, directory structure layouts, security boundaries, and validation requirements.
 
-### `Event Schema registry.md` (~103KB)
-- All cross-module async events with versioned Zod schemas
-- Standard envelope: `eventId`, `version`, `tenantId`, `occurredAt`, `correlationId`, `traceId`
-- Key events:
-  - `call.transcription.completed` — M-01 → M-02, M-03, M-04, M-05, M-06
-  - `call.scored` — M-04 → M-05, M-06, M-07, M-09, M-10
-  - `call.topics.tagged` — M-04 → M-05, M-06
-  - `call.summary.generated` — M-06 → M-03, M-07, M-08, M-10
-  - `tracker.detection.created` — M-05 → M-06, M-07, M-08
-  - `revenue_graph.entity.linked` — M-03 → M-04, M-05, M-07
-  - `deal.stage.changed` — M-07 → M-08, M-09
-  - `crm.fields.extracted` — M-01 → M-03
-  - `email.sent` — M-02 → M-05, M-07
-  - `forecast.submitted` — M-09 → M-10
-- Rules: publisher owns schema, consumers use versioned contracts, all events immutable + idempotent
-
-### `Database Schema.md` (~151KB)
-- Schema-per-module convention: `m01_*`, `m02_*`, … `m10_*`
-- Every table MUST have: `tenant_id UUID NOT NULL`, `UUID PRIMARY KEY`, `created_at`, index on `(tenant_id, lookup_col)`
-- RLS policy: `tenant_id = current_setting('app.current_tenant_id')`
-- Prisma middleware sets tenant context before every query
-- Mandatory audit SQL scripts for RLS and index validation
-
-### `Security architecture.md` (~253KB)
-- Defense-in-depth: JWT → Prisma middleware → RLS
-- Data classification: Public / Internal / Confidential / Restricted
-- Secrets via Doppler only — never in `.env` files or images
-- HMAC-SHA256 for all inbound webhooks
-- GDPR/CCPA: automated cascade deletion and opt-out checks
-- No AI/LLM calls from TypeScript services
-
-### `Non‑Functional Requirements (NFR) Specification.md` (~77KB)
-- API p99 latency: < 500ms
-- Availability: 99.5%
-- Transcription completion: < 5min p95
-- AI summary generation: < 30s p95
-- Search: < 200ms p99
-- Every NFR has: measurement tool, owner, breach protocol
-- "Measure Everything" principle
-
-### `Module boundary document.md` (~133KB)
-- Master table of all events with producer/consumer ownership
-- Cross-module access rules: events or public APIs only, never direct DB access
-- Critical rule: `deal.stage.changed` producer = M-07 (NOT M-03)
-- Module interaction matrix showing allowed dependencies
-
-### `API Design Standards.md` (~146KB)
-- REST conventions: `noun.verb` for events, kebab-case for URL paths
-- Versioning: `/api/v1/...`
-- All endpoints require JWT auth unless explicitly public (webhooks use HMAC)
-- Standard response envelope, pagination, error codes
-- Internal APIs use `INTERNAL_SERVICE_SECRET` header
-
-### `Coding standards.md` (~220KB)
-- TypeScript strict mode enforced
-- Zod for all request/event validation
-- No `any` types, no direct LLM imports in TypeScript
-- Repository pattern for DB access (no raw Prisma scattered in services)
-- BullMQ workers must be idempotent
-- snake_case for DB, camelCase for TypeScript
-
-### `git-branching-strategy.md` (~181KB)
-- Branches: `main` (production), `develop` (integration), `module/mX-*` (per-module integration)
-- Feature branches: `feature/`, `fix/`, `chore/`
-- Stale branch policy: 14-day warning → 30-day deletion
-- PR requirements: CI must pass, Tech Lead review, no draft merges
-- Monorepo structure
-
-### `Local-Dev-Setup-Guide.md` (~34KB)
-- Full stack runs via `doppler run -- docker compose up`
-- Services: frontend (3000), NestJS API (3001), AI services (8000), transcription (8001)
-- Prerequisites: Docker Desktop, Node 20 LTS, Python 3.11, Doppler CLI
-- DB: `npx prisma migrate dev && prisma generate && prisma db seed`
-- Health checks: `GET /health` (API), `GET /internal/health` (AI services)
-- Day-to-day: pull develop → branch → code → test → PR → CI → merge
-
-### `Architecture Decision Records.md` (~22KB)
-9 formal ADRs — all Approved:
-| ADR | Decision |
-|---|---|
-| ADR-001 | Modular Monolith for Phase 1–2 (extraction triggers: 5 conditions required) |
-| ADR-002 | TypeScript/NestJS for product services |
-| ADR-002b | Python/FastAPI for AI/ML services |
-| ADR-003 | Language stack rule (no AI libs in TS, no business logic in Python) |
-| ADR-004 | PostgreSQL 16 via Supabase as primary DB |
-| ADR-005 | BullMQ on Redis as event bus |
-| ADR-006 | OpenAI via LiteLLM as primary LLM |
-| ADR-007 | Whisper (primary ASR) + AssemblyAI (fallback) |
-| ADR-008 | Shared DB + RLS for multi-tenancy |
-| ADR-009 | 5 warehouse targets (Snowflake, BigQuery, etc.) + daily idempotent sync |
-
-### `mermaid-system-design.md` (~9KB)
-- Flowchart TD diagram of the entire system
-- Shows: Actors → Frontend → Platform Core → Modular Monolith → AI Services → Data Layer → External Systems
-- Event flows: call.created → BullMQ → Transcription → call.transcription.completed → AI Orchestrator
-- M-03 labeled as Priority 1
-
-### `fix-checkout.md` (~4KB)
-- Historical log of 14 documentation fixes applied
-- Key fixes: event name standardization, producer conflict corrections, ADR population, Mermaid diagram updates
-- All issues verified via grep and PowerShell scans
+### 1.2 Governance & Evolution Policy
+*   **Zero Casual Edits:** No changes may be made to this knowledge base without an accompanying approved Architecture Decision Record (ADR) or explicit sign-off from the Tech Lead.
+*   **Version Increment Rules:**
+    *   `v1.x` — Minor updates, structural cleanups, or clarifications that do not change underlying architecture.
+    *   `v2.x` — Major revisions reflecting platform transitions.
+    *   `v3.x` — Full alignment reflecting Decoupled Physical Monorepo Workspaces and Decentralized Database Governance.
+*   **Conflict Resolution Hierarchy:** If this document conflicts with any direct source specification:
+    1.  **Architecture Decision Records (ADRs)** take absolute priority as the formal decision history.
+    2.  **System Architecture Document (SAD / Doc #1)** takes precedence for high-level module boundaries and lifecycle stages.
+    3.  **This Knowledge Base** takes precedence for integration patterns, environment configurations, and schema rules.
 
 ---
 
-## archives/
+## 2. Core Architectural & Platform Principles
 
-### `System_architecture_old_v1.md` (~655KB)
-- Old v1 architecture — historical reference only
-- 7-stage lifecycle first documented here
-- Modular monolith → microservices extraction strategy origin
+The R-Revenue Intelligence platform is designed around four foundational, non-negotiable architectural pillars. Every line of code written must respect these patterns:
 
----
+```
+┌────────────────────────────────────────────────────────┐
+│               Public Internet (Untrusted)              │
+└───────────────────────────┬────────────────────────────┘
+                            │ (Cloudflare Edge Protection)
+                            v
+┌────────────────────────────────────────────────────────┐
+│              Decoupled Multi-Package Monorepo          │
+│         (NestJS Platform Core & modules/m0X-*)        │
+└─────────────┬────────────────────────────┬─────────────┘
+              │ (Internal network only)    │ (Event Bus)
+              v                            v
+┌───────────────────────────┐    ┌───────────────────────┐
+│     FastAPI AI Layer      │    │  BullMQ Queue System  │
+│  (Python / AI Inference)   │    │  (Redis Backed Async) │
+└───────────────────────────┘    └───────────┬───────────┘
+                                             │
+                                             v
+                                 ┌───────────────────────┐
+                                 │  Background Workers   │
+                                 │   (Durable Ingestion) │
+                                 └───────────────────────┘
+```
 
-## M1 Capture & Transcription/ (4 MD files + TDD/)
+### 2.1 Separation of Business Logic and AI Inference
+*   **TypeScript (NestJS) is the Product Brain:** Responsible for state management, authorization, multi-tenancy context, workflow orchestration, database updates, and external API integrations.
+*   **Python (FastAPI) is the AI Brain:** Restricts its scope strictly to model execution, high-performance transcription (ASR), vector embedding generation, sentiment mapping, and RAG pipelines.
+*   **Standard Boundary Rule (ADR-003):** No AI library imports (such as `openai`, `langchain`, or `transformers`) are permitted within the NestJS platform modules. All AI operations are made asynchronously or via private HTTP interfaces to the Python FastAPI microservices.
 
-### `m1-readme.md`
-- **Lifecycle stage:** Capture
-- **Status:** Phase 1–2 deployed
-- **Three features:** Call Transcription, Native Connectors, AI Data Extractor
-- **Pipeline:** connect source → ingest → transcribe → extract → publish events
-- **Emits:** `call.transcription.completed`, `crm.fields.extracted`
-- **Tables:** `m01.callrecordings`, `m01.transcripts`, `m01.transcriptcorrections`, `m01.ingestionsources`, `m01.crmextractedfields`
-- **API prefix:** `/api/v1/ingestion`
-- **Webhooks:** Zoom, Teams, Meet, Dialer (all HMAC-SHA256)
-- **Key rule:** Raw audio deleted after 7 days; M-01 is entry point and consumes NO upstream events
+### 2.2 Strict Multi-Tenancy & Layered Data Isolation
+The platform enforces a shared-database, isolated-schema tenancy model, secured by a three-tiered defense-in-depth framework:
+1.  **Layer 1: Application Middleware (Prisma Middleware):** A global query interceptor captures the verified `tenant_id` from the request context and automatically appends it to all queries, updates, deletes, and insertions. It rejects any operation lacking a valid tenant context with a `ForbiddenException`.
+2.  **Layer 2: Database Storage (PostgreSQL Row-Level Security - RLS):** RLS is enabled and forced on all tenant-scoped tables. The NestJS API sets the `app.current_tenant_id` session variable at the start of every connection, ensuring that PostgreSQL enforces tenant separation even if application code is bypassed.
+3.  **Layer 3: Secure JWT Verification:** The tenant context is extracted from RS256 cryptographically signed Supabase JWT claims, preventing client-side spoofing or ID tampering.
 
-### `m1-sequence diagram.md`
-- **SD-01:** Webhook → HMAC verify → idempotency check → store audio → enqueue BullMQ job
-- **SD-02:** Worker → transcription service → Whisper (primary) / AssemblyAI (fallback) → persist transcript → publish `call.transcription.completed`
-- **SD-03:** `call.transcription.completed` → extraction worker → AI service `/v1/extract-crm-fields` → store `crmextractedfields` → publish `crm.fields.extracted`
-- **SD-04:** RevOps user → `POST /api/v1/ingestion/sources` → RBAC check → insert `ingestionsources`
+### 2.3 Async by Default for Heavy Workloads
+*   Any operation involving model inference, transcription, massive data synchronizations, or multi-step external integration calls must be designed as an **Asynchronous Background Task**.
+*   Synchronous HTTP request handlers are prohibited from waiting on LLM prompts or speech-to-text outputs. They must return an HTTP `202 Accepted` status with a tracking job ID and immediately delegate the payload execution to a robust **BullMQ** queue backed by Upstash Redis.
 
-### `M-01 Environment Variables Registry.md`
-- **Doc ID:** DOC-18-M01-ENV-REGISTRY
-- 40+ variables covering: app config, DB, Redis, storage, webhook secrets, AI services, ASR providers, CRM creds, observability, feature flags
-- Key vars: `ZOOM_WEBHOOK_SECRET`, `TRANSCRIPTION_SERVICE_URL`, `ASSEMBLYAI_API_KEY`, `M01_EXTRACTION_CONFIDENCE_REVIEW_THRESHOLD` (0.80), `M01_EXTRACTION_CONFIDENCE_EXCLUDE_THRESHOLD` (0.70)
-- Secrets: Doppler only | Naming: UPPER_SNAKE_CASE with domain prefix
-
-### `drift analysis m1.md`
-- 17 drifts identified (2 Critical, 4 High, 6 Medium, 4 Low)
-- **D-01 Critical:** README title says "Data Ingestion" vs actual "Capture & Transcription"
-- **D-04 High:** Three-way confidence threshold conflict (narrative vs pseudocode vs env var)
-- **D-05 High:** TDD file name contains merge artifact
-- Root cause: README written with old module name, TDDs are more current
-- Event names and HMAC rules consistent across all files
-
-### TDD/AI Data Extractor.md
-- AI extraction of structured CRM fields from transcripts
-- Three-tier confidence: ≥0.80 normal, 0.70–0.80 flag review, <0.70 exclude
-- Calls AI service: `POST /v1/extract-crm-fields`
-- Returns: field name, value, confidence, source spans
-
-### TDD/Native Connectors.md
-- Connector types: Zoom, Teams, Meet, telephony, Salesforce, HubSpot, Dynamics, Gmail, Outlook, GTM tools
-- HMAC verification on all webhooks
-- Connector lifecycle events: `connector.connected`, `connector.disconnected`, `connector.health.degraded`, etc.
-
-### TDD/TDD-Call-Transcription.md
-- Primary ASR: Whisper | Fallback: AssemblyAI
-- Output: raw text, speaker segments, language, confidence score, provider used
-- BullMQ retry: 3 attempts, exponential backoff (30s/60s/120s)
-- Dead-letter queue for failed jobs
+### 2.4 Decoupled Monorepo with Clear Microservice Extraction Path
+To avoid premature optimization while preparing for high scalability, the platform is implemented as a decoupled, physical multi-package monorepo. Modules live directly under `/modules/` (e.g. `/modules/m01-capture-transcription/`, `/modules/m02-conversation-intelligence/`, etc.). 
+A module becomes eligible for microservice extraction into an independent server only when all 5 conditions specified in **ADR-001** are met:
+1.  **Independent Scaling Requirements:** The module consumes disproportionate CPU/memory (e.g., M-01 audio ingestion).
+2.  **Data Isolation Completeness:** The module's database tables are completely decoupled from other schemas with no foreign keys crossing schemas.
+3.  **Team Ownership Autonomy:** A dedicated engineering sub-team is assigned to manage its lifecycle.
+4.  **Operational Boundary Overhead Justification:** The latency cost of network serialization is offset by architectural isolation.
+5.  **Defined API Contract Stability:** The public API and event boundaries have remained stable without breaking changes for at least 3 months.
 
 ---
 
-## M2 Conversation Intelligence/ (4 MD files + TDD/)
+## 3. Database Stack & Schema Governance
 
-### `README-M2 Conversation Intelligence.md`
-- **Lifecycle stage:** Understand
-- **Product module:** M2 (customer-facing) splits into:
-  - **M-04** Conversation Intelligence: AI Call Reviewer, AI Topic Tagger, AI Theme Spotter, AI Translator
-  - **M-05** Smart Tracking & Search: AI Smart Tracker, Searchable Conversation Library
-- **Consumes:** `call.transcription.completed`, `revenue_graph.entity.linked`, `email.sent`
-- **Emits:** `call.scored`, `call.topics.tagged`, `tracker.detection.created`
-- **M-04 tables:** `scorecards`, `callscores`, `themes`, `themeanalyses`, `topictags`, `translationpreferences`
-- **M-05 tables:** `trackers`, `trackerdetections`, `searchindexsynclog`, `dealdriversnapshots`
-- **Rule:** M-04 must wait for `revenue_graph.entity.linked` before finalizing call scores
+### 3.1 Technology Inventory & Storage Mapping
+The platform segregates storage technologies to match specific transactional and analytical workloads:
 
-### `Sequence Diagrams for M2.md`
-- Scoring flow, theme detection flow, tracker detection flow, search indexing flow
+| Storage Engine | Technology Provider | Primary Data Domain | Performance Role |
+| :--- | :--- | :--- | :--- |
+| **Primary Relational DB** | Supabase PostgreSQL 16 | User credentials, tenants, deals, accounts, metadata, and transactional configurations. | Core system of record. Enforces RLS and consistency. |
+| **Vector Index** | pgvector (Postgres Extension) | High-dimensional text embeddings of transcripts, call reviews, and RAG knowledge items. | Semantic search, similarity matching, and context retrieval. |
+| **Analytics Engine** | ClickHouse 24.x | Time-series events, activity metrics, call score trends, and coaching log data. | High-performance columnar aggregation for BI dashboards. |
+| **Full-Text Search** | Meilisearch (Stable) | Transcripts, conversation logs, email content, and deal driver tags. | Instant search UI, prefix matching, and spelling correction. |
+| **Queue / Cache** | Redis 7.x (Upstash) | Queue state persistence, rate-limiting, session states, and API result caching. | BullMQ backing store and low-latency volatile cache. |
 
-### `Environment Variables Registry-M2.md`
-- Variables for M-04 and M-05: AI service URLs, Meilisearch config, pgvector config, scoring thresholds, search index settings
+### 3.2 Decentralized Schema Governance & Table Design
+The platform operates under a **Decentralized Database Governance** model. Rather than utilizing a single centralized schema file, each module independently owns and manages its database migrations, seed data, and schema definitions under its local `/modules/m0X-<module-slug>/prisma/schema.prisma` configuration. 
 
-### `M2-drift-analysis.md`
-- Drift between product module naming (M2) and architecture module names (M-04, M-05)
-- Some TDD files misrouted to wrong architecture owner
+Every single table created in the Postgres database must follow this structure to satisfy automated syntax audits during CI/CD execution:
+1.  **Primary Key:** Must use `UUID PRIMARY KEY DEFAULT gen_random_uuid()`. Serial integers are completely prohibited.
+2.  **Tenant Scoping:** Must have `tenant_id UUID NOT NULL` as the second column. Pure join tables may omit this only if they enforce tenant separation transitively through foreign keys.
+3.  **Auditing Fields:** Must include `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`. 
+4.  **Default Indexing:** An index must be created on `(tenant_id, primary_lookup_column)` to prevent sequential table scans as tenant data scales.
+5.  **RLS Enforcement:** Must execute `ALTER TABLE schema.table ENABLE ROW LEVEL SECURITY;` and `ALTER TABLE schema.table FORCE ROW LEVEL SECURITY;`.
 
-### TDD/ (7 files)
-- AI Call Reviewer, AI Smart Tracker, AI Theme Spotter, AI Transcriber, AI Translator, AI Topic Tagger, Searchable Conversation Library
+```sql
+-- Standard Table Pattern Definition
+CREATE TABLE m01_capture_transcription.calls (
+    call_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES platform.tenants(tenant_id) ON DELETE CASCADE,
+    source_platform VARCHAR(50) NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    duration INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
----
+-- Tenant Isolation and Index Policies
+CREATE INDEX idx_calls_tenant_lookup ON m01_capture_transcription.calls(tenant_id, status);
 
-## M3 AI Summaries & GenAI/ (4 MD files + TDD/)
+ALTER TABLE m01_capture_transcription.calls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE m01_capture_transcription.calls FORCE ROW LEVEL SECURITY;
 
-### `Module README-M3 AI Summaries & GenAI.md`
-- **Lifecycle stage:** Analyze
-- **Architecture owner:** M-06 Insight Generation (InsightGenerationModule)
-- **API prefix:** `/api/v1/insights`
-- **Three features:** AI Smart Summaries, Ask Anything, AI Deep Researcher
-- **Owned tables:** `callsummaries`, `dealbriefs`, `accountbriefs`, `researchreports`, `querysessions`
-- **Consumes:** `call.transcription.completed`, `tracker.detection.created`, `call.topics.tagged`
-- **Emits:** `call.summary.generated`
-- **Pattern:** Receive event → fetch context → build prompt → call AI service → validate → store → expose via API/event
-- Uses pgvector for embeddings, retrieval orchestration through `v1/embed` and `v1/answer-query`
-- Research jobs: `queued → running → completed → failed` lifecycle
+CREATE POLICY calls_isolation ON m01_capture_transcription.calls
+    FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
 
-### `M3 Sequence Diagrams.md`
-- Summary generation flow, Ask Anything RAG flow, Deep Researcher async job flow
+### 3.3 Schema Ownership Mapping
+Database isolation is enforced using strict schema-per-module namespace separation in PostgreSQL. Direct cross-schema write queries are blocked by database permissions:
 
-### `M3 Environment Variables Registry.md`
-- AI service URL, retrieval depth limits, research concurrency limits, summary versioning config
+*   `platform`: Core platform metadata (tenants, users, global roles, feature flags, global configurations).
+*   `m01_capture_transcription`: Managed by **M1** (`modules/m01-capture-transcription/`). Stores call records, transcripts, audio metadata, speaker segments, and vocabulary correction registries.
+*   `m02_conversation_intelligence`: Managed by **M2** (`modules/m02-conversation-intelligence/`). Scorecards, call reviews, themes, tags, and translation mappings.
+*   `m03_ai_summaries_genai`: Managed by **M3** (`modules/m03-ai-summaries-genai/`). Executive summaries, briefings, Q&A chat history, and research reports.
+*   `m04_deal_intelligence`: Managed by **M4** (`modules/m04-deal-intelligence/`). Deal boards, columns, custom views, and deal risk metrics.
+*   `m05_account_intelligence`: Managed by **M5** (`modules/m05-account-intelligence/`). Account boards, contact mapping, engagement scores, and renewal indicators.
+*   `m06_forecasting_prediction`: Managed by **M6** (`modules/m06-forecasting-prediction/`). Forecast periods, rep submission history, and snapshot entries.
+*   `m07_revenue_dashboards`: Managed by **M7** (`modules/m07-revenue-dashboards/`). Layout configurations and cached performance data.
+*   `m08_sales_engagement`: Managed by **M8** (`modules/m08-sales-engagement/`). Outbound tasks, compose records, automated playbooks, sequences, templates, and active workflows.
+*   `m09_coaching_training`: Managed by **M9** (`modules/m09-coaching-training/`). Coaching snapshots, roleplay scenarios, messages, results, and recommendations.
+*   `m10_data_compliance`: Managed by **M10** (`modules/m10-data-compliance/`). Revenue graph tables (accounts, contacts, deals, activities), compliance logs, policy config, and data-cloud sync history.
 
-### `M3-drift-analysis.md`
-- Drift: README names architecture owner as M-06 but product docs call it M3
+### 3.4 Permitted Cross-Schema Read Contract Registry
+Direct PostgreSQL table joins across schemas in application code are strictly prohibited to ensure module decoupling. If a service requires read context from a different domain, it must query it via the corresponding module's public REST API. The approved synchronizations are:
 
-### TDD/ (3 files)
-- TDD-AI Deep Researcher, TDD-AI Smart Summaries, TDD-Ask Anything
-
----
-
-## M4 Deal Intelligence/ (4 MD files + TDD/)
-
-### `Module README-M4 Deal Intelligence.md`
-- **Two features:** Deals Boards (→ M-07), View Deal Drivers (→ M-05)
-- **Critical note:** One product module maps to TWO architecture owners — requires formal ADR
-- **Event-Driven Loop Warning:** M-03 is upstream for M-07, but M-07 emits `deal.stage.changed` consumed by M-03 — must stay async, never synchronous
-- **Stale board troubleshooting:** Check M-03 → M-05 → M-06 → Redis/BullMQ in that order
-
-### `Sequence Diagrams for M4.md`
-- Board read path, driver analytics path, async refresh path
-
-### `Environment Variables Registry-M4.md`
-- CRM integration creds, board refresh config, AI service endpoints
-
-### `M4-drift-analysis.md`
-- Product/architecture split not yet formalized in ADR
-
-### TDD/ (2 files)
-- TDD — View Deal Drivers, TDD — Deals Boards
-
----
-
-## M5 Account Intelligence/ (4 MD files + TDD/)
-
-### `Module README-M5 Account Intelligence.md`
-- **One feature:** Account Boards
-- **Architecture owner:** M-07 Deal and Account Management (DealAccountModule)
-- **API prefix:** `/api/v1/deal-management`
-- **Lifecycle stage:** Execute
-- **Owned tables (via M-07):** `account_board_configs`, `engagement_scores`, `renewal_signals`
-- **Key upstream:** M-06 Insight Generation for account briefs
-- Read-heavy UI-serving pattern; prefer precomputed signals over live recomputation
-- Every board read must remain tenant-scoped under RLS + RBAC
-
-### `Sequence Diagrams for M5.md`
-- Account board read path, AI context refresh path, stale-state handling
-
-### `Environment Variables Registry-M5 Account Intelligence.md`
-- Board page size, score freshness thresholds, AI brief TTL, refresh debounce
-
-### `M5-drift-analysis.md`
-- Product name (M5) vs architecture owner (M-07) naming drift in docs
-
-### TDD/ (1 file)
-- TDD — Account Boards (32KB — comprehensive)
+```
+┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
+│       M8 Sales Engagement             │ ────API─────> │       M10 Data & Compliance           │
+│       (modules/m08-sales-engagement)  │              │       (modules/m10-data-compliance)   │
+└───────────────────────────────────────┘              └───────────────────────────────────────┘
+┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
+│       M2 Conversation Intelligence    │ ────API─────> │       M10 Data & Compliance           │
+│       (modules/m02-conv-intel)        │              │       (modules/m10-data-compliance)   │
+└───────────────────────────────────────┘              └───────────────────────────────────────┘
+┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
+│       M3 AI Summaries & GenAI         │ ────API─────> │       M2 Conversation Intelligence    │
+│       (modules/m03-ai-summaries-genai)│              │       (modules/m02-conv-intel)        │
+└───────────────────────────────────────┘              └───────────────────────────────────────┘
+┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
+│       M4 Deal Intelligence            │ ────API─────> │       M3 AI Summaries & GenAI         │
+│       (modules/m04-deal-intelligence) │              │       (modules/m03-ai-summaries-genai)│
+└───────────────────────────────────────┘              └───────────────────────────────────────┘
+```
 
 ---
 
-## M6 Forecasting & Prediction/ (4 MD files + TDD/)
+## 4. Technical, Design & Coding Standards
 
-### `Module README-M6 Forecasting Prediction.md`
-- **Two features:** AI Revenue Predictor, Forecast Boards
-- **Architecture owner:** M-09 Forecasting and Prediction
-- **Lifecycle stage:** Predict (Stage 6)
-- **API prefix:** `/api/v1/forecasting`
-- **Owned tables:** `forecast_periods`, `forecast_submissions`, `ai_forecast_snapshots`, `pipeline_coverage_metrics`, `historical_conversion_rates`, `forecast_accuracy_log`
-- **Consumes:** `deal.stage.changed` (batched: max 1 recalculation per tenant/period per 60-min window)
-- **Emits:** `forecast.submitted` → M-10
-- **Submission rule:** versioned (never overwrite previous, create new version row)
-- **Idempotency:** `idempotency_key` on snapshots and coverage metrics
+### 4.1 The 10 Golden Rules of R-Revenue Intelligence
+These rules are non-negotiable. Breaking any golden rule will result in an immediate merge blockage at the PR stage:
 
-### `Sequence Diagrams for M6.md`
-- Period creation, board load, submission, AI prediction refresh, recalculation trigger
+1.  **Never Write AI Logic in TypeScript:** No `import OpenAI`, no LangChain, and no raw prompt string definitions in NestJS. All AI tasks live in the Python FastAPI service.
+2.  **No Direct Cross-Module Imports:** You cannot import service classes or repositories directly across `/modules/m0X-*` workspaces. Communicate exclusively via BullMQ events or public API calls.
+3.  **Strict Secrets Governance:** Secrets must never reside in source code, committed `.env` files, or Docker images. Doppler is the exclusive secrets orchestrator.
+4.  **No Raw SQL in Services:** Database queries must use the local module's Prisma client instance to ensure automatic query verification and RLS enforcement.
+5.  **Validate All Input Boundaries:** Every API route handler must use a typed **Zod DTO** schema. Unvalidated client payloads must never reach business logic.
+6.  **No Synchronous AI Processing:** Keep the request-response lifecycle fast. Queue all transcriptions, scoring tasks, and summaries, returning an instant `202 Accepted` status.
+7.  **Pin All Docker and Base Image Tags:** Never use `latest` or floating version identifiers in `Dockerfile` configurations. Pin exact, tested major-minor versions.
+8.  **No Technology Addition Without ADR:** Adding an external package, service, database, or LLM provider requires a signed-off Architecture Decision Record.
+9.  **Scope All Database Queries by Tenant:** Every database operation must contain a `tenant_id` filter at the service layer, acting as a redundant guard alongside RLS.
+10. **Zero Bypasses for Merge to Main:** All 7 automated CI validation gates must be completely green, and manual Tech Lead sign-off is mandatory.
 
-### `Environment Variables Registry-M6.md`
-- Recalculation batch delay, prediction freshness threshold, forecast period locks
+### 4.2 Naming Conventions & Code Style
 
-### `M6-drift-analysis.md`
-- Minor naming inconsistencies between product (M6) and architecture (M-09)
+#### Case Standardization
+*   **Database Objects:** Schemas, tables, columns, indexes, and constraints must use `snake_case`. (e.g. `tenant_id`, `created_at`, `call_id`).
+*   **TypeScript (NestJS/Next.js):**
+    *   Files and folders: `kebab-case` (e.g., `call-review.service.ts`).
+    *   Classes and types: `PascalCase` (e.g., `CallReviewService`).
+    *   Variables and functions: `camelCase` (e.g., `getCallById`).
+    *   Constants: `SCREAMING_SNAKE_CASE` (e.g., `MAX_RETRY_ATTEMPTS`).
+*   **Python (FastAPI):**
+    *   Modules, functions, and variables: `snake_case` (e.g., `score_call.py`).
+    *   Classes: `PascalCase` (e.g., `CallScorer`).
 
-### TDD/ (2 files)
-- TDD-AI Revenue Predictor, TDD-Forecast Boards
-
----
-
-## M7 Revenue Dashboards/ (3 MD files + TDD/ + sequence diagrams/)
-
-### `Module-README M7 R-Revenue Dashboards.md`
-- **Architecture owner:** M-10 Coaching and Training (Optimize stage)
-- **API prefix:** `/api/v1/coaching/dashboards`
-- **Two endpoints:** `GET /dashboards` (load), `PATCH /dashboards/config` (save layout)
-- **Owned tables:** `dashboards.dashboard_configs`, `dashboards.custom_metrics`, `dashboards.dashboard_snapshots`
-- **Read strategy:** ClickHouse primary → PostgreSQL fallback (must always remain available)
-- **ClickHouse tables:** `call_events`, `activity_events`, `call_score_events`, `forecast_submission_events`
-- **RBAC:** Rep = own dashboard, Manager = team dashboards, Admin/RevOps = custom metrics + org templates
-- Per-user config unique on `(tenantid, userid)`
-
-### `env-registry.md`
-- ClickHouse connection, fallback flags, snapshot refresh schedule, observability
-
-### `M7-drift-analysis.md`
-- Placement under M-10 architecture owner vs M7 product label needs clearer cross-reference
-
-### TDD/ (1 file)
-- Revenue Dashboards TDD
-
-### sequence diagrams/ (3 files)
-- `sequence-dashboard-read-flow.md`: Frontend → API → ClickHouse/PostgreSQL → response
-- `sequence-save-dashboard-config.md`: PATCH config → validate → update row
-- `sequence-clickhouse-fallback.md`: ClickHouse down → PostgreSQL fallback with alert
+#### Typing Enforcement
+*   The TypeScript compile options enforce `strict: true`. Bypassing the compiler using the `any` keyword is blocked. Use explicit interfaces or typed generics.
+*   Pydantic v2 is the mandatory validation engine for all Python-based API payloads, using strict type declarations.
 
 ---
 
-## M8 Sales Engagement/ (6 MD files + TDD/)
+## 5. System Event Schema & Message Registry
 
-### `Module README M8 Sales Engagement.md`
-- **Critical boundary:** M8 is a PRODUCT UMBRELLA, NOT one backend module
-- **Feature split:**
-  - Email Composer + Engage To-Do → **M-02 Sales Engagement**
-  - Orchestrate + Workflow Automation → **M-08 Execution and Automation**
-- **M-02 tables:** `email_drafts`, `email_sends`, `email_templates`, `email_flows`, `email_flow_enrollments`, `tasks`
-- **M-08 tables:** `sales_plays`, `play_enrollments`, `play_step_completions`, `workflows`, `workflow_runs`
-- **Key rule:** Every PR must state which architecture module owns the feature
-- **Open architecture note:** ADR-001 drafted for M-02 vs M-08 boundary resolution
+Platform components are decoupled via an asynchronous message choreography driven by **BullMQ** on Redis. 
 
-### `ADR-001-M8-Product-vs-Architecture-Boundary.md`
-- Decision pending: formalize M-02/M-08 split
+### 5.1 Standard Event Envelope
+Every event emitted into the platform message bus must be encapsulated within this standard envelope to ensure consistent validation, routing, and log correlation:
 
-### `ADR-002-Platform-Notification-Service.md`
-- Notification service boundary decision
+```typescript
+export const EventEnvelopeSchema = z.object({
+  eventId: z.string().uuid(),
+  eventName: z.string(),
+  eventVersion: z.literal('v1'),
+  tenantId: z.string().uuid(),
+  producer: z.string(),
+  occurredAt: z.string().datetime(),
+  publishedAt: z.string().datetime(),
+  correlationId: z.string().uuid(),
+  traceId: z.string().uuid().optional(),
+  payload: z.record(z.any())
+});
+```
 
-### `Environment Variables Registry-M8.md`
-- Email provider creds, workflow trigger configs, play enrollment settings, Slack alert config
+### 5.2 Schema Size & Payload Limits
+*   **Maximum Payload Size:** Standard events should target `< 256 KB` and have an absolute hard ceiling at `512 KB` to prevent Redis memory fragmentation.
+*   **Large Data Reference Rule:** Payload fields containing objects larger than `50 KB` (such as full transcription text or raw audio buffers) must not be embedded directly inside the message. Instead, upload the asset to Supabase Object Storage and pass a validated URL reference:
 
-### `M8-drift-analysis.md`
-- TDD files misrouted between M-02 and M-08
+```json
+// ❌ WRONG: Heavy text embedded in payload
+{
+  "eventId": "...",
+  "payload": {
+    "callId": "...",
+    "fullText": "...hundreds of thousands of lines of transcription text..."
+  }
+}
 
-### `Sequence Diagrams M8 flows.md`
-- Email composer flow, task creation flow, play enrollment flow, workflow automation trigger flow
+// ✅ CORRECT: URL reference to file storage
+{
+  "eventId": "...",
+  "payload": {
+    "callId": "...",
+    "transcriptStorageUrl": "s3://ingestion-transcripts/tenant-123/call-456.txt",
+    "transcriptSizeBytes": 45102,
+    "transcriptHash": "sha256:e3b0c442..."
+  }
+}
+```
 
-### TDD/ (4 files)
-- TDD-Email Composer, TDD-Engage To-Do, TDD-Orchestrate, TDD-Workflow Automation
-
----
-
-## M9 Coaching & Training/ (4 MD files + TDD/)
-
-### `Module README-M9 Coaching Training.md`
-- **Two features:** Sales Coaching Insights, AI Trainer
-- **Architecture owner:** M-10 Coaching and Training
-- **Lifecycle stage:** Optimize (Terminal module — does NOT emit downstream lifecycle events)
-- **API prefix:** `/api/v1/coaching`
-- **Sales Coaching Insights tables:** `coaching_snapshots`, `coaching_benchmarks`, `coaching_recommendations`
-- **AI Trainer tables:** `trainer_scenarios`, `trainer_sessions`, `trainer_messages`, `trainer_results`
-- **Consumes:** `call.scored` (M-04), `forecast.submitted` (M-09)
-- **RBAC:** Reps see own data only, Managers see their team, Admins see all
-- **Low-sample rule:** Do NOT generate coaching recommendations if `callCount < 5` (statistically unreliable)
-- AI Trainer: full conversation history sent on EVERY turn; session state stored in M-10
-
-### `Sequence Diagrams-M9 flows.md`
-- Coaching snapshot update, manager team view, AI Trainer session turn, scenario creation
-
-### `Environment Variables Registry M9.md`
-- Coaching snapshot freshness, benchmark period config, AI persona model settings, session timeout
-
-### `M9-drift-analysis.md`
-- Terminal module rule not clearly stated in some TDDs
-
-### TDD/ (2 files)
-- TDD-Sales Coaching Insights, TDD-AI Trainer
+### 5.3 Event Routing & Delivery Design
+*   **Queue-per-Version Model:** The platform uses separated, versioned queues (e.g., `call.transcription.completed.v1`, `call.transcription.completed.v2`) to manage migrations smoothly without runtime parsing failures.
+*   **Idempotency Guarantee:** Every consumer must track processed `eventId` values in Redis or check database state first, ensuring that a re-delivered message does not produce duplicate side effects.
 
 ---
 
-## M10 Data & Compliance/ (4 MD files + TDD/)
+## 6. Comprehensive Module Mapping (M1 – M10)
 
-### `Module README-M10 Data Compliance.md`
-- **Three features mapped to different architecture owners:**
-  - Revenue Graph → M-03 Revenue Graph
-  - Configure Compliance Settings → Platform Core / Cross-cutting Governance
-  - Data Cloud / Data Export → M-03 Revenue Graph / Data Platform
-- **M10 is a product grouping, NOT one technical subsystem**
-- **Revenue Graph:** Automated Data Capture → Contextual Data Mapping → AI Context Layer
-- **Configure Compliance Settings:** CRM opt-out enforcement, GDPR/CCPA regional rules, policy evaluation at outreach time, audit logging
-- **Data Cloud:** 5 warehouse targets (Snowflake, BigQuery, Databricks, S3, Redshift), daily idempotent sync at 02:00 UTC, `sync_id` prevents duplicate writes
-- **Core design principles:** Split by real ownership, tenant isolation first, idempotent processing, policy enforcement at runtime, customer data ownership
+This section maps all customer-facing product modules to their corresponding technical architecture owners, database schemas, event boundaries, and custom domain validation constraints.
 
-### `Sequence Diagrams-M10 flows.md`
-- Capture to entity linking, compliance policy enforcement at outreach, Data Cloud export + retry, deletion/consent enforcement
+### 6.1 Product Module & Feature Inventory
 
-### `Environment Variables Registry-M10.md`
-- Graph processing workers, opt-out sync settings, export schedules, warehouse credentials, audit logging controls
+| Module ID | Module Name | Core Features |
+| :--- | :--- | :--- |
+| **M1** | Capture & Transcription | Call Transcription, Native Connectors, AI Data Extractor |
+| **M2** | Conversation Intelligence | AI Call Reviewer, AI Topic Tagger, AI Theme Spotter, Smart Tracker, AI Translator, AI Transcriber, Searchable Conversation Library, Real-Time Call guidance |
+| **M3** | AI Summaries & GenAI | AI Smart Summaries, Ask Anything, AI Deep Researcher |
+| **M4** | Deal Intelligence | Deals Boards, View Deal Drivers |
+| **M5** | Account Intelligence | Account Boards |
+| **M6** | Forecasting & Prediction | AI Revenue Predictor, Forecast Boards |
+| **M7** | R-Revenue Dashboards | Revenue Dashboards |
+| **M8** | Sales Engagement | Email Composer, Engage (To-Do), Orchestrate, Workflow Automation |
+| **M9** | Coaching & Training | Sales Coaching Insights, AI Trainer |
+| **M10** | Data & Compliance | Revenue Graph, Configure Compliance, Data Export (Data Cloud) |
 
-### `M10-drift-analysis.md`
-- Revenue Graph owned by M-03 but labeled M10 in product docs — common confusion point
-
-### TDD/ (3 files)
-- TDD-Configure Compliance Settings, TDD-Data Cloud or Data Export, TDD-Revenue Graph
-
----
-
-## PLATFORM-WIDE RULES CHEAT SHEET
-
-| Rule | Detail |
-|---|---|
-| No secrets in `.env` | Use Doppler only |
-| No AI calls from TypeScript | All LLM/ML stays in Python FastAPI |
-| No cross-module DB writes | Use events or public APIs |
-| Every table needs `tenant_id` | RLS enforced at DB level |
-| Events must be idempotent | BullMQ can redeliver |
-| Publisher owns event schema | Consumers use versioned contracts |
-| Extraction triggers (5 of 5) | Required before Phase 3 module extraction |
-| `deal.stage.changed` producer | M-07 only (NOT M-03) |
-| M4/M5/M8/M9 product names | Map to different architecture owners |
-| Coaching < 5 calls | No recommendations generated |
-| Audio retention | 7 days default, then auto-delete |
-| Forecast submissions | Versioned — never update in place |
-| ClickHouse fallback | Dashboard must work via PostgreSQL |
-| ADR required | Before any major technology choice enters codebase |
+```
+                  ┌─────────────────────────────────────────┐
+                  │    Capture & Transcription (M1)         │
+                  └────────────────────┬────────────────────┘
+                                       │
+                                       │ (call.transcription.completed)
+                                       v
+                  ┌─────────────────────────────────────────┐
+                  │      Data & Compliance (M10 Graph)      │
+                  └──────────┬───────────────────┬──────────┘
+                             │                   │
+                             │ (linked metadata) │ (linked metadata)
+                             v                   v
+┌────────────────────────────────────────┐   ┌────────────────────────────────────────┐
+│  Conversation Intelligence (M2)        │   │     AI Summaries & GenAI (M3)          │
+└────────────────────┬───────────────────┘   └───────────────────┬────────────────────┘
+                     │                                           │
+                     │ (call.scored)                             │ (call.summary.generated)
+                     v                                           v
+┌────────────────────────────────────────┐   ┌────────────────────────────────────────┐
+│    Coaching & Training (M9)            │   │       Deal & Account Mgmt (M4/M5)      │
+└────────────────────────────────────────┘   └────────────────────────────────────────┘
+```
 
 ---
 
-## MODULE → ARCHITECTURE OWNER QUICK MAP
-
-| Product Module | Architecture Owner | Lifecycle Stage |
-|---|---|---|
-| M1 Capture & Transcription | M-01 Data Ingestion | Capture |
-| M2 Conversation Intelligence | M-04 + M-05 (split) | Understand |
-| M3 AI Summaries & GenAI | M-06 Insight Generation | Analyze |
-| M4 Deal Intelligence | M-07 (Deals Boards) + M-05 (Deal Drivers) | Execute |
-| M5 Account Intelligence | M-07 Deal and Account Management | Execute |
-| M6 Forecasting & Prediction | M-09 Forecasting and Prediction | Predict |
-| M7 Revenue Dashboards | M-10 Coaching and Training | Optimize |
-| M8 Sales Engagement | M-02 (Email/Tasks) + M-08 (Plays/Automation) | Execute |
-| M9 Coaching & Training | M-10 Coaching and Training | Optimize |
-| M10 Data & Compliance | M-03 (Revenue Graph + Data Cloud) + Platform Core (Compliance) | Model/Cross-cutting |
+### 📦 MODULE: M1 Capture & Transcription
+*   **v1 Features:** Call Ingestion API, Native Connectors (Zoom, Google Meet, Teams), Deepgram/Whisper Transcribers, speaker diarization, vocabulary correction.
+*   **Technical Workspace:** `modules/m01-capture-transcription/`
+*   **Platform Lifecycle Stage:** Stage 1 — `Capture`
+*   **Canonical API Prefix:** `/api/v1/m01-capture-transcription`
+*   **Owned Table Schema:** `m01_capture_transcription`
+*   **Events Emitted:**
+    *   `call.transcription.completed` (Triggered after transcription and speaker diarization persist).
+    *   `crm.fields.extracted` (Triggered after downstream parsing of key entity properties).
+*   **Events Consumed:** None. (M1 acts as the primary data entry gateway for the entire platform).
+*   **Special Domain Rules & Constraints:**
+    *   **7-Day Raw Audio Deletion:** To minimize risk and storage costs, raw audio and video files must be permanently purged from the storage buckets 7 days post-ingestion. Only text transcripts and downstream intelligence remain.
+    *   **Confidence Review Thresholds:** CRM fields extracted by the AI engine must follow a three-tier pipeline:
+        *   `Score >= 0.80`: Auto-synced to the connected CRM platform.
+        *   `0.70 <= Score < 0.80`: Flagged for review; must reside in `crm_extracted_fields` for human manual approval.
+        *   `Score < 0.70`: Silent exclusion; dropped from sync pipelines.
 
 ---
 
-*Last compiled: 2026-05-17 | Source: Full audit of all MD files across all folders*
+### 📦 MODULE: M2 Conversation Intelligence
+*   **v1 Features:** AI Call Reviewer (LangGraph agent scorecards), AI Topic Tagger, AI Theme Spotter, Smart Tracker, AI Translator, AI Transcriber, Searchable Conversation Library, Real-Time Call guidance.
+*   **Technical Workspace:** `modules/m02-conversation-intelligence/`
+*   **Platform Lifecycle Stage:** Stage 3 — `Understand`
+*   **Canonical API Prefix:** `/api/v1/m02-conversation-intelligence`
+*   **Owned Table Schema:** `m02_conversation_intelligence`
+*   **Events Emitted:**
+    *   `call.topics.tagged` (Emitted after topic categorization completes).
+    *   `call.scored` (Emitted after scorecard valuation finishes).
+    *   `tracker.detection.created` (Emitted when dynamic keyword patterns match a transcript).
+*   **Events Consumed:**
+    *   `call.transcription.completed` (Triggers both AI scorecard scoring and keyword tracking runs).
+    *   `revenue_graph.entity.linked` (Signals that a call record has been successfully mapped to CRM deals; triggers scoring finalization).
+    *   `email.sent` (Triggers intent tracking sweeps across outbound outreach content).
+*   **Special Domain Rules & Constraints:**
+    *   **Context Locking Rule:** AI Call Reviewer and scoring services are restricted from calculating final call scores until M10 emits the `revenue_graph.entity.linked` event. Scoring must leverage the CRM metadata (deal value, client tier) to select the correct contextual scoring template.
+
+---
+
+### 📦 MODULE: M3 AI Summaries & GenAI
+*   **v1 Features:** AI Smart Summaries (structured briefs), Ask Anything (RAG-based chat), AI Deep Researcher (multi-call insights).
+*   **Technical Workspace:** `modules/m03-ai-summaries-genai/`
+*   **Platform Lifecycle Stage:** Stage 4 — `Analyze`
+*   **Canonical API Prefix:** `/api/v1/m03-ai-summaries-genai`
+*   **Owned Table Schema:** `m03_ai_summaries_genai`
+*   **Events Emitted:**
+    *   `call.summary.generated` (Announces the availability of a new call summary).
+    *   `research.report.completed` (Fires when an asynchronous AI deep research job completes).
+*   **Events Consumed:**
+    *   `call.transcription.completed` (Triggers the automatic generation of call summaries and next steps).
+    *   `tracker.detection.created` (Triggers recalculations of risk flags in active briefs).
+    *   `call.topics.tagged` (Provides taxonomy mappings to index retrieval context).
+*   **Special Domain Rules & Constraints:**
+    *   **RAG Query Retention Limit:** Chat history records within `query_sessions` must be strictly retained for exactly 90 days. A daily platform CRON sweeps and permanently cascades deletion for expired chat histories.
+    *   **Research Concurrency Caps:** To prevent external token exhaustion, a single tenant can run a maximum of 2 concurrent AI Deep Researcher workflows. Excess requests are placed in an operational wait queue.
+
+---
+
+### 📦 MODULE: M4 Deal Intelligence
+*   **v1 Features:** Deals Boards UI, Deal drivers scoring, MEDDIC/BANT extraction, risk indicators.
+*   **Technical Workspace:** `modules/m04-deal-intelligence/`
+*   **Platform Lifecycle Stage:** Stage 5 — `Execute`
+*   **Canonical API Prefix:** `/api/v1/m04-deal-intelligence`
+*   **Owned Table Schema:** `m04_deal_intelligence`
+*   **Events Emitted:** None. (UI-serving module).
+*   **Events Consumed:**
+    *   `revenue_graph.entity.linked` (Updates active boards with new entity relation lines).
+    *   `deal.stage.changed` (Fires when a deal moved stage in CRM; consumed to refresh position on board).
+    *   `tracker.detection.created` (Used to update and show deal risk flags on the active board).
+    *   `email.sent` (Updates deal's last activity timestamps).
+    *   `call.summary.generated` (Invalidates deal brief cache and signals board UI to fetch fresh details).
+*   **Special Domain Rules & Constraints:**
+    *   **UI Stage-Change Request Pattern (ADR-005):** When a salesperson drags and drops a deal card to a new stage in the Deals Board UI:
+        1. M4 performs an optimistic local DB update and publishes an internal `deal.stage.update.requested` request message.
+        2. **M10** (Data & Compliance / Revenue Graph) consumes this internal message, performs the outbound synchronization to the external CRM system, and waits for success.
+        3. Once the CRM updates successfully (or when an inbound sync detects a CRM stage change), **M10** publishes the public platform event `deal.stage.changed` to the event bus.
+        4. M4, M8, and M6 consume `deal.stage.changed` to run downstream side-effects. M4 is strictly prohibited from direct CRM writes or publishing public platform events directly from UI triggers.
+
+---
+
+### 📦 MODULE: M5 Account Intelligence
+*   **v1 Features:** Account Boards UI, stakeholder influence map, competitive alert widgets.
+*   **Technical Workspace:** `modules/m05-account-intelligence/`
+*   **Platform Lifecycle Stage:** Stage 5 — `Execute`
+*   **Canonical API Prefix:** `/api/v1/m05-account-intelligence`
+*   **Owned Table Schema:** `m05_account_intelligence`
+*   **Events Emitted:** None.
+*   **Events Consumed:**
+    *   `call.summary.generated` (Used to invalidate account briefs and serve fresh summaries).
+    *   `email.sent` (Increments engagement activity counts).
+    *   `tracker.detection.created` (Attaches competitive tracking alerts to the account portal).
+*   **Special Domain Rules & Constraints:**
+    *   **Context Freshness Control:** Account intelligence dashboards utilize a precomputed read-model pattern. The system pulls from pre-calculated `engagement_scores` and `renewal_signals` rather than computing them live on every page load to guarantee under 500ms p99 latency SLAs.
+
+---
+
+### 📦 MODULE: M6 Forecasting & Prediction
+*   **v1 Features:** AI Revenue Predictor, Quota and Forecast Boards.
+*   **Technical Workspace:** `modules/m06-forecasting-prediction/`
+*   **Platform Lifecycle Stage:** Stage 6 — `Predict`
+*   **Canonical API Prefix:** `/api/v1/m06-forecasting-prediction`
+*   **Owned Table Schema:** `m06_forecasting_prediction`
+*   **Events Emitted:**
+    *   `forecast.submitted` (Fires when a manager locks and submits a team forecast).
+*   **Events Consumed:**
+    *   `deal.stage.changed` (Triggers asynchronous pipeline coverage and accuracy calculation updates).
+*   **Special Domain Rules & Constraints:**
+    *   **Rate-Limited Recalculations:** Due to the mathematical complexity of the predictive ML models, the forecasting engine restricts real-time updates. A maximum of one forecast recalculation per tenant/period is allowed within a 60-minute window.
+    *   **Immutability of Submissions:** Submissions inside `forecast_submissions` are strictly append-only. A manager modifying a forecast generates a new row version increment, maintaining a historical audit trail.
+
+---
+
+### 📦 MODULE: M7 R-Revenue Dashboards
+*   **v1 Features:** Columnar Revenue performance widgets, scorecards, Attainment BI graphs.
+*   **Technical Workspace:** `modules/m07-revenue-dashboards/`
+*   **Platform Lifecycle Stage:** Stage 7 — `Optimize`
+*   **Canonical API Prefix:** `/api/v1/m07-revenue-dashboards`
+*   **Owned Table Schema:** `m07_revenue_dashboards`
+*   **Events Emitted:** None.
+*   **Events Consumed:** None.
+*   **Special Domain Rules & Constraints:**
+    *   **The Columnar Storage Rule:** Dashboard queries must target the **ClickHouse Columnar Store** as their primary data engine. 
+    *   **PostgreSQL Failover Fallback:** If the primary ClickHouse database becomes unavailable, the dashboard service must automatically fall back to executing queries against the PostgreSQL transaction database, log a high-priority alert to Better Stack, and throttle non-essential dashboard widget renderings.
+
+---
+
+### 📦 MODULE: M8 Sales Engagement
+*   **v1 Features:** Email Composer, Engage (To-Do), Sequencer outreach tasks, automated playbooks trigger flows.
+*   **Technical Workspace:** `modules/m08-sales-engagement/`
+*   **Platform Lifecycle Stage:** Stage 5 — `Execute`
+*   **Canonical API Prefix:** `/api/v1/m08-sales-engagement`
+*   **Owned Table Schema:** `m08_sales_engagement`
+*   **Events Emitted:**
+    *   `email.sent` (Emitted when an outbound email dispatch finishes).
+*   **Events Consumed:**
+    *   `call.transcription.completed` (Evaluates transcribed content to trigger automated follow-up drafts).
+    *   `tracker.detection.created` (Triggers competitive alerts and automated play enrollments).
+    *   `deal.stage.changed` (Triggers stage-based workflows and sales play automations).
+    *   `call.summary.generated` (Evaluates extracted meeting topics to trigger workflow completions).
+*   **Special Domain Rules & Constraints:**
+    *   **SendGrid Integration Sandboxing:** Dispatched emails are automatically validated and must use a strictly isolated sandbox mode unless flagged for production by the organizational tenant settings.
+
+---
+
+### 📦 MODULE: M9 Coaching & Training
+*   **v1 Features:** Coaching dashboard, playlists, AI Trainer (roleplay scenarios and messages).
+*   **Technical Workspace:** `modules/m09-coaching-training/`
+*   **Platform Lifecycle Stage:** Stage 7 — `Optimize`
+*   **Canonical API Prefix:** `/api/v1/m09-coaching-training`
+*   **Owned Table Schema:** `m09_coaching_training`
+*   **Events Emitted:** None. (M9 acts as a terminal downstream consumer).
+*   **Events Consumed:**
+    *   `call.scored` (Consumes scorecards to update skill metrics).
+    *   `forecast.submitted` (Triggers forecast accuracy evaluation pipelines).
+*   **Special Domain Rules & Constraints:**
+    *   **The Low-Sample Coaching Rule:** To prevent AI Hallucinations and statistically invalid recommendations, the coaching service is prohibited from generating weekly recommendations unless the salesperson has a minimum of 5 recorded calls (`callCount >= 5`) within that tracking window.
+
+---
+
+### 📦 MODULE: M10 Data & Compliance
+*   **v1 Features:** Revenue Graph CRM entities sync, PII Redaction, Immutable audit logging, Data Cloud export connectors (Snowflake, BigQuery).
+*   **Technical Workspace:** `modules/m10-data-compliance/`
+*   **Platform Lifecycle Stage:** Stage 2 — `Model` & Cross-cutting Governance
+*   **Canonical API Prefix:** `/api/v1/m10-data-compliance`
+*   **Owned Table Schema:** `m10_data_compliance`
+*   **Events Emitted:**
+    *   `revenue_graph.entity.linked` (Fires after successful CRM entity resolution and matching).
+    *   `deal.stage.changed` (Fires after a deal stage change is durably recorded/synced to CRM).
+*   **Events Consumed:**
+    *   `call.transcription.completed` (Triggers interaction mapping to accounts and deals).
+    *   `crm.fields.extracted` (Pushes key structured data parameters into relational tables).
+    *   `email.sent` (Captures outreach activities to update transaction timelines).
+    *   `call.summary.generated` (Saves generated summaries to CRM opportunity note fields).
+*   **Special Domain Rules & Constraints:**
+    *   **The Daily Synchronization Lock:** The Data Cloud export system processes daily exports to 5 supported target types (Snowflake, BigQuery, Databricks, Amazon S3, Redshift) starting at 02:00 UTC. The process uses a persistent `sync_id` key in Redis to prevent duplicate parallel exports.
+
+---
+
+## 7. Tooling, Services & Cost Management
+
+### 7.1 Tech Stack Cost & Usage Matrix
+All tools and services utilized in the R-Revenue Intelligence platform must be mapped to their approved cost mindset and usage role. The introduction of any unlisted service is prohibited:
+
+| Cost Classification | Development Tools | AI / ML Layer | Data & Storage | Monitoring & DevOps |
+| :--- | :--- | :--- | :--- | :--- |
+| **Free & Open Source** | Node.js, TypeScript, Next.js, NestJS, FastAPI, Prisma, Zod. | LangGraph, LiteLLM. | PostgreSQL, Redis, Meilisearch, ClickHouse. | GitHub Actions, Docker, TailwindCSS. |
+| **Free Offline AI** | Ollama (Local LLM runs). | Gemma-family (Prompt validation), pyannote.audio. | SQLite (Local mock databases). | Ruff, Black, ESLint. |
+| **Free Tier / Trial** | Vercel (Previews). | Google AI Studio (API tests), Groq (Speed tests). | Supabase (Starter plans), Upstash Redis. | Sentry (Hobby), Better Stack (Logs). |
+| **Paid Now** | Vercel Pro (Production). | OpenAI API, Deepgram. | Supabase Pro, AWS S3 Buckets. | Sentry (Production), Doppler Team. |
+| **Paid Later at Scale** | AWS ECS / Fargate. | Dedicated GPU clusters (AI Services). | Managed ClickHouse, Qdrant (Vector DB). | PagerDuty, Enterprise Cloudflare. |
+
+### 7.2 Core Principles of Stack Governance
+*   **"Prefer Approved Stack First":** Before adding any third-party framework or dependency, the engineering lead must verify if an existing tool in the matrix can satisfy the requirement.
+*   **"No Secrets in Git":** Secrets rotation must occur on a strict 90-day cadence. Doppler acts as the single orchestrator. Storing keys in raw code or Docker files is prohibited.
+*   **"Security Redaction on Logs":** Log collectors (Better Stack, Sentry) must run local regex processors to filter and redact all PII data (phone numbers, emails) and secrets prior to external storage.
+
+---
+
+## 8. Local Setup & Environment Architecture
+
+To accommodate different developer machines and OS-level virtualization constraints, the R-Revenue Intelligence platform is architected to run seamlessly under a dual-environment configuration:
+
+### 8.1 Setup Option A: Containerized Infrastructure (With Docker)
+This is the standard local engineering environment. Running `docker-compose up -d` boots:
+* **PostgreSQL 16 (with pgvector)** on port `5432` for transactional metadata and embedding search.
+* **Redis 7 (via Upstash client compatibility)** on port `6379` for BullMQ backing.
+* **Meilisearch** on port `7700` and **ClickHouse** on port `8123/9000`.
+
+### 8.2 Setup Option B: Native Host Environment (Without Docker)
+If running without Docker, services are run natively:
+* **Local Databases**: Developers run PostgreSQL 16 and Redis natively on their host machine, or point to sandbox instances in the cloud (e.g. Supabase/Neon, Upstash).
+* **Workspace Environment (.env)**: A local `.env` is created in the repository root containing native connection parameters (`DATABASE_URL`, `REDIS_HOST`, `AI_SERVICE_URL`).
+* **Python Services**: The AI microservice (`apps/ai-services`) runs in a native Python 3.11 virtual environment (`python -m venv venv` + `uvicorn app.main:app --port 8000`).
+
+### 8.3 Compilation Resolution for Shared Monorepo Databases
+When building Prisma types across our physical monorepo workspaces on Windows, running parallel compiler threads causes a file system rename race condition (`EPERM` write lock errors on `query_engine-windows.dll.node.tmp`).
+* **Non-Negotiable Rule**: All developers must compile prisma client databases recursively and **sequentially** utilizing the concurrency-throttled pnpm option:
+  ```bash
+  pnpm --workspace-concurrency=1 -r db:generate
+  ```
+* **Schema Synchronization**: Once generated, database tables are synchronized globally against the configured DB instance via:
+  ```bash
+  npx prisma db push --schema=packages/database/prisma/schema.prisma
+  ```
+
+### 8.4 Beginner Onboarding Roadmap & SDD Constitution
+For freshers, interns, and onboarding teams, a step-by-step feature development blueprint is maintained at [beginner_developer_journey_guide.md](file:///C:/Users/Relanto/.gemini/antigravity/brain/c4cfdae5-d238-463f-beb1-926342b7d116/artifacts/beginner_developer_journey_guide.md). This guide details:
+1. **Spec-Driven Development (SDD)**: Creating Specs under `.specify/specs/`, plan generation via AI under `.specify/plans/`, and sequential tasks execution.
+2. **Modular Git Branching**: Cutting temporary `feature/mX-*` branches from dedicated staging integrations `module/mX-*`, ensuring zero commit pollution on `develop` or `main`.
+
+---
+
+## 9. Development Workflow Checklist for Engineering Team
+
+Before submitting a Pull Request for integration into the `develop` branch, the developer must complete this validation checklist:
+
+- [ ] **Directory Alignment:** The code resides strictly within the decoupled physical workspace directories: domain modules under `/modules/m0X-*`, platform core under `/modules/platform-core/`, and AI model code under `/apps/ai-services/`.
+- [ ] **Technical Boundary Rule:** No direct cross-module imports are used. Cross-module data queries are routed through BullMQ event publishers or approved REST APIs.
+- [ ] **Database Schema Standard:** The local table configurations utilize UUID primary keys, carry `tenant_id UUID NOT NULL` as the second column, and have an index on `(tenant_id, lookup_col)`.
+- [ ] **Row-Level Security:** `ENABLE ROW LEVEL SECURITY` and `FORCE ROW LEVEL SECURITY` are applied to all newly created tables.
+- [ ] **Input Sanitization:** All controller entry points contain a corresponding Zod validation schema. No raw payload reaches business service files.
+- [ ] **Secrets Hygiene:** No credentials or API keys exist within `.env` files or source code. All variables are fetched via Doppler context calls.
+- [ ] **ASR & LLM Decoupling:** TypeScript service files make no direct calls to OpenAI or Deepgram. All AI operations are delegated asynchronously via BullMQ or routed through private FastAPI endpoints.
+- [ ] **Dashboard ClickHouse Fallback:** If modifying M7/M10 dashboard components, a failover mechanism is implemented to query PostgreSQL if ClickHouse is unreachable.
+- [ ] **Coaching Metrics Constraint:** M9 updates ensure that coaching metrics recommendations are suppressed if the salesperson has fewer than 5 recorded calls in the current period.
+- [ ] **Event Envelope Compliance:** Emitted event messages carry the verified standard v1 envelope, including `eventId`, `tenantId`, `correlationId`, and `occurredAt`.
+- [ ] **Linting & Verification:** `npm run lint` and `python -m ruff check` compile with zero warnings. Automated unit and integration tests run successfully with a minimum coverage of 80%.
+
+---
+*End of Complete Codebase Knowledge Base. Maintain this standard to preserve architectural integrity.*

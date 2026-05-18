@@ -2,640 +2,243 @@
 
 ## 1. Document Control
 
-- **Document title:** Technical Design Document — AI Smart Summaries
-- **Feature name:** AI Smart Summaries
-- **Module name:** M3 AI Summaries & GenAI
-- **Architecture module mapping:** M-06 Insight Generation
-- **Version:** v1.0
-- **Status:** Draft
+- **Document Title:** Technical Design Document — AI Smart Summaries
+- **Feature Name:** AI Smart Summaries (Call Summaries, Deal Briefs, Account Briefs)
+- **Module Name:** M3 AI Summaries & GenAI
+- **Workspace Directory:** `modules/m03-ai-summaries-genai/`
 - **Owner:** Product Engineering — M3
-- **Reviewers:** CTO, Tech Lead, AI Lead, Backend Lead, Product Manager, QA Lead
-- **Last updated:** 2026-04-30
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
-## 2. Purpose
+---
 
-### Business problem
-Revenue teams spend too much time reading long call transcripts, piecing together deal context from multiple interactions, and manually preparing notes for follow-up, CRM updates, and internal reviews. AI Smart Summaries solves this by converting conversation and CRM signals into short, structured, directly usable outputs. 
+## 2. Business & Feature Context
+
+### Business Problem
+Sales reps and managers spend hours listening to recorded calls, reading transcript files, and trying to write recap notes for external CRM platforms. Crucial deal warnings, competitor updates, and follow-up commitments are frequently lost or delayed. AI Smart Summaries automates the creation of high-fidelity, structured summaries of customer interactions, saving time and improving data precision across opportunities and accounts.
 
 ### What this feature does
-AI Smart Summaries automatically generates structured call summaries and briefs by analyzing transcripts, tracker detections, topic tags, deal context, account context, and related CRM signals. The feature produces concise outputs that help reps, managers, and RevOps quickly understand what happened, what matters, what is risky, and what should happen next. 
+AI Smart Summaries dynamically synthesizes meeting inputs and CRM context into three core intelligence artifacts:
+1. **AI Call Summaries:** Structure-mapped summaries of individual sales calls, highlighting customer feedback, pain points, competitor mentions, and next-step actions.
+2. **AI Deal Briefs:** A debounced, aggregated brief of active sales opportunities combining the latest call summaries, emails, and active tracker flags.
+3. **AI Account Briefs:** A strategic synthesis of overall account relationships, sentiment trends, and organizational health.
 
-### Why it belongs in M3
-M3 is the module responsible for turning structured signals from earlier modules into human-readable, downstream-consumable outputs such as summaries, briefs, reports, and generated answers. This aligns directly with M-06 Insight Generation in the architecture. 
+### Value Proposition
+- Eliminates manual transcription analysis for revenue professionals.
+- Accelerates executive deal reviews by aggregating raw signals into digestible briefings.
+- Drives downstream automation and trigger-playbooks in CRM sync workflows.
+- Lowers risk by automatically detecting and highlighting buyer friction or objections.
 
-### Business value
-- Reduces time spent reviewing calls and account history.
-- Improves rep follow-through by extracting next steps and risks.
-- Improves manager visibility with structured deal and account briefs.
-- Creates reusable AI outputs that downstream systems can consume.
-- Supports CRM note sync and deal/account management workflows. 
+---
 
-## 3. Scope
+## 3. Scope & Dependencies
 
-### In scope
-- AI-generated **call summaries** for completed calls.
-- AI-generated **deal briefs** combining recent deal-related signals.
-- AI-generated **account briefs** combining account-level conversation and activity signals.
-- Structured summary storage, versioning, review flags, and regeneration behavior.
-- Event emission for downstream consumers.
-- Source-linked traceability from summary sections to originating evidence.
-- Use of conversation, tracker, topic, and CRM context for summary generation. 
+### In Scope
+- Automatic background generation of a Call Summary upon receipt of call transcription event.
+- Debounced, async updates of Deal and Account Briefs when new interaction data is captured.
+- Storage of citation links mapping summary findings directly back to raw transcript passages.
+- Manual trigger API for summary regeneration.
+- Confidence-score evaluation, review gating, and CRM auto-sync blocking.
 
-### Out of scope
-- Real-time in-call summarization.
-- User-authored note editing workflows.
-- Full report generation for complex analytical questions; that belongs to AI Deep Researcher.
-- Conversational question answering; that belongs to Ask Anything.
-- CRM schema design and cross-platform sync logic outside the summary payload boundary. 
+### Out of Scope
+- Ephemeral in-call workspace notes or real-time assistance.
+- Multi-call research reports on custom topics; those belong exclusively to AI Deep Researcher.
+- General chat queries across multiple deals; those belong exclusively to Ask Anything.
 
-### Assumptions
-- A transcript exists for the call before summary generation starts.
-- Revenue Graph can provide deal/account/contact context where linkage exists.
-- Topic tags and tracker detections may arrive slightly after transcript completion.
-- AI Services Layer returns structured JSON for summary outputs.
-- Multi-tenant isolation is enforced by platform middleware and tenant-scoped storage. 
+### Upstream Dependencies
+- **M1 Capture & Transcription:** Emits `call.transcription.completed` and provides meeting audio transcripts.
+- **M2 Conversation Intelligence:** Emits `tracker.detection.created` and `call.topics.tagged` for thematic tagging.
+- **M10 Data & Compliance (Revenue Graph):** Supplies account, deal, and stakeholder boundaries.
 
-### Upstream dependencies
-- M-01 Data Ingestion for `call.transcription.completed` and transcript records.
-- M-03 Revenue Graph for linked deal, account, and contact context.
-- M-04 Conversation Intelligence for topic tags.
-- M-05 Smart Tracking for tracker detections and signal enrichment.
-- Platform Core for tenant resolution, auth, eventing, and persistence. 
+### Downstream Consumers
+- **M4 Deal Intelligence / M5 Account Intelligence:** For pipeline card metrics and dashboard updates.
+- **M8 Sales Engagement:** Pre-filling email composers and sequencing playbooks.
+- **M10 Data & Compliance:** Subscribes to `call.summary.generated` to sync meeting summaries to external CRM systems (Salesforce/HubSpot).
 
-### Downstream consumers
-- M-03 Revenue Graph, which consumes `call.summary.generated` and can write summary-derived activity notes and AI-extracted fields into CRM sync workflows.
-- M-07 Deal and Account Management, which reads deal briefs and account briefs for UI and health/risk visibility.
-- M-08 Execution and Automation, indirectly through downstream workflows that use summary outputs and related signals.
-- Frontend applications that display call summaries, deal briefs, and account briefs. 
+---
 
-## 4. Users and Triggers
+## 4. API Specification
 
-### Primary users
-- Account Executives
-- Sales Managers
-- Customer Success Managers
-- RevOps
-- Leadership users reviewing deal and account state 
+All endpoints are hosted under the unified prefix: `/api/v1/m03-ai-summaries-genai`.
 
-### Trigger types
-- **Event-driven:** automatic summary generation after `call.transcription.completed`.
-- **Signal-driven refresh:** deal brief refresh after `tracker.detection.created`.
-- **Context enrichment refresh:** summary enhancement when topic tags become available.
-- **User-initiated:** explicit regenerate action for a call summary or brief. 
+### GET /api/v1/m03-ai-summaries-genai/calls/:id/summary
+- **Description:** Retrieve the active call summary for a specific call.
+- **Headers:** `Authorization: Bearer <token>`, `X-Tenant-ID: <uuid>`
+- **Response Payload (`200 OK`):**
+  ```json
+  {
+    "summaryId": "uuid",
+    "callId": "uuid",
+    "tenantId": "uuid",
+    "version": 1,
+    "confidenceScore": 0.85,
+    "flaggedForReview": false,
+    "executiveSummary": "Acme is interested in expanding their seat count but raised concerns regarding pricing flexibility...",
+    "keyObjections": [
+      {
+        "category": "pricing",
+        "description": "Acme requested a 15% discount for a 3-year term contract commitment."
+      }
+    ],
+    "actionItems": [
+      {
+        "assignee": "rep-uuid",
+        "task": "Send custom multi-year price quote",
+        "dueDate": "2026-05-22"
+      }
+    ],
+    "competitors": ["CompetitorX", "CompetitorY"],
+    "updatedAt": "2026-05-18T23:43:19Z"
+  }
+  ```
 
-### Entry points
-- `GET /api/v1/insights/calls/:id/summary`
-- `GET /api/v1/insights/deals/:id/brief`
-- `GET /api/v1/insights/accounts/:id/brief`
-- Internal event consumer for `call.transcription.completed`
-- Internal event consumer for `tracker.detection.created`
-- Internal event consumer for `call.topics.tagged` 
+### POST /api/v1/m03-ai-summaries-genai/calls/:id/summary/regenerate
+- **Description:** Explicitly trigger an asynchronous background regeneration job.
+- **Response Payload (`202 Accepted`):**
+  ```json
+  {
+    "jobId": "bullet-job-uuid",
+    "status": "queued",
+    "createdAt": "2026-05-18T23:43:19Z"
+  }
+  ```
 
-### Preconditions
-- Tenant context must be present and verified.
-- A completed transcript must exist for call summary generation.
-- Deal or account linkage should exist for deal/account brief generation; if missing, the system may proceed with reduced context where permitted.
-- Required AI and database dependencies must be available. 
+---
 
-## 5. Functional Flow
+## 5. Functional Flow & Debounce Orchestration
 
-### Happy path
-1. M-06 receives `call.transcription.completed`.
-2. M-06 loads transcript content and speaker-labeled segments from storage.
-3. M-06 requests linked deal, account, and contact context from M-03.
-4. M-06 optionally includes topic tags and tracker detections if already available.
-5. M-06 assembles a structured prompt payload and calls `POST /v1/summarize` on the AI Services Layer.
-6. AI Services Layer returns structured summary JSON.
-7. M-06 stores the generated call summary in `callsummaries`.
-8. M-06 emits `call.summary.generated`.
-9. Downstream modules consume the summary event for CRM and deal/account workflows. 
+### Call Summary Flow
+1. **M1** emits `call.transcription.completed`.
+2. M3 background worker validates tenant context and fetches raw transcript from M1 database.
+3. Worker sends transcript and Revenue Graph metadata to FastAPI AI Services Layer via `POST /v1/summarize`.
+4. FastAPI evaluates the prompt using the `gpt-4o-mini` model, returning structured JSON and an extraction confidence score.
+5. The worker parses the response:
+   - If confidence score is `< 0.70` (configured via `SUMMARY_CONFIDENCE_MIN`), set `flagged_for_review = true` and lock down auto-sync behavior (`ENABLE_FLAGGED_FOR_REVIEW_WRITE_GUARD`).
+   - Store the summary record under `m03_ai_summaries_genai.call_summaries`.
+   - Store citation links mapping summary findings directly back to raw transcript passages in `m03_ai_summaries_genai.summary_evidence_links`.
+6. Emit a `call.summary.generated` event via Redis/BullMQ.
 
-### Alternate paths
-- If deal linkage is not ready, M-06 waits up to 5 minutes using a delayed job, then proceeds without deal context if still unresolved.
-- If topic tags are not yet available, the base summary is generated first and can later be enriched or regenerated.
-- If multiple tracker detections arrive quickly for the same deal, deal brief refresh is debounced to avoid repeated regeneration. 
+### Deal Brief Debouncing Flow (SD-05)
+To prevent LLM token waste, the M3 Brief Worker debounces deal brief regenerations:
+- When a `tracker.detection.created` event is consumed, M3 checks if a deal brief refresh job is already scheduled.
+- If a job exists, the debounce timer is extended, preventing redundant generations.
+- Once the 5-minute debounce window expires without further triggers, the worker pulls the last 5 call summaries, emails, and active trackers from `m03_ai_summaries_genai` and updates `m03_ai_summaries_genai.deal_briefs`.
 
-### Failure paths
-- Transcript not found.
-- Revenue Graph context fetch fails.
-- AI Services Layer times out or returns invalid schema.
-- Database write fails.
-- Event publish fails.
-- Downstream CRM write fails after summary creation. 
+---
 
-### Retry behavior
-- AI summary generation retries up to 3 times on timeout or transient failures.
-- Database write operations retry through worker retry policy, then move to DLQ on exhaustion.
-- Revenue Graph context fetch waits and retries in delayed fashion for newly linked calls.
-- Brief refresh jobs use deduplicated job IDs plus debounce windows to avoid duplicate work. 
+## 6. Database Schema Design
 
-## 6. Inputs and Outputs
+All tables are defined inside the monorepo at `modules/m03-ai-summaries-genai/prisma/schema.prisma` under the `m03_ai_summaries_genai` PostgreSQL schema.
 
-### Inputs
-- Call transcript raw text
-- Speaker-labeled transcript segments
-- Call metadata
-- Deal context
-- Account context
-- Contact context
-- Topic tags
-- Tracker detections
-- CRM-extracted fields where available
-- User or tenant language preference if translation/localization is enabled later in the roadmap 
+```sql
+-- Create Schema Namespace
+CREATE SCHEMA IF NOT EXISTS m03_ai_summaries_genai;
 
-### Retrieval context
-AI Smart Summaries is not pure single-document summarization. It aggregates context from the current call plus linked CRM entities and supporting signals from topic tagging and smart tracking. Deal briefs and account briefs are multi-source outputs that rely on broader context than one transcript alone. 
+-- 1. Call Summaries Table
+CREATE TABLE m03_ai_summaries_genai.call_summaries (
+  summary_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  call_id             UUID UNIQUE NOT NULL,
+  tenant_id           UUID NOT NULL,
+  version             INTEGER NOT NULL DEFAULT 1,
+  confidence_score    NUMERIC(3,2) NOT NULL,
+  flagged_for_review  BOOLEAN NOT NULL DEFAULT false,
+  executive_summary   TEXT NOT NULL,
+  key_objections      JSONB NULL, -- Array of objects: category, description
+  action_items        JSONB NULL, -- Array of objects: assignee, task, dueDate
+  competitors         JSONB NULL, -- Array of strings
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-### Output artifacts
-- Call summary payload
-- Deal brief payload
-- Account brief payload
-- Stored summary records with version and confidence metadata
-- Review flags for low-confidence outputs
-- Event message for downstream consumers 
+-- 2. Deal Briefs Table
+CREATE TABLE m03_ai_summaries_genai.deal_briefs (
+  brief_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  deal_id             UUID UNIQUE NOT NULL,
+  tenant_id           UUID NOT NULL,
+  summary_text        TEXT NOT NULL,
+  objections_summary  TEXT NULL,
+  health_indicators   JSONB NULL,
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-### Events emitted
-- `call.summary.generated` 
+-- 3. Account Briefs Table
+CREATE TABLE m03_ai_summaries_genai.account_briefs (
+  brief_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id          UUID UNIQUE NOT NULL,
+  tenant_id           UUID NOT NULL,
+  relationship_brief  TEXT NOT NULL,
+  sentiment_summary   TEXT NULL,
+  key_stakeholders    JSONB NULL,
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-### APIs exposed or consumed
-**Exposed**
-- `GET /api/v1/insights/calls/:id/summary`
-- `GET /api/v1/insights/deals/:id/brief`
-- `GET /api/v1/insights/accounts/:id/brief`
+-- 4. Normalized Summary Evidence Links Table (Drift #8 Resolution)
+CREATE TABLE m03_ai_summaries_genai.summary_evidence_links (
+  link_id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id           UUID NOT NULL,
+  summary_type        VARCHAR NOT NULL CHECK (summary_type IN ('call_summary', 'deal_brief', 'account_brief')),
+  summary_id          UUID NOT NULL,
+  section_name        VARCHAR NULL,
+  source_type         VARCHAR NOT NULL CHECK (source_type IN ('transcript', 'tracker_detection', 'topic_tag', 'activity', 'email')),
+  source_entity_id    UUID NOT NULL,
+  snippet             TEXT NULL,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-**Consumed**
-- M-03 Revenue Graph APIs for deal/account/contact context
-- M-05 Smart Tracking APIs for detections
-- AI Services Layer `POST /v1/summarize` 
+-- 5. Summary History Table for Auditing (Drift #9 Resolution)
+CREATE TABLE m03_ai_summaries_genai.summary_history (
+  history_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id           UUID NOT NULL,
+  summary_type        VARCHAR NOT NULL CHECK (summary_type IN ('call_summary', 'deal_brief', 'account_brief')),
+  version             INTEGER NOT NULL,
+  snapshot_data       JSONB NOT NULL,
+  snapshot_at         TIMESTAMPTZ DEFAULT NOW()
+);
 
-## 7. Summary Types
-
-### Call summary
-A call summary is the shortest and most immediate output. It is generated from one completed call and includes concise takeaways, next steps, risks, evidence snippets, and confidence metadata. The canonical storage table is `callsummaries`. 
-
-### Deal brief
-A deal brief is a multi-source summary of the current state of a specific deal. It combines recent call outputs, tracker detections, topic tags, and linked CRM context to provide a usable view of deal status, recent signals, and key risks. The canonical storage table is `dealbriefs`. 
-
-### Account brief
-An account brief is a broader, account-level summary that synthesizes interactions and health signals across the account. It is intended for account planning, renewal awareness, expansion planning, and executive review. The canonical storage table is `accountbriefs`. 
-
-## 8. Input Aggregation Rules
-
-### Call summary aggregation rules
-- The primary source is the transcript for the target call.
-- Include speaker segments for evidence extraction and section grounding.
-- Include linked deal/account/contact context if available at generation time.
-- Include topic tags when already present.
-- Include tracker detections relevant to the same call when already present.
-- Do not include unrelated call history by default in the initial call summary unless an explicit “expanded summary” mode is introduced later. 
-
-### Deal brief aggregation rules
-- Use the linked deal as the root entity.
-- Pull recent summaries, recent tracker detections, relevant topic tags, stage, value, participants, and recent activities tied to the deal.
-- Rank recency first, then signal severity, then source confidence.
-- Debounce refresh for 60 seconds when multiple tracker detections arrive in a burst.
-- Exclude signals outside tenant scope or outside the linked deal boundary. 
-
-### Account brief aggregation rules
-- Use the linked account as the root entity.
-- Aggregate across related deals, calls, contacts, and account-level engagement signals.
-- Prefer the most recent and highest-confidence items, but preserve meaningful trend indicators when present.
-- Avoid duplicating the same evidence across multiple sections.
-- Keep the brief concise enough for workspace UI display while preserving traceability. 
-
-### General aggregation rules
-- Tenant isolation is mandatory in all retrieval.
-- Missing context should degrade gracefully instead of blocking the entire output where possible.
-- Summaries must prefer structured upstream facts over freeform inference.
-- The system must preserve source references for each generated section or extracted claim.
-- Duplicate evidence chunks should be deduplicated before prompt assembly. 
-
-## 9. Template or Section Configuration
-
-### Goal
-AI Smart Summaries must support a stable structure so outputs are predictable for users, downstream services, and UI rendering. The system should separate **template configuration** from the prompt text so that feature teams can adjust sections without rewriting core orchestration logic. 
-
-### Default call summary template
-- One-line summary
-- Key points
-- Next steps
-- Risks
-- Topics discussed
-- Evidence snippets
-- Confidence score
-- Review flag 
-
-### Default deal brief template
-- Deal overview
-- Current stage and momentum
-- Key risks
-- Recent signals
-- Open questions
-- Recommended next actions
-- Source links
-- Confidence score 
-
-### Default account brief template
-- Account overview
-- Relationship and engagement health
-- Recent conversation themes
-- Renewal/expansion signals
-- Key risks
-- Recommended actions
-- Source links
-- Confidence score 
-
-### Configuration rules
-- Templates are versioned and referenced in generation metadata.
-- Sections may be hidden or reordered by configuration, but required system sections must remain available for downstream consumers.
-- Each section can declare max length, required evidence count, optionality, and formatting type.
-- Templates can vary by summary type and later by tenant tier or workspace configuration.
-- Any template change that impacts output schema must trigger contract test updates. 
-
-## 10. Source-Link Traceability
-
-### Objective
-Every summary output must be traceable back to the evidence used to generate it. This is required for trust, reviewability, and downstream debugging. 
-
-### Traceability design
-- Each generated section stores one or more supporting source references.
-- A source reference points to the originating entity, such as transcript segment, call, deal signal, tracker detection, or topic tag.
-- For transcript-based evidence, the system should preserve call ID, transcript segment ID if available, speaker label, and timestamp range when available.
-- For tracker-based evidence, preserve detection ID and snippet.
-- For CRM-context-derived content, preserve the source entity and field origin. 
-
-### UI expectation
-Users should be able to expand a section and see where the content came from, such as “from call transcript at 12:43” or “from tracker detection in linked deal call.” This mirrors the architecture’s broader emphasis on grounded outputs and cited answer payloads in retrieval-heavy features. 
-
-### Guardrails
-- If a claim has no supporting source, it must not be presented as a factual extracted point.
-- Low-evidence sections may be omitted, down-scored, or flagged for review.
-- Summaries must clearly separate grounded evidence from model-generated phrasing. 
-
-## 11. Data Model
-
-### Primary tables used
-- `callsummaries`
-- `dealbriefs`
-- `accountbriefs`
-- `transcripts`
-- `speakersegments`
-- `trackerdetections`
-- `topictags`
-- `deals`
-- `accounts`
-- `contacts`
-- `activities`
-- `crmextractedfields`
-- `semanticembeddings` for optional retrieval and reuse patterns 
-
-### Prompt context records
-Prompt assembly uses transcript content, linked business entities, topic tags, tracker detections, and relevant recent activities. The assembled context is derived at runtime and should be auditable through run logs or persisted source references rather than by storing unrestricted raw prompt strings in user-facing tables. 
-
-### Generated output storage
-- `callsummaries` stores call-level outputs with key points, next steps, risks, confidence score, review flag, version, and generation time.
-- `dealbriefs` stores deal-level outputs with summary text, key risks, recent signals, confidence score, version, and generation time.
-- `accountbriefs` stores account-level outputs with summary text, health signals, confidence score, version, and generation time. 
-- All three use `summaryevidencelinks` for evidence-link storage rather than inline JSONB source references.
-
-### Versioning rules
-- Version starts at `1` for first generation.
-- Version increments only on explicit regeneration or refresh that replaces the prior record semantics.
-- Regeneration updates the active row with an incremented version field AND appends the prior version to the companion `summaryhistory` table.
-- Consumers should read the latest version by default from the primary row.
-- Prior versions should remain available for audit/debug use in the `summaryhistory` table. 
-
-### Idempotency keys
-- Call summary generation must be idempotent on `(callId, version)`.
-- Duplicate `call.transcription.completed` events must not create duplicate version-1 summaries.
-- Deal brief refresh jobs should use deterministic job IDs, such as `brief-{dealId}`, to deduplicate queued work. 
-
-## 12. Retrieval and AI Processing
-
-### Retrieval scope
-AI Smart Summaries retrieves only the context needed to produce grounded summary outputs. The scope differs by summary type:
-- Call summary: current call transcript plus linked context and same-call signals.
-- Deal brief: deal-centric recent history and signals.
-- Account brief: account-centric recent history and health signals. 
-
-### Source ranking
-Recommended ranking order:
-1. Primary transcript evidence from the target interaction.
-2. Linked deal/account/contact context from Revenue Graph.
-3. High-confidence tracker detections.
-4. Topic tags and structured AI labels.
-5. Recent relevant activities and CRM-extracted fields. 
-
-### Prompt assembly
-Prompt assembly should include:
-- Summary type
-- Entity identifiers and tenant context
-- Structured business context
-- Ranked evidence blocks
-- Output schema contract
-- Style and brevity rules
-- Hallucination prevention rules
-- Traceability requirements for section evidence 
-
-### AI service endpoint
-- `POST /v1/summarize` on the AI Services Layer 
-
-### Structured output schema
-At minimum, the summary service must return a typed JSON contract aligned to summary type.
-
-**Call summary contract**
-```json
-{
-  "oneLineSummary": "string",
-  "keyPoints": [
-    {
-      "point": "string",
-      "evidenceSnippet": "string",
-      "sourceRef": "string"
-    }
-  ],
-  "nextSteps": [
-    {
-      "action": "string",
-      "owner": "string|null",
-      "dueDate": "string|null",
-      "sourceRef": "string"
-    }
-  ],
-  "risks": [
-    {
-      "riskType": "string",
-      "severity": "low|medium|high|critical",
-      "snippet": "string",
-      "sourceRef": "string"
-    }
-  ],
-  "topicsDiscussed": ["string"],
-  "confidenceScore": 0.0,
-  "flaggedForReview": false
-}
+-- Indexes for performance & security
+CREATE INDEX idx_call_summaries_tenant ON m03_ai_summaries_genai.call_summaries (tenant_id);
+CREATE INDEX idx_summary_evidence_lookup ON m03_ai_summaries_genai.summary_evidence_links (tenant_id, summary_type, summary_id);
+CREATE INDEX idx_summary_evidence_source ON m03_ai_summaries_genai.summary_evidence_links (source_entity_id);
+CREATE INDEX idx_summary_history_lookup ON m03_ai_summaries_genai.summary_history (parent_id, summary_type);
 ```
 
-**Deal brief contract**
-```json
-{
-  "summaryText": "string",
-  "keyRisks": [
-    {
-      "riskType": "string",
-      "severity": "low|medium|high|critical",
-      "sourceCallId": "uuid|null",
-      "sourceRef": "string"
-    }
-  ],
-  "recentSignals": [
-    {
-      "signalType": "string",
-      "description": "string",
-      "sourceRef": "string"
-    }
-  ],
-  "confidenceScore": 0.0
-}
-```
+---
 
-**Account brief contract**
-```json
-{
-  "summaryText": "string",
-  "healthSignals": [
-    {
-      "signalType": "string",
-      "trend": "positive|neutral|negative",
-      "source": "string",
-      "sourceRef": "string"
-    }
-  ],
-  "confidenceScore": 0.0
-}
-```
+## 7. AI & Prompt Architecture
 
-### Confidence or grounding strategy
-- Confidence is derived from model output plus source completeness checks.
-- Any output below `0.7` confidence is flagged for review.
-- Missing or sparse evidence reduces confidence and may suppress specific sections.
-- Traceability coverage should be part of the confidence computation. 
+### Model Choices
+- Call summaries utilize `gpt-4o-mini` (configured via `OPENAI_MODEL_SUMMARY`) due to high throughput requirements and low latency.
+- Deal and Account briefs utilize the high-reasoning model `gpt-4o` (configured via `OPENAI_MODEL_ASK`) because they require complex synthesis of multi-source timeline signals.
 
-### Hallucination prevention rules
-- Do not invent facts not present in transcript, tracker detections, topic tags, or CRM context.
-- Do not present uncertain inferences as confirmed facts.
-- Prefer omission over fabrication.
-- Every major claim must map to source evidence.
-- If context is insufficient, say so in structured output rather than guessing. 
+### Prompt Structural Rules
+- Prompts are version-pinned via Doppler configuration (`PROMPT_VERSION_SUMMARY = v1`).
+- All prompt parameters require structured JSON output validation (`PROMPT_STRICT_JSON = true`) enforcing clean parsing schema models.
+- Hallucination prevention rule: AI must strictly output action items and objections grounded in the transcript text, providing the exact timestamp or segment boundaries for citation storage in `summary_evidence_links`.
 
-## 13. Service and Integration Design
+---
 
-### Internal services
-- `InsightGenerationModule` in NestJS orchestrates summary generation and persistence.
-- BullMQ workers process event-driven jobs and refresh jobs.
-- AI Services Layer performs summarization.
-- Revenue Graph supplies linked business context.
-- Smart Tracking supplies detection evidence. 
+## 8. Operational Resilience & Error Handling
 
-### AI service endpoints
-- `POST /v1/summarize` for structured summary generation 
+### Low Confidence Review Flag
+If the AI-extracted confidence score falls below `0.70` (evaluated against `SUMMARY_CONFIDENCE_MIN`), the background worker sets `flagged_for_review = true` in the DB. The write guard (`ENABLE_FLAGGED_FOR_REVIEW_WRITE_GUARD`) automatically intercepts the post-generation lifecycle, blocking downstream CRM sync workers from updating external databases until a manager manually approves or updates the record.
 
-### Search and retrieval dependencies
-AI Smart Summaries is less retrieval-heavy than Ask Anything, but it still depends on structured context retrieval from internal services and storage tables. Where embeddings are used later for summary reuse or semantic context expansion, retrieval must remain tenant-scoped and bounded to the relevant entity context. 
+### Timeout & Queue Retries
+- Summarization tasks have a synchronous timeout guard of 30 seconds (`AI_SERVICE_TIMEOUT_MS_SYNC`).
+- BullMQ workers maintain a strict queue retry limit of 3 (`AI_SERVICE_RETRY_MAX`). Transient errors will attempt execution retries using exponential backoff.
+- Jobs exceeding maximum retries are routed to the Dead-Letter Queue (`QUEUE_DLQ_ENABLED = true`) for manual ops review.
 
-### CRM context usage
-Revenue Graph provides deal, account, and contact context such as stage, account name, participants, and linked entities. That context is used to improve summary relevance and to enable downstream CRM note sync after event emission. 
+---
 
-### Queue workers and job orchestration
-- `call.transcription.completed` triggers call summary generation.
-- `tracker.detection.created` triggers debounced deal brief refresh.
-- `call.topics.tagged` can enrich or regenerate summary structure where applicable.
-- Failed jobs retry per queue policy and then move to DLQ. 
+## 9. Security & Compliance
 
-## 14. Security and Compliance
+### Row Level Security (RLS)
+Every database query, search filter, and background retrieval joins on `tenant_id` to prevent cross-tenant data leakage. RLS is enforced at the PostgreSQL database level for all tables in the `m03_ai_summaries_genai` schema.
 
-### Tenant isolation
-All summary generation, retrieval, storage, and event payloads must be tenant-scoped. Platform middleware automatically injects tenant context and query scoping, and this behavior must not be bypassed. 
-
-### Access control
-Only authenticated users with access to the underlying call, deal, or account should be able to retrieve summaries and briefs. API guards and role checks apply at the route layer. 
-
-### Data visibility rules
-Summary outputs must not expose data from calls, contacts, or deals outside the requesting user’s permitted business scope. If a user cannot access the source entity, they cannot access the generated summary artifact derived from it. 
-
-### Prompt data sensitivity
-Prompt payloads may contain sensitive sales and customer information. Prompt construction must minimize unnecessary fields, avoid leaking cross-tenant data, and follow approved internal AI service boundaries. 
-
-### Audit logging
-Generation attempts, failures, review flags, and regeneration actions must be logged with tenant ID, entity ID, version, timing, and status for debugging and compliance review. 
-
-## 15. Error Handling
-
-### Missing context behavior
-- If transcript is missing, fail summary generation and retry according to queue policy.
-- If deal/account context is missing, proceed with reduced context where allowed and lower confidence.
-- If topic tags or tracker detections are missing, generate the best grounded output possible and allow later refresh. 
-
-### Low-confidence retrieval handling
-- Flag output for review when confidence is below threshold.
-- Suppress weakly grounded sections instead of filling them with speculative text.
-- Record missing evidence reasons in logs or metadata. 
-
-### AI generation failure handling
-- Retry up to 3 times for transient AI service failures.
-- If retries fail, mark the generation as failed and raise observability alerts.
-- For call summary generation, no silent success should be recorded without a persisted summary artifact. 
-
-### Timeout and partial-output rules
-- Call summaries may fail cleanly if the core generation step times out.
-- Deal and account briefs may return the latest cached version if refresh generation fails, provided the API clearly marks freshness state in implementation.
-- Partial sections may be allowed only if schema contract remains valid and traceability is preserved. 
-
-### DLQ conditions
-Move jobs to DLQ when retries are exhausted due to:
-- repeated AI service timeout,
-- repeated database write failure,
-- invalid structured response,
-- unrecoverable context retrieval failure. 
-
-## 16. Observability
-
-### Logs
-Capture:
-- generation request ID,
-- tenant ID,
-- entity ID,
-- summary type,
-- model endpoint,
-- latency,
-- token or prompt size metadata,
-- confidence,
-- retry count,
-- final status. 
-
-### Metrics
-Track:
-- summaries generated per type,
-- average generation latency,
-- failure rate,
-- retry rate,
-- review-flag rate,
-- regeneration rate,
-- context-missing rate,
-- downstream event publish success rate. 
-
-### Alerts
-Alert on:
-- AI service timeout spikes,
-- DLQ growth,
-- summary generation failure rate above threshold,
-- database write failure spikes,
-- event publish failures,
-- abnormal confidence degradation. 
-
-### Quality signals
-- evidence coverage ratio,
-- average confidence score,
-- user regenerate frequency,
-- user copy/use rate if instrumentation is added,
-- downstream consumption success,
-- manual review override frequency. 
-
-### Cost monitoring
-Track model-call volume, average tokens per summary type, and cost by tenant and summary type to detect runaway prompt growth or noisy refresh patterns. 
-
-## 17. Non-Functional Requirements
-
-### Latency targets
-Recommended targets:
-- Call summary generation: near-real-time async completion after transcript readiness.
-- Deal brief refresh: async, usually within a small number of minutes after signal bursts settle.
-- API retrieval of stored summaries: low-latency read path from database.  
-The architecture’s post-call pipeline targets summary generation within the broader post-call agent timing envelope. 
-
-### Throughput
-The system must support many concurrent post-call summary jobs across tenants and queue-based burst handling after business-hour call peaks. 
-
-### Scalability
-Scale through queue workers, bounded prompt assembly, deduplicated refresh jobs, and efficient tenant-scoped reads. 
-
-### Reliability
-Summary generation must be retry-safe, idempotent, and resilient to upstream delay in context linking or signal arrival. 
-
-## 18. Test Strategy
-
-### Unit tests
-- Prompt assembly per summary type
-- Input ranking and deduplication
-- Confidence threshold logic
-- Schema validation
-- Traceability mapping
-- Version increment rules
-- Idempotency key behavior 
-
-### Integration tests
-- `call.transcription.completed` to stored call summary
-- Revenue Graph context fetch and fallback behavior
-- `tracker.detection.created` to debounced deal brief refresh
-- `call.topics.tagged` enrichment path
-- `call.summary.generated` event publish and consumer compatibility 
-
-### Retrieval-quality tests
-- Verify correct evidence selection from transcript and linked business context.
-- Verify duplicate evidence suppression.
-- Verify recent/high-severity deal signals are prioritized in deal briefs.
-- Verify account brief aggregation does not mix entities across accounts. 
-
-### Prompt-output contract tests
-- Ensure AI service output always matches required JSON schema.
-- Validate required fields by summary type.
-- Validate sourceRef presence for evidence-backed sections.
-- Reject malformed or under-specified model responses. 
-
-### Regression and idempotency tests
-- Duplicate event delivery should not create duplicate version-1 summaries.
-- Reprocessing same call should be skipped unless regenerate is explicitly requested.
-- Multiple rapid tracker detections should still result in one debounced brief refresh.
-- Old template versions should not break stored-summary reads. 
-
-## 19. Event Schema
-
-### `call.summary.generated`
-This event is emitted by M-06 after a call summary is successfully persisted. The architecture defines the payload fields and identifies Revenue Graph as a consumer, while broader module mapping also shows downstream summary consumption by deal/account workflows. 
-
-**Queue name**
-- `call.summary.generated` 
-
-**Producer**
-- M-06 Insight Generation 
-
-**Consumers**
-- M-03 Revenue Graph
-- M-07 Deal and Account Management, via downstream use of generated summary outputs and reads from M-06-backed artifacts in architecture flows and module relationships. 
-
-**Payload schema**
-```json
-{
-  "eventId": "uuid",
-  "summaryId": "uuid",
-  "callId": "uuid",
-  "tenantId": "uuid",
-  "confidenceScore": 0.0,
-  "flaggedReview": false,
-  "generatedAt": "ISO-8601 timestamp"
-}
-```
-
-**Emission rules**
-- Emit only after summary persistence succeeds.
-- Do not emit for failed or partial writes.
-- Preserve idempotency by associating event emission with the persisted summary version.
-- Include the exact persisted `summaryId` used for downstream joins. 
-
-## 20. Open Questions
-
-- Should deal brief and account brief refresh events be formalized into separate emitted events in Phase 3, or remain read-driven from stored artifacts?
-- Should summary template configuration be tenant-configurable in Phase 3 or platform-default only?
-- Resolved: Source references must be stored in a normalized `summaryevidencelinks` table, not inline.
-- Resolved: Regeneration updates the active row with an incremented version AND appends the prior version to a companion `summaryhistory` table.
-- Should translated summaries be handled in this feature or deferred to the translation capability roadmap? 
+### Audit Trial
+Regeneration sweeps preserve data history. Instead of silently overwriting existing rows:
+1. The active summary is read and archived.
+2. A copy is inserted into the `summary_history` audit table.
+3. The primary table row is overwritten with the updated content, and the `version` counter is incremented by 1.

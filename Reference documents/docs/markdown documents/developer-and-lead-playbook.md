@@ -15,17 +15,42 @@ When you join the team, execute these commands to spin up your local environment
 # 1. Clone the repository and go to the boilerplate code directory
 git clone https://github.com/santhoshraajrelanto/Revenue-intelligence-technical-docs.git
 cd "Revenue-intelligence-technical-docs/boilerplate code/r-revenue-intelligence"
+```
 
-# 2. Start the local database infrastructure
+#### **Option A: Containerized Local Setup (With Docker)**
+If you are using Docker Desktop to orchestrate all services automatically:
+```bash
+# 1. Start the local database infrastructure
 docker compose up -d postgres redis meilisearch clickhouse
 
-# 3. Pull secure local configurations (Requires Doppler CLI)
+# 2. Pull secure local configurations (Requires Doppler CLI)
 doppler setup --project r-revenue-intelligence --config dev
 
-# 4. Install dependencies and synchronize database schemas
+# 3. Install dependencies and compile workspace typings sequentially
 pnpm install
-doppler run -- pnpm db:migrate
-doppler run -- pnpm db:seed
+pnpm --workspace-concurrency=1 -r db:generate
+
+# 4. Synchronize schemas
+npx prisma db push --schema=packages/database/prisma/schema.prisma
+```
+
+#### **Option B: Native Local Setup (Without Docker)**
+If you are running PostgreSQL, Redis, and services natively on your local system:
+```bash
+# 1. Configure your local environment variables in `.env`
+# Create a `.env` in the root containing your native connection URLs:
+# DATABASE_URL="postgresql://postgres:postgres@localhost:5432/revenue_intel?schema=public"
+# REDIS_HOST="localhost"
+# REDIS_PORT="6379"
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Compile workspace database clients sequentially
+pnpm --workspace-concurrency=1 -r db:generate
+
+# 4. Synchronize the master schema with your native DB instance
+npx prisma db push --schema=packages/database/prisma/schema.prisma
 ```
 
 ---

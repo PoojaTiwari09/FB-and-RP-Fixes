@@ -23,6 +23,7 @@ def main():
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'modules/*'
 """
     write_file(os.path.join(ROOT_DIR, "pnpm-workspace.yaml"), pnpm_workspace)
 
@@ -34,9 +35,8 @@ packages:
     "dev": "turbo run dev",
     "build": "turbo run build",
     "test": "turbo run test",
-    "db:migrate": "pnpm --filter database prisma migrate dev",
-    "db:seed": "pnpm --filter database prisma db seed",
-    "db:generate": "pnpm --filter database prisma generate"
+    "db:migrate": "turbo run db:migrate",
+    "db:generate": "turbo run db:generate"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
@@ -60,6 +60,12 @@ packages:
     },
     "test": {
       "dependsOn": ["build"]
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
     }
   }
 }
@@ -116,11 +122,6 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
-  transcription-service:
-    build: ./apps/transcription-service
-    ports:
-      - "8001:8001"
-
 volumes:
   pgdata:
 """
@@ -133,7 +134,7 @@ setup:
 """
     write_file(os.path.join(ROOT_DIR, ".doppler.yaml"), doppler_config)
 
-    # 3. Create Packages/Database
+    # 3. Central Tenant DB workspace (baseline shared infrastructure)
     prisma_schema = """
 datasource db {
   provider = "postgresql"
@@ -144,7 +145,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Example global models
 model Tenant {
   id        String   @id @default(uuid())
   name      String
@@ -157,6 +157,10 @@ model Tenant {
 {
   "name": "database",
   "version": "1.0.0",
+  "scripts": {
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate"
+  },
   "dependencies": {
     "@prisma/client": "^5.0.0"
   },
@@ -167,7 +171,7 @@ model Tenant {
 """
     write_file(os.path.join(ROOT_DIR, "packages", "database", "package.json"), db_package_json)
 
-    # 4. Create Packages/Shared-Types
+    # 4. Shared Types
     shared_package_json = """
 {
   "name": "shared-types",
@@ -194,7 +198,24 @@ export interface BaseEvent {
     write_file(os.path.join(ROOT_DIR, "packages", "shared-types", "src", "events", "base.event.ts"), base_event)
     write_file(os.path.join(ROOT_DIR, "packages", "shared-types", "src", "index.ts"), 'export * from "./events/base.event";')
 
-    # 5. Create Apps/Api Platform Core
+    # 5. Platform Core workspace package under modules/
+    platform_core_dir = os.path.join(ROOT_DIR, "modules", "platform-core")
+    
+    platform_package_json = """
+{
+  "name": "@r-revenue/platform-core",
+  "version": "1.0.0",
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/bullmq": "^10.0.0",
+    "bullmq": "^5.0.0",
+    "zod": "^3.0.0"
+  }
+}
+"""
+    write_file(os.path.join(platform_core_dir, "package.json"), platform_package_json)
+
     # Guards
     tenant_guard = """
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
@@ -210,7 +231,7 @@ export class TenantGuard implements CanActivate {
   }
 }
 """
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "guards", "tenant.guard.ts"), tenant_guard)
+    write_file(os.path.join(platform_core_dir, "guards", "tenant.guard.ts"), tenant_guard)
 
     jwt_guard = """
 import { Injectable } from '@nestjs/common';
@@ -219,7 +240,7 @@ import { AuthGuard } from '@nestjs/passport';
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {}
 """
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "guards", "jwt.guard.ts"), jwt_guard)
+    write_file(os.path.join(platform_core_dir, "guards", "jwt.guard.ts"), jwt_guard)
 
     hmac_guard = """
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
@@ -240,32 +261,7 @@ export class HmacWebhookGuard implements CanActivate {
   }
 }
 """
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "guards", "hmac-webhook.guard.ts"), hmac_guard)
-
-    # Database Prisma Service
-    prisma_service = """
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-@Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
-  async onModuleInit() {
-    await this.$connect();
-    // In production, configure row-level security middleware here
-  }
-}
-"""
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "database", "prisma.service.ts"), prisma_service)
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "database", "prisma.module.ts"), """
-import { Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-
-@Module({
-  providers: [PrismaService],
-  exports: [PrismaService],
-})
-export class PrismaModule {}
-""")
+    write_file(os.path.join(platform_core_dir, "guards", "hmac-webhook.guard.ts"), hmac_guard)
 
     # Events Publisher
     event_publisher = """
@@ -288,8 +284,8 @@ export class EventPublisherService {
   }
 }
 """
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "events", "event-publisher.service.ts"), event_publisher)
-    write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "platform-core", "events", "event-publisher.module.ts"), """
+    write_file(os.path.join(platform_core_dir, "events", "event-publisher.service.ts"), event_publisher)
+    write_file(os.path.join(platform_core_dir, "events", "event-publisher.module.ts"), """
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { EventPublisherService } from './event-publisher.service';
@@ -326,23 +322,34 @@ bootstrap();
     "@nestjs/core": "^10.0.0",
     "@nestjs/bullmq": "^10.0.0",
     "bullmq": "^5.0.0",
-    "zod": "^3.0.0"
+    "zod": "^3.0.0",
+    "@r-revenue/platform-core": "workspace:*",
+    "@r-revenue/m01-capture-transcription": "workspace:*",
+    "@r-revenue/m02-conversation-intelligence": "workspace:*",
+    "@r-revenue/m03-ai-summaries-genai": "workspace:*",
+    "@r-revenue/m04-deal-intelligence": "workspace:*",
+    "@r-revenue/m05-account-intelligence": "workspace:*",
+    "@r-revenue/m06-forecasting-prediction": "workspace:*",
+    "@r-revenue/m07-revenue-dashboards": "workspace:*",
+    "@r-revenue/m08-sales-engagement": "workspace:*",
+    "@r-revenue/m09-coaching-training": "workspace:*",
+    "@r-revenue/m10-data-compliance": "workspace:*"
   }
 }
 """)
 
-    # 6. Create 10 Modules
+    # 6. Create 10 Modules under modules/ with independent DB Schema & Local Prisma service
     modules_config = [
-        {"num": "01", "name": "capture", "route": "ingestion", "event": "call.transcription.completed"},
-        {"num": "02", "name": "sales-engagement", "route": "sales-engagement", "event": "email.sent"},
-        {"num": "03", "name": "revenue-graph", "route": "revenue-graph", "event": "revenue_graph.entity.linked"},
-        {"num": "04", "name": "conversation-intelligence", "route": "conversation-intelligence", "event": "call.scored"},
-        {"num": "05", "name": "smart-tracking", "route": "smart-tracking", "event": "tracker.detection.created"},
-        {"num": "06", "name": "insight-generation", "route": "insights", "event": "call.summary.generated"},
-        {"num": "07", "name": "deal-account", "route": "deal-management", "event": "deal.stage.changed"},
-        {"num": "08", "name": "execution", "route": "execution", "event": "workflow.executed"},
-        {"num": "09", "name": "forecasting", "route": "forecasting", "event": "forecast.submitted"},
-        {"num": "10", "name": "coaching", "route": "coaching", "event": "coaching.recommendation.created"},
+        {"num": "01", "name": "capture-transcription", "route": "capture-transcription", "event": "call.transcription.completed"},
+        {"num": "02", "name": "conversation-intelligence", "route": "conversation-intelligence", "event": "call.scored"},
+        {"num": "03", "name": "ai-summaries-genai", "route": "ai-summaries-genai", "event": "call.summary.generated"},
+        {"num": "04", "name": "deal-intelligence", "route": "deal-intelligence", "event": "deal.stage.changed"},
+        {"num": "05", "name": "account-intelligence", "route": "account-intelligence", "event": "account.updated"},
+        {"num": "06", "name": "forecasting-prediction", "route": "forecasting-prediction", "event": "forecast.submitted"},
+        {"num": "07", "name": "revenue-dashboards", "route": "revenue-dashboards", "event": "dashboard.viewed"},
+        {"num": "08", "name": "sales-engagement", "route": "sales-engagement", "event": "email.sent"},
+        {"num": "09", "name": "coaching-training", "route": "coaching-training", "event": "coaching.recommendation.created"},
+        {"num": "10", "name": "data-compliance", "route": "data-compliance", "event": "compliance.policy.updated"},
     ]
 
     all_imports = []
@@ -355,15 +362,40 @@ bootstrap();
         m_event = m["event"]
 
         folder_name = f"m{m_num}-{m_name}"
-        mod_dir = os.path.join(ROOT_DIR, "apps", "api", "src", "modules", folder_name)
+        mod_dir = os.path.join(ROOT_DIR, "modules", folder_name)
         
         pascal_name = "".join([part.capitalize() for part in m_name.split("-")])
         class_prefix = f"M{m_num}{pascal_name}"
 
-        all_imports.append(f"import {{ {class_prefix}Module }} from './modules/{folder_name}/{folder_name}.module';")
+        # App Module relative imports
+        all_imports.append(f"import {{ {class_prefix}Module }} from '../../../modules/{folder_name}/{folder_name}.module';")
         all_modules.append(f"{class_prefix}Module")
 
-        # 6.1 SDD.md for the team
+        # 6.0 Module package.json with independent DB scripts
+        mod_package_json = f"""
+{{
+  "name": "@r-revenue/{folder_name}",
+  "version": "1.0.0",
+  "scripts": {{
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate"
+  }},
+  "dependencies": {{
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/bullmq": "^10.0.0",
+    "bullmq": "^5.0.0",
+    "zod": "^3.0.0",
+    "@prisma/client": "^5.0.0"
+  }},
+  "devDependencies": {{
+    "prisma": "^5.0.0"
+  }}
+}}
+"""
+        write_file(os.path.join(mod_dir, "package.json"), mod_package_json)
+
+        # 6.1 SDD.md
         sdd_content = f"""
 # SDD — Module M-{m_num} {m_name.capitalize()}
 
@@ -380,7 +412,7 @@ Strategic implementation for features inside lifecycle stage of the platform.
 ## 4. Events Emitted
 - `{m_event}`
 
-## 5. Database Tables
+## 5. Database Tables (Independently Owned)
 - `m{m_num}_{m_name.replace('-', '_')}`
 
 ## 6. AI Service Calls
@@ -388,7 +420,76 @@ Strategic implementation for features inside lifecycle stage of the platform.
 """
         write_file(os.path.join(mod_dir, "SDD.md"), sdd_content)
 
-        # 6.2 Module File
+        # 6.1.1 Standard folders required by the architectural spec (with placeholder .gitkeep)
+        write_file(os.path.join(mod_dir, "entities", ".gitkeep"), "")
+        write_file(os.path.join(mod_dir, "events", ".gitkeep"), "")
+        write_file(os.path.join(mod_dir, "interfaces", ".gitkeep"), "")
+        write_file(os.path.join(mod_dir, "migrations", ".gitkeep"), "")
+        write_file(os.path.join(mod_dir, "seeds", ".gitkeep"), "")
+
+        # 6.1.2 Standard CHANGELOG.md for independent module auditing
+        changelog = f"""
+# Changelog — M-{m_num} {m_name.capitalize()}
+
+All notable changes to this module will be documented in this file.
+
+## [1.0.0] — 2026-05-18
+### Added
+- Standardized directory layout matching codebase specifications.
+- Independent database schema configurations and migrations.
+- Decoupled PrismaService transactions and repositories.
+"""
+        write_file(os.path.join(mod_dir, "CHANGELOG.md"), changelog)
+
+        # 6.2 Local Prisma schema for module
+        local_schema = f"""
+datasource db {{
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}}
+
+generator client {{
+  provider = "prisma-client-js"
+}}
+
+model M{m_num}{pascal_name}Record {{
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  createdAt DateTime @default(now())
+
+  @@map("m{m_num}_{m_name.replace('-', '_')}")
+}}
+"""
+        write_file(os.path.join(mod_dir, "prisma", "schema.prisma"), local_schema)
+
+        # 6.3 Local Prisma Service & Module
+        local_prisma_service = f"""
+import {{ Injectable, OnModuleInit }} from '@nestjs/common';
+import {{ PrismaClient }} from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit {{
+  async onModuleInit() {{
+    await this.$connect();
+  }}
+}}
+"""
+        write_file(os.path.join(mod_dir, "database", "prisma.service.ts"), local_prisma_service)
+
+        local_prisma_module = """
+import { Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService],
+})
+export class PrismaModule {}
+"""
+        write_file(os.path.join(mod_dir, "database", "prisma.module.ts"), local_prisma_module)
+
+        # 6.4 Module File
         module_file = f"""
 import {{ Module }} from '@nestjs/common';
 import {{ BullModule }} from '@nestjs/bullmq';
@@ -396,8 +497,8 @@ import {{ {class_prefix}Controller }} from './controllers/m{m_num}.controller';
 import {{ {class_prefix}Service }} from './services/m{m_num}.service';
 import {{ {class_prefix}Worker }} from './workers/m{m_num}.worker';
 import {{ {class_prefix}Repository }} from './repositories/m{m_num}.repository';
-import {{ PrismaModule }} from '../../../platform-core/database/prisma.module';
-import {{ EventPublisherModule }} from '../../../platform-core/events/event-publisher.module';
+import {{ PrismaModule }} from './database/prisma.module';
+import {{ EventPublisherModule }} from '../platform-core/events/event-publisher.module';
 
 @Module({{
   imports: [
@@ -413,10 +514,10 @@ export class {class_prefix}Module {{}}
 """
         write_file(os.path.join(mod_dir, f"m{m_num}-{m_name}.module.ts"), module_file)
 
-        # 6.3 Controller
+        # 6.5 Controller
         controller = f"""
 import {{ Controller, Get, Post, Body, Param, UseGuards, Req }} from '@nestjs/common';
-import {{ TenantGuard }} from '../../../platform-core/guards/tenant.guard';
+import {{ TenantGuard }} from '../../platform-core/guards/tenant.guard';
 import {{ {class_prefix}Service }} from '../services/m{m_num}.service';
 
 @Controller('api/v1/{m_route}')
@@ -437,11 +538,11 @@ export class {class_prefix}Controller {{
 """
         write_file(os.path.join(mod_dir, "controllers", f"m{m_num}.controller.ts"), controller)
 
-        # 6.4 Service
+        # 6.6 Service
         service = f"""
 import {{ Injectable }} from '@nestjs/common';
 import {{ {class_prefix}Repository }} from '../repositories/m{m_num}.repository';
-import {{ EventPublisherService }} from '../../../platform-core/events/event-publisher.service';
+import {{ EventPublisherService }} from '../../platform-core/events/event-publisher.service';
 
 @Injectable()
 export class {class_prefix}Service {{
@@ -463,10 +564,10 @@ export class {class_prefix}Service {{
 """
         write_file(os.path.join(mod_dir, "services", f"m{m_num}.service.ts"), service)
 
-        # 6.5 Repository
+        # 6.7 Repository
         repository = f"""
 import {{ Injectable }} from '@nestjs/common';
-import {{ PrismaService }} from '../../../platform-core/database/prisma.service';
+import {{ PrismaService }} from '../database/prisma.service';
 
 @Injectable()
 export class {class_prefix}Repository {{
@@ -483,7 +584,7 @@ export class {class_prefix}Repository {{
 """
         write_file(os.path.join(mod_dir, "repositories", f"m{m_num}.repository.ts"), repository)
 
-        # 6.6 Worker
+        # 6.8 Worker
         worker = f"""
 import {{ Processor, WorkerHost }} from '@nestjs/bullmq';
 import {{ Job }} from 'bullmq';
@@ -497,7 +598,7 @@ export class {class_prefix}Worker extends WorkerHost {{
 """
         write_file(os.path.join(mod_dir, "workers", f"m{m_num}.worker.ts"), worker)
 
-        # 6.7 Schema
+        # 6.9 Schema
         schema = f"""
 import {{ z }} from 'zod';
 
@@ -531,7 +632,7 @@ export class AppModule {{}}
 """
     write_file(os.path.join(ROOT_DIR, "apps", "api", "src", "app.module.ts"), app_module)
 
-    # 8. Python AI Services
+    # 8. Consolidated Python AI Services (FastAPI serving Inference and legacy ASR pipeline endpoint)
     fastapi_main = """
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -553,28 +654,18 @@ def summarize(req: ProcessRequest):
 @app.post("/v1/score-call")
 def score_call(req: ProcessRequest):
     return {"score": 85, "metrics": {"objections_handled": True}}
+
+@app.post("/v1/transcribe")
+def transcribe():
+    return {"transcript": "Mock transcript", "words": [], "confidence": 0.99}
+
+@app.post("/transcribe")
+def transcribe_legacy():
+    return {"transcript": "Mock transcript", "words": [], "confidence": 0.99}
 """
     write_file(os.path.join(ROOT_DIR, "apps", "ai-services", "app", "main.py"), fastapi_main)
     write_file(os.path.join(ROOT_DIR, "apps", "ai-services", "requirements.txt"), "fastapi==0.110.0\nuvicorn==0.28.0\npydantic==2.6.4")
     write_file(os.path.join(ROOT_DIR, "apps", "ai-services", "Dockerfile"), "FROM python:3.12-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"uvicorn\", \"app.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]")
-
-    # 9. Python Transcription Service
-    transcription_main = """
-from fastapi import FastAPI
-
-app = FastAPI(title="R-Revenue Transcription Service")
-
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
-
-@app.post("/transcribe")
-def transcribe():
-    return {"transcript": "Mock transcript", "words": [], "confidence": 0.99}
-"""
-    write_file(os.path.join(ROOT_DIR, "apps", "transcription-service", "app", "main.py"), transcription_main)
-    write_file(os.path.join(ROOT_DIR, "apps", "transcription-service", "requirements.txt"), "fastapi==0.110.0\nuvicorn==0.28.0")
-    write_file(os.path.join(ROOT_DIR, "apps", "transcription-service", "Dockerfile"), "FROM python:3.12-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"uvicorn\", \"app.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8001\"]")
 
     # 10. Write Scaffold README.md
     scaffold_readme = """

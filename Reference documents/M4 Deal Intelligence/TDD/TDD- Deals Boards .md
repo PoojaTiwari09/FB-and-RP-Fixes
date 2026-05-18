@@ -1,245 +1,221 @@
-A. Feature-Specific Additions — TDD: Deals Boards
+# Doc #15a — Technical Design Document (TDD): Deals Boards
 
-Architecture Mapping Note
-Deals Boards belongs to the product-facing module M4 Deal Intelligence, whose business purpose is to help teams manage, review, and analyze the health of every deal. Architecturally, however, Deals Boards is owned by M-07 Deal and Account Management. This TDD must therefore use M4 for product naming and M-07 for implementation ownership. Any integration, API, event, schema, or execution responsibility described below should be interpreted as M-07-owned unless explicitly marked as upstream or downstream dependency. This note exists to prevent incorrect implementation routing caused by the current mismatch between product packaging and architecture boundaries.
+## 1. Document Control
 
-A1. Board Purpose and Board Types
-Deals Boards is the primary pipeline workspace for deal-level execution review. It centralizes pipeline management by combining CRM data with AI-driven insights so that sellers, managers, and revenue leaders can review deal health, risks, activity, and engagement in one place.
+- **Document Title:** Technical Design Document — Deals Boards
+- **Feature Name:** Deals Boards (Interactive Pipeline Board Workspace)
+- **Module Name:** M4 Deal Intelligence
+- **Workspace Directory:** `modules/m04-deal-intelligence/`
+- **Owner:** Product Engineering — M4
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
-The board exists to answer four core business questions:
-1. Which deals need attention now?
-2. Why is a deal healthy or at risk?
-3. Which deals are changing based on new conversation and insight signals?
-4. What should the user review next inside the pipeline?
+---
 
-Supported board types should be defined as:
-- My Deals Board: shows only deals owned by the current user.
-- Team Deals Board: shows deals owned by members of the user’s reporting scope.
-- Pipeline Review Board: grouped by stage for manager inspection and weekly reviews.
-- Risk Board: prioritized list of deals with active warnings, low health scores, or stale engagement.
-- Custom Saved Board: user-defined view with persisted filters, columns, sorting, and grouping.
+## 2. Business & Feature Context
 
-Board types are logical views over the same M-07 deal data and board query layer. They do not create separate source-of-truth records for deal state. The source of truth remains the deal record, related health score records, risk flags, activity history, and upstream insight outputs consumed by M-07.
+### Business Problem
+Sales teams spend excessive time navigating rigid, slow, and isolated spreadsheet-style CRM dashboards to review deal pipeline health. Crucial details—such as deal stagnancy, missing contact engagement, pricing friction, and competitor risks—are scattered. Deals Boards addresses this by providing an intelligent, collaborative pipeline workspace that overlays raw opportunity data with dynamic, AI-generated risk signals, call summary briefs, and next-step milestones.
 
-A2. Deal Row Schema
-Each Deals Board row represents one deal record enriched with AI-derived and activity-derived fields required for board rendering, sorting, filtering, and health review.
+### What this feature does
+Deals Boards aggregates active opportunity records and presents them in an interactive multi-column Kanban board grouped by pipeline stage. Each deal card displays:
+1. **Deal Health Score:** A dynamic indicators rating (`healthy`, `watch`, or `risk`).
+2. **AI Risk Warnings:** Flagged objections, competitors, or stagnancy indicators.
+3. **Engagement Metrics:** Days since last customer contact, activity volume.
+4. **Custom Views:** Personalized column ordering, filters, sorting configurations.
 
-Minimum row schema:
-- dealId: internal UUID for the deal.
-- tenantId: tenant boundary key.
-- crmDealId: external CRM identifier.
-- accountId: linked account identifier.
-- accountName: account display name.
-- dealName: human-readable deal name.
-- ownerUserId: current deal owner.
-- ownerDisplayName: current deal owner label shown in UI.
-- stage: current pipeline stage.
-- stageOrder: sortable stage index from tenant stage configuration.
-- value: current deal amount from CRM.
-- closeDate: expected close date from CRM.
-- healthScore: latest computed numeric score.
-- healthCategory: normalized label such as healthy, watch, or risk.
-- riskFlagCount: count of active risk flags.
-- riskFlagSummary: short joined summary of the highest-priority active risks.
-- engagementScore: latest engagement score consumed or derived for board display.
-- lastActivityAt: timestamp of latest linked activity.
-- daysSinceLastContact: derived freshness metric.
-- pastDueNextSteps: boolean or count indicating overdue next steps if available from upstream summary/insight outputs.
-- latestInsightAt: timestamp of latest applied Stage 4 insight refresh affecting this row.
-- lastSignalAt: timestamp of latest signal used in health recomputation.
-- warningState: normalized board warning state used for badges and filters.
-- sourceFreshnessState: fresh, stale, partial, or unavailable.
-- boardUpdatedAt: timestamp when the materialized row payload was last refreshed for UI serving.
+### Value Proposition
+- Centralizes opportunity execution inspections into a single high-performance screen.
+- Accelerates deal progression by highlighting active deal risks.
+- Streamlines stage-change tracking through optimistic UI animations coupled with robust background CRM synchronizations.
 
-Optional enrichment fields:
-- primaryContactName
-- meetingCountLast30Days
-- emailCountLast30Days
-- openRisksByType
-- latestSummaryVersion
-- latestBriefVersion
-- trackerSignalCount
-- nextRecommendedAction
-- confidenceLabel for explanation quality
+---
 
-The board row schema must be optimized for read-heavy UI access. Derived values should be precomputed where possible to avoid expensive fan-out during every board load.
+## 3. Scope & Dependencies
 
-A3. Default Columns and Configurable Columns
-The board must open with a sensible default configuration that supports immediate pipeline review without requiring setup.
+### In Scope
+- Multi-column pipeline layout grouped by stage with sorting and filtering options.
+- Row-level metadata composition including deal health scores, warning flags, and engagement levels.
+- Direct-saved board view preferences stored per user.
+- Asynchronous board-refresh handlers and cache invalidation protocols.
+- Drag-and-drop stage updates implementing the asynchronous CRM sync contract.
 
-Default columns:
-- Deal Name
-- Account
-- Owner
-- Stage
-- Value
-- Close Date
-- Health
-- Risk Flags
-- Last Activity
-- Days Since Last Contact
+### Out of Scope
+- Direct write access to raw external CRM APIs (managed exclusively by M10).
+- Rep-level risk trend aggregation panels; those belong to View Deal Drivers.
+- Account-level contact map configurations; those belong to M5 Account Intelligence.
 
-Configurable columns:
-- Engagement Score
-- Past Due Next Steps
-- Latest Insight Refresh
-- Primary Contact
-- Meeting Count
-- Email Count
-- Warning State
-- Tracker Signal Count
-- Summary Status
-- Brief Status
-- Custom CRM fields approved for board display
+### Upstream Dependencies
+- **M10 Data & Compliance (Revenue Graph):** Supplies core opportunity tables (`deals`, `activities`) and handles the external CRM write synchronization.
+- **M2 Conversation Intelligence:** Emits tracker detections to fuel deal risk flag adjustments.
+- **M3 AI Summaries & GenAI:** Emits summary-generated events containing call recaps.
 
-Column configuration rules:
-- Users may show, hide, and reorder configurable columns.
-- Tenant admins may define organization defaults.
-- Some system columns must remain pinned or always available for usability, such as Deal Name and Stage.
-- Column preferences must persist per user in the board configuration store.
-- Shared or saved views may persist a team-level column set, but personal overrides should still be supported where product policy allows.
+---
 
-A4. Health Score and Warning Computation Inputs
-Deals Boards does not invent deal state independently. It consumes CRM pipeline context plus upstream insight outputs and recomputes board-visible health state when those inputs change.
+## 4. API Specification
 
-Primary computation inputs include:
-- CRM deal stage
-- deal owner
-- deal value
-- expected close date
-- linked account and contact context
-- activity recency from calls, meetings, and emails
-- conversation outputs linked through Revenue Graph
-- tracker detections from Smart Tracking
-- generated summaries and deal briefs from Stage 4 outputs
-- risk detections and engagement scoring inputs defined in M-07 architecture
-- historical health score and active unresolved risk flags
+All endpoints are hosted under the unified prefix: `/api/v1/m04-deal-intelligence`.
 
-The TDD must define a transparent scoring input contract even if the final scoring formula evolves later. At minimum, the logic should specify:
-- what fields are mandatory versus optional,
-- how stale or missing inputs affect score confidence,
-- which signals produce warnings immediately,
-- which signals only adjust score but do not create warnings,
-- how ties and conflicting signals are resolved,
-- when a row is marked partial because not all dependencies were available.
+### GET /api/v1/m04-deal-intelligence/boards
+- **Description:** Retrieve available deals board configurations for the tenant.
+- **Headers:** `Authorization: Bearer <token>`, `X-Tenant-ID: <uuid>`
+- **Response Payload (`200 OK`):**
+  ```json
+  [
+    {
+      "boardId": "uuid",
+      "tenantId": "uuid",
+      "name": "Standard Pipeline Board",
+      "boardType": "pipeline_review",
+      "columns": ["qualification", "proposal", "negotiation", "closed_won"],
+      "createdAt": "2026-05-18T12:00:00Z"
+    }
+  ]
+  ```
 
-Illustrative warning categories:
-- No recent customer engagement
-- Close date approaching with weak activity
-- Negative or risk-bearing tracker detections
-- Missing next step or overdue next step
-- Stage aging beyond threshold
-- Summary or insight indicates risk escalation
-- CRM context incomplete or stale
+### GET /api/v1/m04-deal-intelligence/boards/:id
+- **Description:** Retrieve active opportunity records formatted as columns and rows for board display.
+- **Query Params:** `viewId` (optional saved view reference), `ownerId` (optional rep filter)
+- **Response Payload (`200 OK`):**
+  ```json
+  {
+    "boardId": "uuid",
+    "tenantId": "uuid",
+    "name": "Standard Pipeline Board",
+    "rows": [
+      {
+        "dealId": "uuid",
+        "dealName": "Acme expansion deal",
+        "accountId": "uuid",
+        "accountName": "Acme Corp",
+        "ownerUserId": "uuid",
+        "ownerDisplayName": "Alice Smith",
+        "stage": "proposal",
+        "value": 150000.00,
+        "closeDate": "2026-06-30T00:00:00Z",
+        "healthScore": 75.0,
+        "healthCategory": "watch",
+        "riskFlagCount": 2,
+        "riskFlagSummary": "Competitor mentioned; No customer response in 7 days",
+        "lastActivityAt": "2026-05-16T14:30:00Z",
+        "daysSinceLastContact": 2,
+        "syncStatus": "synced"
+      }
+    ]
+  }
+  ```
 
-The SAD states that M-07 uses AI for risk detection and engagement scoring from Stage 4 outputs. Therefore this TDD must explicitly define which Stage 4 outputs are consumed by Deals Boards, how they are mapped into board-level health fields, and which of them trigger a row status change versus only refreshing explanation text.
+### POST /api/v1/m04-deal-intelligence/deals/:id/stage
+- **Description:** Move a deal to a new stage column (triggers optimistic internal update and async CRM sync).
+- **Request Payload:**
+  ```json
+  {
+    "targetStage": "negotiation"
+  }
+  ```
+- **Response Payload (`202 Accepted`):**
+  ```json
+  {
+    "dealId": "uuid",
+    "status": "pending_sync",
+    "targetStage": "negotiation",
+    "correlationId": "uuid"
+  }
+  ```
 
-A5. Filtering, Sorting, Grouping, and Saved Views
-Deals Boards must support fast operational review of large pipelines. The board should behave like an intelligent workspace, not a static table.
+---
 
-Filtering must support:
-- owner
-- team
-- stage
-- value range
-- close date range
-- health category
-- warning state
-- risk flag presence
-- activity recency
-- account
-- source freshness state
-- custom CRM fields approved for board use
+## 5. Drag-and-Drop Stage Update Pattern (ADR-005)
 
-Sorting must support:
-- close date
-- deal value
-- health score
-- last activity date
-- stage order
-- risk flag count
-- engagement score
-- latest insight refresh time
+To prevent lagging UI transitions and coordinate multiple downstream event actions, Deals Boards implements a strict optimistic state pattern:
 
-Grouping must support:
-- stage
-- owner
-- health category
-- warning state
-- account segment if available from CRM context
+1. **Optimistic Local Update:** When the rep drags a deal card in the UI, M4 writes a temporary stage update to the local read-model database and flags the status column as `pending_sync`.
+2. **Publish Integration Request:** M4 immediately publishes an internal `deal.stage.update.requested` request message containing `dealId`, `targetStage`, and `tenantId` to the background BullMQ queue.
+3. **Synchronize to External CRM:** **M10 Data & Compliance** consumes `deal.stage.update.requested` and attempts to write to the external CRM API (Salesforce/HubSpot).
+4. **Durable Confirmation:**
+   - On success, **M10** writes the final opportunity state to the `m10_data_compliance.deals` database table and emits a public platform event: `deal.stage.changed`.
+   - M4 consumes `deal.stage.changed` and updates `m04_deal_intelligence.deal_drivers` durably: setting the stage, clearing the `pending_sync` flag to `synced`, and updating the board client via Server-Sent Events (SSE).
+   - On failure, **M10** publishes `deal.stage.sync.failed`. M4 consumes this, reverts the stage column locally, and notifies the client to slide the deal card back to the previous stage.
 
-Saved view rules:
-- Users can save personal views with filters, grouping, sorting, and visible columns.
-- Managers or RevOps can save shared team views where permitted.
-- One view can be marked default per user.
-- Saved views must store only configuration metadata, not duplicate deal data.
-- Deleting a saved view must not affect deal records or other users’ personal views.
+---
 
-A6. Board Refresh Triggers and Cache Policy
-Deals Boards is a read-heavy workspace backed by asynchronous recomputation. The TDD must define exactly when board rows refresh and which events cause health recalculation.
+## 6. Database Schema Design
 
-User-driven refresh triggers:
-- opening the board,
-- manual refresh action,
-- changing filters, grouping, sorting, or saved view,
-- opening a deal detail and returning to the board when row freshness threshold has expired.
+All tables reside under the `m04_deal_intelligence` PostgreSQL schema.
 
-System-driven refresh triggers:
-- CRM sync updates deal core fields such as stage, owner, value, or close date,
-- Revenue Graph updates linkage between interaction and deal,
-- tracker detection created or updated,
-- summary generation completed,
-- deal brief refreshed,
-- risk detection recomputed,
-- engagement score recomputed,
-- deal stage change confirmed,
-- async backfill or replay job completed.
+```sql
+-- Create Schema Namespace
+CREATE SCHEMA IF NOT EXISTS m04_deal_intelligence;
 
-Refresh policy:
-- Board row payloads should be served from a cached or materialized read model for low-latency UI response.
-- Row recomputation should be event-driven where possible, not done synchronously on every board request.
-- A board request may read the latest available row snapshot and attach freshness metadata.
-- If upstream inputs changed but recomputation is still pending, the row should surface a refreshing or stale indicator rather than blocking the entire board load.
-- Partial refresh is allowed at row level; one failed row recompute must not fail the whole board.
-- Retry behavior for async refresh jobs must be idempotent and compatible with BullMQ retries and DLQ handling.
-- Cache invalidation must happen on relevant upstream events and on user configuration changes where the rendered projection changes.
-- Personal board configuration cache must be separate from deal row data cache.
+-- 1. Deal Boards Configuration Table
+CREATE TABLE m04_deal_intelligence.deal_boards (
+  board_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id           UUID NOT NULL,
+  name                VARCHAR(255) NOT NULL,
+  board_type          VARCHAR(50) NOT NULL CHECK (board_type IN ('my_deals', 'team_deals', 'pipeline_review', 'risk_board')),
+  columns             JSONB NOT NULL, -- Array of stage identifiers
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-Recommended freshness model:
-- Hot board row cache for commonly accessed views.
-- Materialized read model updated by events for large board loads.
-- Config cache for user column and saved-view metadata.
-- Stale-while-revalidate behavior for non-critical UI reads.
-- Hard refresh path for support or admin troubleshooting only.
+-- 2. Deal Board Columns Table
+CREATE TABLE m04_deal_intelligence.deal_board_columns (
+  column_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  board_id            UUID NOT NULL REFERENCES m04_deal_intelligence.deal_boards(board_id) ON DELETE CASCADE,
+  tenant_id           UUID NOT NULL,
+  stage_name          VARCHAR(100) NOT NULL,
+  sort_order          INTEGER NOT NULL DEFAULT 0,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-A7. Row Status Change Rules
-The board must define deterministic rules for when a deal row visibly changes state.
+-- 3. Deal Board Views Preference Table
+CREATE TABLE m04_deal_intelligence.deal_board_views (
+  view_id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  board_id            UUID NOT NULL REFERENCES m04_deal_intelligence.deal_boards(board_id) ON DELETE CASCADE,
+  tenant_id           UUID NOT NULL,
+  user_id             UUID NOT NULL,
+  name                VARCHAR(255) NOT NULL,
+  is_default          BOOLEAN NOT NULL DEFAULT false,
+  filters             JSONB NOT NULL, -- JSON block mapping applied filters
+  visible_columns     JSONB NOT NULL, -- JSON block mapping visible columns and orders
+  sorting_rules       JSONB NOT NULL, -- JSON block mapping sorting rules
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
 
-A row status should change when:
-- health score crosses a category threshold,
-- a new active risk flag is created,
-- all active risk flags are resolved,
-- days since last contact crosses configured threshold,
-- close date enters risk window without required engagement,
-- summary or brief introduces a higher-severity risk classification,
-- CRM stage changes,
-- linkage changes attach new relevant activities or conversations to the deal.
+-- Indexes for performance & security
+CREATE INDEX idx_deal_boards_tenant ON m04_deal_intelligence.deal_boards (tenant_id);
+CREATE INDEX idx_board_columns_lookup ON m04_deal_intelligence.deal_board_columns (board_id, tenant_id);
+CREATE INDEX idx_board_views_user ON m04_deal_intelligence.deal_board_views (tenant_id, user_id, board_id);
+```
 
-A row should not change visible status for cosmetic or explanation-only updates unless the explanation changes a warning, score, category, or freshness state.
+---
 
-A8. Dependency and Ownership Clarification
-Deals Boards is implemented by M-07 but depends on upstream outputs from M-03, M-05, and M-06 before presenting board-level intelligence. M-07 must not directly own forecasting math, outbound automation orchestration, or unrelated account workspace behavior. Any data needed from another module must arrive through published events, approved public APIs, or documented read-model exceptions already approved in architecture.
+## 7. Board Health Score Calculation Inputs
 
-A9. Non-Goals for This Feature Section
-The following are out of scope for Deals Boards:
-- forecast prediction logic,
-- account board behavior,
-- CRM schema ownership outside approved sync boundaries,
-- authoring tracker definitions,
-- summary generation internals,
-- orchestration play execution,
-- dashboard analytics beyond board-specific metrics,
-- direct AI model implementation inside M-07 product code.
+M4 does not invent transactional deal state; it consumes core CRM inputs from **M10** and aggregates risk/engagement flags. The health score recompute (computed inside `deal_drivers`) operates on the following metrics:
 
-A10. Implementation Reminder for Engineers
-This feature is easy to misroute because product naming says M4 Deal Intelligence while architecture ownership says M-07 Deal and Account Management. All backend implementation for Deals Boards should therefore be reviewed against M-07 boundaries first, then checked for declared dependencies on M-03, M-05, and M-06 outputs. If a needed dependency is unresolved, document it explicitly instead of silently crossing module boundaries.
+| Input Parameter | Weight | Source Module | Risk Condition |
+| :--- | :--- | :--- | :--- |
+| **Stage Stagnation** | `20%` | M10 (Deals) | Opportunity remains in the same stage exceeding `M04_ENGAGEMENT_WINDOW_DAYS` (14 days). |
+| **Activity Gap** | `30%` | M10 (Activities)| No customer customer meetings or outbound emails recorded in the last 14 days. |
+| **Tracker Risks** | `25%` | M2 (Trackers) | Detection of active pricing, competitor, or contract objections. |
+| **Summary Brief Risks**| `25%` | M3 (Briefs) | Negative sentiment spikes or major customer obstacles extracted from summaries. |
+
+---
+
+## 8. Security & Multi-Tenancy
+
+### Row-Level Security
+RLS is enabled on all tables under the `m04_deal_intelligence` schema. Database connections are configured to inject the active tenant context (`app.current_tenant_id`) at query startup:
+```sql
+ALTER TABLE m04_deal_intelligence.deal_boards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE m04_deal_intelligence.deal_board_views ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY deal_boards_isolation ON m04_deal_intelligence.deal_boards
+  FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+### Access Scope Scrutiny
+Sellers can only read board rows corresponding to active deals within their explicit reporting hierarchy. Administrative functions (such as modifying columns mapping or changing global tenant thresholds) are secured using specific organizational permission profiles.

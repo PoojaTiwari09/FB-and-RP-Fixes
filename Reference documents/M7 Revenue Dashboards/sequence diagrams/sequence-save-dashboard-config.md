@@ -1,25 +1,28 @@
 # Sequence Diagram — Save Dashboard Config (Layout + Filters)
 
-This document shows what happens when a user updates their dashboard layout or default filters and the frontend calls `PATCH /api/v1/coaching/dashboards/config`.
+This document shows what happens when a user updates their dashboard layout grid positions, default filters, or date range presets.
 
-## 1. Actors
+## 1. Document Control
 
-- User browser / frontend app
-- API Gateway (or BFF)
-- M7 Dashboard Service
-- PostgreSQL (dashboards schema)
-- Auth / Identity provider (for context)
+- **Document Title:** Sequence Diagram — Save Dashboard Layout Config
+- **Feature Name:** Save Dashboard Layout Configuration
+- **Module Name:** M7 Revenue Dashboards
+- **Workspace Directory:** `modules/m07-revenue-dashboards/`
+- **Owner:** Product Engineering — M7
+- **Status:** Approved
+- **Version:** v3.0
+- **Last Updated:** 2026-05-18
 
-## 2. High-Level Description
+---
 
-When a user drags widgets, changes default filters, or updates their default date range:
+## 2. Actors & Components
 
-1. Frontend sends a PATCH request with the new layout and defaults.
-2. Gateway validates auth and forwards to M7 Dashboard Service with tenant and user context.
-3. Service validates the payload (widget IDs, types, metrics, limits).
-4. Service enforces RBAC (user can only edit their own config unless they have admin privileges).
-5. Service updates the `dashboards.dashboard_configs` row for that `(tenantid, userid)`.
-6. Service returns the updated configuration to the frontend.
+- **User Browser (Frontend):** Sends drag-and-drop coordinate changes and configuration updates.
+- **API Gateway:** Passes token claims and request headers.
+- **M7 Dashboard Service:** NestJS backend service residing at `modules/m07-revenue-dashboards/`.
+- **PostgreSQL:** Transactional database (using namespace schema `m07_revenue_dashboards`).
+
+---
 
 ## 3. Mermaid Sequence Diagram
 
@@ -30,49 +33,44 @@ sequenceDiagram
     participant U as User Browser (Frontend)
     participant G as API Gateway
     participant D as M7 Dashboard Service
-    participant P as PostgreSQL (dashboards)
+    participant P as PostgreSQL (m07_revenue_dashboards)
 
-    Note over U: User rearranges widgets / changes filters
+    Note over U: User drags grid widgets or edits filters
+    U->>G: PATCH /api/v1/m07-revenue-dashboards/config<br/>{ layout, visibleWidgets, dateRangeDefault, filtersDefault }
+    G->>G: Validate JWT access token & extract claims
+    G->>D: PATCH /api/v1/m07-revenue-dashboards/config<br/>Headers: X-Tenant-Id, X-User-Id, X-User-Roles, Payload
 
-    U->>G: PATCH /api/v1/coaching/dashboards/config<br/>{ layout, visibleWidgets, dateRangeDefault, filtersDefault }
-    G->>G: Validate auth & extract tenantId, userId, roles
-    G->>D: PATCH /api/v1/coaching/dashboards/config<br/>X-Tenant-Id, X-User-Id, roles, payload
+    Note over D: Validate Payload Boundaries & RBAC
+    D->>D: Parse & validate grid coordinates schema via Zod
+    D->>D: Check metric references (built-in or custom_metrics ID)
+    D->>D: Enforce RBAC access policies (Rep vs Manager vs Admin)
 
-    Note over D: Validate payload & permissions
-
-    D->>D: Validate layout JSON<br/>and widget definitions
-    D->>D: Validate metric references<br/>(built-in or custom_metrics)
-    D->>D: Check RBAC (rep vs manager vs admin)
-
-    alt Invalid payload or forbidden
-        D-->>G: 400/403 error<br/>{ error: ... }
-        G-->>U: 400/403 error
-    else Valid config and allowed
-        Note over D: Upsert user config in dashboards.dashboard_configs
-
-        D->>P: SELECT configid FROM dashboards.dashboard_configs<br/>WHERE tenantid = ? AND userid = ?
-        alt Config exists
-            P-->>D: configid
-            D->>P: UPDATE dashboards.dashboard_configs<br/>SET layout = ?, visiblewidgets = ?,<br/>    daterangedefault = ?, filtersdefault = ?, updatedat = now()<br/>WHERE configid = ?
-        else No config yet
-            P-->>D: no row
-            D->>P: INSERT INTO dashboards.dashboard_configs<br/>(tenantid, userid, layout, visiblewidgets,<br/> daterangedefault, filtersdefault, createdat, updatedat)<br/>VALUES (...)
+    alt Invalid Payload or Forbidden Role Context
+        D-->>G: 400 Bad Request / 403 Forbidden
+        G-->>U: Return Error Response (Redacted logs)
+    else Payload Valid & Authorized
+        Note over D: Persist Configuration in PostgreSQL
+        D->>P: SELECT config_id FROM m07_revenue_dashboards.dashboard_configs<br/>WHERE tenant_id = ? AND user_id = ?
+        
+        alt Layout Row Exists
+            P-->>D: Return config_id
+            D->>P: UPDATE m07_revenue_dashboards.dashboard_configs<br/>SET layout = ?, visible_widgets = ?,<br/>    date_range_default = ?, filters_default = ?, updated_at = NOW()<br/>WHERE config_id = ?
+        else No Row Exists
+            P-->>D: Return empty set
+            D->>P: INSERT INTO m07_revenue_dashboards.dashboard_configs<br/>(tenant_id, user_id, layout, visible_widgets, date_range_default, filters_default)<br/>VALUES (...)
         end
-        P-->>D: write success
+        P-->>D: Return transaction commit success
 
         D-->>G: 200 OK<br/>{ updatedConfig }
-        G-->>U: 200 OK<br/>updated config JSON
-
-        Note over U: Persist new layout in UI state
+        G-->>U: 200 OK<br/>Return updated layout JSON
+        Note over U: Store layout state in local UI context
     end
 ```
 
+---
+
 ## 4. Key Notes for Engineers
 
-- This flow modifies only **configuration**, not metrics or snapshots.
-- All writes are scoped by `tenantid` and `userid`; RLS ensures isolation.
-- RBAC should prevent a normal user from editing another user’s config or global templates.
-- Validation should enforce:
-  - Known widget types.
-  - Valid metric identifiers.
-  - Reasonable limits (e.g., max widgets per dashboard).
+1. **Validation Checks (Zod DTOs):** The layout update payload must carry valid grid coordinate properties (`x`, `y`, `w`, `h` as integers). An invalid grid width or coordinate will throw a `400 Bad Request` before database queries are formulated.
+2. **Access Control Safeguards:** Normal sales representatives are strictly forbidden from writing or altering organizational or team-shared template presets. Admins and RevOps are the exclusive writers of shared dashboard configurations.
+3. **Idempotent Write Operations:** The service wraps the PostgreSQL SELECT and UPDATE/INSERT steps into a single database transaction, ensuring RLS checks are locked during execution.
