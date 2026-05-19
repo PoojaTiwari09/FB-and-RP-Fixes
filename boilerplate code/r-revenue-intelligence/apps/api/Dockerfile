@@ -1,6 +1,6 @@
 # Stage 1: Build the Monorepo Node App
 FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
@@ -20,6 +20,7 @@ RUN pnpm --filter api build
 
 # Stage 2: Production Execution
 FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /usr/src/app
 RUN npm install -g pnpm
 
