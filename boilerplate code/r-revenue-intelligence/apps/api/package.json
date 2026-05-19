@@ -1,6 +1,12 @@
 {
   "name": "api",
   "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/main.ts",
+    "start": "ts-node src/main.ts",
+    "start:prod": "node dist/main.js"
+  },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
@@ -18,5 +24,10 @@
     "@r-revenue/m08-sales-engagement": "workspace:*",
     "@r-revenue/m09-coaching-training": "workspace:*",
     "@r-revenue/m10-data-compliance": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }

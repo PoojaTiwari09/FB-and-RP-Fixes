@@ -29,7 +29,9 @@ services:
       - "9000:9000"
 
   api:
-    build: ./apps/api
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     ports:
       - "3001:3001"
     depends_on:

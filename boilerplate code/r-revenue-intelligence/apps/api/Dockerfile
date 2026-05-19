@@ -15,6 +15,7 @@ COPY apps/api ./apps/api
 
 # Install dependencies and build the API
 RUN pnpm install --frozen-lockfile
+RUN pnpm db:generate
 RUN pnpm --filter api build
 
 # Stage 2: Production Execution
