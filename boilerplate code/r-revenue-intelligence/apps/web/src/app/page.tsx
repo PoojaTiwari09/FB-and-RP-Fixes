@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import RevenueGraphDashboard from "../modules/m10-data-compliance/components/RevenueGraphDashboard/index";
 import {
   LayoutDashboard,
   MessageSquareCode,
@@ -1200,111 +1201,8 @@ export default function PlatformDashboard() {
 
           {/* TAB 8: M10 GOVERNANCE & DATA CLOUD */}
           {activeTab === "compliance" && (
-            <div className="grid grid-cols-2 gap-8">
-              
-              {/* Compliance Policy Toggle Panel */}
-              <div className="glass-panel p-6 flex flex-col gap-6 h-fit">
-                <div className="flex justify-between items-center border-b border-slate-900 pb-3">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck size={16} className="text-emerald-400" />
-                    <h3 className="text-sm font-bold text-slate-200">M10 Compliance Controls</h3>
-                  </div>
-                  <span className="badge badge-emerald">Active Governance</span>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {[
-                    { label: "GDPR Regional Enforcement", desc: "Require explicit opt-in consent parameters for EU contacts prior to sales messaging.", val: gdprToggle, set: setGdprToggle },
-                    { label: "CCPA Restriction Gates", desc: "Automatically sync opt-out sale flags and prevent California contact dispatches.", val: ccpaToggle, set: setCcpaToggle },
-                    { label: "Fail-Closed Safety Mode", desc: "Immediately block actions if contact communication opt-out state is missing or timed out.", val: failClosedToggle, set: setFailClosedToggle }
-                  ].map((policy, i) => (
-                    <div key={i} className="p-4 rounded-lg bg-slate-900/60 border border-slate-800/80 flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1 overflow-hidden">
-                        <span className="text-xs font-bold text-slate-200">{policy.label}</span>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">{policy.desc}</p>
-                      </div>
-                      
-                      <label className="cyber-switch flex-shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={policy.val}
-                          onChange={(e) => policy.set(e.target.checked)}
-                        />
-                        <span className="cyber-slider" />
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Data Cloud Warehouse Connector sync */}
-              <div className="flex flex-col gap-6">
-                
-                {/* Connector stats card */}
-                <div className="glass-panel p-6 flex flex-col gap-4 bg-gradient-to-tr from-slate-950/60 to-slate-900/30">
-                  <div className="flex justify-between items-center border-b border-slate-900 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Database size={16} className="text-cyan-400 animate-beacon" />
-                      <h3 className="text-sm font-bold text-slate-200">M10 Data Cloud Adapter</h3>
-                    </div>
-                    <span className="badge badge-cyan">Snowflake</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded bg-slate-900 border border-slate-800 flex flex-col gap-1">
-                      <span className="text-[9px] font-mono text-slate-500 uppercase">Export status:</span>
-                      <span className="text-xs font-bold text-slate-200">{isExporting ? "Synchronizing..." : exportStatus}</span>
-                    </div>
-
-                    <div className="p-3 rounded bg-slate-900 border border-slate-800 flex flex-col gap-1">
-                      <span className="text-[9px] font-mono text-slate-500 uppercase">Checkpoint cursor:</span>
-                      <span className="text-xs font-bold text-emerald-400 font-mono">2026-05-19 02:00 UTC</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end mt-2">
-                    <button
-                      onClick={runDataCloudSync}
-                      disabled={isExporting}
-                      className="btn-cyber btn-cyber-cyan cursor-pointer"
-                    >
-                      {isExporting ? <RefreshCw size={12} className="animate-spin text-cyan-400" /> : <RefreshCw size={12} />}
-                      <span>Trigger Daily Export Job</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Ingestion logs */}
-                <div className="glass-panel p-5 flex flex-col gap-3 h-56 bg-slate-950/80">
-                  <div className="flex items-center gap-2 border-b border-slate-900 pb-2">
-                    <Lock size={12} className="text-slate-500" />
-                    <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">Lock & Sync Execution Ledger</span>
-                  </div>
-
-                  <div className="flex-grow overflow-y-auto flex flex-col gap-1.5 font-mono text-[9px] leading-relaxed pr-2 text-slate-400">
-                    {exportLogs.length === 0 ? (
-                      <span className="text-slate-600 text-center block pt-8">Click &quot;Trigger Daily Export Job&quot; to see the active sync process simulation.</span>
-                    ) : (
-                      exportLogs.map((log, i) => (
-                        <div
-                          key={i}
-                          className={`p-1.5 rounded ${
-                            log.startsWith("✓")
-                              ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-400 font-bold border"
-                              : log.includes("Lock acquired")
-                              ? "bg-cyan-950/20 border-cyan-500/20 text-cyan-400 border"
-                              : "bg-slate-900/30 text-slate-400"
-                          }`}
-                        >
-                          {log}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
+            <div className="w-full h-full overflow-y-auto">
+              <RevenueGraphDashboard />
             </div>
           )}
 
