@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { EventPublisherService } from './event-publisher.service';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: 'platform-events' }),
-  ],
+  imports: [],
   providers: [EventPublisherService],
   exports: [EventPublisherService],
 })
