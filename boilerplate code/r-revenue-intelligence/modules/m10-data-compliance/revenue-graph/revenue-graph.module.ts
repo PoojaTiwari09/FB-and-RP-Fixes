@@ -11,6 +11,8 @@ import { RevenueGraphService } from './services/revenue-graph.service';
 import { RevenueGraphWorker } from './workers/revenue-graph.worker';
 import { RevenueGraphRepository } from './repositories/revenue-graph.repository';
 import { M10_REVENUE_GRAPH_QUEUES } from './events/revenue-graph.events';
+import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { PrismaService } from '../database/prisma.service';
 
 @Module({
   imports: [
@@ -26,9 +28,10 @@ import { M10_REVENUE_GRAPH_QUEUES } from './events/revenue-graph.events';
       },
     }),
     BullModule.registerQueue({ name: M10_REVENUE_GRAPH_QUEUES.DEAL_STAGE }),
+    BullModule.registerQueue({ name: 'platform-events' }),
   ],
   controllers: [RevenueGraphController],
-  providers: [RevenueGraphService, RevenueGraphWorker, RevenueGraphRepository],
+  providers: [RevenueGraphService, RevenueGraphWorker, RevenueGraphRepository, EventPublisherService, PrismaService],
   exports: [RevenueGraphService],
 })
 export class RevenueGraphModule {}

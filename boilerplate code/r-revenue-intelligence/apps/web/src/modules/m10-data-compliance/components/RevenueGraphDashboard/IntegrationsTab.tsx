@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import React, { useState } from 'react';
 
@@ -9,7 +10,7 @@ import React, { useState } from 'react';
 
 export function IntegrationsTab({ integrations }: { integrations: any[] }) {
   const [catFilter, setCatFilter] = useState('All');
-  const categories = ['All', ...new Set(integrations.map(i => i.category))];
+  const categories = ['All', ...Array.from(new Set(integrations.map(i => i.category)))];
   const filtered = catFilter === 'All' ? integrations : integrations.filter(i => i.category === catFilter);
   const connected = integrations.filter(i => i.status === 'connected').length;
 

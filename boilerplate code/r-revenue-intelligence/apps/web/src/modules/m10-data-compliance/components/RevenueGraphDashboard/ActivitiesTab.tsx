@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import React, { useState } from 'react';
 
@@ -25,7 +26,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
 export function ActivitiesTab({ activities }: { activities: any[] }) {
   const [filter, setFilter] = useState('all');
 
-  const channelTypes = ['all', ...new Set(activities.map(a => a.sourceType))];
+  const channelTypes = ['all', ...Array.from(new Set(activities.map(a => a.sourceType)))];
   const filtered = filter === 'all' ? activities : activities.filter(a => a.sourceType === filter);
 
   return (

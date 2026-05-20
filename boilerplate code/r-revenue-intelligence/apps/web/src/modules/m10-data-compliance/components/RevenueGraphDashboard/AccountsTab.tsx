@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import type { Account } from '../../../types/revenue-graph.types';
+import type { Account } from '../../types/revenue-graph.types';
 
 /**
  * Accounts — BRD §6.3 (RG-11 / RG-14)

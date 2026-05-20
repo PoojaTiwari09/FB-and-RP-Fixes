@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import type { Account, Deal } from '../../../types/revenue-graph.types';
+import type { Account, Deal } from '../../types/revenue-graph.types';
 
 /**
  * Revenue Graph Visualization — BRD §6.4 (RG-14 / RG-16)

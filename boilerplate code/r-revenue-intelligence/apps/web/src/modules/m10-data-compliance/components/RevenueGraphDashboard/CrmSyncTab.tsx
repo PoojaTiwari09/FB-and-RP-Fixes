@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import type { CrmSyncStatus } from '../../../types/revenue-graph.types';
+import type { CrmSyncStatus } from '../../types/revenue-graph.types';
 
 /**
  * CRM Sync Status — BRD §6.5 (RG-20 / RG-21 / RG-22)

@@ -13,7 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { randomUUID } from 'crypto';
 
 import { RevenueGraphRepository } from '../repositories/revenue-graph.repository';
-import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { EventPublisherService } from '../../../platform-core/events/event-publisher.service';
 import { M10_REVENUE_GRAPH_EVENTS } from '../events/revenue-graph.events';
 
 import {
@@ -248,7 +248,7 @@ export class RevenueGraphService {
 
       // Step 7: Persist links (FR-5: idempotent upsert)
       if (WRITE_ENABLED && finalLinks.length > 0) {
-        await this.repo.upsertInteractionLinks(tenantId, activity.id, finalLinks);
+        await this.repo.upsertInteractionLinks(tenantId, activity.id, finalLinks as any);
       }
 
       // Step 8: Update activity status

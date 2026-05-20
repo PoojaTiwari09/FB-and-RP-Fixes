@@ -10,8 +10,8 @@ import {
 import { Request } from 'express';
 
 import { RevenueGraphService } from '../services/revenue-graph.service';
-import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
-import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { JwtAuthGuard } from '../../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../../platform-core/guards/tenant.guard';
 import { TriggerCrmSyncSchema } from '../schemas/revenue-graph.schema';
 
 interface AuthenticatedRequest extends Request {

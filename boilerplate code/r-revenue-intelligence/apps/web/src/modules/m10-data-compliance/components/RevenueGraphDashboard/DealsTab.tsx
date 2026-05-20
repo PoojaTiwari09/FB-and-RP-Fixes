@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import type { Deal } from '../../../types/revenue-graph.types';
+import type { Deal } from '../../types/revenue-graph.types';
 
 /**
  * Deals Pipeline — BRD §6.3 (RG-10 / RG-12)
