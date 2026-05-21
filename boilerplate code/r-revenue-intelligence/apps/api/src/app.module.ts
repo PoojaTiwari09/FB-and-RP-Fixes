@@ -17,6 +17,13 @@ import { M10DataComplianceModule } from '../../../modules/m10-data-compliance/m1
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379'),
+        lazyConnect: true,
+        enableOfflineQueue: false,
+        maxRetriesPerRequest: null,
+        retryStrategy: (times: number) => {
+          // Reconnect after min(times * 200ms, 5s) — won't crash the app
+          return Math.min(times * 200, 5000);
+        },
       },
     }),
     M01CaptureTranscriptionModule,M02ConversationIntelligenceModule,M03AiSummariesGenaiModule,M04DealIntelligenceModule,M05AccountIntelligenceModule,M06ForecastingPredictionModule,M07RevenueDashboardsModule,M08SalesEngagementModule,M09CoachingTrainingModule,M10DataComplianceModule

@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import RevenueGraphDashboard from "../modules/m10-data-compliance/components/RevenueGraphDashboard/index";
+import DataCloudDashboard from "../modules/m10-data-compliance/components/DataCloudDashboard/index";
 import {
   LayoutDashboard,
   MessageSquareCode,
@@ -33,7 +34,29 @@ interface CoachingFeedback {
   recommendation: string;
 }
 
-// Mock Data representing M1-M10 modules records
+// ─── M10 Sub-tab Switcher ──────────────────────────────────────────────────────
+function M10TabSwitcher() {
+  const [m10Tab, setM10Tab] = React.useState<'revenue-graph' | 'data-cloud'>('revenue-graph');
+  const btnStyle = (active: boolean): React.CSSProperties => ({
+    background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
+    border: active ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.07)',
+    color: active ? '#818cf8' : '#64748b',
+    padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: active ? 700 : 500,
+    cursor: 'pointer', transition: 'all .2s ease', display: 'flex', alignItems: 'center', gap: 8,
+  });
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <button style={btnStyle(m10Tab === 'revenue-graph')} onClick={() => setM10Tab('revenue-graph')}><span>🕸️</span> Revenue Graph</button>
+        <button style={btnStyle(m10Tab === 'data-cloud')}    onClick={() => setM10Tab('data-cloud')}><span>☁️</span> Data Cloud</button>
+      </div>
+      {m10Tab === 'revenue-graph' && <RevenueGraphDashboard />}
+      {m10Tab === 'data-cloud'    && <DataCloudDashboard />}
+    </div>
+  );
+}
+
+
 const mockCalls = [
   {
     id: "call_001",
@@ -1203,7 +1226,7 @@ export default function PlatformDashboard() {
           {/* TAB 8: M10 GOVERNANCE & DATA CLOUD */}
           {activeTab === "compliance" && (
             <div className="w-full h-full overflow-y-auto">
-              <RevenueGraphDashboard />
+              <M10TabSwitcher />
             </div>
           )}
 
