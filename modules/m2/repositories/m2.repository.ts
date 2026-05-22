@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { Scorecard, CallScore } from '../interfaces/m2.interface';
+import { Scorecard, CallScore, SmartTracker, TrackerDetection, ThemeAnalysis, Theme, ThemeQuote, ThemeAlert } from '../interfaces/m2.interface';
 import { Pool, Client } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -176,6 +176,67 @@ export class M2Repository implements OnModuleInit, OnModuleDestroy {
       CREATE INDEX IF NOT EXISTS idx_trackers_tenant ON trackers(tenant_id);
       CREATE INDEX IF NOT EXISTS idx_tracker_detections_tenant ON tracker_detections(tenant_id);
       CREATE INDEX IF NOT EXISTS idx_tracker_detections_tracker ON tracker_detections(tracker_id);
+
+      -- AI Theme Spotter Tables
+      CREATE TABLE IF NOT EXISTS theme_analyses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id VARCHAR(255) NOT NULL,
+        business_question TEXT NOT NULL,
+        filters JSONB DEFAULT '{}',
+        status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+        call_count_analyzed INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS themes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        analysis_id UUID REFERENCES theme_analyses(id) ON DELETE CASCADE,
+        tenant_id VARCHAR(255) NOT NULL,
+        name VARCHAR(500) NOT NULL,
+        summary TEXT,
+        call_count INTEGER DEFAULT 0,
+        account_count INTEGER DEFAULT 0,
+        associated_revenue DECIMAL(15,2) DEFAULT 0,
+        confidence_score DECIMAL(5,4) DEFAULT 0,
+        status VARCHAR(50) NOT NULL DEFAULT 'PENDING_REVIEW',
+        detection_source VARCHAR(100) DEFAULT 'GROQ_AI',
+        trend VARCHAR(50) DEFAULT 'STABLE',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS theme_quotes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        theme_id UUID REFERENCES themes(id) ON DELETE CASCADE,
+        tenant_id VARCHAR(255) NOT NULL,
+        conversation_id VARCHAR(255),
+        snippet TEXT NOT NULL,
+        speaker_side VARCHAR(50) DEFAULT 'any',
+        confidence_score DECIMAL(5,4) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS theme_alerts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        theme_id UUID REFERENCES themes(id) ON DELETE CASCADE,
+        tenant_id VARCHAR(255) NOT NULL,
+        condition_type VARCHAR(100) DEFAULT 'COUNT_THRESHOLD',
+        threshold_value INTEGER DEFAULT 10,
+        time_window_days INTEGER DEFAULT 7,
+        is_active BOOLEAN DEFAULT TRUE,
+        last_triggered_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_theme_analyses_tenant ON theme_analyses(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_themes_analysis ON themes(analysis_id);
+      CREATE INDEX IF NOT EXISTS idx_themes_tenant ON themes(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_themes_status ON themes(status);
+      CREATE INDEX IF NOT EXISTS idx_theme_quotes_theme ON theme_quotes(theme_id);
+      CREATE INDEX IF NOT EXISTS idx_theme_alerts_theme ON theme_alerts(theme_id);
+      CREATE INDEX IF NOT EXISTS idx_theme_alerts_tenant ON theme_alerts(tenant_id);
     `;
   }
 
@@ -600,6 +661,170 @@ export class M2Repository implements OnModuleInit, OnModuleDestroy {
       detectionSource: row.detection_source,
       detectedAt: new Date(row.detected_at),
       createdAt: new Date(row.created_at)
+    };
+  }
+
+  // ─── AI Theme Spotter Methods ────────────────────────────────────────────────
+
+  async createThemeAnalysis(data: ThemeAnalysis): Promise<ThemeAnalysis> {
+    const res = await this.pool.query(
+      `INSERT INTO theme_analyses (id, tenant_id, business_question, filters, status, call_count_analyzed, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [data.id, data.tenantId, data.businessQuestion, JSON.stringify(data.filters), data.status, data.callCountAnalyzed, data.createdAt, data.updatedAt]
+    );
+    return this.mapRowToThemeAnalysis(res.rows[0]);
+  }
+
+  async getThemeAnalysis(id: string, tenantId: string): Promise<ThemeAnalysis | null> {
+    const res = await this.pool.query('SELECT * FROM theme_analyses WHERE id=$1 AND tenant_id=$2', [id, tenantId]);
+    return res.rows[0] ? this.mapRowToThemeAnalysis(res.rows[0]) : null;
+  }
+
+  async listThemeAnalyses(tenantId: string): Promise<ThemeAnalysis[]> {
+    const res = await this.pool.query('SELECT * FROM theme_analyses WHERE tenant_id=$1 ORDER BY created_at DESC', [tenantId]);
+    return res.rows.map((r: any) => this.mapRowToThemeAnalysis(r));
+  }
+
+  async updateThemeAnalysisStatus(id: string, status: string, callCount: number): Promise<void> {
+    await this.pool.query(
+      'UPDATE theme_analyses SET status=$1, call_count_analyzed=$2, updated_at=NOW() WHERE id=$3',
+      [status, callCount, id]
+    );
+  }
+
+  async createTheme(data: Theme): Promise<Theme> {
+    const res = await this.pool.query(
+      `INSERT INTO themes (id, analysis_id, tenant_id, name, summary, call_count, account_count, associated_revenue, confidence_score, status, detection_source, trend, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [data.id, data.analysisId, data.tenantId, data.name, data.summary, data.callCount, data.accountCount, data.associatedRevenue, data.confidenceScore, data.status, data.detectionSource, data.trend, data.createdAt, data.updatedAt]
+    );
+    return this.mapRowToTheme(res.rows[0]);
+  }
+
+  async listThemes(tenantId: string, statusFilter?: string): Promise<Theme[]> {
+    let query = 'SELECT * FROM themes WHERE tenant_id=$1';
+    const params: any[] = [tenantId];
+    if (statusFilter) {
+      query += ' AND status=$2';
+      params.push(statusFilter);
+    }
+    query += ' ORDER BY created_at DESC';
+    const res = await this.pool.query(query, params);
+    return res.rows.map((r: any) => this.mapRowToTheme(r));
+  }
+
+  async getTheme(id: string, tenantId: string): Promise<Theme | null> {
+    const res = await this.pool.query('SELECT * FROM themes WHERE id=$1 AND tenant_id=$2', [id, tenantId]);
+    return res.rows[0] ? this.mapRowToTheme(res.rows[0]) : null;
+  }
+
+  async updateThemeStatus(id: string, status: string): Promise<Theme | null> {
+    const res = await this.pool.query(
+      'UPDATE themes SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *',
+      [status, id]
+    );
+    return res.rows[0] ? this.mapRowToTheme(res.rows[0]) : null;
+  }
+
+  async listArchivedThemes(tenantId: string): Promise<Theme[]> {
+    const res = await this.pool.query(
+      "SELECT * FROM themes WHERE tenant_id=$1 AND status IN ('ARCHIVED','REJECTED') ORDER BY updated_at DESC",
+      [tenantId]
+    );
+    return res.rows.map((r: any) => this.mapRowToTheme(r));
+  }
+
+  async createThemeQuote(data: ThemeQuote): Promise<ThemeQuote> {
+    const res = await this.pool.query(
+      'INSERT INTO theme_quotes (id, theme_id, tenant_id, conversation_id, snippet, speaker_side, confidence_score, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
+      [data.id, data.themeId, data.tenantId, data.conversationId || null, data.snippet, data.speakerSide, data.confidenceScore, data.createdAt]
+    );
+    return this.mapRowToThemeQuote(res.rows[0]);
+  }
+
+  async getThemeQuotes(themeId: string): Promise<ThemeQuote[]> {
+    const res = await this.pool.query('SELECT * FROM theme_quotes WHERE theme_id=$1 ORDER BY confidence_score DESC', [themeId]);
+    return res.rows.map((r: any) => this.mapRowToThemeQuote(r));
+  }
+
+  async createThemeAlert(data: ThemeAlert): Promise<ThemeAlert> {
+    const res = await this.pool.query(
+      'INSERT INTO theme_alerts (id, theme_id, tenant_id, condition_type, threshold_value, time_window_days, is_active, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
+      [data.id, data.themeId, data.tenantId, data.conditionType, data.thresholdValue, data.timeWindowDays, data.isActive, data.createdAt, data.updatedAt]
+    );
+    return this.mapRowToThemeAlert(res.rows[0]);
+  }
+
+  async listThemeAlerts(tenantId: string): Promise<ThemeAlert[]> {
+    const res = await this.pool.query('SELECT * FROM theme_alerts WHERE tenant_id=$1 ORDER BY created_at DESC', [tenantId]);
+    return res.rows.map((r: any) => this.mapRowToThemeAlert(r));
+  }
+
+  async updateThemeAlert(id: string, update: Partial<ThemeAlert>): Promise<ThemeAlert | null> {
+    const res = await this.pool.query(
+      'UPDATE theme_alerts SET is_active=$1, threshold_value=$2, time_window_days=$3, updated_at=NOW() WHERE id=$4 RETURNING *',
+      [update.isActive ?? true, update.thresholdValue ?? 10, update.timeWindowDays ?? 7, id]
+    );
+    return res.rows[0] ? this.mapRowToThemeAlert(res.rows[0]) : null;
+  }
+
+  private mapRowToThemeAnalysis(row: any): ThemeAnalysis {
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      businessQuestion: row.business_question,
+      filters: typeof row.filters === 'string' ? JSON.parse(row.filters) : (row.filters || {}),
+      status: row.status,
+      callCountAnalyzed: parseInt(row.call_count_analyzed || '0', 10),
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+    };
+  }
+
+  private mapRowToTheme(row: any): Theme {
+    return {
+      id: row.id,
+      analysisId: row.analysis_id,
+      tenantId: row.tenant_id,
+      name: row.name,
+      summary: row.summary || '',
+      callCount: parseInt(row.call_count || '0', 10),
+      accountCount: parseInt(row.account_count || '0', 10),
+      associatedRevenue: parseFloat(row.associated_revenue || '0'),
+      confidenceScore: parseFloat(row.confidence_score || '0'),
+      status: row.status,
+      detectionSource: row.detection_source,
+      trend: row.trend || 'STABLE',
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+    };
+  }
+
+  private mapRowToThemeQuote(row: any): ThemeQuote {
+    return {
+      id: row.id,
+      themeId: row.theme_id,
+      tenantId: row.tenant_id,
+      conversationId: row.conversation_id || undefined,
+      snippet: row.snippet,
+      speakerSide: row.speaker_side,
+      confidenceScore: parseFloat(row.confidence_score || '0'),
+      createdAt: new Date(row.created_at),
+    };
+  }
+
+  private mapRowToThemeAlert(row: any): ThemeAlert {
+    return {
+      id: row.id,
+      themeId: row.theme_id,
+      tenantId: row.tenant_id,
+      conditionType: row.condition_type,
+      thresholdValue: parseInt(row.threshold_value || '10', 10),
+      timeWindowDays: parseInt(row.time_window_days || '7', 10),
+      isActive: row.is_active,
+      lastTriggeredAt: row.last_triggered_at ? new Date(row.last_triggered_at) : undefined,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
     };
   }
 }

@@ -95,3 +95,58 @@ export interface TrackerDetection {
   detectedAt: Date;
   createdAt: Date;
 }
+
+// ─── AI Theme Spotter Interfaces ──────────────────────────────────────────────
+
+export interface ThemeAnalysis {
+  id: string;
+  tenantId: string;
+  businessQuestion: string;
+  filters: Record<string, any>;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  callCountAnalyzed: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Theme {
+  id: string;
+  analysisId: string;
+  tenantId: string;
+  name: string;
+  summary: string;
+  callCount: number;
+  accountCount: number;
+  associatedRevenue: number;
+  confidenceScore: number;
+  status: 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED' | 'ARCHIVED';
+  detectionSource: 'GROQ_AI' | 'RULE_BASED_FALLBACK';
+  trend: 'RISING' | 'STABLE' | 'DECLINING';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ThemeQuote {
+  id: string;
+  themeId: string;
+  tenantId: string;
+  conversationId?: string;
+  snippet: string;
+  speakerSide: 'agent' | 'customer' | 'any';
+  confidenceScore: number;
+  createdAt: Date;
+}
+
+export interface ThemeAlert {
+  id: string;
+  themeId: string;
+  tenantId: string;
+  conditionType: 'COUNT_THRESHOLD' | 'TREND_CHANGE';
+  thresholdValue: number;
+  timeWindowDays: number;
+  isActive: boolean;
+  lastTriggeredAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+

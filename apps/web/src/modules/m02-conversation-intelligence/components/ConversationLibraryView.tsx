@@ -9,6 +9,7 @@ import {
 import { SearchResult } from './types';
 import CallReviewerDashboard from '../../m2/components/CallReviewerDashboard';
 import SmartTrackerDashboard from '../../m2/components/SmartTrackerDashboard';
+import ThemeSpotterDashboard from '../../m2/components/theme-spotter/ThemeSpotterDashboard';
 
 // Helper function to escape special characters for regex matches
 const escapeRegExp = (str: string) => {
@@ -366,6 +367,7 @@ export const ConversationLibraryView: React.FC = () => {
             { name: 'Search', icon: Search, sub: ['Conversations', 'Your library'] },
             { name: 'AI Call Reviewer', icon: ShieldCheck },
             { name: 'AI Smart Tracker', icon: Compass },
+            { name: 'AI Theme Spotter', icon: TrendingUp },
             { name: 'Company library', icon: Bookmark },
             { name: 'Deals', icon: Layers },
             { name: 'Coaching', icon: Award },
@@ -434,7 +436,7 @@ export const ConversationLibraryView: React.FC = () => {
             <span style={{ color: 'var(--text-slate-500)', fontSize: '12px', fontWeight: '600' }}>Conversations</span>
             <span style={{ color: '#cbd5e1', fontSize: '12px' }}>/</span>
             <span style={{ color: 'var(--text-white)', fontSize: '12px', fontWeight: '800' }}>
-              {activeTab === 'AI Call Reviewer' ? 'AI Call Reviewer' : 'Search Portal'}
+            {activeTab === 'AI Call Reviewer' ? 'AI Call Reviewer' : activeTab === 'AI Smart Tracker' ? 'AI Smart Tracker' : activeTab === 'AI Theme Spotter' ? 'AI Theme Spotter' : 'Search Portal'}
             </span>
           </div>
 
@@ -466,6 +468,8 @@ export const ConversationLibraryView: React.FC = () => {
           <CallReviewerDashboard apiBaseUrl="http://localhost:3001" />
         ) : activeTab === 'AI Smart Tracker' ? (
           <SmartTrackerDashboard apiBaseUrl="http://localhost:3001" />
+        ) : activeTab === 'AI Theme Spotter' ? (
+          <ThemeSpotterDashboard apiBaseUrl="http://localhost:3001" />
         ) : (
           <div className="rev-split-body">
           

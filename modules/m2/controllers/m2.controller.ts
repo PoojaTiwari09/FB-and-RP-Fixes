@@ -115,4 +115,79 @@ export class M2Controller {
     const tenantId = req.tenantId || 'tenant-123';
     return this.service.getTrackerDetections(tenantId);
   }
+
+  // AI Theme Spotter Endpoints
+
+  @Post('theme-analyses')
+  @HttpCode(HttpStatus.CREATED)
+  async createThemeAnalysis(@Body() body: any, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.createThemeAnalysis(body, tenantId);
+  }
+
+  @Get('theme-analyses')
+  async listThemeAnalyses(@Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.listThemeAnalyses(tenantId);
+  }
+
+  @Get('theme-analyses/:id')
+  async getThemeAnalysis(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.getThemeAnalysis(id, tenantId);
+  }
+
+  @Get('themes')
+  async listThemes(@Query('status') status: string, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.listThemes(tenantId, status || undefined);
+  }
+
+  @Get('themes/archived')
+  async listArchivedThemes(@Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.listArchivedThemes(tenantId);
+  }
+
+  @Get('themes/:id')
+  async getThemeDeepDive(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.getThemeDeepDive(id, tenantId);
+  }
+
+  @Post('themes/:id/accept')
+  async acceptTheme(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.acceptTheme(id, tenantId);
+  }
+
+  @Post('themes/:id/reject')
+  async rejectTheme(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.rejectTheme(id, tenantId);
+  }
+
+  @Post('themes/:id/archive')
+  async archiveTheme(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.archiveTheme(id, tenantId);
+  }
+
+  @Post('theme-alerts')
+  @HttpCode(HttpStatus.CREATED)
+  async createThemeAlert(@Body() body: any, @Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.createThemeAlert(body, tenantId);
+  }
+
+  @Get('theme-alerts')
+  async listThemeAlerts(@Req() req: any) {
+    const tenantId = req.tenantId || 'tenant-123';
+    return this.service.listThemeAlerts(tenantId);
+  }
+
+  @Put('theme-alerts/:id')
+  async updateThemeAlert(@Param('id') id: string, @Body() body: any) {
+    return this.service.updateThemeAlert(id, body);
+  }
 }
