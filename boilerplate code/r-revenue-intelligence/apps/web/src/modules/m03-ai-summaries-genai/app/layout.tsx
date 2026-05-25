@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "../modules/m03-ai-summaries-genai/app/globals.css";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SalesIQ AI Assistant",

@@ -1,29 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  LayoutDashboard,
-  MessageSquareCode,
-  Sparkles,
-  KanbanSquare,
-  BarChart3,
-  Send,
-  GraduationCap,
-  ShieldCheck,
-  Play,
-  Pause,
-  Volume2,
-  Search,
-  ArrowRight,
-  CornerDownRight,
-  CheckCircle2,
-  Database,
-  Lock,
-  RefreshCw,
-  User,
-  Flame,
-  Info
-} from "lucide-react";
+import App from "../modules/m03-ai-summaries-genai/app/page";
 
 interface CoachingFeedback {
   score: number;
