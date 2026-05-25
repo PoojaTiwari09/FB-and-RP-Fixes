@@ -11,15 +11,41 @@ import { M08SalesEngagementModule } from '../../../modules/m08-sales-engagement/
 import { M09CoachingTrainingModule } from '../../../modules/m09-coaching-training/m09-coaching-training.module';
 import { M10DataComplianceModule } from '../../../modules/m10-data-compliance/m10-data-compliance.module';
 
+const redisEnabled = process.env.DISABLE_REDIS !== 'true';
+
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
-    }),
-    M01CaptureTranscriptionModule,M02ConversationIntelligenceModule,M03AiSummariesGenaiModule,M04DealIntelligenceModule,M05AccountIntelligenceModule,M06ForecastingPredictionModule,M07RevenueDashboardsModule,M08SalesEngagementModule,M09CoachingTrainingModule,M10DataComplianceModule
+    ...(redisEnabled
+      ? [
+          BullModule.forRoot({
+            connection: {
+              host: process.env.REDIS_HOST || 'localhost',
+              port: parseInt(process.env.REDIS_PORT || '6379', 10),
+              retryStrategy() {
+                return 3600000;
+              },
+            },
+          }),
+          M01CaptureTranscriptionModule,
+          M02ConversationIntelligenceModule,
+          M03AiSummariesGenaiModule,
+          M05AccountIntelligenceModule,
+          M06ForecastingPredictionModule,
+          M07RevenueDashboardsModule,
+          M08SalesEngagementModule,
+          M09CoachingTrainingModule,
+          M10DataComplianceModule,
+        ]
+      : []),
+    M04DealIntelligenceModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    if (!redisEnabled) {
+      console.log(
+        'Redis disabled via DISABLE_REDIS=true; loading M04DealIntelligenceModule only.',
+      );
+    }
+  }
+}
