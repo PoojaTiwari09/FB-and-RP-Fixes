@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { randomUUID } from "crypto";
-import { WidgetType } from "@prisma/client";
 import { CreateDatasetDto, CreateDashboardDto, CreateWidgetDto } from "@rri/shared-types";
 import { PrismaService } from "../database/prisma.service";
 import {
@@ -29,6 +28,22 @@ type SampleDeal = {
   quarter: string;
   teamName: string;
 };
+enum WidgetType {
+  KPI = "KPI",
+  BAR = "BAR",
+  LINE = "LINE",
+  PIE = "PIE",
+  FUNNEL = "FUNNEL",
+  AREA = "AREA",
+  COLUMN = "COLUMN",
+  GAUGE = "GAUGE",
+  TABLE = "TABLE",
+  PERFORMANCE = "PERFORMANCE",
+  ATTAINMENT_TREND = "ATTAINMENT_TREND",
+  FORECAST = "FORECAST",
+  TRENDS = "TRENDS",
+  CHANGES = "CHANGES",
+}
 
 const sampleDashboardState: {
   title: string;
@@ -436,14 +451,14 @@ export class M07DealAccountService {
       for (const objectName of selectedObjects) {
         const fields = selectedFields[objectName] ?? [];
         const sourceRows = SAMPLE_DATA[objectName as keyof typeof SAMPLE_DATA] ?? [];
-        const sourceRow = objectName === primaryObject
-          ? row
-          : sourceRows.find((item) => {
-            if ("accountName" in item && "accountName" in row) {
-              return item.accountName === row.accountName;
-            }
-            return false;
-          });
+        const sourceRow: any = objectName === primaryObject
+  ? row
+  : sourceRows.find((item: any) => {
+    if ("accountName" in item && "accountName" in (row as any)) {
+      return item.accountName === (row as any).accountName;
+    }
+    return false;
+  });
 
         for (const field of fields) {
           previewRow[field] = sourceRow?.[field as keyof typeof sourceRow] ?? null;
