@@ -1,8 +1,9 @@
+version: '3.9'
 services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: revenue_intel
+      POSTGRES_DB: ${DB_NAME:-m6}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
@@ -38,7 +39,7 @@ services:
       - postgres
       - redis
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/revenue_intel}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/m6}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}

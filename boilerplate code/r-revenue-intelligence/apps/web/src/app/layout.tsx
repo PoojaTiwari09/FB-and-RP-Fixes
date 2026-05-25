@@ -1,22 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-plus-jakarta",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "R-Revenue Intelligence — Boilerplate Platform Hub",
-  description: "Futuristic enterprise revenue operations command center driving capturing, deep conversation intelligence, AI summaries, deal drivers, forecasting, and cross-cutting GDPR/CCPA data compliance.",
-  keywords: ["Revenue Intelligence", "Next.js 14", "Modular Monolith", "Speech-to-Text", "RAG", "Data Export"],
-  authors: [{ name: "Technical Architecture Team & Relanto Engineering" }],
+  title: "M6 Forecasting & Prediction — AI Revenue Predictor",
+  description: "AI-powered revenue forecasting for Sales Reps. Submit commit forecasts, view AI projections, and understand deal-level breakdowns.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#02040c",
   width: "device-width",
   initialScale: 1,
 };
@@ -27,9 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
-      <body style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
-        <div className="cyber-grid" />
+    <html lang="en" className={inter.variable}>
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", background: "#f9fafb" }}>
         {children}
       </body>
     </html>

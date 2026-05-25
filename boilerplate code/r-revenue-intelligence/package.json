@@ -8,6 +8,12 @@
     "db:migrate": "turbo run db:migrate",
     "db:generate": "turbo run db:generate"
   },
+  "pnpm": {
+    "overrides": {
+      "@nestjs/core": "^10.0.0",
+      "@nestjs/common": "^10.0.0"
+    }
+  },
   "devDependencies": {
     "turbo": "^2.0.0",
     "typescript": "^5.0.0"
