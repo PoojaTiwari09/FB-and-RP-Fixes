@@ -1,3 +1,4 @@
+version: '3.9'
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -28,20 +29,7 @@ services:
       - "8123:8123"
       - "9000:9000"
 
-  api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    ports:
-      - "3001:3001"
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/revenue_intel}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+  # api service intentionally omitted — run locally via `pnpm dev`
 
   ai-services:
     build: ./apps/ai-services
@@ -49,6 +37,7 @@ services:
       - "8000:8000"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY}
 
 volumes:
   pgdata:

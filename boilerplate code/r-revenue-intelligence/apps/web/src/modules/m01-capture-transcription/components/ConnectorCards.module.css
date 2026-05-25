@@ -1,0 +1,59 @@
+.wrapper { margin-top: 8px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin: 0; }
+.count { font-size: 12px; color: #64748b; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 3px 10px; }
+.loading { color: #64748b; font-size: 13px; padding: 16px 0; text-align: center; }
+
+.grid { display: flex; flex-direction: column; gap: 10px; }
+
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: all 0.2s;
+}
+.card:hover { background: rgba(255,255,255,0.05); }
+.card.connected { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 5%, transparent); }
+
+.cardTop { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.icon { font-size: 22px; flex-shrink: 0; }
+.info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.name { font-size: 13px; font-weight: 700; color: #f1f5f9; }
+.email { font-size: 11px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.badge { font-size: 11px; font-weight: 600; border-radius: 10px; padding: 3px 8px; white-space: nowrap; flex-shrink: 0; }
+.badgeOn { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.badgeOff { background: rgba(255,255,255,0.05); color: #64748b; border: 1px solid rgba(255,255,255,0.08); }
+
+.cardActions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.connectedSince { font-size: 11px; color: #64748b; }
+
+.connectBtn {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.connectBtn:hover { opacity: 0.85; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.connectBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.disconnectBtn {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.disconnectBtn:hover { background: rgba(239,68,68,0.2); }
+.disconnectBtn:disabled { opacity: 0.5; cursor: not-allowed; }
