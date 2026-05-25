@@ -1,0 +1,198 @@
+.askApp {
+  display: flex;
+  height: calc(100vh - var(--topbar-height, 42px));
+  width: 100%;
+  overflow: hidden;
+
+  /* Theme variables for Ask Anything AI page */
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --surface3: #f1f5f9;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --border3: #94a3b8;
+  --text: #0f172a;
+  --text2: #334155;
+  --text3: #64748b;
+  --accent: #2563eb;
+  --accent2: #7c3aed;
+  --font-head: 'Cabinet Grotesk', sans-serif;
+}
+
+.askMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Top bar */
+.askTopbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 58px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.breadHome {
+  color: #64748b;
+}
+
+.breadSep {
+  color: #64748b;
+}
+
+.breadCurrent {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.apiStatus {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: #334155;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  transition: all 0.15s;
+  font-weight: 500;
+}
+
+.apiStatus:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.apiDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.apiConnected { background: #10b981; }
+.apiDisconnected { background: #ef4444; }
+.apiWarning { background: #fbbf24; }
+
+.apiEdit {
+  font-size: 13px;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+/* Loading banner */
+.loadingBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  height: 30px;
+  font-size: 12px;
+  color: #3ECF8E;
+  background: rgba(62, 207, 142, 0.06);
+  border-bottom: 1px solid rgba(62, 207, 142, 0.15);
+  flex-shrink: 0;
+}
+
+.loadingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3ECF8E;
+  animation: askPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes askPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Schema-missing banner */
+.schemaBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: rgba(251, 191, 36, 0.08);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.schemaIcon {
+  font-size: 15px;
+  flex-shrink: 0;
+  color: #fbbf24;
+}
+
+.schemaText {
+  flex: 1;
+  font-size: 12.5px;
+  color: #d9a72a;
+  line-height: 1.4;
+  min-width: 200px;
+}
+.schemaText strong { color: #fbbf24; }
+
+.schemaBtns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.schemaBtn {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.schemaBtn:hover { background: rgba(251, 191, 36, 0.25); }
+
+.schemaReconnect {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #7e8fa8;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.schemaReconnect:hover { background: rgba(0, 0, 0, 0.03); color: #0f172a; }
+
+/* Content area */
+.askContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
