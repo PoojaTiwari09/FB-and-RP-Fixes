@@ -431,6 +431,9 @@ export default function PlatformDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <a href="/board/commercial" className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 border border-purple-400 text-white transition-all mr-4 cursor-pointer no-underline">
+              <span className="text-xs font-bold tracking-wide">ENTER M05 POC</span>
+            </a>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800/80">
               <Database size={12} className="text-emerald-400" />
               <span className="text-[10px] text-slate-300 font-mono font-bold">tenant_001</span>
