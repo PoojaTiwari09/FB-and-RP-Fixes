@@ -11,7 +11,15 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["../modules/m04-deal-intelligence/*"]
+      "@/services/*": ["../modules/m04-deal-intelligence/services/*"],
+      "@/controllers/*": ["../modules/m04-deal-intelligence/controllers/*"],
+      "@/entities/*": ["../modules/m04-deal-intelligence/entities/*"],
+      "@/schemas/*": ["../modules/m04-deal-intelligence/schemas/*"],
+      "@/guards/*": ["../modules/m04-deal-intelligence/guards/*"],
+      "@/interfaces/*": ["../modules/m04-deal-intelligence/interfaces/*"],
+      "@/decorators/*": ["../modules/m04-deal-intelligence/decorators/*"],
+      "@/repositories/*": ["../modules/m04-deal-intelligence/repositories/*"],
+      "@/middleware/*": ["../modules/m04-deal-intelligence/middleware/*"]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -20,5 +28,6 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "exclude": ["../modules/**", "node_modules", "dist"]
 }
