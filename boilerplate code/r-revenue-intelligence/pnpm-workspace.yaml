@@ -1,4 +1,12 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'modules/*'
+  - apps/*
+  - packages/*
+  - modules/*
+
+ignoredBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - msgpackr-extract
+  - prisma
+  - unrs-resolver
