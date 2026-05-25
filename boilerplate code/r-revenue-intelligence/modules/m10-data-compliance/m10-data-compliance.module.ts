@@ -3,10 +3,11 @@
 // Imports the three capability sub-modules:
 //   1. RevenueGraphModule — entity linking pipeline
 //   2. (Future) ComplianceSettingsModule
-//   3. (Future) DataCloudModule
+//   3. DataCloudModule — scheduled data export pipeline
 
 import { Module } from '@nestjs/common';
 import { RevenueGraphModule } from './revenue-graph/revenue-graph.module';
+import { DataCloudModule } from './data-cloud/data-cloud.module';
 import { PrismaModule } from './database/prisma.module';
 import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
 
@@ -15,7 +16,8 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     PrismaModule,
     EventPublisherModule,
     RevenueGraphModule,
+    DataCloudModule,
   ],
-  exports: [RevenueGraphModule],
+  exports: [RevenueGraphModule, DataCloudModule],
 })
 export class M10DataComplianceModule {}
