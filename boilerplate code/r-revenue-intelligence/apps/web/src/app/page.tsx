@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import DealDriversApp from "../modules/m04-deal-intelligence/src/DealDriversApp";
 import {
   LayoutDashboard,
   MessageSquareCode,
@@ -14,7 +15,6 @@ import {
   Pause,
   Volume2,
   Search,
-  ArrowRight,
   CornerDownRight,
   CheckCircle2,
   Database,
@@ -103,15 +103,6 @@ export default function PlatformDashboard() {
   ]);
   const [isRagTyping, setIsRagTyping] = useState(false);
 
-  // M4 Deals Board stage advancement simulation
-  const [deals, setDeals] = useState([
-    { id: "deal_01", name: "ACME Corp Seat Scale-up", amount: "$120,000", stage: "Discovery", account: "ACME Corp", owner: "John" },
-    { id: "deal_02", name: "Coca-Cola POC Deal", amount: "$45,000", stage: "Proposal", account: "Coca-Cola Ltd", owner: "John" },
-    { id: "deal_03", name: "Tesla Ingestion Rollout", amount: "$350,000", stage: "Negotiation", account: "Tesla Inc", owner: "Alice" }
-  ]);
-  const [stageLogs, setStageLogs] = useState<string[]>([]);
-  const [activeStageSyncId, setActiveStageSyncId] = useState<string | null>(null);
-
   // M8 Email Composer State
   const [emailTo, setEmailTo] = useState("sarah@acme.com");
   const [emailSubject, setEmailSubject] = useState("");
@@ -158,48 +149,6 @@ export default function PlatformDashboard() {
       setRagMessages(prev => [...prev, { role: "assistant", content: aiAnswer }]);
       setIsRagTyping(false);
     }, 1500);
-  };
-
-  // Simulate Deals Board Stage Advancement (ADR-005)
-  const advanceDealStage = (dealId: string) => {
-    const targetDeal = deals.find(d => d.id === dealId);
-    if (!targetDeal) return;
-
-    let nextStage = "Discovery";
-    if (targetDeal.stage === "Discovery") nextStage = "Proposal";
-    else if (targetDeal.stage === "Proposal") nextStage = "Negotiation";
-    else return; // max stage for demo
-
-    setActiveStageSyncId(dealId);
-    setStageLogs([
-      `[M4 Deal Intel] Rep request: Advance deal "${targetDeal.name}" to ${nextStage}`,
-      `[M4 Deal Intel] Optimistic local update done. Publishing internal message "deal.stage.update.requested" to BullMQ...`
-    ]);
-
-    setTimeout(() => {
-      setStageLogs(prev => [...prev, `[M10 Data & Compliance] Caught request. Starting CRM Outbound synchronization...`]);
-    }, 800);
-
-    setTimeout(() => {
-      setStageLogs(prev => [
-        ...prev,
-        `[CRM Endpoint] Outbound PATCH request successfully committed to Salesforce Opportunity [Stage: ${nextStage}].`,
-        `[M10 Data & Compliance] Committed update to PostgreSQL schema "m10_data_compliance.deals" table.`,
-        `[M10 Data & Compliance] Publishing public event "deal.stage.changed" (v3.0 standard envelope)...`
-      ]);
-    }, 1800);
-
-    setTimeout(() => {
-      setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: nextStage } : d));
-      setStageLogs(prev => [
-        ...prev,
-        `[M4 Deals Board] Consumed "deal.stage.changed" -> card locked on new column.`,
-        `[M8 Sales Engagement] Consumed "deal.stage.changed" -> Triggered playbooks sequence automated enrollment.`,
-        `[M6 Forecasting] Consumed "deal.stage.changed" -> Recalculated quarterly pipeline predict coverage.`,
-        `✓ STAGE UPDATE SYNCHRONIZED COMPLETED.`
-      ]);
-      setActiveStageSyncId(null);
-    }, 2800);
   };
 
   // Simulate AI Auto-drafting email based on call transcript
@@ -806,103 +755,8 @@ export default function PlatformDashboard() {
 
           {/* TAB 4: M4 & M5 DEALS COMMAND PIPELINE */}
           {activeTab === "deals" && (
-            <div className="flex flex-col gap-8">
-              
-              <div className="flex justify-between items-center">
-                <div className="flex flex-col gap-1">
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-100">M4 Deal Intelligence Board</h1>
-                  <p className="text-sm text-slate-400">Advance pipeline stages which dynamically triggers an ADR-005 CRM synchronizing logging.</p>
-                </div>
-                <span className="badge badge-emerald">Enforced ADR-005 Pattern</span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-8">
-                
-                {/* Column columns (Kanban board layout) */}
-                <div className="col-span-3 grid grid-cols-3 gap-6">
-                  {["Discovery", "Proposal", "Negotiation"].map(columnStage => {
-                    const stageDeals = deals.filter(d => d.stage === columnStage);
-                    return (
-                      <div key={columnStage} className="glass-panel p-5 flex flex-col gap-4 bg-slate-950/40">
-                        <div className="flex justify-between items-center border-b border-slate-900 pb-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{columnStage}</span>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-500 font-bold">{stageDeals.length}</span>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                          {stageDeals.map(deal => (
-                            <div key={deal.id} className="p-4 rounded-lg bg-slate-900/60 border border-slate-800/80 flex flex-col gap-3 group hover:border-slate-700 transition-all">
-                              <div className="flex flex-col">
-                                <span className="text-xs font-bold text-slate-200">{deal.name}</span>
-                                <span className="text-[10px] text-slate-500">{deal.account} • Rep: {deal.owner}</span>
-                              </div>
-                              
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs font-black text-emerald-400">{deal.amount}</span>
-                                
-                                {columnStage !== "Negotiation" && (
-                                  <button
-                                    onClick={() => advanceDealStage(deal.id)}
-                                    disabled={activeStageSyncId !== null}
-                                    className="btn-cyber btn-cyber-emerald py-1 px-2.5 text-[9px] font-mono flex items-center gap-1 cursor-pointer"
-                                  >
-                                    {activeStageSyncId === deal.id ? (
-                                      <RefreshCw size={10} className="animate-spin text-emerald-400" />
-                                    ) : (
-                                      <>
-                                        <span>Advance</span>
-                                        <ArrowRight size={10} />
-                                      </>
-                                    )}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Visual side logger panel (ADR-005) */}
-                <div className="col-span-1 glass-panel p-5 flex flex-col gap-4 h-[420px] bg-slate-950/80">
-                  <div className="flex items-center gap-2 border-b border-slate-900 pb-2">
-                    <Database size={14} className="text-cyan-400 animate-beacon" />
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">ADR-005 Event Ingestion</h4>
-                  </div>
-
-                  <div className="flex-grow overflow-y-auto flex flex-col gap-2 font-mono text-[9px] leading-relaxed pr-2 text-slate-400">
-                    {stageLogs.length === 0 ? (
-                      <div className="text-slate-600 flex flex-col items-center justify-center h-full text-center p-4">
-                        <Info size={24} className="text-slate-700 mb-2" />
-                        <span>Click &quot;Advance&quot; on any deal card above to simulate the ADR-005 CRM synchronizing flow.</span>
-                      </div>
-                    ) : (
-                      stageLogs.map((log, i) => {
-                        const isSuccess = log.startsWith("✓") || log.includes("SUCCESS");
-                        const isCRM = log.includes("[CRM Endpoint]");
-                        return (
-                          <div
-                            key={i}
-                            className={`p-2 rounded border ${
-                              isSuccess
-                                ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-400 font-bold"
-                                : isCRM
-                                ? "bg-purple-950/20 border-purple-500/20 text-purple-400"
-                                : "bg-slate-900 border-slate-800 text-slate-400"
-                            }`}
-                          >
-                            {log}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
+            <div className="w-full h-full overflow-y-auto">
+              <DealDriversApp />
             </div>
           )}
 
