@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Phone, Mail, Clock, ShieldCheck, ChevronRight } from 'lucide-react';
 import { SearchResult } from './types';
 
@@ -8,9 +8,34 @@ interface ConversationCardProps {
 }
 
 export const ConversationCard: React.FC<ConversationCardProps> = ({ result, onOpen }) => {
-  // Safe default arrays
-  const topics = result.topics || [];
+  const [topics, setTopics] = useState<string[]>(result.topics || []);
+  const [loadingTopics, setLoadingTopics] = useState(false);
   const overallScore = result.overallScore || 0;
+
+  // Fetch dynamic topics from API when component mounts
+  useEffect(() => {
+    if (result.id) {
+      fetchTopicsForConversation(result.id);
+    }
+  }, [result.id]);
+
+  const fetchTopicsForConversation = async (conversationId: string) => {
+    setLoadingTopics(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/conversations/${conversationId}/topics`);
+      if (res.ok) {
+        const data = await res.json();
+        // Extract topic names from the API response
+        const topicNames = data.map((t: any) => t.topicName);
+        setTopics(topicNames);
+      }
+    } catch (e) {
+      // Fallback to hardcoded topics if API fails
+      setTopics(result.topics || []);
+    } finally {
+      setLoadingTopics(false);
+    }
+  };
 
   // Visual Styling helpers
   const getSentimentStyles = (sentiment?: string) => {
@@ -86,14 +111,20 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ result, onOp
 
         {/* Topics Pills */}
         <div className="flex flex-wrap gap-1.5">
-          {topics.map((t) => (
-            <span
-              key={t}
-              className="text-[10px] bg-slate-950/80 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg font-medium hover:text-slate-200 hover:border-slate-600 transition-all cursor-pointer"
-            >
-              {t}
-            </span>
-          ))}
+          {loadingTopics ? (
+            <span className="text-[10px] text-slate-500 italic">Loading topics...</span>
+          ) : topics.length > 0 ? (
+            topics.map((t) => (
+              <span
+                key={t}
+                className="text-[10px] bg-slate-950/80 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg font-medium hover:text-slate-200 hover:border-slate-600 transition-all cursor-pointer"
+              >
+                {t}
+              </span>
+            ))
+          ) : (
+            <span className="text-[10px] text-slate-500 italic">No topics</span>
+          )}
         </div>
       </div>
 

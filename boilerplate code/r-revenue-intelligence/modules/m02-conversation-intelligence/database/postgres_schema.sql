@@ -209,3 +209,51 @@ CREATE POLICY tenant_isolation_folder_items ON m02_folder_items
 DROP POLICY IF EXISTS tenant_isolation_folder_access_logs ON m02_folder_access_logs;
 CREATE POLICY tenant_isolation_folder_access_logs ON m02_folder_access_logs
     FOR ALL USING (tenant_id = COALESCE(current_setting('app.current_tenant_id', true), '00000000-0000-0000-0000-000000000000')::uuid);
+
+-- ==========================================
+-- 6. AI TOPIC TAGGER TABLES (AI Topic Tagger Feature)
+-- ==========================================
+
+-- Topic Models Table - Stores topic definitions and taxonomies
+CREATE TABLE IF NOT EXISTS m02_topic_models (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL,
+    topics JSONB NOT NULL DEFAULT '[]'::jsonb,
+    type VARCHAR(50) NOT NULL DEFAULT 'global', -- 'global' or 'tenant_custom'
+    last_trained_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- Topic Tags Table - Stores AI-generated topic tags for conversations
+CREATE TABLE IF NOT EXISTS m02_topic_tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    call_id UUID NOT NULL,
+    tenant_id UUID NOT NULL,
+    topic_name VARCHAR(255) NOT NULL,
+    source VARCHAR(50) NOT NULL DEFAULT 'aimodel', -- 'aimodel' or 'manual'
+    confidence_score DECIMAL(5,4) NOT NULL DEFAULT 0.0000,
+    explanation TEXT,
+    evidence_snippet TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- Multi-Tenant Context Left-Most Indexes for Topic Tables
+CREATE INDEX IF NOT EXISTS idx_topic_models_m02_tenant ON m02_topic_models(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_topic_models_m02_type ON m02_topic_models(type);
+CREATE INDEX IF NOT EXISTS idx_topic_tags_m02_call ON m02_topic_tags(call_id);
+CREATE INDEX IF NOT EXISTS idx_topic_tags_m02_tenant ON m02_topic_tags(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_topic_tags_m02_topic ON m02_topic_tags(topic_name);
+
+-- Enable Row-Level Security on topic tables
+ALTER TABLE m02_topic_models ENABLE ROW LEVEL SECURITY;
+ALTER TABLE m02_topic_tags ENABLE ROW LEVEL SECURITY;
+
+-- Tenant Isolation Policies for topic tables
+DROP POLICY IF EXISTS tenant_isolation_topic_models ON m02_topic_models;
+CREATE POLICY tenant_isolation_topic_models ON m02_topic_models
+    FOR ALL USING (tenant_id = COALESCE(current_setting('app.current_tenant_id', true), '00000000-0000-0000-0000-000000000000')::uuid);
+
+DROP POLICY IF EXISTS tenant_isolation_topic_tags ON m02_topic_tags;
+CREATE POLICY tenant_isolation_topic_tags ON m02_topic_tags
+    FOR ALL USING (tenant_id = COALESCE(current_setting('app.current_tenant_id', true), '00000000-0000-0000-0000-000000000000')::uuid);

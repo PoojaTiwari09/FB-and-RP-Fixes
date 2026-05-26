@@ -4,27 +4,473 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Phone, Mail, Clock, ShieldCheck, ChevronRight, X, Calendar, 
   User, Award, Compass, Smile, Bookmark, Plus, Settings, Home, 
-  BarChart2, TrendingUp, Download, Share2, Layers, Filter, HelpCircle
+  BarChart2, TrendingUp, Download, Share2, Layers, Filter, HelpCircle, Globe,
+  Sparkles, Target, Tag
 } from 'lucide-react';
 import { SearchResult } from './types';
+import { TranslationSettingsModal } from './TranslationSettingsModal';
+import { TrackerManagement } from './TrackerManagement';
 
 // Helper function to escape special characters for regex matches
 const escapeRegExp = (str: string) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
+const API_BASE_URL = 'http://localhost:3001/api/v1';
+const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+const AddTermModal: React.FC<{ onClose: () => void; onSuccess: () => void }> = ({ onClose, onSuccess }) => {
+  const [term, setTerm] = useState('');
+  const [category, setCategory] = useState('');
+  const [mispronunciations, setMispronunciations] = useState('');
+  const [variations, setVariations] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!term.trim()) {
+      setError('Term is required');
+      return;
+    }
+    if (!category) {
+      setError('Category is required');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/conversation-intelligence/vocabulary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': TENANT_ID
+        },
+        body: JSON.stringify({
+          incorrectTerm: mispronunciations.split(',').map(s => s.trim()).filter(Boolean)[0] || term, // Fallback to term if no mistranscriptions provided for now
+          correctTerm: term,
+          category,
+          mispronunciations: mispronunciations.split(',').map(s => s.trim()).filter(Boolean),
+          variations: variations.split(',').map(s => s.trim()).filter(Boolean)
+        })
+      });
+
+      if (res.ok) {
+        onSuccess();
+        onClose();
+      } else {
+        setError('Failed to save term');
+      }
+    } catch (e) {
+      setError('Network error saving term');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', width: '480px', overflow: 'hidden' }}>
+        <div style={{ padding: '24px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', color: '#f8fafc', fontWeight: 700 }}>Add term</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {error && <div style={{ color: '#ef4444', fontSize: '13px' }}>{error}</div>}
+          
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Term (correct version) *</label>
+            <input 
+              type="text" 
+              value={term} 
+              onChange={e => setTerm(e.target.value)}
+              placeholder="e.g. RevenueOS"
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Category *</label>
+            <select 
+              value={category} 
+              onChange={e => setCategory(e.target.value)}
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            >
+              <option value="">Select category...</option>
+              <option value="Product">Product</option>
+              <option value="Competitor">Competitor</option>
+              <option value="Acronym">Acronym</option>
+              <option value="Industry term">Industry term</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Common mispronunciations (comma separated)</label>
+            <input 
+              type="text" 
+              value={mispronunciations} 
+              onChange={e => setMispronunciations(e.target.value)}
+              placeholder="e.g. revenoose, rev-en-oss"
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Shorthand / variations (comma separated)</label>
+            <input 
+              type="text" 
+              value={variations} 
+              onChange={e => setVariations(e.target.value)}
+              placeholder="e.g. ROS, Rev OS"
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: '#0f172a' }}>
+          <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #334155', color: '#f8fafc', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="rev-btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>{saving ? 'Saving...' : 'Save term'}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ManageTopicsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [topics, setTopics] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTopicName, setNewTopicName] = useState('');
+  const [newTopicDesc, setNewTopicDesc] = useState('');
+  const tenantId = '00000000-0000-0000-0000-000000000001';
+
+  useEffect(() => {
+    fetchTopics();
+  }, []);
+
+  const fetchTopics = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics?tenantId=${tenantId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length > 0 && data[0].topics) {
+          setTopics(data[0].topics);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch topics', e);
+    }
+    setLoading(false);
+  };
+
+  const handleAdd = async () => {
+    if (!newTopicName) return;
+    try {
+      const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/topics/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, topicName: newTopicName, description: newTopicDesc })
+      });
+      if (res.ok) {
+        setNewTopicName('');
+        setNewTopicDesc('');
+        fetchTopics();
+      } else {
+        alert('Failed to add topic');
+      }
+    } catch (e) {
+      alert('Error adding topic');
+    }
+  };
+
+  const handleRemove = async (topicName: string) => {
+    if (!confirm(`Are you sure you want to delete the AI topic "${topicName}"?`)) return;
+    try {
+      const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/topics/remove', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, topicName })
+      });
+      if (res.ok) {
+        fetchTopics();
+      } else {
+        alert('Failed to remove topic');
+      }
+    } catch (e) {
+      alert('Error removing topic');
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: '0', background: 'rgba(15, 23, 42, 0.6)',
+      backdropFilter: 'blur(8px)', zIndex: '9999', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', padding: '20px'
+    }}>
+      <div style={{
+        background: '#ffffff', border: '1px solid #cbd5e1',
+        borderRadius: '12px', padding: '28px', width: '100%',
+        maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+        display: 'flex', flexDirection: 'column', gap: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px' }}>
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-white)' }}>Manage AI Topics</h3>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0 0' }}>Configure global topics for AI auto-tagging.</p>
+          </div>
+          <button onClick={onClose} style={{ color: '#64748b', background: '#f8fafc', border: '1px solid #cbd5e1', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+            <X style={{ width: '16px', height: '16px' }} />
+          </button>
+        </div>
+
+        {/* Add New Topic */}
+        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <h4 style={{ fontSize: '12px', fontWeight: '800', color: '#334155', margin: 0 }}>Add New AI Topic</h4>
+          <input
+            type="text"
+            placeholder="Topic Name (e.g., Pricing Strategy)"
+            value={newTopicName}
+            onChange={e => setNewTopicName(e.target.value)}
+            style={{ width: '100%', padding: '8px 12px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }}
+          />
+          <textarea
+            placeholder="Topic Description (Instructs AI on what to look for...)"
+            value={newTopicDesc}
+            onChange={e => setNewTopicDesc(e.target.value)}
+            rows={2}
+            style={{ width: '100%', padding: '8px 12px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', resize: 'none' }}
+          />
+          <button
+            onClick={handleAdd}
+            disabled={!newTopicName}
+            className="rev-btn-primary"
+            style={{ padding: '8px', fontSize: '12px', borderRadius: '6px', alignSelf: 'flex-start', opacity: newTopicName ? 1 : 0.5, cursor: newTopicName ? 'pointer' : 'not-allowed' }}
+          >
+            Add AI Topic
+          </button>
+        </div>
+
+        {/* Topic List */}
+        <div>
+          <h4 style={{ fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Active Global Topics</h4>
+          {loading ? (
+            <div style={{ fontSize: '12px', color: '#94a3b8' }}>Loading topics...</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {topics.map((t: any) => (
+                <div key={t.name} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                  <div style={{ flex: 1 }}>
+                    <h5 style={{ fontSize: '12px', fontWeight: '800', color: '#334155', margin: '0 0 4px 0' }}>{t.name}</h5>
+                    <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{t.description || 'No description provided.'}</p>
+                  </div>
+                  <button onClick={() => handleRemove(t.name)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }} title="Delete AI Topic">
+                    <X style={{ width: '14px', height: '14px' }} />
+                  </button>
+                </div>
+              ))}
+              {topics.length === 0 && <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>No topics configured.</div>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TrackerModal: React.FC<{
+  editingTracker: any;
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ editingTracker, onClose, onSuccess }) => {
+  const [name, setName] = useState(editingTracker?.name || '');
+  const [keywords, setKeywords] = useState((editingTracker?.keywords || []).join(', '));
+  const [speakerScope, setSpeakerScope] = useState(editingTracker?.speakerScope || 'Both');
+  const [timingCondition, setTimingCondition] = useState(editingTracker?.timingCondition || 'Any time');
+  const [timingMinutes, setTimingMinutes] = useState((editingTracker?.timingMinutes ?? 10).toString());
+  const [isActive, setIsActive] = useState(editingTracker?.isActive ?? true);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setName(editingTracker?.name || '');
+    setKeywords((editingTracker?.keywords || []).join(', '));
+    setSpeakerScope(editingTracker?.speakerScope || 'Both');
+    setTimingCondition(editingTracker?.timingCondition || 'Any time');
+    setTimingMinutes((editingTracker?.timingMinutes ?? 10).toString());
+    setIsActive(editingTracker?.isActive ?? true);
+    setError('');
+  }, [editingTracker]);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError('Tracker name is required');
+      return;
+    }
+    const payload = {
+      name: name.trim(),
+      keywords: keywords.split(',').map((k: string) => k.trim()).filter(Boolean),
+      speakerScope,
+      timingCondition,
+      timingMinutes: Number(timingMinutes) || 0,
+      isActive,
+    };
+
+    setSaving(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/conversation-intelligence/trackers${editingTracker?.id ? `/${editingTracker.id}` : ''}`,
+        {
+          method: editingTracker?.id ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-tenant-id': TENANT_ID,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (response.ok) {
+        onSuccess();
+        onClose();
+      } else {
+        setError('Unable to save tracker');
+      }
+    } catch (e) {
+      console.error('Tracker save failed', e);
+      setError('Network error saving tracker');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', width: '520px', overflow: 'hidden' }}>
+        <div style={{ padding: '24px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', color: '#f8fafc', fontWeight: 700 }}>
+            {editingTracker ? 'Edit Smart Tracker' : 'New Smart Tracker'}
+          </h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+
+        <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {error && <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '13px' }}>{error}</div>}
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Tracker name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Competitive mentions"
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            />
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Keywords / phrases *</label>
+            <input
+              type="text"
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+              placeholder="e.g. pricing, contract, demo"
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            />
+            <div style={{ marginTop: '8px', fontSize: '11px', color: '#64748b' }}>Separate terms with commas.</div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Speaker scope</label>
+            <select
+              value={speakerScope}
+              onChange={(e) => setSpeakerScope(e.target.value)}
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            >
+              <option value="Both">Both</option>
+              <option value="Representative">Representative</option>
+              <option value="Customer">Customer</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Timing condition</label>
+            <select
+              value={timingCondition}
+              onChange={(e) => setTimingCondition(e.target.value)}
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            >
+              <option value="Any time">Any time</option>
+              <option value="Within first 5 minutes">Within first 5 minutes</option>
+              <option value="Within first 10 minutes">Within first 10 minutes</option>
+              <option value="During follow-up discussion">During follow-up discussion</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginBottom: '8px' }}>Timing minutes</label>
+            <input
+              type="number"
+              value={timingMinutes}
+              onChange={(e) => setTimingMinutes(e.target.value)}
+              min="0"
+              style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '10px 12px', color: '#f8fafc', fontSize: '14px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', gridColumn: '1 / -1' }}>
+            <input
+              id="tracker-active-toggle"
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              style={{ width: '16px', height: '16px' }}
+            />
+            <label htmlFor="tracker-active-toggle" style={{ fontSize: '12px', color: '#f8fafc', fontWeight: 600 }}>Active tracker</label>
+          </div>
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: '#0f172a' }}>
+          <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #334155', color: '#f8fafc', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="rev-btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>{saving ? 'Saving...' : 'Save tracker'}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ConversationLibraryView: React.FC = () => {
   // Queries & Filters states mapped directly to white light-theme portal
   const [query, setQuery] = useState('');
-  const [filters, setFilters] = useState({
+  type FilterState = {
+    channel: 'call' | 'email' | '';
+    sentiment: 'Positive' | 'Neutral' | 'Negative' | '';
+    topic: string;
+    agent: string;
+    title: string;
+    callType: 'customer' | 'internal' | '';
+    tracker: string[];
+    datePreset: string;
+    startDate: string;
+    endDate: string;
+  };
+
+  const [filters, setFilters] = useState<FilterState>({
     channel: '' as 'call' | 'email' | '',
     sentiment: '' as 'Positive' | 'Neutral' | 'Negative' | '',
     topic: '',
     agent: '',
     title: '',
     callType: '' as 'customer' | 'internal' | '',
-    tracker: '',
+    tracker: [],
+    datePreset: 'All time',
+    startDate: '',
+    endDate: '',
   });
+
+  const [trackerDefinitions, setTrackerDefinitions] = useState<any[]>([]);
+  const [trackerDropdownOpen, setTrackerDropdownOpen] = useState(false);
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
@@ -33,6 +479,8 @@ export const ConversationLibraryView: React.FC = () => {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [showPresetDropdown, setShowPresetDropdown] = useState(false);
+  const [showManageTopicsModal, setShowManageTopicsModal] = useState(false);
+  const [showTranslationSettingsModal, setShowTranslationSettingsModal] = useState(false);
 
   // Sorting & Modal States
   const [sortBy, setSortBy] = useState<'date' | 'duration' | 'score'>('score');
@@ -40,6 +488,15 @@ export const ConversationLibraryView: React.FC = () => {
   const [exportNotification, setExportNotification] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [trendUnit, setTrendUnit] = useState<'Days' | 'Weeks' | 'Months'>('Weeks');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadType, setUploadType] = useState<'call' | 'email'>('call');
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadTranscript, setUploadTranscript] = useState('');
+  const [uploadAgentName, setUploadAgentName] = useState('');
+  const [uploadCustomerName, setUploadCustomerName] = useState('');
+  const [uploadDuration, setUploadDuration] = useState('600');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<any>(null);
 
   const [selectedFields, setSelectedFields] = useState({
     // Call Metadata
@@ -66,6 +523,27 @@ export const ConversationLibraryView: React.FC = () => {
 
   // Active sidebar state mock
   const [activeTab, setActiveTab] = useState('Search');
+  const [insightsSort, setInsightsSort] = useState<'desc' | 'asc'>('desc');
+  const [insightsSubTab, setInsightsSubTab] = useState<'Trackers' | 'Topics'>('Trackers');
+  const [globalTopics, setGlobalTopics] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchGlobalTopics = async () => {
+      try {
+        const tenantId = '00000000-0000-0000-0000-000000000001';
+        const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics?tenantId=${tenantId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.length > 0 && data[0].topics) {
+            setGlobalTopics(data[0].topics);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch topics for insights', err);
+      }
+    };
+    fetchGlobalTopics();
+  }, []);
 
   // Load sample seed data
   const seedCorpus = getSimulatedCorpus();
@@ -74,7 +552,7 @@ export const ConversationLibraryView: React.FC = () => {
   const sortResults = (data: SearchResult[], method: 'date' | 'duration' | 'score') => {
     const sorted = [...data];
     if (method === 'date') {
-      return sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return sorted.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
     } else if (method === 'duration') {
       const getSeconds = (durationStr?: string) => {
         if (!durationStr || durationStr.includes('Email')) return 0;
@@ -93,43 +571,127 @@ export const ConversationLibraryView: React.FC = () => {
     }
   };
 
+  // --- Insights Logic ---
+  const TRACKERS_LIST = [
+    "Pricing Strategy", 
+    "Technical Support", 
+    "Onboarding & Training", 
+    "Objection Handling", 
+    "Salesforce Integration", 
+    "pgvector Search"
+  ];
+
+  const calculateStats = (baseList: string[], searchResults: any[]) => {
+    if (!searchResults || searchResults.length === 0) {
+      return baseList.map(name => ({ name, count: 0, percent: 0 }));
+    }
+    
+    const totalCalls = searchResults.length;
+    const counts: Record<string, number> = {};
+    baseList.forEach(name => counts[name] = 0);
+
+    searchResults.forEach(call => {
+      // Gather both topics and keywords for flexible matching
+      const callTerms = new Set([
+        ...(call.topics || []),
+        ...(call.keywords || [])
+      ].map(t => t.toLowerCase()));
+
+      baseList.forEach(name => {
+        // Trackers/Topics can match if they exist in the transcript's topics or keywords array
+        // We do a loose includes match to ensure we catch variations
+        const lowerName = name.toLowerCase();
+        if (Array.from(callTerms).some(term => term.includes(lowerName) || lowerName.includes(term))) {
+          counts[name]++;
+        }
+      });
+    });
+
+    const stats = baseList.map(name => ({
+      name,
+      count: counts[name],
+      percent: (counts[name] / totalCalls) * 100
+    }));
+
+    stats.sort((a, b) => insightsSort === 'desc' ? b.percent - a.percent : a.percent - b.percent);
+    return stats;
+  };
+
+  const trackerStats = React.useMemo(() => calculateStats(TRACKERS_LIST, results), [results, insightsSort]);
+  
+  const topicStats = React.useMemo(() => {
+    const globalTopicNames = globalTopics.map(t => typeof t === 'string' ? t : t.name).filter(Boolean);
+    return calculateStats(globalTopicNames, results);
+  }, [results, insightsSort, globalTopics]);
+
+  const maxTrackerPercent = trackerStats.length > 0 ? Math.max(...trackerStats.map(s => s.percent), 1) : 100;
+  const maxTopicPercent = topicStats.length > 0 ? Math.max(...topicStats.map(s => s.percent), 1) : 100;
+
   // Unified search handler executing hybrid search + manual filters
   const performSearch = async () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
-        query,
+        page: '1',
+        limit: '1000',
+        ...(query && { query }),
         ...(filters.channel && { channel: filters.channel }),
         ...(filters.sentiment && { sentiment: filters.sentiment }),
         ...(filters.topic && { topic: filters.topic }),
         ...(filters.agent && { agent: filters.agent }),
+        ...(filters.datePreset && { datePreset: filters.datePreset }),
+        ...(filters.startDate && { startDate: filters.startDate }),
+        ...(filters.endDate && { endDate: filters.endDate }),
       });
 
-      const response = await fetch(`/api/v1/conversation-intelligence/conversations/search?${queryParams}`, {
+      // Call search endpoint if query exists, otherwise standard list
+      const endpoint = query 
+        ? `http://localhost:3001/api/v1/conversation-intelligence/conversations/search?${queryParams.toString()}`
+        : `http://localhost:3001/api/v1/conversation-intelligence/conversations?${queryParams.toString()}`;
+
+      const response = await fetch(endpoint, {
         headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
       });
+
       if (response.ok) {
         const backendData = await response.json();
-        // Post-filter backend results with additional inputs
-        let finalData = backendData;
+        console.log('Backend response:', backendData);
+        
+        let finalData = [];
+        
+        // The search API returns an array of SearchResult directly.
+        // The findAll API returns { conversations: [...] }
+        if (query) {
+          finalData = Array.isArray(backendData) ? backendData : (backendData.conversations || []);
+        } else {
+          finalData = backendData.conversations || [];
+        }
+
+        // Apply remaining frontend local filters that are not handled by backend query
         if (filters.title) {
           finalData = finalData.filter((r: any) => r.title?.toLowerCase().includes(filters.title.toLowerCase()));
         }
+        if (filters.tracker?.length) {
+          finalData = finalData.filter((r: any) =>
+            filters.tracker.some((tracker) =>
+              r.topics?.includes(tracker) || r.keywords?.some((k: any) => k.toLowerCase().includes(tracker.toLowerCase()))
+            )
+          );
+        }
         if (filters.callType) {
           finalData = finalData.filter((r: any) => {
-            if (filters.callType === 'internal') return r.agentName === 'System';
-            return r.agentName !== 'System';
+            if (filters.callType === 'internal') return r.title?.toLowerCase().includes('internal') || r.title?.toLowerCase().includes('escalation');
+            return !r.title?.toLowerCase().includes('internal') && !r.title?.toLowerCase().includes('escalation');
           });
         }
-        if (filters.tracker) {
-          finalData = finalData.filter((r: any) => r.topics?.includes(filters.tracker) || r.keywords?.includes(filters.tracker));
-        }
+        
         setResults(sortResults(finalData, sortBy));
       } else {
         // High fidelity frontend backup search simulator
         setResults(sortResults(simulateLocalSearch(), sortBy));
       }
     } catch (e) {
+      console.error("Search error:", e);
       setResults(sortResults(simulateLocalSearch(), sortBy));
     } finally {
       setLoading(false);
@@ -167,8 +729,12 @@ export const ConversationLibraryView: React.FC = () => {
     if (filters.title) {
       corpus = corpus.filter(c => c.title?.toLowerCase().includes(filters.title.toLowerCase()));
     }
-    if (filters.tracker) {
-      corpus = corpus.filter(c => c.topics?.includes(filters.tracker) || c.keywords?.some(k => k.toLowerCase().includes(filters.tracker.toLowerCase())));
+    if (filters.tracker?.length) {
+      corpus = corpus.filter(c =>
+        filters.tracker.some((tracker) =>
+          c.topics?.includes(tracker) || c.keywords?.some((k: any) => k.toLowerCase().includes(tracker.toLowerCase()))
+        )
+      );
     }
     if (filters.callType) {
       corpus = corpus.filter(c => {
@@ -177,14 +743,57 @@ export const ConversationLibraryView: React.FC = () => {
       });
     }
 
+    if (filters.datePreset || (filters.startDate && filters.endDate)) {
+      const now = new Date();
+      let start: Date | null = null;
+      let end: Date | null = null;
+
+      if (filters.datePreset && filters.datePreset !== 'All time' && filters.datePreset !== 'Custom') {
+        const todayStr = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (filters.datePreset === 'Today') {
+          start = new Date(todayStr);
+          end = new Date(todayStr.getTime() + 24 * 60 * 60 * 1000 - 1);
+        } else if (filters.datePreset === 'This week') {
+          const day = now.getDay() || 7;
+          const diff = now.getDate() - day;
+          start = new Date(now.getFullYear(), now.getMonth(), diff);
+          end = now;
+        } else if (filters.datePreset === 'This month') {
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          end = now;
+        } else if (filters.datePreset === 'Last 30 days') {
+          start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          end = now;
+        } else if (filters.datePreset === 'Last 90 days') {
+          start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          end = now;
+        } else if (filters.datePreset === 'This quarter') {
+          const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
+          start = new Date(now.getFullYear(), quarterStartMonth, 1);
+          end = now;
+        }
+      } else if (filters.startDate && filters.endDate && filters.datePreset === 'Custom') {
+        start = new Date(filters.startDate);
+        end = new Date(filters.endDate);
+        end.setHours(23, 59, 59, 999);
+      }
+
+      if (start && end) {
+        corpus = corpus.filter(c => {
+          const d = new Date(c.date!);
+          return d >= start! && d <= end!;
+        });
+      }
+    }
+
     // Sort by score or date as default
-    return corpus.sort((a, b) => b.overallScore - a.overallScore);
+    return corpus.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
   };
 
   const fetchSavedSearches = async () => {
     try {
-      const response = await fetch('/api/v1/conversation-intelligence/saved-searches', {
-        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
+      const response = await fetch(`${API_BASE_URL}/conversation-intelligence/saved-searches`, {
+        headers: { 'x-tenant-id': TENANT_ID },
       });
       if (response.ok) {
         const data = await response.json();
@@ -197,12 +806,28 @@ export const ConversationLibraryView: React.FC = () => {
     }
   };
 
+  const fetchTrackers = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/conversation-intelligence/trackers`, {
+        headers: { 'x-tenant-id': TENANT_ID },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTrackerDefinitions(Array.isArray(data) ? data : []);
+        setSmartTrackers(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch trackers', e);
+    }
+  };
+
   useEffect(() => {
     performSearch();
   }, [query, filters, sortBy]);
 
   useEffect(() => {
     fetchSavedSearches();
+    fetchTrackers();
   }, []);
 
   const handleFilterChange = (key: string, value: any) => {
@@ -217,12 +842,16 @@ export const ConversationLibraryView: React.FC = () => {
       agent: '',
       title: '',
       callType: '',
-      tracker: '',
+      tracker: [],
+      datePreset: 'All time',
+      startDate: '',
+      endDate: '',
     });
     setQuery('');
   };
 
   const handleSelectSavedSearch = (search: any) => {
+    const trackerValue = search.filters?.tracker;
     setQuery(search.queryString || '');
     setFilters({
       channel: search.filters?.channel || '',
@@ -231,10 +860,61 @@ export const ConversationLibraryView: React.FC = () => {
       agent: search.filters?.agent || '',
       title: search.filters?.title || '',
       callType: search.filters?.callType || '',
-      tracker: search.filters?.tracker || '',
+      tracker: Array.isArray(trackerValue)
+        ? trackerValue
+        : trackerValue
+        ? [trackerValue]
+        : [],
+      datePreset: search.filters?.datePreset || 'All time',
+      startDate: search.filters?.startDate || '',
+      endDate: search.filters?.endDate || '',
     });
     setShowPresetDropdown(false);
   };
+
+  // Add state for AI Transcriber
+  const [transcriberSubTab, setTranscriberSubTab] = useState<'Vocabulary' | 'Trackers'>('Vocabulary');
+  const [transcriberStats, setTranscriberStats] = useState({ termsCount: 0, correctionsThisMonth: 0, enhancedPercent: 0 });
+  const [vocabularyTerms, setVocabularyTerms] = useState<any[]>([]);
+  const [smartTrackers, setSmartTrackers] = useState<any[]>([]);
+  const [showAddTermModal, setShowAddTermModal] = useState(false);
+  const [showTrackerModal, setShowTrackerModal] = useState(false);
+  const [editingTracker, setEditingTracker] = useState<any>(null);
+
+  const fetchTranscriberData = async () => {
+    try {
+      const headers = { 'x-tenant-id': TENANT_ID };
+
+      const statsRes = await fetch(`${API_BASE_URL}/conversation-intelligence/vocabulary/stats`, {
+        headers,
+      });
+      if (statsRes.ok) {
+        setTranscriberStats(await statsRes.json());
+      }
+
+      const termsRes = await fetch(`${API_BASE_URL}/conversation-intelligence/vocabulary`, {
+        headers,
+      });
+      if (termsRes.ok) {
+        setVocabularyTerms(await termsRes.json());
+      }
+
+      const trackersRes = await fetch(`${API_BASE_URL}/conversation-intelligence/trackers`, {
+        headers,
+      });
+      if (trackersRes.ok) {
+        setSmartTrackers(await trackersRes.json());
+      }
+    } catch (e) {
+      console.error("Failed to fetch transcriber data", e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'AI Transcriber') {
+      fetchTranscriberData();
+    }
+  }, [activeTab]);
 
   const handleSaveSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,7 +927,7 @@ export const ConversationLibraryView: React.FC = () => {
     };
 
     try {
-      const response = await fetch('/api/v1/conversation-intelligence/saved-searches', {
+      const response = await fetch('http://localhost:3001/api/v1/conversation-intelligence/saved-searches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,6 +963,67 @@ export const ConversationLibraryView: React.FC = () => {
 
     setSaveName('');
     setShowSaveModal(false);
+  };
+
+  const handleUploadTranscript = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadTitle.trim() || !uploadTranscript.trim()) return;
+
+    setIsUploading(true);
+    setUploadResult(null);
+
+    try {
+      const payload = {
+        type: uploadType,
+        title: uploadTitle,
+        transcript: uploadTranscript,
+        agentName: uploadAgentName,
+        customerName: uploadCustomerName,
+        durationSeconds: uploadType === 'call' ? parseInt(uploadDuration) : undefined,
+      };
+
+      const response = await fetch('http://localhost:3001/api/v1/conversation-intelligence/upload-transcript', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Upload successful:', result);
+        setUploadResult(result);
+        // Refresh the search results to show the new transcript
+        console.log('Calling performSearch to refresh dashboard...');
+        await performSearch();
+        console.log('performSearch completed');
+        // Reset form
+        setUploadTitle('');
+        setUploadTranscript('');
+        setUploadAgentName('');
+        setUploadCustomerName('');
+        setUploadDuration('600');
+      } else {
+        const error = await response.json();
+        setUploadResult({ error: error.message || 'Upload failed' });
+      }
+    } catch (err) {
+      setUploadResult({ error: 'Network error during upload' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const resetUploadForm = () => {
+    setUploadTitle('');
+    setUploadTranscript('');
+    setUploadAgentName('');
+    setUploadCustomerName('');
+    setUploadDuration('600');
+    setUploadResult(null);
+    setShowUploadModal(false);
   };
 
   // Metrics Calculations based on filters
@@ -360,7 +1101,8 @@ export const ConversationLibraryView: React.FC = () => {
           {[
             { name: 'Home', icon: Home },
             { name: 'Engage', icon: Smile },
-            { name: 'Search', icon: Search, sub: ['Conversations', 'Your library'] },
+            { name: 'Search', icon: Search, sub: ['Conversations', 'Your library', 'AI Transcriber'] },
+            { name: 'Smart Trackers', icon: Target },
             { name: 'Company library', icon: Bookmark },
             { name: 'Deals', icon: Layers },
             { name: 'Coaching', icon: Award },
@@ -380,19 +1122,29 @@ export const ConversationLibraryView: React.FC = () => {
                 </button>
                 {isActive && item.sub && (
                   <div style={{ paddingLeft: '40px', paddingRight: '8px', paddingTop: '4px', paddingBottom: '4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {item.sub.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => handleClearFilters()}
-                        style={{
-                          background: 'none', border: 'none', textAlign: 'left',
-                          fontSize: '11px', fontWeight: '600', color: 'var(--accent-purple)',
-                          cursor: 'pointer', padding: '3px 0'
-                        }}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                    {item.sub.map((s) => {
+                      const isTranscriber = s === 'AI Transcriber';
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => {
+                            if (isTranscriber) {
+                              setActiveTab('AI Transcriber');
+                            } else {
+                              handleClearFilters();
+                              setActiveTab('Search');
+                            }
+                          }}
+                          style={{
+                            background: 'none', border: 'none', textAlign: 'left',
+                            fontSize: '11px', fontWeight: '600', color: activeTab === 'AI Transcriber' && isTranscriber ? 'var(--text-white)' : 'var(--accent-purple)',
+                            cursor: 'pointer', padding: '3px 0', opacity: activeTab === 'AI Transcriber' && !isTranscriber ? 0.6 : 1
+                          }}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -415,9 +1167,13 @@ export const ConversationLibraryView: React.FC = () => {
         {/* Top Header Bar */}
         <header className="rev-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: 'var(--text-slate-500)', fontSize: '12px', fontWeight: '600' }}>Conversations</span>
+            <span style={{ color: 'var(--text-slate-500)', fontSize: '12px', fontWeight: '600' }}>
+              {activeTab === 'Insights' ? 'Insights' : activeTab === 'Smart Trackers' ? 'Smart Trackers' : 'Conversations'}
+            </span>
             <span style={{ color: '#cbd5e1', fontSize: '12px' }}>/</span>
-            <span style={{ color: 'var(--text-white)', fontSize: '12px', fontWeight: '800' }}>Search Portal</span>
+            <span style={{ color: 'var(--text-white)', fontSize: '12px', fontWeight: '800' }}>
+              {activeTab === 'Insights' ? 'Team' : activeTab === 'Smart Trackers' ? 'Manage Trackers' : 'Search Portal'}
+            </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -444,6 +1200,288 @@ export const ConversationLibraryView: React.FC = () => {
         </header>
 
         {/* Main Body Grid */}
+        {activeTab === 'Smart Trackers' ? (
+          <div style={{ flex: 1, padding: '32px', overflowY: 'auto', background: 'var(--bg-dark)' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+              <TrackerManagement />
+            </div>
+          </div>
+        ) : activeTab === 'AI Transcriber' ? (
+          <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+             <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', margin: '0 0 8px 0' }}>Quality overview</h2>
+                    <div style={{ fontSize: '13px', color: '#94a3b8' }}>Last update: {new Date().toLocaleString()}</div>
+                  </div>
+                  <div style={{ display: 'flex', background: '#0f172a', borderRadius: '8px', padding: '4px', border: '1px solid #1e293b' }}>
+                    <button 
+                      onClick={() => setTranscriberSubTab('Vocabulary')}
+                      style={{ 
+                        padding: '6px 16px', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none',
+                        background: transcriberSubTab === 'Vocabulary' ? '#1e293b' : 'transparent',
+                        color: transcriberSubTab === 'Vocabulary' ? '#f8fafc' : '#64748b'
+                      }}
+                    >
+                      Vocabulary
+                    </button>
+                    <button 
+                      onClick={() => setTranscriberSubTab('Trackers')}
+                      style={{ 
+                        padding: '6px 16px', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none',
+                        background: transcriberSubTab === 'Trackers' ? '#1e293b' : 'transparent',
+                        color: transcriberSubTab === 'Trackers' ? '#f8fafc' : '#64748b'
+                      }}
+                    >
+                      Smart Trackers
+                    </button>
+                  </div>
+                </div>
+
+                {transcriberSubTab === 'Vocabulary' ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+                      <div style={{ background: '#1e293b', borderRadius: '8px', padding: '16px' }}>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>Transcripts enhanced</div>
+                        <div style={{ fontSize: '24px', color: '#f8fafc', fontWeight: 800 }}>{transcriberStats.enhancedPercent}%</div>
+                      </div>
+                      <div style={{ background: '#1e293b', borderRadius: '8px', padding: '16px' }}>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>Terms in vocabulary</div>
+                        <div style={{ fontSize: '24px', color: '#f8fafc', fontWeight: 800 }}>{transcriberStats.termsCount}</div>
+                      </div>
+                      <div style={{ background: '#1e293b', borderRadius: '8px', padding: '16px' }}>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>Corrections this month</div>
+                        <div style={{ fontSize: '24px', color: '#f8fafc', fontWeight: 800 }}>{transcriberStats.correctionsThisMonth}</div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 style={{ fontSize: '16px', color: '#f8fafc', margin: 0, fontWeight: 700 }}>Recently added terms</h3>
+                      <button className="rev-btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setShowAddTermModal(true)}>+ Add term</button>
+                    </div>
+                    
+                    {vocabularyTerms.length === 0 ? (
+                      <div style={{ border: '1px solid #1e293b', borderRadius: '8px', padding: '32px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                        No vocabulary terms added yet.
+                      </div>
+                    ) : (
+                      <div style={{ border: '1px solid #1e293b', borderRadius: '8px', overflow: 'hidden' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Term</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Category</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Added</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {vocabularyTerms.map(term => (
+                              <tr key={term.id} style={{ borderBottom: '1px solid #1e293b' }}>
+                                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#f8fafc', fontWeight: 600 }}>{term.correctTerm}</td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{ 
+                                    padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                    background: term.category === 'Product' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(167, 139, 250, 0.1)',
+                                    color: term.category === 'Product' ? '#38bdf8' : '#a78bfa'
+                                  }}>
+                                    {term.category}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                                  {new Date(term.createdAt).toLocaleDateString()}
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const response = await fetch(`${API_BASE_URL}/conversation-intelligence/vocabulary/${term.id}`, {
+                                          method: 'DELETE',
+                                          headers: { 'x-tenant-id': TENANT_ID },
+                                        });
+                                        if (response.ok) {
+                                          fetchTranscriberData();
+                                        }
+                                      } catch (error) {
+                                        console.error('Failed to delete vocabulary term', error);
+                                      }
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: '#f87171', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                                  >
+                                    Delete
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 style={{ fontSize: '16px', color: '#f8fafc', margin: 0, fontWeight: 700 }}>Smart Trackers</h3>
+                      <button className="rev-btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => { setEditingTracker(null); setShowTrackerModal(true); }}>+ New Tracker</button>
+                    </div>
+                    
+                    {smartTrackers.length === 0 ? (
+                      <div style={{ border: '1px solid #1e293b', borderRadius: '8px', padding: '32px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                        No Smart Trackers configured yet.
+                      </div>
+                    ) : (
+                      <div style={{ border: '1px solid #1e293b', borderRadius: '8px', overflow: 'hidden' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Tracker Name</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Keywords</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Scope</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Status</th>
+                              <th style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {smartTrackers.map(tracker => (
+                              <tr key={tracker.id} style={{ borderBottom: '1px solid #1e293b' }}>
+                                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#f8fafc', fontWeight: 600 }}>{tracker.name}</td>
+                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#cbd5e1' }}>
+                                  {tracker.keywords?.slice(0, 3).join(', ')}{tracker.keywords?.length > 3 ? '...' : ''}
+                                </td>
+                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                                  {tracker.speakerScope} • {tracker.timingCondition}
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{ 
+                                    padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                    background: tracker.isActive ? 'rgba(52, 211, 153, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                                    color: tracker.isActive ? '#34d399' : '#94a3b8'
+                                  }}>
+                                    {tracker.isActive ? 'Active' : 'Inactive'}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <button onClick={() => { setEditingTracker(tracker); setShowTrackerModal(true); }} style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Edit</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </>
+                )}
+             </div>
+          </div>
+        ) : activeTab === 'Insights' ? (
+          <div style={{ padding: '24px', flex: 1, overflowY: 'auto', background: 'var(--bg-dark)' }}>
+             {/* Sub-nav */}
+             <div style={{ display: 'flex', gap: '24px', borderBottom: '1px solid #1e293b', marginBottom: '24px' }}>
+                <button 
+                  onClick={() => setInsightsSubTab('Trackers')}
+                  style={{ background: 'none', border: 'none', padding: '12px 0', color: insightsSubTab === 'Trackers' ? 'var(--accent-purple)' : '#64748b', borderBottom: insightsSubTab === 'Trackers' ? '2px solid var(--accent-purple)' : '2px solid transparent', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                >
+                  <Target size={16} /> Trackers
+                </button>
+                <button 
+                  onClick={() => setInsightsSubTab('Topics')}
+                  style={{ background: 'none', border: 'none', padding: '12px 0', color: insightsSubTab === 'Topics' ? 'var(--accent-purple)' : '#64748b', borderBottom: insightsSubTab === 'Topics' ? '2px solid var(--accent-purple)' : '2px solid transparent', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                >
+                  <Tag size={16} /> Topics
+                </button>
+             </div>
+
+             {insightsSubTab === 'Trackers' && (
+                <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', padding: '24px' }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc', fontWeight: 700 }}>Tracker Mentions</h3>
+                  <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: '#94a3b8' }}>
+                    Percentage of calls in which tracker terms or concepts were mentioned based on {results.length} calls
+                  </p>
+                  
+                  {/* Table Header */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', borderBottom: '1px solid #1e293b', paddingBottom: '12px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Tracker name</div>
+                    <div 
+                      onClick={() => setInsightsSort(insightsSort === 'desc' ? 'asc' : 'desc')}
+                      style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      % of calls {insightsSort === 'desc' ? '↓' : '↑'}
+                    </div>
+                  </div>
+
+                  {/* Table Body */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '500px', overflowY: 'auto', paddingRight: '8px' }}>
+                    {trackerStats.map((tracker, idx) => (
+                      <div key={idx} style={{ display: 'grid', gridTemplateColumns: '250px 1fr', alignItems: 'center' }}>
+                        <div style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {tracker.name} <Sparkles size={12} color="var(--accent-purple)" />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ width: '40px', fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                            {tracker.percent.toFixed(0)}%
+                          </div>
+                          <div style={{ flex: 1, height: '8px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ 
+                              height: '100%', 
+                              background: 'var(--accent-purple)', 
+                              width: `${(tracker.percent / maxTrackerPercent) * 100}%`,
+                              borderRadius: '4px',
+                              transition: 'width 0.5s ease-out'
+                            }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+             )}
+
+             {insightsSubTab === 'Topics' && (
+                <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', padding: '24px' }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc', fontWeight: 700 }}>Topic Mentions</h3>
+                  <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: '#94a3b8' }}>
+                    Percentage of calls in which topics were discussed based on {results.length} calls
+                  </p>
+                  
+                  {/* Table Header */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', borderBottom: '1px solid #1e293b', paddingBottom: '12px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Topic name</div>
+                    <div 
+                      onClick={() => setInsightsSort(insightsSort === 'desc' ? 'asc' : 'desc')}
+                      style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      % of calls {insightsSort === 'desc' ? '↓' : '↑'}
+                    </div>
+                  </div>
+
+                  {/* Table Body */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '500px', overflowY: 'auto', paddingRight: '8px' }}>
+                    {topicStats.map((topic, idx) => (
+                      <div key={idx} style={{ display: 'grid', gridTemplateColumns: '250px 1fr', alignItems: 'center' }}>
+                        <div style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {topic.name} <Sparkles size={12} color="var(--accent-purple)" />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ width: '40px', fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                            {topic.percent.toFixed(0)}%
+                          </div>
+                          <div style={{ flex: 1, height: '8px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ 
+                              height: '100%', 
+                              background: 'var(--accent-purple)', 
+                              width: `${(topic.percent / maxTopicPercent) * 100}%`,
+                              borderRadius: '4px',
+                              transition: 'width 0.5s ease-out'
+                            }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+             )}
+          </div>
+        ) : (
         <div className="rev-split-body">
           
           {/* 🔍 FILTERS COLUMN (25%) */}
@@ -457,19 +1495,32 @@ export const ConversationLibraryView: React.FC = () => {
               </h2>
               
               {/* Saved searches Dropdown */}
-              <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
-                  onClick={() => setShowPresetDropdown(!showPresetDropdown)}
+                  onClick={() => setShowManageTopicsModal(true)}
                   style={{
-                    background: 'none', border: 'none', fontSize: '11px',
-                    fontWeight: '700', color: 'var(--accent-purple)',
+                    background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)', fontSize: '11px',
+                    fontWeight: '700', color: 'var(--accent-purple)', padding: '4px 8px', borderRadius: '6px',
                     display: 'flex', alignItems: 'center', gap: '4px',
                     cursor: 'pointer'
                   }}
                 >
-                  Saved searches
-                  <Bookmark style={{ width: '13px', height: '13px' }} />
+                  <Settings style={{ width: '13px', height: '13px' }} />
+                  Manage Topics
                 </button>
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowPresetDropdown(!showPresetDropdown)}
+                    style={{
+                      background: 'none', border: 'none', fontSize: '11px',
+                      fontWeight: '700', color: 'var(--accent-purple)',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Saved searches
+                    <Bookmark style={{ width: '13px', height: '13px' }} />
+                  </button>
                 {showPresetDropdown && (
                   <div className="presets-list-card">
                     <span style={{ fontSize: '9px', color: 'var(--text-slate-500)', fontWeight: '800', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Presets</span>
@@ -498,6 +1549,7 @@ export const ConversationLibraryView: React.FC = () => {
                     )}
                   </div>
                 )}
+                </div>
               </div>
             </div>
 
@@ -535,7 +1587,9 @@ export const ConversationLibraryView: React.FC = () => {
               <div>
                 <label className="rev-filter-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   Words or phrases
-                  <HelpCircle style={{ width: '12px', height: '12px', color: 'var(--text-slate-500)' }} title="Full-text query filter" />
+                  <span title="Full-text query filter">
+                    <HelpCircle style={{ width: '12px', height: '12px', color: 'var(--text-slate-500)' }} />
+                  </span>
                 </label>
                 <div className="rev-input-wrapper">
                   <input
@@ -576,6 +1630,51 @@ export const ConversationLibraryView: React.FC = () => {
                 </div>
               </div>
 
+              {/* Date Filter */}
+              <div>
+                <label className="rev-filter-label">Date</label>
+                <select
+                  value={filters.datePreset || 'All time'}
+                  onChange={(e) => handleFilterChange('datePreset', e.target.value)}
+                  className="rev-input"
+                  style={{ marginBottom: filters.datePreset === 'Custom' ? '8px' : '0' }}
+                >
+                  <option value="All time">All time</option>
+                  <option value="Today">Today</option>
+                  <option value="This week">This week</option>
+                  <option value="This month">This month</option>
+                  <option value="Last 30 days">Last 30 days</option>
+                  <option value="Last 90 days">Last 90 days</option>
+                  <option value="This quarter">This quarter</option>
+                  <option value="Custom">Custom</option>
+                </select>
+                
+                {filters.datePreset === 'Custom' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <label style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Start Date</label>
+                      <input
+                        type="date"
+                        value={filters.startDate}
+                        onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                        className="rev-input"
+                        style={{ colorScheme: 'dark' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <label style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>End Date</label>
+                      <input
+                        type="date"
+                        value={filters.endDate}
+                        onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                        className="rev-input"
+                        style={{ colorScheme: 'dark' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Participants Filter */}
               <div>
                 <label className="rev-filter-label">Participants</label>
@@ -588,23 +1687,7 @@ export const ConversationLibraryView: React.FC = () => {
                 />
               </div>
 
-              {/* Trackers Filter */}
-              <div>
-                <label className="rev-filter-label">Trackers</label>
-                <select
-                  value={filters.tracker}
-                  onChange={(e) => handleFilterChange('tracker', e.target.value)}
-                  className="rev-select"
-                >
-                  <option value="">Select trackers</option>
-                  <option value="Pricing Strategy">Pricing Strategy</option>
-                  <option value="Technical Support">Technical Support</option>
-                  <option value="Onboarding & Training">Onboarding & Training</option>
-                  <option value="Objection Handling">Objection Handling</option>
-                  <option value="Salesforce Integration">Salesforce Integration</option>
-                  <option value="pgvector Search">Vector Search / pgvector</option>
-                </select>
-              </div>
+
 
               {/* Call title or email subject */}
               <div>
@@ -718,10 +1801,29 @@ export const ConversationLibraryView: React.FC = () => {
                   <Download style={{ width: '14px', height: '14px' }} />
                   Export CSV
                 </button>
-                <button className="rev-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '11px' }}>
-                  <Download style={{ width: '14px', height: '14px' }} />
-                  Upload calls
-                </button>
+                <div className="flex gap-2">
+            <button 
+              className="rev-btn-secondary" 
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+              onClick={() => setShowTranslationSettingsModal(true)}
+            >
+              <Globe className="w-3 h-3" /> Language Settings
+            </button>
+            <button 
+              className="rev-btn-primary" 
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+              onClick={() => setShowUploadModal(true)}
+            >
+              <Plus className="w-3 h-3" /> Add Test Conversation
+            </button>
+            <button 
+              className="rev-btn-secondary" 
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+              onClick={() => setShowExportModal(true)}
+            >
+              <Download className="w-3 h-3" /> Export CSV
+            </button>
+          </div>
               </div>
             </div>
 
@@ -975,6 +2077,7 @@ export const ConversationLibraryView: React.FC = () => {
 
           </main>
         </div>
+        )}
 
       </div>
 
@@ -990,16 +2093,16 @@ export const ConversationLibraryView: React.FC = () => {
             borderRadius: '12px', padding: '24px', width: '100%',
             maxWidth: '380px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.05)'
           }}>
-            <h3 style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-white)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
-              <Bookmark style={{ width: '16px', height: '16px', color: 'var(--accent-purple)' }} />
-              Save Search Preset
+            <h3 style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-white)', marginBottom: '16px' }}>
+              Save Search Query
             </h3>
-            <form onSubmit={handleSaveSearch} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <label className="rev-filter-label">Search Preset Name</label>
+            <form onSubmit={handleSaveSearch}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-slate-300)', display: 'block', marginBottom: '6px' }}>
+                  Search name
+                </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Acme Pricing Comparison"
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
@@ -1021,7 +2124,7 @@ export const ConversationLibraryView: React.FC = () => {
                   className="rev-btn-primary"
                   style={{ padding: '6px 12px', fontSize: '11px' }}
                 >
-                  Save Preset
+                  Save
                 </button>
               </div>
             </form>
@@ -1256,7 +2359,7 @@ export const ConversationLibraryView: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 {/* Call Metadata Group */}
                 <div>
-                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', uppercase: 'true', letterSpacing: '0.08em', marginBottom: '10px' }}>CALL METADATA</h4>
+                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>CALL METADATA</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
                       { key: 'callName', label: 'Call name' },
@@ -1280,7 +2383,7 @@ export const ConversationLibraryView: React.FC = () => {
 
                 {/* Tracker Data Group */}
                 <div>
-                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', uppercase: 'true', letterSpacing: '0.08em', marginBottom: '10px' }}>TRACKER DATA</h4>
+                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>TRACKER DATA</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
                       { key: 'trackerNames', label: 'Tracker names' },
@@ -1305,7 +2408,7 @@ export const ConversationLibraryView: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 {/* CRM Fields Group */}
                 <div>
-                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', uppercase: 'true', letterSpacing: '0.08em', marginBottom: '10px' }}>CRM FIELDS</h4>
+                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>CRM FIELDS</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
                       { key: 'dealStage', label: 'Deal stage' },
@@ -1328,7 +2431,7 @@ export const ConversationLibraryView: React.FC = () => {
 
                 {/* Interaction Metrics Group */}
                 <div>
-                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', uppercase: 'true', letterSpacing: '0.08em', marginBottom: '10px' }}>INTERACTION METRICS</h4>
+                  <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>INTERACTION METRICS</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
                       { key: 'talkRatio', label: 'Talk ratio' },
@@ -1434,6 +2537,239 @@ export const ConversationLibraryView: React.FC = () => {
         </div>
       )}
 
+      {/* MODALS */}
+      {showAddTermModal && (
+        <AddTermModal 
+          onClose={() => setShowAddTermModal(false)} 
+          onSuccess={() => {
+            fetchTranscriberData();
+          }} 
+        />
+      )}
+
+      {showTrackerModal && (
+        <TrackerModal
+          editingTracker={editingTracker}
+          onClose={() => {
+            setShowTrackerModal(false);
+            setEditingTracker(null);
+          }}
+          onSuccess={() => {
+            fetchTrackers();
+            fetchTranscriberData();
+          }}
+        />
+      )}
+
+      {/* Manage Topics Modal */}
+      {showManageTopicsModal && (
+        <ManageTopicsModal onClose={() => setShowManageTopicsModal(false)} />
+      )}
+
+      {/* Translation Settings Modal */}
+      {showTranslationSettingsModal && (
+        <TranslationSettingsModal
+          tenantId={TENANT_ID}
+          onClose={() => setShowTranslationSettingsModal(false)}
+        />
+      )}
+
+      {/* 📤 UPLOAD TRANSCRIPT MODAL */}
+      {showUploadModal && (
+        <div style={{
+          position: 'fixed', inset: '0', background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(8px)', zIndex: '9999', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            background: '#ffffff', border: '1px solid #cbd5e1',
+            borderRadius: '12px', padding: '28px', width: '100%',
+            maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            display: 'flex', flexDirection: 'column', gap: '20px'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px' }}>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-white)' }}>Upload Transcript</h3>
+                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>
+                  Add a new conversation to the library
+                </p>
+              </div>
+              <button
+                onClick={resetUploadForm}
+                style={{
+                  color: '#64748b', background: '#f8fafc',
+                  border: '1px solid #cbd5e1', padding: '6px',
+                  borderRadius: '8px', cursor: 'pointer'
+                }}
+              >
+                <X style={{ width: '16px', height: '16px' }} />
+              </button>
+            </div>
+
+            {/* Upload Form */}
+            <form onSubmit={handleUploadTranscript} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Type Selection */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  Type
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {(['call', 'email'] as const).map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setUploadType(type)}
+                      style={{
+                        flex: '1', padding: '8px', borderRadius: '6px',
+                        border: '1px solid', fontSize: '11px', fontWeight: '700',
+                        cursor: 'pointer', textTransform: 'capitalize',
+                        borderColor: uploadType === type ? 'rgba(99, 102, 241, 0.4)' : '#cbd5e1',
+                        background: uploadType === type ? 'rgba(99, 102, 241, 0.08)' : '#ffffff',
+                        color: uploadType === type ? 'var(--accent-purple)' : '#64748b'
+                      }}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                  placeholder="Enter conversation title..."
+                  required
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: '6px',
+                    border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Transcript */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  Transcript
+                </label>
+                <textarea
+                  value={uploadTranscript}
+                  onChange={(e) => setUploadTranscript(e.target.value)}
+                  placeholder="Paste the conversation transcript..."
+                  required
+                  rows={6}
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: '6px',
+                    border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none',
+                    resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Agent Name */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  Agent Name
+                </label>
+                <input
+                  type="text"
+                  value={uploadAgentName}
+                  onChange={(e) => setUploadAgentName(e.target.value)}
+                  placeholder="Enter agent name..."
+                  required
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: '6px',
+                    border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Customer Name */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  Customer Name
+                </label>
+                <input
+                  type="text"
+                  value={uploadCustomerName}
+                  onChange={(e) => setUploadCustomerName(e.target.value)}
+                  placeholder="Enter customer name..."
+                  required
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: '6px',
+                    border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Duration (for calls only) */}
+              {uploadType === 'call' && (
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                    Duration (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    value={uploadDuration}
+                    onChange={(e) => setUploadDuration(e.target.value)}
+                    placeholder="600"
+                    required
+                    style={{
+                      width: '100%', padding: '10px', borderRadius: '6px',
+                      border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Upload Result */}
+              {uploadResult && (
+                <div style={{
+                  background: uploadResult.error ? 'rgba(239, 68, 68, 0.08)' : 'rgba(34, 197, 94, 0.08)',
+                  border: uploadResult.error ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid rgba(34, 197, 94, 0.15)',
+                  borderRadius: '8px', padding: '12px', fontSize: '11px',
+                  color: uploadResult.error ? '#dc2626' : '#16a34a',
+                  fontWeight: '700'
+                }}>
+                  {uploadResult.error ? `Error: ${uploadResult.error}` : `Success! Conversation uploaded with ${uploadResult.topicsTagged} topics.`}
+                </div>
+              )}
+
+              {/* Modal Buttons */}
+              <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={resetUploadForm}
+                  className="rev-btn-secondary"
+                  style={{ flex: '1', padding: '12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="rev-btn-primary"
+                  style={{ flex: '1', padding: '12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', opacity: isUploading ? 0.6 : 1 }}
+                >
+                  {isUploading ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* 🔎 DETAILED TRANSCRIPT VIEW MODAL SHEET */}
       {selectedConversation && (
         <TranscriptDetailModal
@@ -1459,7 +2795,9 @@ interface ConversationCardProps {
 const ConversationCard: React.FC<ConversationCardProps> = ({ 
   result, query, filters, highlightText, getContextSnippet, onOpen 
 }) => {
-  const topics = result.topics || [];
+  // Use topicTags from backend response, fallback to topics for backward compatibility
+  const topicTags = result.topicTags || [];
+  const topics = topicTags.map((t: any) => t.topicName) || result.topics || [];
   const overallScore = result.overallScore || 0;
 
   const getSentimentStyles = (sentiment?: string) => {
@@ -1477,14 +2815,18 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
 
   // Compute exact list of matched filters for rationale indicators
   const matchingReasons: string[] = [];
-  if (filters.topic && result.topics?.includes(filters.topic)) {
+  const topicNames = result.topicTags?.map((t: any) => t.topicName) || result.topics || [];
+  if (filters.topic && topicNames.includes(filters.topic)) {
     matchingReasons.push(`Topic: ${filters.topic}`);
   }
   if (filters.agent && result.agentName?.toLowerCase().includes(filters.agent.toLowerCase())) {
     matchingReasons.push(`Rep: ${result.agentName}`);
   }
-  if (filters.tracker && (result.topics?.includes(filters.tracker) || result.keywords?.some((k: string) => k.toLowerCase().includes(filters.tracker.toLowerCase())))) {
-    matchingReasons.push(`Tracker: ${filters.tracker}`);
+  if (filters.tracker?.length) {
+    const matchedTrackerNames = filters.tracker.filter((tracker: string) =>
+      topicNames.includes(tracker) || result.keywords?.some((k: string) => k.toLowerCase().includes(tracker.toLowerCase()))
+    );
+    matchedTrackerNames.forEach((tracker: string) => matchingReasons.push(`Tracker: ${tracker}`));
   }
   if (filters.sentiment && result.sentiment === filters.sentiment) {
     matchingReasons.push(`Sentiment: ${filters.sentiment}`);
@@ -1519,6 +2861,11 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
           <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-white)', margin: '0' }} className="truncate">
             {highlightText(result.title || 'Conversation Record', query)}
           </h4>
+          {result.translatedTo && (
+            <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+              {result.sourceLanguage || 'EN'} → {result.translatedTo}
+            </span>
+          )}
           <span className="badge-purple-rev">
             Index Seed
           </span>
@@ -1571,7 +2918,19 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
 
         {/* Topics */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-          {topics.map((t) => (
+          {topicTags.length > 0 ? topicTags.map((t: any) => (
+            <span
+              key={t.topicName}
+              style={{
+                fontSize: '9px', background: '#f8fafc', border: '1px solid #cbd5e1',
+                color: '#64748b', padding: '3px 8px', borderRadius: '6px',
+                fontWeight: '700', cursor: 'help'
+              }}
+              title={`Confidence: ${(t.confidenceScore * 100).toFixed(0)}%\nEvidence: ${t.evidenceSnippet}\nExplanation: ${t.explanation}`}
+            >
+              {highlightText(t.topicName, query)} ({(t.confidenceScore * 100).toFixed(0)}%)
+            </span>
+          )) : topics.map((t: string) => (
             <span
               key={t}
               style={{
@@ -1592,7 +2951,7 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
         justifyContent: 'space-between', flexShrink: '0'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          <span style={{ fontSize: '9px', color: '#94a3b8', uppercase: 'true', fontWeight: '800', letterSpacing: '0.08em' }}>QA score</span>
+          <span style={{ fontSize: '9px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.08em' }}>QA score</span>
           <span style={{
             fontSize: '11px', fontWeight: '800', border: '1px solid #cbd5e1',
             borderRadius: '6px', padding: '2px 8px', marginTop: '2px', display: 'flex',
@@ -1635,6 +2994,168 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const diarized = conversation.diarizedTranscript || [];
   const competitors = conversation.competitorsDetected || [];
 
+  const [topics, setTopics] = React.useState<any[]>([]);
+  const [availableTopics, setAvailableTopics] = React.useState<string[]>([]);
+  const [isEditingTopics, setIsEditingTopics] = React.useState(false);
+  const [loadingTopics, setLoadingTopics] = React.useState(true);
+  const [newTopic, setNewTopic] = React.useState('');
+  
+  // Translation state
+  const [targetLang, setTargetLang] = React.useState('en');
+  const [isTranslating, setIsTranslating] = React.useState(false);
+  const [translatedSummary, setTranslatedSummary] = React.useState(conversation.summary);
+  const [translatedTranscript, setTranslatedTranscript] = React.useState(conversation.diarizedTranscript || []);
+  const [translatedTopics, setTranslatedTopics] = React.useState<any[]>([]);
+  
+  const [editingTurnIndex, setEditingTurnIndex] = React.useState<number | null>(null);
+  const [editedTurnText, setEditedTurnText] = React.useState('');
+  const [isSavingTranscript, setIsSavingTranscript] = React.useState(false);
+  const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+  const [trackerDetections, setTrackerDetections] = React.useState<any[]>([]);
+  const [loadingDetections, setLoadingDetections] = React.useState(false);
+
+  const tenantId = '00000000-0000-0000-0000-000000000001';
+
+  React.useEffect(() => {
+    if (conversation?.id) {
+      fetchTopics();
+      fetchAvailableTopics();
+      fetchTrackerDetections();
+    }
+  }, [conversation?.id]);
+
+  const fetchTrackerDetections = async () => {
+    setLoadingDetections(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3001/api/v1/conversation-intelligence/trackers/detections/${conversation.id}?entityType=${conversation.channel}`,
+        { headers: { 'x-tenant-id': tenantId } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setTrackerDetections(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch tracker detections', e);
+    }
+    setLoadingDetections(false);
+  };
+
+  const fetchTopics = async () => {
+    setLoadingTopics(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/topics`, {
+        headers: { 'x-tenant-id': tenantId }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const topicsArray = Array.isArray(data) ? data : (data.topics || []);
+        setTopics(topicsArray);
+        if (targetLang === 'en') setTranslatedTopics(topicsArray);
+      }
+    } catch (e) {}
+    setLoadingTopics(false);
+  };
+
+  const fetchAvailableTopics = async () => {
+    try {
+      // Get available topics from the conversation's topics
+      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/topics`, {
+        headers: { 'x-tenant-id': tenantId }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const topicsArray = Array.isArray(data) ? data : (data.topics || []);
+        const allTopics = topicsArray.map((t: any) => t.topicName);
+        setAvailableTopics(Array.from(new Set(allTopics)));
+      }
+    } catch (e) {}
+  };
+
+  const handleDeleteTopic = async (tagId: string) => {
+    try {
+      await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics/tags/${tagId}`, { method: 'DELETE' });
+      setTopics(topics.filter(t => t.id !== tagId));
+    } catch (e) {}
+  };
+
+  const handleSaveDiarizedTurn = async (idx: number) => {
+    setIsSavingTranscript(true);
+    try {
+      const updatedTranscript = [...translatedTranscript];
+      updatedTranscript[idx] = { ...updatedTranscript[idx], text: editedTurnText };
+      
+      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/transcript`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
+        body: JSON.stringify({ diarizedTranscript: updatedTranscript })
+      });
+      if (res.ok) {
+        setTranslatedTranscript(updatedTranscript);
+        setEditingTurnIndex(null);
+        conversation.diarizedTranscript = updatedTranscript; // Optimistically update the parent reference
+        conversation.transcript = updatedTranscript.map(t => `${t.speaker}: ${t.text}`).join('\n');
+        console.log(`[FRONTEND DEBUG] Saved edited chat bubble at index ${idx}`);
+      } else {
+        alert('Failed to save edited chat bubble');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error saving chat bubble');
+    }
+    setIsSavingTranscript(false);
+  };
+
+  const handleAddTopic = async () => {
+    if (!newTopic) return;
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/conversations/${conversation.id}/topics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          type: conversation.channel,
+          topicName: newTopic,
+          explanation: 'Manually added by user'
+        })
+      });
+      if (res.ok) {
+        const newTag = await res.json();
+        setTopics([newTag, ...topics]);
+        setNewTopic('');
+      }
+    } catch (e) {}
+  };
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId }
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTranslatedSummary(updated.summary);
+        
+        // Optimistically update parent cache so it persists on close
+        conversation.summary = updated.summary;
+        conversation.competitorsDetected = updated.competitorsDetected || [];
+        conversation.topicTags = updated.topicTags || conversation.topicTags;
+        
+        setTopics(conversation.topicTags || []);
+        setTranslatedTopics(conversation.topicTags || []);
+        console.log('[FRONTEND DEBUG] AI Analysis completed and saved');
+      } else {
+        alert('Failed to run AI analysis');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error running AI analysis');
+    }
+    setIsAnalyzing(false);
+  };
+
   return (
     <div className="rev-dialog-backdrop">
       <div className="rev-dialog-sheet">
@@ -1672,16 +3193,107 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              color: '#64748b', background: '#f8fafc',
-              border: '1px solid #cbd5e1', padding: '6px',
-              borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease'
-            }}
-          >
-            <X style={{ width: '16px', height: '16px' }} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {isTranslating && <span style={{ fontSize: '11px', color: 'var(--accent-purple)', fontWeight: '800' }}>Translating...</span>}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Globe style={{ width: '14px', height: '14px', color: '#64748b', position: 'absolute', left: '8px' }} />
+              <select
+                value={targetLang}
+                onChange={async (e) => {
+                  const newLang = e.target.value;
+                  setTargetLang(newLang);
+                  if (newLang === 'en') {
+                    setTranslatedSummary(conversation.summary);
+                    setTranslatedTranscript(conversation.diarizedTranscript || []);
+                    setTranslatedTopics(topics);
+                    return;
+                  }
+                  
+                  setIsTranslating(true);
+                  try {
+                    const sumRes = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/translate', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
+                      body: JSON.stringify({
+                        text: conversation.summary,
+                        sourceLang: 'en',
+                        targetLang: newLang,
+                        entityType: 'summary',
+                        entityId: conversation.id
+                      })
+                    });
+                    if (sumRes.ok) {
+                      const data = await sumRes.json();
+                      setTranslatedSummary(data.translatedText);
+                    }
+
+                    const newDiarized = [...(conversation.diarizedTranscript || [])];
+                    for (let i = 0; i < newDiarized.length; i++) {
+                      const text = newDiarized[i].text;
+                      const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
+                        body: JSON.stringify({
+                          text,
+                          sourceLang: 'en',
+                          targetLang: newLang,
+                          entityType: 'transcript',
+                          entityId: `${conversation.id}_${i}`
+                        })
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        newDiarized[i] = { ...newDiarized[i], text: data.translatedText };
+                      }
+                    }
+                    setTranslatedTranscript(newDiarized);
+
+                    const newTopics = [...topics];
+                    for (let i = 0; i < newTopics.length; i++) {
+                      if (newTopics[i].explanation) {
+                        const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/translate', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
+                          body: JSON.stringify({
+                            text: newTopics[i].explanation,
+                            sourceLang: 'en',
+                            targetLang: newLang,
+                            entityType: 'topic_explanation',
+                            entityId: newTopics[i].id
+                          })
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          newTopics[i] = { ...newTopics[i], explanation: data.translatedText };
+                        }
+                      }
+                    }
+                    setTranslatedTopics(newTopics);
+                  } catch (err) {}
+                  setIsTranslating(false);
+                }}
+                style={{
+                  padding: '6px 8px 6px 28px', borderRadius: '8px', border: '1px solid #cbd5e1',
+                  background: '#f8fafc', fontSize: '11px', color: '#475569', fontWeight: '700', outline: 'none', cursor: 'pointer'
+                }}
+              >
+                <option value="en">English (Original)</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+              </select>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                color: '#64748b', background: '#f8fafc',
+                border: '1px solid #cbd5e1', padding: '6px',
+                borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease'
+              }}
+            >
+              <X style={{ width: '16px', height: '16px' }} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -1695,12 +3307,26 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
               background: 'rgba(99, 102, 241, 0.03)', border: '1px solid rgba(99, 102, 241, 0.15)',
               borderRadius: '12px', padding: '16px', boxShadow: 'inset 0 0 10px rgba(99,102,241,0.02)'
             }}>
-              <h3 style={{ fontSize: '11px', fontWeight: '800', color: 'var(--accent-purple)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                <Compass style={{ width: '14px', height: '14px' }} />
-                AI Generated Conversation Summary
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '11px', fontWeight: '800', color: 'var(--accent-purple)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: '6px', margin: '0' }}>
+                  <Compass style={{ width: '14px', height: '14px' }} />
+                  AI Generated Conversation Summary
+                </h3>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzing}
+                  style={{
+                    background: 'var(--accent-purple)', color: '#ffffff', border: 'none',
+                    padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: '800',
+                    cursor: isAnalyzing ? 'not-allowed' : 'pointer', opacity: isAnalyzing ? 0.7 : 1,
+                    display: 'flex', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  {isAnalyzing ? 'Analyzing...' : 'Generate AI Summary & Analysis'}
+                </button>
+              </div>
               <p style={{ fontSize: '12px', color: 'var(--text-slate-300)', lineHeight: '1.5', fontWeight: '500', margin: '0' }}>
-                {conversation.summary || 'Summary generated on sync log indexing pipeline.'}
+                {translatedSummary || 'Summary generated on sync log indexing pipeline.'}
               </p>
             </div>
 
@@ -1709,9 +3335,34 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
               <h3 style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
                 Conversation Transcript Logs
               </h3>
-              {diarized.length > 0 ? (
+              {conversation.channel === 'email' ? (
+                <div style={{
+                  background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px',
+                  padding: '24px', color: 'var(--text-slate-300)', fontSize: '13px', lineHeight: '1.6'
+                }}>
+                  <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '16px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div>
+                        <strong>From:</strong> {conversation.agentName || 'Sender'}
+                      </div>
+                      <div style={{ color: '#94a3b8', fontSize: '12px' }}>
+                        {conversation.date}
+                      </div>
+                    </div>
+                    <div>
+                      <strong>To:</strong> {conversation.customerName || 'Recipient'}
+                    </div>
+                    <div style={{ marginTop: '8px' }}>
+                      <strong>Subject:</strong> {conversation.title}
+                    </div>
+                  </div>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                    {translatedTranscript.map((t: any) => t.text).join('\n\n')}
+                  </div>
+                </div>
+              ) : translatedTranscript.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {diarized.map((turn: any, idx: number) => {
+                  {translatedTranscript.map((turn: any, idx: number) => {
                     const isAgent = turn.speaker.toLowerCase().includes('agent') || turn.speaker.includes('1') || turn.speaker.toLowerCase().includes('sender');
                     return (
                       <div
@@ -1744,8 +3395,22 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: '800', fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            <span style={{ fontWeight: '800', fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
                               {turn.speaker}
+                              {editingTurnIndex !== idx && (
+                                <button
+                                  onClick={() => {
+                                    setEditingTurnIndex(idx);
+                                    setEditedTurnText(turn.text);
+                                  }}
+                                  style={{
+                                    background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-purple)',
+                                    border: 'none', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px'
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                              )}
                             </span>
                             {turn.start !== undefined && (
                               <span style={{ fontSize: '9px', fontFamily: 'monospace', color: '#94a3b8' }}>
@@ -1753,7 +3418,44 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
                               </span>
                             )}
                           </div>
-                          <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{turn.text}</p>
+                          {editingTurnIndex === idx ? (
+                            <div style={{ marginTop: '8px' }}>
+                              <textarea
+                                style={{
+                                  width: '100%', minHeight: '60px', padding: '8px', borderRadius: '6px',
+                                  border: '1px solid #cbd5e1', fontSize: '12px', background: '#ffffff',
+                                  color: 'var(--text-slate-300)', outline: 'none', resize: 'vertical'
+                                }}
+                                value={editedTurnText}
+                                onChange={(e) => setEditedTurnText(e.target.value)}
+                                disabled={isSavingTranscript}
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                                <button
+                                  onClick={() => setEditingTurnIndex(null)}
+                                  disabled={isSavingTranscript}
+                                  style={{
+                                    background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1',
+                                    padding: '4px 12px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer'
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleSaveDiarizedTurn(idx)}
+                                  disabled={isSavingTranscript}
+                                  style={{
+                                    background: 'var(--accent-purple)', color: '#ffffff', border: 'none',
+                                    padding: '4px 12px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer'
+                                  }}
+                                >
+                                  {isSavingTranscript ? 'Saving...' : 'Save'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{turn.text}</p>
+                          )}
                         </div>
                       </div>
                     );
@@ -1832,9 +3534,9 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
               <h3 style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>
                 Competitors Detected
               </h3>
-              {competitors.length > 0 ? (
+              {conversation.competitorsDetected?.length > 0 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {competitors.map((c: string) => (
+                  {conversation.competitorsDetected.map((c: string) => (
                     <span
                       key={c}
                       style={{
@@ -1851,23 +3553,128 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
                 <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', fontWeight: '600' }}>None detected</span>
               )}
 
-              <h3 style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', marginTop: '16px' }}>
-                Topics & Keywords
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {(conversation.keywords || []).map((k: string) => (
-                  <span
-                    key={k}
-                    style={{
-                      fontSize: '9px', background: '#f8fafc', border: '1px solid #cbd5e1',
-                      color: '#64748b', padding: '2px 6px', borderRadius: '4px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    {k}
-                  </span>
-                ))}
+              {/* Tracker Detections */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between', marginBottom: '10px', marginTop: '16px' }}>
+                <h3 style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Target size={14} style={{ color: 'var(--accent-purple)' }} />
+                  Tracker Detections
+                </h3>
               </div>
+
+              {loadingDetections ? (
+                <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', fontWeight: '600' }}>Loading detections...</span>
+              ) : trackerDetections.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {trackerDetections.map((detection: any) => (
+                    <div key={detection.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent-purple)' }}>{detection.tracker?.name || 'Unknown Tracker'}</span>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>{new Date(detection.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '6px', padding: '8px', marginBottom: '6px' }}>
+                        <p style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Detected keyword:</p>
+                        <p style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent-purple)', margin: 0 }}>"{detection.keyword}"</p>
+                      </div>
+                      {detection.context && (
+                        <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px' }}>
+                          <p style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Context:</p>
+                          <p style={{ fontSize: '11px', color: '#334155', fontFamily: 'monospace', margin: 0 }}>"{detection.context}"</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', fontWeight: '600' }}>No tracker detections found</span>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between', marginBottom: '10px', marginTop: '16px' }}>
+                <h3 style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  Topics & Keywords
+                </h3>
+                <button
+                  onClick={() => setIsEditingTopics(!isEditingTopics)}
+                  style={{ fontSize: '10px', fontWeight: '800', color: 'var(--accent-purple)', background: 'rgba(99, 102, 241, 0.08)', padding: '2px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                >
+                  {isEditingTopics ? 'Done' : 'Edit'}
+                </button>
+              </div>
+              
+              {loadingTopics ? (
+                <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', fontWeight: '600' }}>Loading topics...</span>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {translatedTopics.map((t: any) => (
+                      <div key={t.id} style={{
+                        background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px',
+                        display: 'flex', flexDirection: 'column', gap: '6px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: '800', color: '#334155' }}>{t.topicName}</span>
+                            <span style={{
+                              fontSize: '9px', fontWeight: '800', color: t.source === 'manual' ? '#0ea5e9' : '#8b5cf6',
+                              background: t.source === 'manual' ? '#e0f2fe' : '#ede9fe', padding: '2px 6px', borderRadius: '4px'
+                            }}>
+                              {t.source === 'manual' ? 'Manual' : 'AI Detected'}
+                            </span>
+                          </div>
+                          {isEditingTopics && (
+                            <button onClick={() => handleDeleteTopic(t.id)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                              <X style={{ width: '12px', height: '12px' }} />
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ flex: 1, background: '#e2e8f0', height: '4px', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ width: `${t.confidenceScore * 100}%`, height: '100%', background: 'var(--accent-purple)', borderRadius: '2px' }} />
+                          </div>
+                          <span style={{ fontSize: '10px', fontWeight: '700', color: '#64748b' }}>{(t.confidenceScore * 100).toFixed(0)}%</span>
+                        </div>
+
+                        {t.explanation && (
+                          <p style={{ fontSize: '10px', color: '#475569', margin: 0 }}>
+                            <strong style={{ color: '#334155' }}>Why: </strong>{t.explanation}
+                          </p>
+                        )}
+                        {t.evidenceSnippet && (
+                          <div style={{
+                            background: '#ffffff', borderLeft: '2px solid #cbd5e1', padding: '4px 8px',
+                            fontSize: '10px', color: '#64748b', fontStyle: 'italic', marginTop: '2px'
+                          }}>
+                            "{t.evidenceSnippet}"
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {translatedTopics.length === 0 && <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', fontWeight: '600' }}>No topics found</span>}
+                  </div>
+
+                  {isEditingTopics && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', padding: '6px', background: '#f1f5f9', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                      <select 
+                        value={newTopic} 
+                        onChange={(e) => setNewTopic(e.target.value)}
+                        style={{ fontSize: '10px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', flex: 1, outline: 'none' }}
+                      >
+                        <option value="">Select a topic to add...</option>
+                        {availableTopics.map(at => (
+                          <option key={at} value={at}>{at}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={handleAddTopic}
+                        disabled={!newTopic}
+                        style={{ background: 'var(--accent-purple)', color: '#fff', fontSize: '10px', padding: '4px 8px', borderRadius: '4px', border: 'none', fontWeight: '800', cursor: newTopic ? 'pointer' : 'not-allowed', opacity: newTopic ? 1 : 0.5 }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>

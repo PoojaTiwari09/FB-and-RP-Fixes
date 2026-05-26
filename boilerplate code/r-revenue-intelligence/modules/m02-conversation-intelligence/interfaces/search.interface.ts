@@ -24,6 +24,9 @@ export class SearchQueryDto {
   channel?: 'call' | 'email';
   page?: number;
   limit?: number;
+  datePreset?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export class SavedSearchDto {
@@ -49,6 +52,14 @@ export interface Scorecard {
   closingQuality: number;
 }
 
+export interface TopicTag {
+  topicName: string;
+  confidenceScore: number;
+  explanation?: string;
+  evidenceSnippet?: string;
+  source: 'aimodel' | 'manual';
+}
+
 export interface ConversationRecord {
   id: string;
   tenantId: string;
@@ -69,6 +80,7 @@ export interface ConversationRecord {
   competitorsDetected: string[];
   coachingSuggestion: string;
   keywords: string[];
+  topicTags?: TopicTag[];
 }
 
 export interface SavedSearchRecord {
@@ -103,6 +115,9 @@ export const SearchQuerySchema = z.object({
   channel: z.enum(['call', 'email', '']).optional(),
   page: z.preprocess((val) => Number(val) || 1, z.number().min(1)).optional().default(1),
   limit: z.preprocess((val) => Number(val) || 10, z.number().min(1)).optional().default(10),
+  datePreset: z.string().optional().default(''),
+  startDate: z.string().optional().default(''),
+  endDate: z.string().optional().default(''),
 });
 
 export const SavedSearchSchema = z.object({
