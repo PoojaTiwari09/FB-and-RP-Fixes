@@ -1,28 +1,31 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+import os
+from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi.middleware.cors import CORSMiddleware
+from app.routers import transcription, extraction
 
-app = FastAPI(title="R-Revenue AI Services")
+app = FastAPI(
+    title="R-Revenue AI Services",
+    version="1.0.0",
+    description="Internal AI services for transcription, summarization, and analysis.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Mount routers ─────────────────────────────────────────────────────────────
+app.include_router(transcription.router, prefix="/v1", tags=["transcription"])
+app.include_router(extraction.router,    prefix="/v1", tags=["extraction"])
+
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "ai-services"}
 
-class ProcessRequest(BaseModel):
-    text: str
-    tenantId: str
 
-@app.post("/v1/summarize")
-def summarize(req: ProcessRequest):
-    return {"summary": f"Mock summary of {len(req.text)} chars", "confidence": 0.98}
-
-@app.post("/v1/score-call")
-def score_call(req: ProcessRequest):
-    return {"score": 85, "metrics": {"objections_handled": True}}
-
-@app.post("/v1/transcribe")
-def transcribe():
-    return {"transcript": "Mock transcript", "words": [], "confidence": 0.99}
-
-@app.post("/transcribe")
-def transcribe_legacy():
-    return {"transcript": "Mock transcript", "words": [], "confidence": 0.99}
+@app.get("/internal/health")
+def internal_health():
+    return {"status": "ok"}

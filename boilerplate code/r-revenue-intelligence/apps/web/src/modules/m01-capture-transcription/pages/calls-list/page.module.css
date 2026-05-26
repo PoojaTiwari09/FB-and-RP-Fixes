@@ -1,0 +1,96 @@
+/* Calls List Page */
+.page { padding: 32px 40px; min-height: 100vh; background: #0f172a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+.topBar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.heading { font-size: 28px; font-weight: 800; color: #f8fafc; margin: 0; }
+.sub { font-size: 13px; color: #64748b; margin: 4px 0 0; }
+.filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.searchInput { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 9px 14px; color: #e2e8f0; font-size: 14px; outline: none; min-width: 220px; }
+.searchInput:focus { border-color: #6366f1; }
+.select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 9px 14px; color: #e2e8f0; font-size: 14px; outline: none; cursor: pointer; }
+
+/* ── Upload Drop Zone ──────────────────────────────────────────────── */
+.dropZone {
+  border: 2px dashed rgba(99, 102, 241, 0.3);
+  border-radius: 16px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+  background: rgba(99, 102, 241, 0.04);
+}
+.dropZone:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  background: rgba(99, 102, 241, 0.08);
+}
+.dropZoneActive {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
+}
+.dropZoneUploading {
+  cursor: default;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.hiddenInput { display: none; }
+
+.uploadIcon { font-size: 42px; margin-bottom: 12px; }
+.uploadLabel { font-size: 16px; color: #cbd5e1; font-weight: 500; margin-bottom: 6px; }
+.browseLink { color: #818cf8; text-decoration: underline; cursor: pointer; }
+.uploadHint { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+/* Upload progress */
+.uploadProgress { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.uploadText { font-size: 14px; color: #fbbf24; font-weight: 600; }
+
+.progressBar {
+  width: 260px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #eab308);
+  border-radius: 100px;
+  transition: width 0.3s ease;
+}
+
+.uploadError {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #fca5a5;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* ── Table ─────────────────────────────────────────────────────────── */
+.tableWrapper { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+.table { width: 100%; border-collapse: collapse; }
+.th { padding: 13px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; background: rgba(255,255,255,0.03); cursor: pointer; user-select: none; white-space: nowrap; }
+.th:hover { color: #94a3b8; }
+.row { border-top: 1px solid rgba(255,255,255,0.05); transition: background 0.12s; }
+.row:hover { background: rgba(255,255,255,0.03); }
+.td { padding: 14px 16px; font-size: 14px; color: #cbd5e1; vertical-align: top; }
+.callLink { color: #a5b4fc; font-weight: 600; text-decoration: none; display: block; }
+.callLink:hover { color: #c7d2fe; text-decoration: underline; }
+.participants { font-size: 12px; color: #475569; margin-top: 3px; }
+.time { font-size: 12px; color: #475569; margin-top: 3px; }
+.sourceChip { font-size: 12px; background: rgba(255,255,255,0.06); border-radius: 6px; padding: 3px 8px; text-transform: capitalize; }
+.statusBadge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 100px; border: 1px solid; text-transform: capitalize; white-space: nowrap; }
+.center { text-align: center; padding: 40px; color: #475569; }
