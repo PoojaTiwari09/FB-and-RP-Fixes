@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/main.js",
+    "build": "tsc",
+    "start": "tsx src/main.ts",
+    "start:prod": "node dist/apps/api/src/main.js",
     "test": "jest"
   },
   "dependencies": {
@@ -62,3 +63,4 @@
     "testEnvironment": "node"
   }
 }
+

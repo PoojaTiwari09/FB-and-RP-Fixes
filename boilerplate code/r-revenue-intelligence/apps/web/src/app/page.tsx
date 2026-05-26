@@ -482,6 +482,8 @@ export default function PlatformDashboard() {
                     onClick={() => {
                       if (tab.id === 'summaries') {
                         window.location.href = '/m3';
+                      } else if (tab.id === 'analytics') {
+                        window.location.href = '/forecasting';
                       } else {
                         setActiveTab(tab.id);
                       }
