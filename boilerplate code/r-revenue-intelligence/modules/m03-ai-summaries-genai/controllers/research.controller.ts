@@ -13,14 +13,14 @@ import {
   Controller, Post, Get, Body, Param, Query, UseGuards,
   Req, HttpCode, HttpStatus, BadRequestException, NotFoundException,
 } from '@nestjs/common';
-import { ResearchService } from './research.service';
-import { ReportService } from './report.service';
-import { CreateJobDto } from './dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { RbacGuard } from '../auth/guards/rbac.guard';
-import { FeaturePermissionGuard } from '../auth/guards/feature-permission.guard';
+import { ResearchService } from '../services/research.service';
+import { ReportService } from '../services/report.service';
+import { CreateJobDto } from '../interfaces/research.dto';
+import { AuthGuard } from '../guards/auth.guard';
+import { RbacGuard } from '../guards/rbac.guard';
+import { FeaturePermissionGuard } from '../guards/feature-permission.guard';
 
-@Controller('research')
+@Controller('api/v1/ai-summaries-genai/research')
 @UseGuards(AuthGuard)
 export class ResearchController {
 

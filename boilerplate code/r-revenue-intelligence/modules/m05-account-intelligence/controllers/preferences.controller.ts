@@ -1,7 +1,7 @@
 import { Controller, Get, Put, Delete, Param, Body, Query } from '@nestjs/common';
 import { PreferencesService } from '../services/preferences.service';
 
-@Controller('preferences')
+@Controller('api/v1/account-intelligence/preferences')
 export class PreferencesController {
   constructor(private readonly preferencesService: PreferencesService) {}
 

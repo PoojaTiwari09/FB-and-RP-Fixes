@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Body, Logger } from '@nestjs/common';
 import { SyncService } from '../services/sync.service';
 
-@Controller('sync')
+@Controller('api/v1/account-intelligence/sync')
 export class SyncController {
   private readonly logger = new Logger(SyncController.name);
 

@@ -1,8 +1,8 @@
 import { Controller, Post, Param, Body, UseGuards, Req } from '@nestjs/common';
-import { FeedbackService } from './feedback.service';
-import { AuthGuard } from '../auth/guards/auth.guard';
+import { FeedbackService } from '../services/feedback.service';
+import { AuthGuard } from '../guards/auth.guard';
 
-@Controller('feedback')
+@Controller('api/v1/ai-summaries-genai/feedback')
 @UseGuards(AuthGuard)
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}

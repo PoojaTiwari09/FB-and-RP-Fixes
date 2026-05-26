@@ -8,6 +8,7 @@ import { CallsController }                   from './controllers/calls.controlle
 // Services
 import { M01CaptureTranscriptionService } from './services/m01.service';
 import { CallService }                    from './services/call.service';
+import { PiiRedactionService }            from './services/pii-redaction.service';
 
 // Repositories
 import { M01CaptureTranscriptionRepository } from './repositories/m01.repository';
@@ -15,6 +16,7 @@ import { CallRepository }                    from './repositories/call.repositor
 import { TranscriptRepository }              from './repositories/transcript.repository';
 import { NotesRepository }                   from './repositories/notes.repository';
 import { SearchRepository, ShareRepository } from './repositories/search.repository';
+import { NextStepsRepository }                   from './repositories/next-steps.repository';
 
 // Infrastructure
 import { PrismaModule }         from './database/prisma.module';
@@ -37,6 +39,7 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     // Services
     M01CaptureTranscriptionService,
     CallService,
+    PiiRedactionService,
     // Repositories
     M01CaptureTranscriptionRepository,
     CallRepository,
@@ -44,6 +47,7 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     NotesRepository,
     SearchRepository,
     ShareRepository,
+    NextStepsRepository,
     // Workers
     M01CaptureTranscriptionWorker,
   ],

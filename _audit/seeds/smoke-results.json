@@ -1,0 +1,212 @@
+{
+  "m01": [
+    {
+      "method": "GET",
+      "url": "/api/v1/capture-transcription",
+      "status": 200,
+      "ms": 101,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "GET",
+      "url": "/api/v1/capture-transcription/calls",
+      "status": 200,
+      "ms": 74,
+      "ok": true,
+      "snippet": "{\"records\":[{\"id\":\"cl0000000000acme01\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\",\"title\":\"Discovery Call with Acme\",\"callDate\":\"2026-02-14T10:00:00.000Z\",\"durationSeconds\":1820,\"callType\":\"meeting\",\"callSource\":\"manual\",\"participants\":[\"Demo Rep\",\"Jane Buyer\"],\"callOwner\":\"cu33333333rep33333"
+    },
+    {
+      "method": "GET",
+      "url": "/api/v1/capture-transcription/calls/cl0000000000acme01",
+      "status": 200,
+      "ms": 38,
+      "ok": true,
+      "snippet": "{\"id\":\"cl0000000000acme01\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\",\"title\":\"Discovery Call with Acme\",\"callDate\":\"2026-02-14T10:00:00.000Z\",\"durationSeconds\":1820,\"callType\":\"meeting\",\"callSource\":\"manual\",\"participants\":[\"Demo Rep\",\"Jane Buyer\"],\"callOwner\":\"cu33333333rep333333\",\"accountI"
+    },
+    {
+      "method": "GET",
+      "url": "/api/v1/capture-transcription/calls/search?q=pricing",
+      "status": 404,
+      "ms": 13,
+      "ok": false,
+      "snippet": "{\"message\":\"Call search not found\",\"error\":\"Not Found\",\"statusCode\":404}"
+    },
+    {
+      "method": "GET",
+      "url": "/api/v1/capture-transcription/calls/cl0000000000acme01/search?q=pricing",
+      "status": 200,
+      "ms": 16,
+      "ok": true,
+      "snippet": "[]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/capture-transcription/calls/cl0000000000acme01/notes",
+      "status": 201,
+      "ms": 496,
+      "ok": true,
+      "snippet": "{\"id\":\"12607b84-9523-42d4-8447-23dcb3ab1ca7\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\",\"callId\":\"cl0000000000acme01\",\"authorId\":\"anonymous\",\"content\":\"Smoke test note: follow up on pricing\",\"createdAt\":\"2026-05-26T13:56:11.471Z\",\"updatedAt\":\"2026-05-26T13:56:11.471Z\"}"
+    },
+    {
+      "method": "PUT",
+      "url": "/api/v1/capture-transcription/calls/cl0000000000acme01/notes/cn0000000000acme01",
+      "status": 200,
+      "ms": 16,
+      "ok": true,
+      "snippet": "{\"id\":\"cn0000000000acme01\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\",\"callId\":\"cl0000000000acme01\",\"authorId\":\"cu33333333rep333333\",\"content\":\"Smoke test note (updated)\",\"createdAt\":\"2026-05-26T13:49:48.128Z\",\"updatedAt\":\"2026-05-26T13:56:11.491Z\"}"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/capture-transcription/calls/cl0000000000acme01/share",
+      "status": 201,
+      "ms": 27,
+      "ok": true,
+      "snippet": "{\"id\":\"f6fe3e91-006f-40c4-b778-4591ac2335a9\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\",\"callId\":\"cl0000000000acme01\",\"sharedByUserId\":\"anonymous\",\"sharedWithId\":\"cu22222222manager22\",\"sharedWithType\":\"user\",\"sharedAt\":\"2026-05-26T13:56:11.505Z\"}"
+    }
+  ],
+  "m02": [
+    {
+      "method": "GET",
+      "url": "/api/v1/conversation-intelligence",
+      "status": 200,
+      "ms": 7,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/conversation-intelligence",
+      "status": 201,
+      "ms": 16,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m03": [
+    {
+      "method": "GET",
+      "url": "/api/v1/ai-summaries-genai",
+      "status": 200,
+      "ms": 3,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/ai-summaries-genai",
+      "status": 201,
+      "ms": 8,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m05": [
+    {
+      "method": "GET",
+      "url": "/api/v1/account-intelligence",
+      "status": 200,
+      "ms": 2,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/account-intelligence",
+      "status": 201,
+      "ms": 9,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m06": [
+    {
+      "method": "GET",
+      "url": "/api/v1/forecasting-prediction",
+      "status": 200,
+      "ms": 2,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/forecasting-prediction",
+      "status": 201,
+      "ms": 7,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m07": [
+    {
+      "method": "GET",
+      "url": "/api/v1/revenue-dashboards",
+      "status": 200,
+      "ms": 3,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/revenue-dashboards",
+      "status": 201,
+      "ms": 7,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m08": [
+    {
+      "method": "GET",
+      "url": "/api/v1/sales-engagement",
+      "status": 200,
+      "ms": 2,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/sales-engagement",
+      "status": 201,
+      "ms": 12,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m09": [
+    {
+      "method": "GET",
+      "url": "/api/v1/coaching-training",
+      "status": 200,
+      "ms": 5,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/coaching-training",
+      "status": 201,
+      "ms": 22,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ],
+  "m10": [
+    {
+      "method": "GET",
+      "url": "/api/v1/data-compliance",
+      "status": 200,
+      "ms": 2,
+      "ok": true,
+      "snippet": "[{\"message\":\"Mock list for tenant 11111111-1111-1111-1111-111111111111\"}]"
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/data-compliance",
+      "status": 201,
+      "ms": 7,
+      "ok": true,
+      "snippet": "{\"id\":\"mock-id-123\",\"ping\":\"smoke\",\"tenantId\":\"11111111-1111-1111-1111-111111111111\"}"
+    }
+  ]
+}

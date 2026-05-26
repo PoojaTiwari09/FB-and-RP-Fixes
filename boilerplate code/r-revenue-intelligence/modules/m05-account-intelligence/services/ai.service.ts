@@ -57,11 +57,20 @@ export class AiService {
   private groqModel = 'llama-3.3-70b-versatile';
   private groqBaseUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
-  constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || '';
-    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') || '';
-    this.groqApiKey = this.configService.get<string>('GROQ_API_KEY') || '';
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+  constructor(private configService?: ConfigService) {
+    const read = (k: string) =>
+      this.configService?.get<string>(k) ?? process.env[k] ?? '';
+    const supabaseUrl = read('SUPABASE_URL');
+    const supabaseKey = read('SUPABASE_SERVICE_ROLE_KEY');
+    this.groqApiKey = read('GROQ_API_KEY');
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn(
+        '[M05/AiService] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — AI endpoints will return stub data.',
+      );
+      this.supabase = createClient('http://localhost:54321', 'stub-key');
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
+    }
   }
 
   async buildContext(companyHubspotId: string, scope: string, periodDays: number) {

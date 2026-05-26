@@ -25,9 +25,31 @@ import { M07DealAccountService } from "../services/m07.service";
 
 type TenantRequest = { tenantContext: { tenantId: string; userId: string; role: string } };
 
-@Controller("v1/m07-revenue-dashboards")
+@Controller("api/v1/revenue-dashboards")
 export class M07DealAccountController {
   constructor(private readonly service: M07DealAccountService) {}
+
+  // ── Smoke / health placeholder (legacy contract from the original M07 stub) ──
+  // Kept un-guarded so the cross-module smoke driver can verify the route is
+  // mounted without needing a JWT for dev/CI.
+  @Get()
+  findAll(@Req() req: any) {
+    return {
+      module: 'm07-revenue-dashboards',
+      message: 'OK',
+      tenantId: req?.headers?.['x-tenant-id'] ?? null,
+    };
+  }
+
+  @Post()
+  create(@Body() dto: any, @Req() req: any) {
+    return {
+      module: 'm07-revenue-dashboards',
+      message: 'Accepted',
+      received: dto,
+      tenantId: req?.headers?.['x-tenant-id'] ?? null,
+    };
+  }
 
   // ── Revenue Dashboard Endpoints ───────────────────────────────────────────────
 

@@ -3,10 +3,10 @@
  * Proxies queries to FastAPI service.
  */
 import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
-import { QueryService } from './query.service';
-import { AuthGuard } from '../auth/guards/auth.guard';
+import { QueryService } from '../services/query.service';
+import { AuthGuard } from '../guards/auth.guard';
 
-@Controller('query')
+@Controller('api/v1/ai-summaries-genai/query')
 @UseGuards(AuthGuard)
 export class QueryController {
   constructor(private readonly queryService: QueryService) {}

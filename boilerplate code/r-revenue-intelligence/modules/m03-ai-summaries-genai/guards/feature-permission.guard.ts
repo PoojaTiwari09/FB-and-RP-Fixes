@@ -4,7 +4,7 @@
  * TC-DR-31: Org-level feature flag enforcement.
  */
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { SupabaseService } from '../../../config/supabase.service';
+import { SupabaseService } from '../config/supabase.service';
 
 @Injectable()
 export class FeaturePermissionGuard implements CanActivate {

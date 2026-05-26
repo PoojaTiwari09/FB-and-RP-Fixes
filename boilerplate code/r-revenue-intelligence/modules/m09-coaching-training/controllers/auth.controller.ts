@@ -5,7 +5,7 @@ import { RegisterDto, LoginDto } from '../schemas/m09.schema';
 import * as bcrypt from 'bcrypt';
 import { Public } from './m09.controller';
 
-@Controller('auth')
+@Controller('api/v1/coaching-training/auth')
 export class AuthController {
   constructor(
     private readonly repository: M09Repository,

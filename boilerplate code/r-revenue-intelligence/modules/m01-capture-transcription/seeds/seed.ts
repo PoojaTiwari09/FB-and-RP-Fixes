@@ -5,7 +5,7 @@
  *
  * Run:  npx ts-node modules/m01-capture-transcription/seeds/seed.ts
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rri/database';
 
 const prisma = new PrismaClient();
 

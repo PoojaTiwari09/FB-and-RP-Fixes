@@ -500,6 +500,7 @@ model CallRecord {
   @@index([tenantId, callDate])
   @@index([tenantId, transcriptStatus])
   @@map("call_records")
+  @@schema("public")
 }
 
 /// Full transcript associated with a call (CT-03, CT-04, CT-18)
@@ -533,6 +534,7 @@ model Transcript {
   // GIN index for full-text search (US-06) — requires PostgreSQL extension
   // Run: CREATE INDEX idx_transcripts_fulltext ON transcripts USING GIN(to_tsvector('english', "fullText"));
   @@map("transcripts")
+  @@schema("public")
 }
 
 /// A single speaker turn within a transcript (CT-03, CT-11, CT-12, CT-18, CT-19, CT-20)
@@ -561,6 +563,7 @@ model Utterance {
   // GIN index for keyword search within utterances (US-06)
   // Run: CREATE INDEX idx_utterances_text ON utterances USING GIN(to_tsvector('english', "text"));
   @@map("utterances")
+  @@schema("public")
 }
 
 /// Notes added by a rep or manager on a specific call (CT-22)
@@ -577,6 +580,7 @@ model CallNote {
   @@index([callId])
   @@index([tenantId])
   @@map("call_notes")
+  @@schema("public")
 }
 
 /// Record of sharing a call with another user or team (CT-23)
@@ -594,6 +598,7 @@ model CallShare {
   @@index([tenantId])
   @@index([callId])
   @@map("call_shares")
+  @@schema("public")
 }
 
 // ────────────────────────────────────────────────────────────
@@ -619,6 +624,7 @@ model AuditLog {
   @@index([tenantId, entityId])
   @@index([tenantId, action])
   @@map("audit_logs")
+  @@schema("public")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -645,6 +651,7 @@ model Integration {
   @@unique([tenantId, provider])
   @@index([tenantId])
   @@map("integrations")
+  @@schema("public")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -682,6 +689,7 @@ model AiExtractionField {
   @@index([tenantId])
   @@index([tenantId, isActive])
   @@map("m18_ai_extraction_fields")
+  @@schema("public")
 }
 
 /// Extraction result — the AI's answer to a field question for a specific call
@@ -713,4 +721,5 @@ model AiExtractionResult {
   @@index([tenantId, callId])
   @@index([tenantId, fieldId])
   @@map("m18_ai_extraction_results")
+  @@schema("public")
 }

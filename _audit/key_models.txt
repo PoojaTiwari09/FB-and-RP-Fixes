@@ -1,0 +1,1177 @@
+
+> schema.prisma:18:model AccountBriefs {
+  schema.prisma:19:  id                String    @id @default(uuid())
+  schema.prisma:20:  tenantId          String    @map("tenant_id")
+  schema.prisma:21:  accountId         String?   @map("account_id")
+  schema.prisma:22:  summarytext       String?
+  schema.prisma:23:  healthsignals     String?
+  schema.prisma:24:  renewalindicators String?
+  schema.prisma:25:  confidenceScore   Float?    @map("confidence_score")
+  schema.prisma:26:  version           Int?
+  schema.prisma:27:  generatedat       DateTime?
+  schema.prisma:28:
+  schema.prisma:29:  @@map("account_briefs")
+  schema.prisma:30:}
+  schema.prisma:31:
+  schema.prisma:32:// ?????????????????????????????????????????????????????????????
+  schema.prisma:33:// SHARED REVENUE GRAPH ? ACCOUNT_CONTACTS
+  schema.prisma:34:// Added reference-required table not present in implementation doc.
+  schema.prisma:35:// ?????????????????????????????????????????????????????????????
+  schema.prisma:36:model AccountContacts {
+  schema.prisma:37:  tenantId  String   @map("tenant_id")
+  schema.prisma:38:  accountId String   @map("account_id")
+  schema.prisma:39:  contactId String   @map("contact_id")
+  schema.prisma:40:  isPrimary Boolean? @map("is_primary")
+  schema.prisma:41:
+  schema.prisma:42:  @@id([tenantId, accountId, contactId])
+  schema.prisma:43:  @@map("account_contacts")
+  schema.prisma:44:}
+  schema.prisma:45:
+  schema.prisma:46:// ?????????????????????????????????????????????????????????????
+  schema.prisma:47:// SHARED REVENUE GRAPH ? ACCOUNTS
+  schema.prisma:48:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference 
+columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+  schema.prisma:49:// ?????????????????????????????????????????????????????????????
+> schema.prisma:50:model Accounts {
+  schema.prisma:51:  id                     String    @id @default(uuid())
+  schema.prisma:52:  tenantId               String    @map("tenant_id")
+  schema.prisma:53:  name                   String
+  schema.prisma:54:  industry               String?
+  schema.prisma:55:  segment                String?
+  schema.prisma:56:  region                 String?
+  schema.prisma:57:  ownerUserId            String?   @map("owner_user_id")
+  schema.prisma:58:  crmAccountId           String?   @map("crm_account_id")
+  schema.prisma:59:  createdAt              DateTime  @map("created_at")
+  schema.prisma:60:  crmRecordId            String?   @map("crm_record_id")
+  schema.prisma:61:  localId                String?   @map("local_id")
+  schema.prisma:62:  domain                 String?
+  schema.prisma:63:  type                   String?
+  schema.prisma:64:  city                   String?
+  schema.prisma:65:  country                String?
+  schema.prisma:66:  employeeCount          Int?      @map("employee_count")
+  schema.prisma:67:  exitArr                Float?    @map("exit_arr")
+  schema.prisma:68:  board                  String?
+  schema.prisma:69:  assignedRepId          String?   @map("assigned_rep_id")
+  schema.prisma:70:  hubspotOwnerId         String?   @map("hubspot_owner_id")
+  schema.prisma:71:  updatedAt              DateTime? @map("updated_at")
+  schema.prisma:72:  crmSource              String?   @map("crm_source")
+  schema.prisma:73:  crmSyncedAt            String?   @map("crm_synced_at")
+  schema.prisma:74:  accountId              String?   @map("account_id")
+  schema.prisma:75:  annualRecurringRevenue Float?    @map("annual_recurring_revenue")
+  schema.prisma:76:  healthscore            Float?
+  schema.prisma:77:  syncedAt               DateTime? @map("synced_at")
+  schema.prisma:78:
+  schema.prisma:79:  @@map("accounts")
+  schema.prisma:80:}
+  schema.prisma:81:
+  schema.prisma:82:// ?????????????????????????????????????????????????????????????
+  schema.prisma:83:// SHARED REVENUE GRAPH ? ACTIVITIES
+  schema.prisma:84:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference 
+columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+  schema.prisma:85:// ?????????????????????????????????????????????????????????????
+  schema.prisma:86:model Activities {
+  schema.prisma:87:  id                 String    @id @default(uuid())
+  schema.prisma:88:  tenantId           String    @map("tenant_id")
+  schema.prisma:89:  accountId          String?   @map("account_id")
+  schema.prisma:90:  dealId             String?   @map("deal_id")
+> schema.prisma:139:model AiBriefs {
+  schema.prisma:140:  id               String    @id @default(uuid())
+  schema.prisma:141:  tenantId         String    @map("tenant_id")
+  schema.prisma:142:  briefType        String?   @map("brief_type")
+  schema.prisma:143:  entityId         String?   @map("entity_id")
+  schema.prisma:144:  generatedSummary Float?    @map("generated_summary")
+  schema.prisma:145:  sourceReferences String?   @map("source_references")
+  schema.prisma:146:  llmModel         String?   @map("llm_model")
+  schema.prisma:147:  generationStatus Float?    @map("generation_status")
+  schema.prisma:148:  createdAt        DateTime  @map("created_at")
+  schema.prisma:149:  updatedAt        DateTime? @map("updated_at")
+  schema.prisma:150:
+  schema.prisma:151:  @@map("ai_briefs")
+  schema.prisma:152:}
+  schema.prisma:153:
+  schema.prisma:154:// ?????????????????????????????????????????????????????????????
+  schema.prisma:155:// M05 - ACCOUNT INTELLIGENCE ? AI_BRIEFS_CACHE
+  schema.prisma:156:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:157:// ?????????????????????????????????????????????????????????????
+  schema.prisma:158:model AiBriefsCache {
+  schema.prisma:159:  id               String    @id @default(uuid())
+  schema.prisma:160:  companyHubspotId String?   @map("company_hubspot_id")
+  schema.prisma:161:  scope            String?
+  schema.prisma:162:  periodDays       Int?      @map("period_days")
+  schema.prisma:163:  briefJson        Json?     @map("brief_json")
+  schema.prisma:164:  generatedAt      DateTime? @map("generated_at")
+  schema.prisma:165:
+  schema.prisma:166:  @@map("ai_briefs_cache")
+  schema.prisma:167:}
+  schema.prisma:168:
+  schema.prisma:169:// ?????????????????????????????????????????????????????????????
+  schema.prisma:170:// M03 - AI SUMMARIES GENAI ? AI_CHAT_HISTORY
+  schema.prisma:171:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:172:// ?????????????????????????????????????????????????????????????
+  schema.prisma:173:model AiChatHistory {
+  schema.prisma:174:  id        String   @id @default(uuid())
+  schema.prisma:175:  question  String?
+  schema.prisma:176:  answer    String?
+  schema.prisma:177:  citations Json?
+  schema.prisma:178:  createdAt DateTime @map("created_at")
+  schema.prisma:179:
+> schema.prisma:324:model AudioFiles {
+  schema.prisma:325:  id            String    @id @default(uuid())
+  schema.prisma:326:  tenantId      String    @map("tenant_id")
+  schema.prisma:327:  callId        String?   @map("call_id")
+  schema.prisma:328:  storagebucket String?
+  schema.prisma:329:  storagepath   String?
+  schema.prisma:330:  filesizebytes Int?
+  schema.prisma:331:  format        String?
+  schema.prisma:332:  uploadedat    DateTime?
+  schema.prisma:333:  createdAt     DateTime  @map("created_at")
+  schema.prisma:334:
+  schema.prisma:335:  @@map("audio_files")
+  schema.prisma:336:}
+  schema.prisma:337:
+  schema.prisma:338:// ?????????????????????????????????????????????????????????????
+  schema.prisma:339:// PLATFORM / SHARED CORE ? AUDIT_LOGS
+  schema.prisma:340:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference 
+columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+  schema.prisma:341:// ?????????????????????????????????????????????????????????????
+> schema.prisma:342:model AuditLogs {
+  schema.prisma:343:  id           String   @id @default(uuid())
+  schema.prisma:344:  tenantId     String   @map("tenant_id")
+  schema.prisma:345:  actorId      String?  @map("actor_id")
+  schema.prisma:346:  actorType    String?  @map("actor_type")
+  schema.prisma:347:  action       String?
+  schema.prisma:348:  entityType   String?  @map("entity_type")
+  schema.prisma:349:  entityId     String?  @map("entity_id")
+  schema.prisma:350:  meta         Json?
+  schema.prisma:351:  createdAt    DateTime @map("created_at")
+  schema.prisma:352:  userId       String?  @map("user_id")
+  schema.prisma:353:  eventType    String?  @map("event_type")
+  schema.prisma:354:  targetEntity String?  @map("target_entity")
+  schema.prisma:355:  targetId     String?  @map("target_id")
+  schema.prisma:356:  details      String?
+  schema.prisma:357:  ipAddress    String?  @map("ip_address")
+  schema.prisma:358:  changes      String?
+  schema.prisma:359:  logid        String?
+  schema.prisma:360:  entityid     String?
+  schema.prisma:361:
+  schema.prisma:362:  @@map("audit_logs")
+  schema.prisma:363:}
+  schema.prisma:364:
+  schema.prisma:365:// ?????????????????????????????????????????????????????????????
+  schema.prisma:366:// M04 - DEAL INTELLIGENCE ? BOARD_COLUMNS
+  schema.prisma:367:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:368:// ?????????????????????????????????????????????????????????????
+  schema.prisma:369:model BoardColumns {
+  schema.prisma:370:  id             String    @id @default(uuid())
+  schema.prisma:371:  tenantId       String    @map("tenant_id")
+  schema.prisma:372:  boardId        String?   @map("board_id")
+  schema.prisma:373:  field          String?
+  schema.prisma:374:  label          String?
+  schema.prisma:375:  width          Int?
+  schema.prisma:376:  order          Int?
+  schema.prisma:377:  isVisible      Boolean?  @map("is_visible")
+  schema.prisma:378:  isSortable     Boolean?  @map("is_sortable")
+  schema.prisma:379:  createdAt      DateTime  @map("created_at")
+  schema.prisma:380:  updatedAt      DateTime? @map("updated_at")
+  schema.prisma:381:  colId          Int?      @map("col_id")
+  schema.prisma:382:  fieldKey       String?   @map("field_key")
+> schema.prisma:569:model BriefTemplates {
+  schema.prisma:570:  id            String    @id @default(uuid())
+  schema.prisma:571:  tenantId      String    @map("tenant_id")
+  schema.prisma:572:  templateName  String?   @map("template_name")
+  schema.prisma:573:  entityType    String?   @map("entity_type")
+  schema.prisma:574:  description   String?
+  schema.prisma:575:  isActive      Boolean?  @map("is_active")
+  schema.prisma:576:  versionNumber Int?      @map("version_number")
+  schema.prisma:577:  createdAt     DateTime  @map("created_at")
+  schema.prisma:578:  updatedAt     DateTime? @map("updated_at")
+  schema.prisma:579:  createdBy     String?   @map("created_by")
+  schema.prisma:580:  metadata      Json?
+  schema.prisma:581:
+  schema.prisma:582:  @@map("brief_templates")
+  schema.prisma:583:}
+  schema.prisma:584:
+  schema.prisma:585:// ?????????????????????????????????????????????????????????????
+  schema.prisma:586:// M01 - CAPTURE & TRANSCRIPTION ? CALL_SHARES
+  schema.prisma:587:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:588:// ?????????????????????????????????????????????????????????????
+  schema.prisma:589:model CallShares {
+  schema.prisma:590:  id             String  @id @default(uuid())
+  schema.prisma:591:  tenantId       String  @map("tenant_id")
+  schema.prisma:592:  callId         String? @map("call_id")
+  schema.prisma:593:  sharedByUserId String? @map("shared_by_user_id")
+  schema.prisma:594:  sharedWithId   String? @map("shared_with_id")
+  schema.prisma:595:  sharedWithType String? @map("shared_with_type")
+  schema.prisma:596:  sharedAt       String? @map("shared_at")
+  schema.prisma:597:
+  schema.prisma:598:  @@map("call_shares")
+  schema.prisma:599:}
+  schema.prisma:600:
+  schema.prisma:601:// ?????????????????????????????????????????????????????????????
+  schema.prisma:602:// M03 - AI SUMMARIES GENAI ? CALL_SUMMARIES
+  schema.prisma:603:// Added reference-required table not present in implementation doc.
+  schema.prisma:604:// ?????????????????????????????????????????????????????????????
+> schema.prisma:605:model CallSummaries {
+  schema.prisma:606:  id              String    @id @default(uuid())
+  schema.prisma:607:  tenantId        String    @map("tenant_id")
+  schema.prisma:608:  callId          String?   @map("call_id")
+  schema.prisma:609:  onelinesummary  String?
+  schema.prisma:610:  keypoints       String?
+  schema.prisma:611:  nextsteps       String?
+  schema.prisma:612:  risks           String?
+  schema.prisma:613:  confidenceScore Float?    @map("confidence_score")
+  schema.prisma:614:  flaggedreview   String?
+  schema.prisma:615:  version         Int?
+  schema.prisma:616:  generatedat     DateTime?
+  schema.prisma:617:
+  schema.prisma:618:  @@map("call_summaries")
+  schema.prisma:619:}
+  schema.prisma:620:
+  schema.prisma:621:// ?????????????????????????????????????????????????????????????
+  schema.prisma:622:// M01 - CAPTURE & TRANSCRIPTION ? CALLS
+  schema.prisma:623:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference 
+columns.
+  schema.prisma:624:// ?????????????????????????????????????????????????????????????
+> schema.prisma:625:model Calls {
+  schema.prisma:626:  id               String    @id @default(uuid())
+  schema.prisma:627:  tenantId         String    @map("tenant_id")
+  schema.prisma:628:  title            String?
+  schema.prisma:629:  callDate         String?   @map("call_date")
+  schema.prisma:630:  durationSeconds  Float?    @map("duration_seconds")
+  schema.prisma:631:  callType         String?   @map("call_type")
+  schema.prisma:632:  callSource       String?   @map("call_source")
+  schema.prisma:633:  participants     String?
+  schema.prisma:634:  callOwner        String?   @map("call_owner")
+  schema.prisma:635:  accountId        String?   @map("account_id")
+  schema.prisma:636:  opportunityId    String?   @map("opportunity_id")
+  schema.prisma:637:  audioUrl         String?   @map("audio_url")
+  schema.prisma:638:  transcriptStatus String?   @map("transcript_status")
+  schema.prisma:639:  failureReason    String?   @map("failure_reason")
+  schema.prisma:640:  skipReason       String?   @map("skip_reason")
+  schema.prisma:641:  createdAt        DateTime  @map("created_at")
+  schema.prisma:642:  updatedAt        DateTime? @map("updated_at")
+  schema.prisma:643:  agentId          String?   @map("agent_id")
+  schema.prisma:644:  agentName        String?   @map("agent_name")
+  schema.prisma:645:  sentiment        String?
+  schema.prisma:646:  language         String?
+  schema.prisma:647:  transcript       String?
+  schema.prisma:648:  dealId           String?   @map("deal_id")
+  schema.prisma:649:  ownerUserId      String?   @map("owner_user_id")
+  schema.prisma:650:  startedAt        DateTime? @map("started_at")
+  schema.prisma:651:  sentimentScore   Float?    @map("sentiment_score")
+  schema.prisma:652:  callId           String?   @map("call_id")
+  schema.prisma:653:  sourcePlatform   String?   @map("source_platform")
+  schema.prisma:654:  recordingUrl     String?   @map("recording_url")
+  schema.prisma:655:  storageUrl       String?   @map("storage_url")
+  schema.prisma:656:  calendareventid  String?
+  schema.prisma:657:  status           String?
+  schema.prisma:658:
+  schema.prisma:659:  @@map("calls")
+  schema.prisma:660:}
+  schema.prisma:661:
+  schema.prisma:662:// ?????????????????????????????????????????????????????????????
+  schema.prisma:663:// M03 - AI SUMMARIES GENAI ? CITATIONS
+  schema.prisma:664:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:665:// ?????????????????????????????????????????????????????????????
+> schema.prisma:777:model CoachingNotes {
+  schema.prisma:778:  id               String   @id @default(uuid())
+  schema.prisma:779:  tenantId         String   @map("tenant_id")
+  schema.prisma:780:  repId            String?  @map("rep_id")
+  schema.prisma:781:  content          String?
+  schema.prisma:782:  managerId        String?  @map("manager_id")
+  schema.prisma:783:  priority         String?
+  schema.prisma:784:  isAgentGenerated Float?   @map("is_agent_generated")
+  schema.prisma:785:  weakestSkill     String?  @map("weakest_skill")
+  schema.prisma:786:  createdAt        DateTime @map("created_at")
+  schema.prisma:787:
+  schema.prisma:788:  @@map("coaching_notes")
+  schema.prisma:789:}
+  schema.prisma:790:
+  schema.prisma:791:// ?????????????????????????????????????????????????????????????
+  schema.prisma:792:// M07 - REVENUE DASHBOARDS ? COACHING_RECOMMENDATIONS
+  schema.prisma:793:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference 
+columns.
+  schema.prisma:794:// ?????????????????????????????????????????????????????????????
+  schema.prisma:795:model CoachingRecommendations {
+  schema.prisma:796:  id                 String    @id @default(uuid())
+  schema.prisma:797:  tenantId           String    @map("tenant_id")
+  schema.prisma:798:  repId              String?   @map("rep_id")
+  schema.prisma:799:  focusArea          String?   @map("focus_area")
+  schema.prisma:800:  weakestSkill       String?   @map("weakest_skill")
+  schema.prisma:801:  recommendationText String?   @map("recommendation_text")
+  schema.prisma:802:  suggestedAction    String?   @map("suggested_action")
+  schema.prisma:803:  priority           String?
+  schema.prisma:804:  status             String?
+  schema.prisma:805:  generatedAt        DateTime? @map("generated_at")
+  schema.prisma:806:  recid              String?
+  schema.prisma:807:  snapshotId         String?   @map("snapshot_id")
+  schema.prisma:808:  userId             String?   @map("user_id")
+  schema.prisma:809:  recommendationtext String?
+  schema.prisma:810:  category           String?
+  schema.prisma:811:  confidenceScore    Float?    @map("confidence_score")
+  schema.prisma:812:  generatedat        DateTime?
+  schema.prisma:813:
+  schema.prisma:814:  @@map("coaching_recommendations")
+  schema.prisma:815:}
+  schema.prisma:816:
+  schema.prisma:817:// ?????????????????????????????????????????????????????????????
+> schema.prisma:888:model CompliancePolicies {
+  schema.prisma:889:  id        String    @id @default(uuid())
+  schema.prisma:890:  tenantId  String    @map("tenant_id")
+  schema.prisma:891:  name      String
+  schema.prisma:892:  channel   String?
+  schema.prisma:893:  region    String?
+  schema.prisma:894:  isActive  Boolean?  @map("is_active")
+  schema.prisma:895:  rules     Json?
+  schema.prisma:896:  createdBy String?   @map("created_by")
+  schema.prisma:897:  createdAt DateTime  @map("created_at")
+  schema.prisma:898:  updatedAt DateTime? @map("updated_at")
+  schema.prisma:899:
+  schema.prisma:900:  @@map("compliance_policies")
+  schema.prisma:901:}
+  schema.prisma:902:
+  schema.prisma:903:// ?????????????????????????????????????????????????????????????
+  schema.prisma:904:// M08 - SALES ENGAGEMENT ? COMPOSER_SESSIONS
+  schema.prisma:905:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:906:// ?????????????????????????????????????????????????????????????
+  schema.prisma:907:model ComposerSessions {
+  schema.prisma:908:  id          String    @id @default(uuid())
+  schema.prisma:909:  tenantId    String    @map("tenant_id")
+  schema.prisma:910:  userId      String?   @map("user_id")
+  schema.prisma:911:  draftId     String?   @map("draft_id")
+  schema.prisma:912:  sourceType  String?   @map("source_type")
+  schema.prisma:913:  sourceId    String?   @map("source_id")
+  schema.prisma:914:  contextJson Json?     @map("context_json")
+  schema.prisma:915:  state       String?
+  schema.prisma:916:  createdAt   DateTime  @map("created_at")
+  schema.prisma:917:  updatedAt   DateTime? @map("updated_at")
+  schema.prisma:918:
+  schema.prisma:919:  @@map("composer_sessions")
+  schema.prisma:920:}
+  schema.prisma:921:
+  schema.prisma:922:// ?????????????????????????????????????????????????????????????
+  schema.prisma:923:// M10 - DATA COMPLIANCE ? CONTACT_COMPLIANCE_STATES
+  schema.prisma:924:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:925:// ?????????????????????????????????????????????????????????????
+  schema.prisma:926:model ContactComplianceStates {
+  schema.prisma:927:  id            String    @id @default(uuid())
+  schema.prisma:928:  tenantId      String    @map("tenant_id")
+> schema.prisma:944:model Contacts {
+  schema.prisma:945:  id               String    @id @default(uuid())
+  schema.prisma:946:  tenantId         String    @map("tenant_id")
+  schema.prisma:947:  accountId        String?   @map("account_id")
+  schema.prisma:948:  name             String
+  schema.prisma:949:  email            String
+  schema.prisma:950:  roleTitle        String?   @map("role_title")
+  schema.prisma:951:  crmContactId     String?   @map("crm_contact_id")
+  schema.prisma:952:  createdAt        DateTime  @map("created_at")
+  schema.prisma:953:  crmRecordId      String?   @map("crm_record_id")
+  schema.prisma:954:  localId          String?   @map("local_id")
+  schema.prisma:955:  companyHubspotId String?   @map("company_hubspot_id")
+  schema.prisma:956:  firstName        String?   @map("first_name")
+  schema.prisma:957:  lastName         String?   @map("last_name")
+  schema.prisma:958:  phone            String?
+  schema.prisma:959:  jobTitle         String?   @map("job_title")
+  schema.prisma:960:  isPrimary        Boolean?  @map("is_primary")
+  schema.prisma:961:  updatedAt        DateTime? @map("updated_at")
+  schema.prisma:962:  title            String?
+  schema.prisma:963:  crmSource        String?   @map("crm_source")
+  schema.prisma:964:  crmSyncedAt      String?   @map("crm_synced_at")
+  schema.prisma:965:  contactId        String?   @map("contact_id")
+  schema.prisma:966:  linkedinurl      String?
+  schema.prisma:967:  syncedAt         DateTime? @map("synced_at")
+  schema.prisma:968:
+  schema.prisma:969:  @@map("contacts")
+  schema.prisma:970:}
+  schema.prisma:971:
+  schema.prisma:972:// ?????????????????????????????????????????????????????????????
+  schema.prisma:973:// M01 - CAPTURE & TRANSCRIPTION ? CRM_EXTRACTED_FIELDS
+  schema.prisma:974:// Added reference-required table not present in implementation doc.
+  schema.prisma:975:// ?????????????????????????????????????????????????????????????
+  schema.prisma:976:model CrmExtractedFields {
+  schema.prisma:977:  id              String    @id @default(uuid())
+  schema.prisma:978:  tenantId        String    @map("tenant_id")
+  schema.prisma:979:  callId          String?   @map("call_id")
+  schema.prisma:980:  fieldName       String?   @map("field_name")
+  schema.prisma:981:  fieldValue      String?   @map("field_value")
+  schema.prisma:982:  confidenceScore Float?    @map("confidence_score")
+  schema.prisma:983:  pushedtocrm     Boolean?
+  schema.prisma:984:  pushedat        DateTime?
+> schema.prisma:1120:model DashboardWidgets {
+  schema.prisma:1121:  id          String   @id @default(uuid())
+  schema.prisma:1122:  tenantId    String   @map("tenant_id")
+  schema.prisma:1123:  dashboardId String?  @map("dashboard_id")
+  schema.prisma:1124:  metricId    String?  @map("metric_id")
+  schema.prisma:1125:  title       String?
+  schema.prisma:1126:  chartType   String?  @map("chart_type")
+  schema.prisma:1127:  gridX       Int?     @map("grid_x")
+  schema.prisma:1128:  gridY       Int?     @map("grid_y")
+  schema.prisma:1129:  width       Int?
+  schema.prisma:1130:  height      Int?
+  schema.prisma:1131:  configJson  Json?    @map("config_json")
+  schema.prisma:1132:  createdAt   DateTime @map("created_at")
+  schema.prisma:1133:
+  schema.prisma:1134:  @@map("dashboard_widgets")
+  schema.prisma:1135:}
+  schema.prisma:1136:
+  schema.prisma:1137:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1138:// M06 - FORECASTING PREDICTION ? DASHBOARDS
+  schema.prisma:1139:// Kept implemented-only table unchanged except naming cleanup. Global shared entity; use as 
+common source of truth to avoid per-module duplication.
+  schema.prisma:1140:// ?????????????????????????????????????????????????????????????
+> schema.prisma:1141:model Dashboards {
+  schema.prisma:1142:  id          String    @id @default(uuid())
+  schema.prisma:1143:  tenantId    String    @map("tenant_id")
+  schema.prisma:1144:  name        String
+  schema.prisma:1145:  description String?
+  schema.prisma:1146:  ownerId     String?   @map("owner_id")
+  schema.prisma:1147:  isPublished Boolean?  @map("is_published")
+  schema.prisma:1148:  version     Int?
+  schema.prisma:1149:  createdAt   DateTime  @map("created_at")
+  schema.prisma:1150:  updatedAt   DateTime? @map("updated_at")
+  schema.prisma:1151:
+  schema.prisma:1152:  @@map("dashboards")
+  schema.prisma:1153:}
+  schema.prisma:1154:
+  schema.prisma:1155:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1156:// M10 - DATA COMPLIANCE ? DATA_CLOUD_CHECKPOINTS
+  schema.prisma:1157:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:1158:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1159:model DataCloudCheckpoints {
+  schema.prisma:1160:  id         String    @id @default(uuid())
+  schema.prisma:1161:  tenantId   String    @map("tenant_id")
+  schema.prisma:1162:  domain     String?
+  schema.prisma:1163:  lastCursor String?   @map("last_cursor")
+  schema.prisma:1164:  updatedAt  DateTime? @map("updated_at")
+  schema.prisma:1165:
+  schema.prisma:1166:  @@map("data_cloud_checkpoints")
+  schema.prisma:1167:}
+  schema.prisma:1168:
+  schema.prisma:1169:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1170:// M10 - DATA COMPLIANCE ? DATA_CLOUD_CONNECTIONS
+  schema.prisma:1171:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:1172:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1173:model DataCloudConnections {
+  schema.prisma:1174:  id          String    @id @default(uuid())
+  schema.prisma:1175:  tenantId    String    @map("tenant_id")
+  schema.prisma:1176:  destination String?
+  schema.prisma:1177:  config      Json?
+  schema.prisma:1178:  isActive    Boolean?  @map("is_active")
+  schema.prisma:1179:  createdAt   DateTime  @map("created_at")
+  schema.prisma:1180:  updatedAt   DateTime? @map("updated_at")
+  schema.prisma:1181:
+> schema.prisma:1523:model Deals {
+  schema.prisma:1524:  id                      String    @id @default(uuid())
+  schema.prisma:1525:  tenantId                String    @map("tenant_id")
+  schema.prisma:1526:  accountId               String?   @map("account_id")
+  schema.prisma:1527:  ownerUserId             String?   @map("owner_user_id")
+  schema.prisma:1528:  name                    String
+  schema.prisma:1529:  stage                   String?
+  schema.prisma:1530:  status                  String?
+  schema.prisma:1531:  amount                  Float?
+  schema.prisma:1532:  closeDate               String?   @map("close_date")
+  schema.prisma:1533:  crmDealId               String?   @map("crm_deal_id")
+  schema.prisma:1534:  createdAt               DateTime  @map("created_at")
+  schema.prisma:1535:  forecastCategory        String?   @map("forecast_category")
+  schema.prisma:1536:  ownerId                 String?   @map("owner_id")
+  schema.prisma:1537:  ownerName               String?   @map("owner_name")
+  schema.prisma:1538:  accountName             String?   @map("account_name")
+  schema.prisma:1539:  probability             Float?
+  schema.prisma:1540:  aiScore                 Float?    @map("ai_score")
+  schema.prisma:1541:  warningCount            Int?      @map("warning_count")
+  schema.prisma:1542:  contactCount            Int?      @map("contact_count")
+  schema.prisma:1543:  activityStrength        Int?      @map("activity_strength")
+  schema.prisma:1544:  isHighRisk              Boolean?  @map("is_high_risk")
+  schema.prisma:1545:  riskReason              String?   @map("risk_reason")
+  schema.prisma:1546:  nextStep                String?   @map("next_step")
+  schema.prisma:1547:  crmData                 Json?     @map("crm_data")
+  schema.prisma:1548:  lastActivityAt          DateTime? @map("last_activity_at")
+  schema.prisma:1549:  lastSyncedAt            DateTime? @map("last_synced_at")
+  schema.prisma:1550:  updatedAt               DateTime? @map("updated_at")
+  schema.prisma:1551:  crmRecordId             String?   @map("crm_record_id")
+  schema.prisma:1552:  localId                 String?   @map("local_id")
+  schema.prisma:1553:  companyHubspotId        String?   @map("company_hubspot_id")
+  schema.prisma:1554:  adjustedAmount          Float?    @map("adjusted_amount")
+  schema.prisma:1555:  dealType                String?   @map("deal_type")
+  schema.prisma:1556:  createdAtCrm            DateTime? @map("created_at_crm")
+  schema.prisma:1557:  assignedRepId           String?   @map("assigned_rep_id")
+  schema.prisma:1558:  primaryContactHubspotId String?   @map("primary_contact_hubspot_id")
+  schema.prisma:1559:  syncedAt                DateTime? @map("synced_at")
+  schema.prisma:1560:  dealName                String?   @map("deal_name")
+  schema.prisma:1561:  lastActivityDate        DateTime? @map("last_activity_date")
+  schema.prisma:1562:  isClosedWon             Boolean?  @map("is_closed_won")
+  schema.prisma:1563:  isClosedLost            Boolean?  @map("is_closed_lost")
+> schema.prisma:1641:model EmailFlows {
+  schema.prisma:1642:  id               String   @id @default(uuid())
+  schema.prisma:1643:  tenantId         String   @map("tenant_id")
+  schema.prisma:1644:  createdBy        String?  @map("created_by")
+  schema.prisma:1645:  name             String
+  schema.prisma:1646:  triggerCondition String?  @map("trigger_condition")
+  schema.prisma:1647:  steps            Json?
+  schema.prisma:1648:  createdAt        DateTime @map("created_at")
+  schema.prisma:1649:  triggercondition String?
+  schema.prisma:1650:  isActive         Boolean? @map("is_active")
+  schema.prisma:1651:  createdby        String?
+  schema.prisma:1652:
+  schema.prisma:1653:  @@map("email_flows")
+  schema.prisma:1654:}
+  schema.prisma:1655:
+  schema.prisma:1656:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1657:// M08 - SALES ENGAGEMENT ? EMAIL_SCHEDULE_QUEUE
+  schema.prisma:1658:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:1659:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1660:model EmailScheduleQueue {
+  schema.prisma:1661:  id                 String    @id @default(uuid())
+  schema.prisma:1662:  tenantId           String    @map("tenant_id")
+  schema.prisma:1663:  draftId            String?   @map("draft_id")
+  schema.prisma:1664:  recipientContactId String?   @map("recipient_contact_id")
+  schema.prisma:1665:  scheduledAt        DateTime? @map("scheduled_at")
+  schema.prisma:1666:  recipientTimezone  String?   @map("recipient_timezone")
+  schema.prisma:1667:  status             String?
+  schema.prisma:1668:  retryCount         Int?      @map("retry_count")
+  schema.prisma:1669:  sentAt             DateTime? @map("sent_at")
+  schema.prisma:1670:  cancelledAt        DateTime? @map("cancelled_at")
+  schema.prisma:1671:  createdAt          DateTime  @map("created_at")
+  schema.prisma:1672:
+  schema.prisma:1673:  @@map("email_schedule_queue")
+  schema.prisma:1674:}
+  schema.prisma:1675:
+  schema.prisma:1676:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1677:// M08 - SALES ENGAGEMENT ? EMAIL_SENDS
+  schema.prisma:1678:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns.
+  schema.prisma:1679:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1680:model EmailSends {
+  schema.prisma:1681:  id            String    @id @default(uuid())
+> schema.prisma:1721:model EmailTemplates {
+  schema.prisma:1722:  id              String   @id @default(uuid())
+  schema.prisma:1723:  tenantId        String   @map("tenant_id")
+  schema.prisma:1724:  createdBy       String?  @map("created_by")
+  schema.prisma:1725:  name            String
+  schema.prisma:1726:  subjectTemplate String?  @map("subject_template")
+  schema.prisma:1727:  bodyTemplate    String?  @map("body_template")
+  schema.prisma:1728:  language        String?
+  schema.prisma:1729:  isPromoted      Boolean? @map("is_promoted")
+  schema.prisma:1730:  promotedBy      String?  @map("promoted_by")
+  schema.prisma:1731:  promotedAt      String?  @map("promoted_at")
+  schema.prisma:1732:  createdAt       DateTime @map("created_at")
+  schema.prisma:1733:  subjecttemplate String?
+  schema.prisma:1734:  bodytemplate    String?
+  schema.prisma:1735:  createdby       String?
+  schema.prisma:1736:
+  schema.prisma:1737:  @@map("email_templates")
+  schema.prisma:1738:}
+  schema.prisma:1739:
+  schema.prisma:1740:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1741:// M08 - SALES ENGAGEMENT ? EMAILS
+  schema.prisma:1742:// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged 
+except naming cleanup.
+  schema.prisma:1743:// ?????????????????????????????????????????????????????????????
+  schema.prisma:1744:model Emails {
+  schema.prisma:1745:  id           String    @id @default(uuid())
+  schema.prisma:1746:  tenantId     String    @map("tenant_id")
+  schema.prisma:1747:  subject      String?
+  schema.prisma:1748:  body         String?
+  schema.prisma:1749:  sender       String?
+  schema.prisma:1750:  recipient    String?
+  schema.prisma:1751:  createdAt    DateTime  @map("created_at")
+  schema.prisma:1752:  updatedAt    DateTime? @map("updated_at")
+  schema.prisma:1753:  dealId       String?   @map("deal_id")
+  schema.prisma:1754:  accountId    String?   @map("account_id")
+  schema.prisma:1755:  senderUserId String?   @map("sender_user_id")
+  schema.prisma:1756:  sentAt       DateTime? @map("sent_at")
+  schema.prisma:1757:  threadId     String?   @map("thread_id")
+  schema.prisma:1758:
+  schema.prisma:1759:  @@map("emails")
+  schema.prisma:1760:}
+  schema.prisma:1761:
+> schema.prisma:1986:model ForecastPeriods {
+  schema.prisma:1987:  id            String    @id @default(uuid())
+  schema.prisma:1988:  tenantId      String    @map("tenant_id")
+  schema.prisma:1989:  name          String
+  schema.prisma:1990:  startDate     DateTime? @map("start_date")
+  schema.prisma:1991:  endDate       DateTime? @map("end_date")
+  schema.prisma:1992:  revenueTarget String?   @map("revenue_target")
+  schema.prisma:1993:  status        String?
+  schema.prisma:1994:  isLocked      Boolean?  @map("is_locked")
+  schema.prisma:1995:  createdAt     DateTime  @map("created_at")
+  schema.prisma:1996:  updatedAt     DateTime? @map("updated_at")
+  schema.prisma:1997:  periodId      String?   @map("period_id")
+  schema.prisma:1998:  startdate     DateTime?
+  schema.prisma:1999:  enddate       DateTime?
+  schema.prisma:2000:  revenuetarget String?
+  schema.prisma:2001:  islocked      Boolean?
+  schema.prisma:2002:
+  schema.prisma:2003:  @@map("forecast_periods")
+  schema.prisma:2004:}
+  schema.prisma:2005:
+  schema.prisma:2006:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2007:// M06 - FORECASTING PREDICTION ? FORECAST_PROJECTION_BREAKDOWNS
+  schema.prisma:2008:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2009:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2010:model ForecastProjectionBreakdowns {
+  schema.prisma:2011:  id                 String   @id @default(uuid())
+  schema.prisma:2012:  tenantId           String   @map("tenant_id")
+  schema.prisma:2013:  snapshotId         String?  @map("snapshot_id")
+  schema.prisma:2014:  periodId           String?  @map("period_id")
+  schema.prisma:2015:  stage              String?
+  schema.prisma:2016:  region             String?
+  schema.prisma:2017:  lob                String?
+  schema.prisma:2018:  dealCount          String?  @map("deal_count")
+  schema.prisma:2019:  pipelineValue      String?  @map("pipeline_value")
+  schema.prisma:2020:  weightedValue      String?  @map("weighted_value")
+  schema.prisma:2021:  conversionRate     Float?   @map("conversion_rate")
+  schema.prisma:2022:  contributionAmount String?  @map("contribution_amount")
+  schema.prisma:2023:  formula            String?
+  schema.prisma:2024:  createdAt          DateTime @map("created_at")
+  schema.prisma:2025:
+  schema.prisma:2026:  @@map("forecast_projection_breakdowns")
+> schema.prisma:2272:model Metrics {
+  schema.prisma:2273:  id                      String    @id @default(uuid())
+  schema.prisma:2274:  tenantId                String    @map("tenant_id")
+  schema.prisma:2275:  name                    String
+  schema.prisma:2276:  category                String?
+  schema.prisma:2277:  formula                 String?
+  schema.prisma:2278:  variableMappings        Json?     @map("variable_mappings")
+  schema.prisma:2279:  refreshFrequencySeconds String?   @map("refresh_frequency_seconds")
+  schema.prisma:2280:  allowedPlans            String?   @map("allowed_plans")
+  schema.prisma:2281:  isActive                Boolean?  @map("is_active")
+  schema.prisma:2282:  createdAt               DateTime  @map("created_at")
+  schema.prisma:2283:  updatedAt               DateTime? @map("updated_at")
+  schema.prisma:2284:  key                     String?
+  schema.prisma:2285:  variables               Json?
+  schema.prisma:2286:  aggregationType         String?   @map("aggregation_type")
+  schema.prisma:2287:  description             String?
+  schema.prisma:2288:  createdById             String?   @map("created_by_id")
+  schema.prisma:2289:
+  schema.prisma:2290:  @@map("metrics")
+  schema.prisma:2291:}
+  schema.prisma:2292:
+  schema.prisma:2293:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2294:// M01 - CAPTURE & TRANSCRIPTION ? NOTES
+  schema.prisma:2295:// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged 
+except naming cleanup.
+  schema.prisma:2296:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2297:model Notes {
+  schema.prisma:2298:  id               String    @id @default(uuid())
+  schema.prisma:2299:  tenantId         String    @map("tenant_id")
+  schema.prisma:2300:  callId           String?   @map("call_id")
+  schema.prisma:2301:  authorId         String?   @map("author_id")
+  schema.prisma:2302:  content          String?
+  schema.prisma:2303:  createdAt        DateTime  @map("created_at")
+  schema.prisma:2304:  updatedAt        DateTime? @map("updated_at")
+  schema.prisma:2305:  accountId        String?   @map("account_id")
+  schema.prisma:2306:  dealId           String?   @map("deal_id")
+  schema.prisma:2307:  contactId        String?   @map("contact_id")
+  schema.prisma:2308:  noteText         String?   @map("note_text")
+  schema.prisma:2309:  createdBy        String?   @map("created_by")
+  schema.prisma:2310:  companyHubspotId String?   @map("company_hubspot_id")
+  schema.prisma:2311:  createdByRole    String?   @map("created_by_role")
+  schema.prisma:2312:  type             String?
+> schema.prisma:2546:model Quotas {
+  schema.prisma:2547:  id        String    @id @default(uuid())
+  schema.prisma:2548:  tenantId  String    @map("tenant_id")
+  schema.prisma:2549:  periodId  String?   @map("period_id")
+  schema.prisma:2550:  repUserId String?   @map("rep_user_id")
+  schema.prisma:2551:  amount    Float?
+  schema.prisma:2552:  createdAt DateTime  @map("created_at")
+  schema.prisma:2553:  updatedAt DateTime? @map("updated_at")
+  schema.prisma:2554:
+  schema.prisma:2555:  @@map("quotas")
+  schema.prisma:2556:}
+  schema.prisma:2557:
+  schema.prisma:2558:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2559:// M08 - SALES ENGAGEMENT ? QUOTE_DOCUMENTS
+  schema.prisma:2560:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2561:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2562:model QuoteDocuments {
+  schema.prisma:2563:  id              String    @id @default(uuid())
+  schema.prisma:2564:  tenantId        String    @map("tenant_id")
+  schema.prisma:2565:  dealId          String?   @map("deal_id")
+  schema.prisma:2566:  createdBy       String?   @map("created_by")
+  schema.prisma:2567:  status          String?
+  schema.prisma:2568:  totalAmount     Float?    @map("total_amount")
+  schema.prisma:2569:  discountPercent Float?    @map("discount_percent")
+  schema.prisma:2570:  fileUrl         String?   @map("file_url")
+  schema.prisma:2571:  createdAt       DateTime  @map("created_at")
+  schema.prisma:2572:  updatedAt       DateTime? @map("updated_at")
+  schema.prisma:2573:
+  schema.prisma:2574:  @@map("quote_documents")
+  schema.prisma:2575:}
+  schema.prisma:2576:
+  schema.prisma:2577:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2578:// M03 - AI SUMMARIES GENAI ? RESEARCH_JOBS
+  schema.prisma:2579:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2580:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2581:model ResearchJobs {
+  schema.prisma:2582:  id            String    @id @default(uuid())
+  schema.prisma:2583:  tenantId      String    @map("tenant_id")
+  schema.prisma:2584:  userId        String?   @map("user_id")
+  schema.prisma:2585:  query         String?
+  schema.prisma:2586:  contextType   String?   @map("context_type")
+> schema.prisma:2640:model Roles {
+  schema.prisma:2641:  tenantId    String @map("tenant_id")
+  schema.prisma:2642:  roleid      String @id @default(uuid())
+  schema.prisma:2643:  name        String
+  schema.prisma:2644:  permissions Json?
+  schema.prisma:2645:
+  schema.prisma:2646:  @@map("roles")
+  schema.prisma:2647:}
+  schema.prisma:2648:
+  schema.prisma:2649:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2650:// M08 - SALES ENGAGEMENT ? SALES_ENGAGEMENT_ORG_SETTINGS
+  schema.prisma:2651:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2652:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2653:model SalesEngagementOrgSettings {
+  schema.prisma:2654:  id                       String    @id @default(uuid())
+  schema.prisma:2655:  tenantId                 String    @map("tenant_id")
+  schema.prisma:2656:  dailyLimitPerRep         String?   @map("daily_limit_per_rep")
+  schema.prisma:2657:  notificationThreshold    String?   @map("notification_threshold")
+  schema.prisma:2658:  trackingEnabled          Boolean?  @map("tracking_enabled")
+  schema.prisma:2659:  salesforceSyncEnabled    Boolean?  @map("salesforce_sync_enabled")
+  schema.prisma:2660:  salesforceFieldMapping   String?   @map("salesforce_field_mapping")
+  schema.prisma:2661:  slackWebhookUrl          String?   @map("slack_webhook_url")
+  schema.prisma:2662:  gmailEnabled             Boolean?  @map("gmail_enabled")
+  schema.prisma:2663:  outlookEnabled           Boolean?  @map("outlook_enabled")
+  schema.prisma:2664:  complianceAcknowledgedAt String?   @map("compliance_acknowledged_at")
+  schema.prisma:2665:  complianceAcknowledgedBy String?   @map("compliance_acknowledged_by")
+  schema.prisma:2666:  updatedAt                DateTime? @map("updated_at")
+  schema.prisma:2667:
+  schema.prisma:2668:  @@map("sales_engagement_org_settings")
+  schema.prisma:2669:}
+  schema.prisma:2670:
+  schema.prisma:2671:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2672:// M08 - SALES ENGAGEMENT ? SALES_PLAYS
+  schema.prisma:2673:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns.
+  schema.prisma:2674:// ?????????????????????????????????????????????????????????????
+> schema.prisma:2675:model SalesPlays {
+  schema.prisma:2676:  id                String    @id @default(uuid())
+  schema.prisma:2677:  tenantId          String    @map("tenant_id")
+  schema.prisma:2678:  createdBy         String?   @map("created_by")
+  schema.prisma:2679:  name              String
+  schema.prisma:2680:  steps             Json?
+  schema.prisma:2681:  triggerConditions Json?     @map("trigger_conditions")
+  schema.prisma:2682:  isActive          Boolean?  @map("is_active")
+  schema.prisma:2683:  createdAt         DateTime  @map("created_at")
+  schema.prisma:2684:  updatedAt         DateTime? @map("updated_at")
+  schema.prisma:2685:  triggerconditions Json?
+  schema.prisma:2686:  createdby         String?
+  schema.prisma:2687:
+  schema.prisma:2688:  @@map("sales_plays")
+  schema.prisma:2689:}
+  schema.prisma:2690:
+  schema.prisma:2691:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2692:// M08 - SALES ENGAGEMENT ? SAVED_SEARCHES
+  schema.prisma:2693:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2694:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2695:model SavedSearches {
+  schema.prisma:2696:  id          String    @id @default(uuid())
+  schema.prisma:2697:  tenantId    String    @map("tenant_id")
+  schema.prisma:2698:  userId      String?   @map("user_id")
+  schema.prisma:2699:  name        String
+  schema.prisma:2700:  queryString String?   @map("query_string")
+  schema.prisma:2701:  filters     Json?
+  schema.prisma:2702:  createdAt   DateTime  @map("created_at")
+  schema.prisma:2703:  updatedAt   DateTime? @map("updated_at")
+  schema.prisma:2704:
+  schema.prisma:2705:  @@map("saved_searches")
+  schema.prisma:2706:}
+  schema.prisma:2707:
+  schema.prisma:2708:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2709:// M08 - SALES ENGAGEMENT ? SCORECARD_CRITERIA
+  schema.prisma:2710:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2711:// ?????????????????????????????????????????????????????????????
+> schema.prisma:2712:model ScorecardCriteria {
+  schema.prisma:2713:  id          String    @id @default(uuid())
+  schema.prisma:2714:  scorecardId Float?    @map("scorecard_id")
+  schema.prisma:2715:  title       String?
+  schema.prisma:2716:  description String?
+  schema.prisma:2717:  scoringType String?   @map("scoring_type")
+  schema.prisma:2718:  weight      Float?
+  schema.prisma:2719:  createdAt   DateTime  @map("created_at")
+  schema.prisma:2720:  updatedAt   DateTime? @map("updated_at")
+  schema.prisma:2721:
+  schema.prisma:2722:  @@map("scorecard_criteria")
+  schema.prisma:2723:}
+  schema.prisma:2724:
+  schema.prisma:2725:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2726:// M08 - SALES ENGAGEMENT ? SCORECARDS
+  schema.prisma:2727:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns.
+  schema.prisma:2728:// ?????????????????????????????????????????????????????????????
+> schema.prisma:2729:model Scorecards {
+  schema.prisma:2730:  id                String    @id @default(uuid())
+  schema.prisma:2731:  tenantId          String    @map("tenant_id")
+  schema.prisma:2732:  name              String
+  schema.prisma:2733:  description       String?
+  schema.prisma:2734:  isActive          Boolean?  @map("is_active")
+  schema.prisma:2735:  createdAt         DateTime  @map("created_at")
+  schema.prisma:2736:  updatedAt         DateTime? @map("updated_at")
+  schema.prisma:2737:  scorecardId       Float?    @map("scorecard_id")
+  schema.prisma:2738:  questions         String?
+  schema.prisma:2739:  scoringconditions String?
+  schema.prisma:2740:  createdby         String?
+  schema.prisma:2741:
+  schema.prisma:2742:  @@map("scorecards")
+  schema.prisma:2743:}
+  schema.prisma:2744:
+  schema.prisma:2745:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2746:// M08 - SALES ENGAGEMENT ? SEARCH_INDEX_SYNC_LOGS
+  schema.prisma:2747:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns.
+  schema.prisma:2748:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2749:model SearchIndexSyncLogs {
+  schema.prisma:2750:  id             String    @id @default(uuid())
+  schema.prisma:2751:  tenantId       String    @map("tenant_id")
+  schema.prisma:2752:  entityType     String?   @map("entity_type")
+  schema.prisma:2753:  entityId       String?   @map("entity_id")
+  schema.prisma:2754:  syncStatus     String?   @map("sync_status")
+  schema.prisma:2755:  syncError      String?   @map("sync_error")
+  schema.prisma:2756:  idempotencyKey String?   @map("idempotency_key")
+  schema.prisma:2757:  indexedAt      String?   @map("indexed_at")
+  schema.prisma:2758:  createdAt      DateTime  @map("created_at")
+  schema.prisma:2759:  updatedAt      DateTime? @map("updated_at")
+  schema.prisma:2760:  entitytype     String?
+  schema.prisma:2761:  entityid       String?
+  schema.prisma:2762:  status         String?
+  schema.prisma:2763:  errormessage   String?
+  schema.prisma:2764:  syncedAt       DateTime? @map("synced_at")
+  schema.prisma:2765:
+  schema.prisma:2766:  @@map("search_index_sync_logs")
+  schema.prisma:2767:}
+  schema.prisma:2768:
+  schema.prisma:2769:// ?????????????????????????????????????????????????????????????
+> schema.prisma:2839:model SpeakerSegments {
+  schema.prisma:2840:  id              String   @id @default(uuid())
+  schema.prisma:2841:  tenantId        String   @map("tenant_id")
+  schema.prisma:2842:  transcriptId    String?  @map("transcript_id")
+  schema.prisma:2843:  speaker         String?
+  schema.prisma:2844:  text            String?
+  schema.prisma:2845:  originalText    String?  @map("original_text")
+  schema.prisma:2846:  startMs         Int?     @map("start_ms")
+  schema.prisma:2847:  endMs           Int?     @map("end_ms")
+  schema.prisma:2848:  confidence      String?
+  schema.prisma:2849:  isLowConfidence Boolean? @map("is_low_confidence")
+  schema.prisma:2850:  sequenceIndex   Int?     @map("sequence_index")
+  schema.prisma:2851:  callId          String?  @map("call_id")
+  schema.prisma:2852:  speakerlabel    String?
+  schema.prisma:2853:  starttime       String?
+  schema.prisma:2854:  endtime         String?
+  schema.prisma:2855:
+  schema.prisma:2856:  @@map("speaker_segments")
+  schema.prisma:2857:}
+  schema.prisma:2858:
+  schema.prisma:2859:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2860:// M05 - ACCOUNT INTELLIGENCE ? SUPPLEMENTARY_ACCOUNTS
+  schema.prisma:2861:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:2862:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2863:model SupplementaryAccounts {
+  schema.prisma:2864:  id                String    @id @default(uuid())
+  schema.prisma:2865:  companyHubspotId  String?   @map("company_hubspot_id")
+  schema.prisma:2866:  managerNote       String?   @map("manager_note")
+  schema.prisma:2867:  nextQbrDate       String?   @map("next_qbr_date")
+  schema.prisma:2868:  aiRiskScore       Float?    @map("ai_risk_score")
+  schema.prisma:2869:  riskLabel         String?   @map("risk_label")
+  schema.prisma:2870:  strategicPriority Float?    @map("strategic_priority")
+  schema.prisma:2871:  createdAt         DateTime  @map("created_at")
+  schema.prisma:2872:  updatedAt         DateTime? @map("updated_at")
+  schema.prisma:2873:
+  schema.prisma:2874:  @@map("supplementary_accounts")
+  schema.prisma:2875:}
+  schema.prisma:2876:
+  schema.prisma:2877:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2878:// M08 - SALES ENGAGEMENT ? TASKS
+  schema.prisma:2879:// Unioned implemented and required reference columns.
+> schema.prisma:2932:model Tenants {
+  schema.prisma:2933:  id                   String   @id @default(uuid())
+  schema.prisma:2934:  tenantId             String   @map("tenant_id")
+  schema.prisma:2935:  name                 String
+  schema.prisma:2936:  createdAt            DateTime @map("created_at")
+  schema.prisma:2937:  plan                 String?
+  schema.prisma:2938:  features             Json?
+  schema.prisma:2939:  isDeleted            Boolean? @map("is_deleted")
+  schema.prisma:2940:  monthlySpendCapCents Int?     @map("monthly_spend_cap_cents")
+  schema.prisma:2941:  dailyQueryLimit      Int?     @map("daily_query_limit")
+  schema.prisma:2942:  status               String?
+  schema.prisma:2943:  complianceconfig     Json?
+  schema.prisma:2944:
+  schema.prisma:2945:  @@map("tenants")
+  schema.prisma:2946:}
+  schema.prisma:2947:
+  schema.prisma:2948:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2949:// M02 - CONVERSATION INTELLIGENCE ? THEMEANALYSES
+  schema.prisma:2950:// Added reference-required table not present in implementation doc.
+  schema.prisma:2951:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2952:model Themeanalyses {
+  schema.prisma:2953:  id                String   @id @default(uuid())
+  schema.prisma:2954:  tenantId          String   @map("tenant_id")
+  schema.prisma:2955:  businessquestion  String?
+  schema.prisma:2956:  filters           Json?
+  schema.prisma:2957:  status            String?
+  schema.prisma:2958:  callcountanalyzed Int?
+  schema.prisma:2959:  createdby         String?
+  schema.prisma:2960:  createdAt         DateTime @map("created_at")
+  schema.prisma:2961:
+  schema.prisma:2962:  @@map("themeanalyses")
+  schema.prisma:2963:}
+  schema.prisma:2964:
+  schema.prisma:2965:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2966:// M02 - CONVERSATION INTELLIGENCE ? THEMES
+  schema.prisma:2967:// Added reference-required table not present in implementation doc.
+  schema.prisma:2968:// ?????????????????????????????????????????????????????????????
+> schema.prisma:2969:model Themes {
+  schema.prisma:2970:  id                String  @id @default(uuid())
+  schema.prisma:2971:  tenantId          String  @map("tenant_id")
+  schema.prisma:2972:  name              String
+  schema.prisma:2973:  summary           String?
+  schema.prisma:2974:  callcount         Int?
+  schema.prisma:2975:  accountcount      Int?
+  schema.prisma:2976:  associatedrevenue Int?
+  schema.prisma:2977:
+  schema.prisma:2978:  @@map("themes")
+  schema.prisma:2979:}
+  schema.prisma:2980:
+  schema.prisma:2981:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2982:// M02 - CONVERSATION INTELLIGENCE ? TOPICS
+  schema.prisma:2983:// Added reference-required table not present in implementation doc.
+  schema.prisma:2984:// ?????????????????????????????????????????????????????????????
+> schema.prisma:2985:model Topics {
+  schema.prisma:2986:  id        String   @id @default(uuid())
+  schema.prisma:2987:  tenantId  String   @map("tenant_id")
+  schema.prisma:2988:  name      String
+  schema.prisma:2989:  phrases   Json?
+  schema.prisma:2990:  type      String?
+  schema.prisma:2991:  isvisible String?
+  schema.prisma:2992:  createdAt DateTime @map("created_at")
+  schema.prisma:2993:
+  schema.prisma:2994:  @@map("topics")
+  schema.prisma:2995:}
+  schema.prisma:2996:
+  schema.prisma:2997:// ?????????????????????????????????????????????????????????????
+  schema.prisma:2998:// M02 - CONVERSATION INTELLIGENCE ? TOPICTAGS
+  schema.prisma:2999:// Added reference-required table not present in implementation doc.
+  schema.prisma:3000:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3001:model Topictags {
+  schema.prisma:3002:  id              String  @id @default(uuid())
+  schema.prisma:3003:  tenantId        String  @map("tenant_id")
+  schema.prisma:3004:  callId          String? @map("call_id")
+  schema.prisma:3005:  topicname       String?
+  schema.prisma:3006:  confidenceScore Float?  @map("confidence_score")
+  schema.prisma:3007:  taggedat        String?
+  schema.prisma:3008:
+  schema.prisma:3009:  @@map("topictags")
+  schema.prisma:3010:}
+  schema.prisma:3011:
+  schema.prisma:3012:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3013:// M08 - SALES ENGAGEMENT ? TRACKER_DETECTIONS
+  schema.prisma:3014:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns.
+  schema.prisma:3015:// ?????????????????????????????????????????????????????????????
+> schema.prisma:3016:model TrackerDetections {
+  schema.prisma:3017:  id               String    @id @default(uuid())
+  schema.prisma:3018:  tenantId         String    @map("tenant_id")
+  schema.prisma:3019:  trackerId        String?   @map("tracker_id")
+  schema.prisma:3020:  entityType       String?   @map("entity_type")
+  schema.prisma:3021:  entityId         String?   @map("entity_id")
+  schema.prisma:3022:  matchedKeyword   Int?      @map("matched_keyword")
+  schema.prisma:3023:  snippet          String?
+  schema.prisma:3024:  timestampSeconds Int?      @map("timestamp_seconds")
+  schema.prisma:3025:  createdAt        DateTime  @map("created_at")
+  schema.prisma:3026:  callId           String?   @map("call_id")
+  schema.prisma:3027:  accountId        String?   @map("account_id")
+  schema.prisma:3028:  dealId           String?   @map("deal_id")
+  schema.prisma:3029:  contactId        String?   @map("contact_id")
+  schema.prisma:3030:  confidenceScore  Float?    @map("confidence_score")
+  schema.prisma:3031:  severity         String?
+  schema.prisma:3032:  detectedat       DateTime?
+  schema.prisma:3033:
+  schema.prisma:3034:  @@map("tracker_detections")
+  schema.prisma:3035:}
+  schema.prisma:3036:
+  schema.prisma:3037:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3038:// M08 - SALES ENGAGEMENT ? TRACKERS
+  schema.prisma:3039:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns.
+  schema.prisma:3040:// ?????????????????????????????????????????????????????????????
+> schema.prisma:3041:model Trackers {
+  schema.prisma:3042:  id               String    @id @default(uuid())
+  schema.prisma:3043:  tenantId         String    @map("tenant_id")
+  schema.prisma:3044:  name             String
+  schema.prisma:3045:  keywords         String?
+  schema.prisma:3046:  createdAt        DateTime  @map("created_at")
+  schema.prisma:3047:  updatedAt        DateTime? @map("updated_at")
+  schema.prisma:3048:  description      String?
+  schema.prisma:3049:  intentdefinition String?
+  schema.prisma:3050:  severitydefault  String?
+  schema.prisma:3051:  isActive         Boolean?  @map("is_active")
+  schema.prisma:3052:  createdby        String?
+  schema.prisma:3053:
+  schema.prisma:3054:  @@map("trackers")
+  schema.prisma:3055:}
+  schema.prisma:3056:
+  schema.prisma:3057:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3058:// M09 - COACHING TRAINING ? TRAINING_ASSIGNMENTS
+  schema.prisma:3059:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:3060:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3061:model TrainingAssignments {
+  schema.prisma:3062:  id            String    @id @default(uuid())
+  schema.prisma:3063:  repId         String?   @map("rep_id")
+  schema.prisma:3064:  scenarioId    String?   @map("scenario_id")
+  schema.prisma:3065:  managerId     String?   @map("manager_id")
+  schema.prisma:3066:  sessionId     String?   @map("session_id")
+  schema.prisma:3067:  status        String?
+  schema.prisma:3068:  priority      String?
+  schema.prisma:3069:  deadline      String?
+  schema.prisma:3070:  assignedAt    String?   @map("assigned_at")
+  schema.prisma:3071:  completedAt   DateTime? @map("completed_at")
+  schema.prisma:3072:  attemptCount  Int?      @map("attempt_count")
+  schema.prisma:3073:  maxAttempts   Int?      @map("max_attempts")
+  schema.prisma:3074:  maxHints      Int?      @map("max_hints")
+  schema.prisma:3075:  bestScore     Float?    @map("best_score")
+  schema.prisma:3076:  bestSessionId String?   @map("best_session_id")
+  schema.prisma:3077:  managerScore  Float?    @map("manager_score")
+  schema.prisma:3078:  managerNote   String?   @map("manager_note")
+  schema.prisma:3079:
+  schema.prisma:3080:  @@map("training_assignments")
+  schema.prisma:3081:}
+> schema.prisma:3087:model TrainingScenarios {
+  schema.prisma:3088:  id                 String   @id @default(uuid())
+  schema.prisma:3089:  tenantId           String   @map("tenant_id")
+  schema.prisma:3090:  personaName        String?  @map("persona_name")
+  schema.prisma:3091:  personaType        String?  @map("persona_type")
+  schema.prisma:3092:  contextText        String?  @map("context_text")
+  schema.prisma:3093:  difficulty         String?
+  schema.prisma:3094:  customPrompt       String?  @map("custom_prompt")
+  schema.prisma:3095:  voiceId            String?  @map("voice_id")
+  schema.prisma:3096:  managerId          String?  @map("manager_id")
+  schema.prisma:3097:  createdAt          DateTime @map("created_at")
+  schema.prisma:3098:  name               String
+  schema.prisma:3099:  personadescription String?
+  schema.prisma:3100:  context            String?
+  schema.prisma:3101:  scorecardId        Float?   @map("scorecard_id")
+  schema.prisma:3102:  createdby          String?
+  schema.prisma:3103:
+  schema.prisma:3104:  @@map("training_scenarios")
+  schema.prisma:3105:}
+  schema.prisma:3106:
+  schema.prisma:3107:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3108:// M09 - COACHING TRAINING ? TRAINING_SCORECARD_CRITERIA
+  schema.prisma:3109:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:3110:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3111:model TrainingScorecardCriteria {
+  schema.prisma:3112:  id            String   @id @default(uuid())
+  schema.prisma:3113:  scorecardId   Float?   @map("scorecard_id")
+  schema.prisma:3114:  criterionName String?  @map("criterion_name")
+  schema.prisma:3115:  description   String?
+  schema.prisma:3116:  maxScore      Float?   @map("max_score")
+  schema.prisma:3117:  weight        Float?
+  schema.prisma:3118:  createdAt     DateTime @map("created_at")
+  schema.prisma:3119:
+  schema.prisma:3120:  @@map("training_scorecard_criteria")
+  schema.prisma:3121:}
+  schema.prisma:3122:
+  schema.prisma:3123:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3124:// M09 - COACHING TRAINING ? TRAINING_SCORECARDS
+  schema.prisma:3125:// Kept implemented-only table unchanged except naming cleanup.
+  schema.prisma:3126:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3127:model TrainingScorecards {
+> schema.prisma:3230:model Transcripts {
+  schema.prisma:3231:  id               String    @id @default(uuid())
+  schema.prisma:3232:  tenantId         String    @map("tenant_id")
+  schema.prisma:3233:  callId           String?   @map("call_id")
+  schema.prisma:3234:  fullText         String?   @map("full_text")
+  schema.prisma:3235:  summary          String?
+  schema.prisma:3236:  keyHighlights    String?   @map("key_highlights")
+  schema.prisma:3237:  nextSteps        String?   @map("next_steps")
+  schema.prisma:3238:  talkRatio        Float?    @map("talk_ratio")
+  schema.prisma:3239:  assemblyAiJobId  String?   @map("assembly_ai_job_id")
+  schema.prisma:3240:  createdAt        DateTime  @map("created_at")
+  schema.prisma:3241:  updatedAt        DateTime? @map("updated_at")
+  schema.prisma:3242:  transcriptText   String?   @map("transcript_text")
+  schema.prisma:3243:  speaker          String?
+  schema.prisma:3244:  timestampMs      String?   @map("timestamp_ms")
+  schema.prisma:3245:  sentiment        String?
+  schema.prisma:3246:  transcriptId     String?   @map("transcript_id")
+  schema.prisma:3247:  rawtext          String?
+  schema.prisma:3248:  languagedetected String?
+  schema.prisma:3249:  wordcount        Int?
+  schema.prisma:3250:  confidenceScore  Float?    @map("confidence_score")
+  schema.prisma:3251:
+  schema.prisma:3252:  @@map("transcripts")
+  schema.prisma:3253:}
+  schema.prisma:3254:
+  schema.prisma:3255:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3256:// M02 - CONVERSATION INTELLIGENCE ? TRANSLATIONPREFERENCES
+  schema.prisma:3257:// Added reference-required table not present in implementation doc.
+  schema.prisma:3258:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3259:model Translationpreferences {
+  schema.prisma:3260:  tenantId       String  @map("tenant_id")
+  schema.prisma:3261:  prefid         String  @id @default(uuid())
+  schema.prisma:3262:  teamid         String?
+  schema.prisma:3263:  userId         String? @map("user_id")
+  schema.prisma:3264:  targetlanguage String?
+  schema.prisma:3265:
+  schema.prisma:3266:  @@map("translationpreferences")
+  schema.prisma:3267:}
+  schema.prisma:3268:
+  schema.prisma:3269:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3270:// M05 - ACCOUNT INTELLIGENCE ? USER_BOARD_PREFERENCES
+> schema.prisma:3325:model UserRoles {
+  schema.prisma:3326:  tenantId   String    @map("tenant_id")
+  schema.prisma:3327:  userId     String    @map("user_id")
+  schema.prisma:3328:  roleid     String
+  schema.prisma:3329:  assignedat DateTime?
+  schema.prisma:3330:
+  schema.prisma:3331:  @@id([tenantId, userId, roleid])
+  schema.prisma:3332:  @@map("user_roles")
+  schema.prisma:3333:}
+  schema.prisma:3334:
+  schema.prisma:3335:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3336:// PLATFORM / SHARED CORE ? USERS
+  schema.prisma:3337:// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required 
+reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+  schema.prisma:3338:// ?????????????????????????????????????????????????????????????
+> schema.prisma:3339:model Users {
+  schema.prisma:3340:  id              String    @id @default(uuid())
+  schema.prisma:3341:  tenantId        String    @map("tenant_id")
+  schema.prisma:3342:  teamId          String?   @map("team_id")
+  schema.prisma:3343:  email           String
+  schema.prisma:3344:  name            String
+  schema.prisma:3345:  role            String?
+  schema.prisma:3346:  crmUserId       String?   @map("crm_user_id")
+  schema.prisma:3347:  isActive        Boolean?  @map("is_active")
+  schema.prisma:3348:  createdAt       DateTime  @map("created_at")
+  schema.prisma:3349:  dailyQueryLimit Int?      @map("daily_query_limit")
+  schema.prisma:3350:  password        String?
+  schema.prisma:3351:  firstName       String?   @map("first_name")
+  schema.prisma:3352:  lastName        String?   @map("last_name")
+  schema.prisma:3353:  lastLoginAt     DateTime? @map("last_login_at")
+  schema.prisma:3354:  updatedAt       DateTime? @map("updated_at")
+  schema.prisma:3355:  repId           String?   @map("rep_id")
+  schema.prisma:3356:  managerId       String?   @map("manager_id")
+  schema.prisma:3357:  region          String?
+  schema.prisma:3358:  teamName        String?   @map("team_name")
+  schema.prisma:3359:  status          String?
+  schema.prisma:3360:  userId          String?   @map("user_id")
+  schema.prisma:3361:  supabaseuserid  String?
+  schema.prisma:3362:  avatarurl       String?
+  schema.prisma:3363:
+  schema.prisma:3364:  @@map("users")
+  schema.prisma:3365:}
+  schema.prisma:3366:
+  schema.prisma:3367:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3368:// M02 - CONVERSATION INTELLIGENCE ? VOCABULARYCORRECTIONS
+  schema.prisma:3369:// Added reference-required table not present in implementation doc.
+  schema.prisma:3370:// ?????????????????????????????????????????????????????????????
+  schema.prisma:3371:model Vocabularycorrections {
+  schema.prisma:3372:  tenantId      String   @map("tenant_id")
+  schema.prisma:3373:  vocabid       String   @id @default(uuid())
+  schema.prisma:3374:  incorrectterm String?
+  schema.prisma:3375:  correctterm   String?
+  schema.prisma:3376:  language      String?
+  schema.prisma:3377:  createdAt     DateTime @map("created_at")
+  schema.prisma:3378:
+  schema.prisma:3379:  @@map("vocabularycorrections")
+
+

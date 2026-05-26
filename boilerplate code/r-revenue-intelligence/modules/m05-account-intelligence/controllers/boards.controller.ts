@@ -1,7 +1,7 @@
 import { Controller, Get, Put, Post, Delete, Patch, Param, Body } from '@nestjs/common';
 import { BoardsService } from '../services/boards.service';
 
-@Controller('boards')
+@Controller('api/v1/account-intelligence/boards')
 export class BoardsController {
   constructor(private readonly boardsService: BoardsService) {}
 

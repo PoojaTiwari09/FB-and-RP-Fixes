@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as prismaClientModule from '@prisma/client';
+import * as prismaClientModule from '@rri/database';
 
 // Resolves PrismaClient class at runtime, falling back to a mock class if not generated
 const BaseClass = (prismaClientModule as any).PrismaClient || class {};

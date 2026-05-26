@@ -14,7 +14,8 @@
     "@nestjs/platform-express": "^10.4.22",
     "@prisma/client": "^5.0.0",
     "bullmq": "^5.0.0",
-    "zod": "^3.0.0"
+    "zod": "^3.0.0",
+    "@rri/database": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/testing": "^10.4.22",

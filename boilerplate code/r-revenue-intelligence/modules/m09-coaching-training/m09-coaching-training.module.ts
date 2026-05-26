@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './database/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
@@ -55,10 +56,9 @@ import { M09Worker } from './workers/m09.worker';
     TestController,
   ],
   providers: [
-    // Guards
+    Reflector,
     JwtAuthGuard,
     RolesGuard,
-
     // Services
     LlmService,
     SessionsService,

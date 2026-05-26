@@ -46,7 +46,7 @@ import {
 
 // ─── ROOT CONTROLLER ─────────────────────────────────────────────────────────
 
-@Controller()
+@Controller('api/v1/coaching-training')
 export class AppController {
   @Get()
   root() {
@@ -156,7 +156,7 @@ export class RolesGuard implements CanActivate {
 
 // ─── SESSIONS CONTROLLER ─────────────────────────────────────────────────────
 
-@Controller('sessions')
+@Controller('api/v1/coaching-training/sessions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
@@ -291,7 +291,7 @@ export class SessionsController {
 
 // ─── SCENARIOS CONTROLLER ────────────────────────────────────────────────────
 
-@Controller('scenarios')
+@Controller('api/v1/coaching-training/scenarios')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ScenariosController {
   constructor(private readonly scenariosService: ScenariosService) {}
@@ -355,7 +355,7 @@ export class ScenariosController {
 
 // ─── COACHING CONTROLLER ─────────────────────────────────────────────────────
 
-@Controller('coaching')
+@Controller('api/v1/coaching-training/coaching')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CoachingController {
   constructor(private readonly coachingService: CoachingService) {}
@@ -395,7 +395,7 @@ export class CoachingController {
 
 // ─── TRAINING CONTROLLER ─────────────────────────────────────────────────────
 
-@Controller('training')
+@Controller('api/v1/coaching-training/training')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TrainingController {
   constructor(
@@ -451,7 +451,7 @@ export class TrainingController {
 
 // ─── ANALYTICS CONTROLLER ────────────────────────────────────────────────────
 
-@Controller('analytics')
+@Controller('api/v1/coaching-training/analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
@@ -562,7 +562,7 @@ export class AnalyticsController {
   }
 }
 
-@Controller('test')
+@Controller('api/v1/coaching-training/test')
 export class TestController {
   constructor(
     private readonly prisma: PrismaService,

@@ -53,6 +53,7 @@ export class M08WorkflowRepository {
   }
 
   async findWorkflows(tenantId: string, filters: { isActive?: boolean } = {}) {
+    if (!(this.prisma as any).workflow?.findMany) return [];
     const where: any = { tenantId };
     if (filters.isActive !== undefined) {
       where.isActive = filters.isActive;

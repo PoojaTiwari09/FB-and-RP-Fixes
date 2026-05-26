@@ -39,12 +39,12 @@ interface HubSpotWebhookEvent {
   changeSource: string;
 }
 
-@Controller('sync')
+@Controller('api/v1/account-intelligence/webhooks')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
   private supabase = getSupabase();
 
-  @Post('hubspot-webhook')
+  @Post('hubspot')
   @HttpCode(200)
   async receiveWebhook(
     @Body() events: HubSpotWebhookEvent[],

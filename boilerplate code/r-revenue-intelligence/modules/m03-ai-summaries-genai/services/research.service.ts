@@ -12,8 +12,8 @@
  */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SupabaseService } from '../../config/supabase.service';
-import { CreateJobDto } from './dto';
+import { SupabaseService } from '../config/supabase.service';
+import { CreateJobDto } from '../interfaces/research.dto';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 

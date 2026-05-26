@@ -6,7 +6,7 @@
  * TC-DR-28: Report versioning with parent linking.
  */
 import { Injectable } from '@nestjs/common';
-import { SupabaseService } from '../../config/supabase.service';
+import { SupabaseService } from '../config/supabase.service';
 
 @Injectable()
 export class ReportService {

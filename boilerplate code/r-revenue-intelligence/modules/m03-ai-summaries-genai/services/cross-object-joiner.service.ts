@@ -7,7 +7,7 @@
  * TC-DR-30: No data leakage across org boundaries.
  */
 import { Injectable } from '@nestjs/common';
-import { SupabaseService } from '../../config/supabase.service';
+import { SupabaseService } from '../config/supabase.service';
 
 export interface JoinedDataContext {
   calls: any[];

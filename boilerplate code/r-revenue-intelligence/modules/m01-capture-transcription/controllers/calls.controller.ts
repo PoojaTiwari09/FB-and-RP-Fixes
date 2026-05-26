@@ -40,17 +40,19 @@ export class CallsController {
     return this.svc.createCall(dto, req.tenantId);
   }
 
-  // ── GET /calls/:id — full call detail (CT-13 through CT-24) ──────────
-  @Get('calls/:id')
-  getCall(@Param('id') id: string, @Req() req: Record<string, string>) {
-    return this.svc.getCallDetail(id, req.tenantId);
-  }
-
   // ── GET /calls/search?q=keyword — org-wide search (CT-05) ────────────
+  // IMPORTANT: this MUST be registered before /calls/:id, otherwise Express
+  // matches the literal "search" segment as a value for :id and returns 404.
   @Get('calls/search')
   searchTranscripts(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
     const parsed = SearchQuerySchema.parse(query);
     return this.svc.searchTranscripts(req.tenantId, parsed);
+  }
+
+  // ── GET /calls/:id — full call detail (CT-13 through CT-24) ──────────
+  @Get('calls/:id')
+  getCall(@Param('id') id: string, @Req() req: Record<string, string>) {
+    return this.svc.getCallDetail(id, req.tenantId);
   }
 
   // ── GET /calls/:id/search?q=keyword — in-call search (CT-21) ─────────

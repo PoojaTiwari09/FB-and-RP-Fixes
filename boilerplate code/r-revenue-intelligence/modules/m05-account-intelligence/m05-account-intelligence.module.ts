@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
 
 import { M05AccountIntelligenceController } from './controllers/m05.controller';
 import { AccountsController } from './controllers/accounts.controller';
@@ -22,14 +23,20 @@ import { SyncService } from './services/sync.service';
 import { TodosService } from './services/todos.service';
 import { AiService } from './services/ai.service';
 
+import { M05AccountIntelligenceWorker } from './workers/m05.worker';
+import { M05AccountIntelligenceRepository } from './repositories/m05.repository';
+import { PrismaModule } from './database/prisma.module';
+import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
+
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      envFilePath: '../../.env.local',
-      isGlobal: true,
-    }),
+    ConfigModule,
+    PrismaModule,
+    EventPublisherModule,
+    BullModule.registerQueue({ name: 'm05-queue' }),
   ],
   controllers: [
+    M05AccountIntelligenceController,
     AccountsController,
     ActivitiesController,
     BoardsController,
@@ -38,9 +45,12 @@ import { AiService } from './services/ai.service';
     SyncController,
     TodosController,
     WebhookController,
-    AiController
+    AiController,
   ],
   providers: [
+    M05AccountIntelligenceService,
+    M05AccountIntelligenceWorker,
+    M05AccountIntelligenceRepository,
     AccountsService,
     ActivitiesService,
     BoardsService,
@@ -48,7 +58,8 @@ import { AiService } from './services/ai.service';
     PreferencesService,
     SyncService,
     TodosService,
-    AiService
-  ]
+    AiService,
+  ],
+  exports: [M05AccountIntelligenceService],
 })
 export class M05AccountIntelligenceModule {}

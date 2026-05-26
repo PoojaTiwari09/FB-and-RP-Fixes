@@ -10,6 +10,9 @@ import { RevenueGraphModule } from './revenue-graph/revenue-graph.module';
 import { DataCloudModule } from './data-cloud/data-cloud.module';
 import { PrismaModule } from './database/prisma.module';
 import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
+import { M10DataComplianceController } from './controllers/m10.controller';
+import { M10DataComplianceService } from './services/m10.service';
+import { M10DataComplianceRepository } from './repositories/m10.repository';
 
 @Module({
   imports: [
@@ -18,6 +21,8 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     RevenueGraphModule,
     DataCloudModule,
   ],
-  exports: [RevenueGraphModule, DataCloudModule],
+  controllers: [M10DataComplianceController],
+  providers: [M10DataComplianceService, M10DataComplianceRepository],
+  exports: [RevenueGraphModule, DataCloudModule, M10DataComplianceService],
 })
 export class M10DataComplianceModule {}
