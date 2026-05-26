@@ -1,20 +1,85 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
-import { M09CoachingTrainingController } from './controllers/m09.controller';
-import { M09CoachingTrainingService } from './services/m09.service';
-import { M09CoachingTrainingWorker } from './workers/m09.worker';
-import { M09CoachingTrainingRepository } from './repositories/m09.repository';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './database/prisma.module';
-import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
+import { JwtModule } from '@nestjs/jwt';
+
+// Controllers
+import {
+  AppController,
+  SessionsController,
+  ScenariosController,
+  CoachingController,
+  TrainingController,
+  AnalyticsController,
+  TestController,
+  JwtAuthGuard,
+  RolesGuard,
+} from './controllers/m09.controller';
+import { AuthController } from './controllers/auth.controller';
+
+// Services
+import {
+  LlmService,
+  SessionsService,
+  ScenariosService,
+  CoachingService,
+  TrainingService,
+  AnalyticsService,
+  SchedulerService,
+} from './services/m09.service';
+
+// Repositories
+import { M09Repository } from './repositories/m09.repository';
+
+// Workers
+import { M09Worker } from './workers/m09.worker';
 
 @Module({
   imports: [
-    PrismaModule,
-    EventPublisherModule,
-    BullModule.registerQueue({ name: 'm09-queue' }),
+    ConfigModule.forRoot({ isGlobal: true }),       // Environment variables for LLM keys
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'fallback_secret',
+      signOptions: { expiresIn: '7d' },
+    }),
+    PrismaModule,       // Database access via Prisma
   ],
-  controllers: [M09CoachingTrainingController],
-  providers: [M09CoachingTrainingService, M09CoachingTrainingWorker, M09CoachingTrainingRepository],
-  exports: [M09CoachingTrainingService],
+  controllers: [
+    AppController,
+    AuthController,
+    SessionsController,
+    ScenariosController,
+    CoachingController,
+    TrainingController,
+    AnalyticsController,
+    TestController,
+  ],
+  providers: [
+    // Guards
+    JwtAuthGuard,
+    RolesGuard,
+
+    // Services
+    LlmService,
+    SessionsService,
+    ScenariosService,
+    CoachingService,
+    TrainingService,
+    AnalyticsService,
+    SchedulerService,
+
+    // Repositories
+    M09Repository,
+
+    // Workers
+    M09Worker,
+  ],
+  exports: [
+    SessionsService,
+    ScenariosService,
+    AnalyticsService,
+    TrainingService,
+    M09Repository,
+  ],
 })
 export class M09CoachingTrainingModule {}
