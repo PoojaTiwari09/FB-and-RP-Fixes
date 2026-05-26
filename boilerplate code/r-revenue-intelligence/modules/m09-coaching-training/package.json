@@ -1,5 +1,5 @@
 {
-  "name": "m09-coaching-training",
+  "name": "@r-revenue/m09-coaching-training",
   "version": "1.0.0",
   "description": "SalesAI Coaching & Training Module - Standalone Backend",
   "scripts": {

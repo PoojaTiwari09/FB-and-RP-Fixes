@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import App from "../modules/m03-ai-summaries-genai/app/page";
 import RevenueGraphDashboard from "../modules/m10-data-compliance/components/RevenueGraphDashboard/index";
 import DataCloudDashboard from "../modules/m10-data-compliance/components/DataCloudDashboard/index";
 import {
@@ -477,7 +479,13 @@ export default function PlatformDashboard() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      if (tab.id === 'summaries') {
+                        window.location.href = '/m3';
+                      } else {
+                        setActiveTab(tab.id);
+                      }
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 border ${
                       isSelected
                         ? "bg-slate-900/80 border-slate-800 text-slate-100 shadow-md shadow-black/40 font-semibold"

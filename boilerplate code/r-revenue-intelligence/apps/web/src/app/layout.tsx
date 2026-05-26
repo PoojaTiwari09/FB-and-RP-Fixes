@@ -1,6 +1,6 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import "./globals.css";
+import "../modules/m03-ai-summaries-genai/app/globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -9,16 +9,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "R-Revenue Intelligence — Boilerplate Platform Hub",
-  description: "Futuristic enterprise revenue operations command center driving capturing, deep conversation intelligence, AI summaries, deal drivers, forecasting, and cross-cutting GDPR/CCPA data compliance.",
-  keywords: ["Revenue Intelligence", "Next.js 14", "Modular Monolith", "Speech-to-Text", "RAG", "Data Export"],
-  authors: [{ name: "Technical Architecture Team & Relanto Engineering" }],
-};
-
-export const viewport: Viewport = {
-  themeColor: "#02040c",
-  width: "device-width",
-  initialScale: 1,
+  title: "SalesIQ AI Assistant",
+  description: "SalesIQ AI Copilot",
 };
 
 import SessionSync from "@/modules/m05-account-intelligence/components/SessionSync";

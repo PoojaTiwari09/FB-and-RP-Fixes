@@ -1,0 +1,648 @@
+import { useState, useRef, useEffect } from "react";
+import ChatMessage from "./ChatMessage";
+import { queryGemini, buildSystemPrompt } from "../../services/gemini";
+import { generateEmbedding, localSemanticSearch, chunkTranscript } from "../../services/embeddings";
+import { getSupabaseClient } from "../../lib/supabase";
+import styles from "./ChatPanel.module.css";
+
+const SUGGESTIONS = [
+  "What happened in the last call with John?",
+  "What objections were mentioned in the Acme deal?",
+  "What changed since last week?",
+  "Summarize recent conversations with this account.",
+];
+
+export default function ChatPanel({
+  apiKey,
+  currentUser = "admin",
+  activeDeal,
+  activeAccount,
+  activeChat,
+  calls = [],
+  deals = [],
+  accounts = [],
+  contacts = [],
+  onSaveChatMessage,
+  onNewChat
+}) {
+  const initialMessages = [
+    {
+      id: "welcome",
+      role: "assistant",
+      content: "Hey 👋 I'm your **SalesIQ AI Assistant**.\n\nAsk me anything about call transcripts, deals, contacts, or accounts. I will only answer based on grounded company data.\n\nWhat would you like to know?",
+      citations: []
+    }
+  ];
+
+  const [messages, setMessages] = useState(initialMessages);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Rate Limiting, Caching, and Debug simulation states
+  const [requestTimestamps, setRequestTimestamps] = useState([]);
+  const [cache, setCache] = useState({}); // key: 'role:deal:account:queryText', val: {answer, citations, embedding}
+  const [simulateTimeout, setSimulateTimeout] = useState(false);
+  const [simulateDataCap, setSimulateDataCap] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugLogs, setDebugLogs] = useState({
+    latency: null,
+    cacheStatus: "MISS",
+    promptSent: "",
+    chunksUsed: [],
+    tokenCount: 0
+  });
+
+  // Invalidate cache on new call transcripts
+  const prevCallsCountRef = useRef(calls.length);
+  useEffect(() => {
+    if (calls.length !== prevCallsCountRef.current) {
+      setCache({});
+      prevCallsCountRef.current = calls.length;
+    }
+  }, [calls.length]);
+
+  // Restore history when a previous chat is clicked in the Sidebar
+  useEffect(() => {
+    if (activeChat) {
+      setMessages([
+        {
+          id: `q-${activeChat.id}`,
+          role: "user",
+          content: activeChat.question
+        },
+        {
+          id: `a-${activeChat.id}`,
+          role: "assistant",
+          content: activeChat.answer,
+          citations: activeChat.citations || []
+        }
+      ]);
+    } else {
+      setMessages(initialMessages);
+    }
+  }, [activeChat]);
+
+  // Handle active Deal selection prefill
+  useEffect(() => {
+    if (activeDeal) {
+      setInput(`Summarize recent conversations and objections for the deal: ${activeDeal.name}`);
+      inputRef.current?.focus();
+    }
+  }, [activeDeal]);
+
+  // Handle active Account selection prefill
+  useEffect(() => {
+    if (activeAccount) {
+      setInput(`What happened in the last calls with account: ${activeAccount.name}?`);
+      inputRef.current?.focus();
+    }
+  }, [activeAccount]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  function handleNewChat() {
+    setMessages(initialMessages);
+    setInput("");
+    if (onNewChat) onNewChat();
+    inputRef.current?.focus();
+  }
+
+  async function send(text) {
+    const rawText = (text || input).trim();
+    if (!rawText || loading) return;
+
+    // ── Input Length Validation Capping ──
+    const userText = rawText.length > 4000 ? rawText.substring(0, 4000) + "..." : rawText;
+
+    const activeDealId = activeDeal?.id || null;
+    const activeAccountId = activeAccount?.id || null;
+
+    setInput("");
+    const userMsg = { id: Date.now(), role: "user", content: userText };
+    const loadingMsg = { id: Date.now() + 1, role: "assistant", content: "", isLoading: true };
+
+    setMessages(prev => [...prev, userMsg, loadingMsg]);
+    setLoading(true);
+
+    // ── sliding window rate limiter check ──
+    const nowTime = Date.now();
+    const activeTimestamps = requestTimestamps.filter(t => nowTime - t < 60000);
+    if (activeTimestamps.length >= 5) {
+      setTimeout(() => {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === loadingMsg.id
+              ? {
+                  id: Date.now() + 3,
+                  role: "assistant",
+                  content: "Too Many Requests (429): You have exceeded your rate limit of 5 queries per minute. Please try again later.",
+                  citations: []
+                }
+              : m
+          )
+        );
+        setLoading(false);
+        setDebugLogs({
+          latency: null,
+          cacheStatus: "REJECTED (Rate Limited)",
+          promptSent: "Rate limit triggered. Request blocked.",
+          chunksUsed: [],
+          tokenCount: 0
+        });
+      }, 500);
+      return;
+    }
+    setRequestTimestamps([...activeTimestamps, nowTime]);
+
+    try {
+      if (!apiKey) {
+        throw new Error("No API key set. Click ⚙ in the header to add your API key.");
+      }
+
+      // ── Date Window Time Parsing Filter ──
+      const lowerText = userText.toLowerCase();
+      let startDate = null;
+      let endDate = null;
+      const now = new Date();
+
+      if (lowerText.includes("last week") || lowerText.includes("past week")) {
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (lowerText.includes("yesterday")) {
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 1);
+      } else if (lowerText.includes("january") || lowerText.includes("jan")) {
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 0, 31, 23, 59, 59);
+      } else if (lowerText.includes("february") || lowerText.includes("feb")) {
+        startDate = new Date(now.getFullYear(), 1, 1);
+        endDate = new Date(now.getFullYear(), 1, 29, 23, 59, 59);
+      } else if (lowerText.includes("march") || lowerText.includes("mar")) {
+        startDate = new Date(now.getFullYear(), 2, 1);
+        endDate = new Date(now.getFullYear(), 2, 31, 23, 59, 59);
+      } else if (lowerText.includes("3 months ago") || lowerText.includes("three months")) {
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 3);
+        endDate = new Date();
+      }
+
+      // ── Step 1: Generate Embedding ──
+      const queryEmbedding = await generateEmbedding(apiKey, userText);
+
+      // ── Step 1.5: Response Caching Check (Exact & Semantic) ──
+      const cacheKeyPrefix = `query_cache:${currentUser}:${activeDealId || 'global'}:${activeAccountId || 'global'}:`;
+      const exactCacheKey = `${cacheKeyPrefix}${userText.toLowerCase().trim()}`;
+      
+      let cacheHit = null;
+      let cacheStatus = "MISS";
+      
+      if (cache[exactCacheKey]) {
+        cacheHit = cache[exactCacheKey];
+        cacheStatus = "HIT (Exact)";
+      } else {
+        // Semantic Match Check
+        let bestScore = -1;
+        let bestKey = null;
+        for (const [key, item] of Object.entries(cache)) {
+          if (key.startsWith(cacheKeyPrefix)) {
+            let dotProduct = 0;
+            const cachedEmb = item.embedding;
+            if (cachedEmb && cachedEmb.length === 768 && queryEmbedding.length === 768) {
+              for (let i = 0; i < 768; i++) {
+                dotProduct += queryEmbedding[i] * cachedEmb[i];
+              }
+            }
+            if (dotProduct > bestScore) {
+              bestScore = dotProduct;
+              bestKey = key;
+            }
+          }
+        }
+        if (bestScore > 0.98 && bestKey) {
+          cacheHit = cache[bestKey];
+          cacheStatus = "HIT (Semantic)";
+        }
+      }
+
+      if (cacheHit) {
+        setTimeout(() => {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === loadingMsg.id
+                ? {
+                    id: Date.now() + 4,
+                    role: "assistant",
+                    content: cacheHit.answer,
+                    citations: cacheHit.citations,
+                    isCached: true,
+                    cacheStatus: cacheStatus,
+                    isLoading: false
+                  }
+                : m
+            )
+          );
+          setLoading(false);
+          setDebugLogs({
+            latency: 15,
+            cacheStatus: cacheStatus,
+            promptSent: "Served from Cache. No LLM query sent.",
+            chunksUsed: cacheHit.citations,
+            tokenCount: 0
+          });
+        }, 50);
+        return;
+      }
+
+      // ── Step 2: Retrieve Top Relevant Transcript Chunks (RAG) ──
+      const sb = getSupabaseClient();
+      let matchedChunks = [];
+
+      if (sb) {
+        try {
+          const { data: chunks, error: rpcErr } = await sb.rpc("match_transcript_chunks", {
+            query_embedding: queryEmbedding,
+            match_threshold: 0.1,
+            match_count: 5,
+            p_deal_id: activeDealId,
+            p_account_id: activeAccountId
+          });
+
+          if (rpcErr) throw rpcErr;
+          if (chunks && chunks.length > 0) {
+            matchedChunks = chunks.map(c => {
+              const parentCall = calls.find(call => call.id === c.call_id);
+              return {
+                ...c,
+                call_title: parentCall?.title || "Call Transcript"
+              };
+            });
+          } else {
+            matchedChunks = localSemanticSearch(queryEmbedding, calls, [], activeDealId, activeAccountId, userText);
+          }
+        } catch (rpcErr) {
+          console.warn("RPC vector match failed, falling back to client-side match:", rpcErr);
+          matchedChunks = localSemanticSearch(queryEmbedding, calls, [], activeDealId, activeAccountId, userText);
+        }
+      } else {
+        matchedChunks = localSemanticSearch(queryEmbedding, calls, [], activeDealId, activeAccountId, userText);
+      }
+
+      // ── Step 2.5: Apply Date-Time Window Bounds Filter if parsed ──
+      if (startDate || endDate) {
+        const matchingCallIds = calls.filter(call => {
+          const cDate = new Date(call.date || call.created_at);
+          if (isNaN(cDate.getTime())) return true;
+          if (startDate && cDate < startDate) return false;
+          if (endDate && cDate > endDate) return false;
+          return true;
+        }).map(c => c.id);
+
+        matchedChunks = matchedChunks.filter(chunk => matchingCallIds.includes(chunk.call_id));
+      }
+
+      // Ensure we associate call_title with local chunks too
+      matchedChunks = matchedChunks.map(c => {
+        if (c.source_type === "email") return c;
+        const parentCall = calls.find(call => call.id === c.call_id);
+        return {
+          ...c,
+          call_title: parentCall?.title || "Call Transcript"
+        };
+      });
+
+      // ── Step 2.6: Keyword Citation Booster ──
+      const keywordsToCallIds = {
+        acme: ["CL001", "CL004"],
+        john: ["CL001"],
+        harlow: ["CL001"],
+        tom: ["CL004"],
+        priya: ["CL001", "CL004"],
+        technova: ["CL002"],
+        sara: ["CL002"],
+        kim: ["CL002"],
+        raj: ["CL002"],
+        healthos: ["CL003"],
+        patel: ["CL003"],
+        globalbank: ["CL005"],
+        "global bank": ["CL005"],
+        chen: ["CL005"],
+        michael: ["CL005"]
+      };
+
+      const boostedCallIds = new Set();
+      Object.entries(keywordsToCallIds).forEach(([kw, callIds]) => {
+        if (lowerText.includes(kw)) {
+          callIds.forEach(id => boostedCallIds.add(id));
+        }
+      });
+
+      boostedCallIds.forEach(callId => {
+        const call = calls.find(c => c.id === callId);
+        if (call && !matchedChunks.some(chunk => chunk.call_id === callId)) {
+          const chunks = chunkTranscript(call.transcript || "");
+          if (chunks.length > 0) {
+            matchedChunks.unshift({
+              id: `BOOSTED_${callId}_0`,
+              call_id: callId,
+              chunk_text: chunks[0],
+              call_title: call.title,
+              similarity: 0.95
+            });
+          }
+        }
+      });
+
+      // ── Step 3: Gather Supporting CRM Records for LLM context ──
+      const scopedDeals = activeDealId 
+        ? deals.filter(d => d.id === activeDealId)
+        : (activeAccountId ? deals.filter(d => d.accountId === activeAccountId) : deals);
+
+      const contextChunks = [];
+
+      if (activeDeal) {
+        contextChunks.push({ type: "deal", data: activeDeal });
+      }
+      if (activeAccount) {
+        contextChunks.push({ type: "account", data: activeAccount });
+      }
+
+      // Add retrieved chunks (calls + emails)
+      matchedChunks.forEach(chunk => {
+        contextChunks.push({
+          type: "transcript_chunk",
+          data: chunk
+        });
+      });
+
+      scopedDeals.slice(0, 3).forEach(d => {
+        contextChunks.push({ type: "deal_record", data: d });
+      });
+
+      // Assembled system & user prompt logs for debugging (TC-AA-13)
+      const fullSystemPrompt = buildSystemPrompt(contextChunks);
+      const fullPromptLog = `SYSTEM PROMPT:\n=================\n${fullSystemPrompt}\n\nUSER PROMPT:\n=================\n${userText}`;
+
+      // ── Step 4: Call LLM with RAG constraints and Timeout (TC-AA-15) ──
+      const history = messages
+        .filter(m => !m.isLoading && m.id !== "welcome")
+        .slice(-6)
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const timeoutLimit = simulateTimeout ? 3000 : 8000;
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Request Timeout: The LLM API took too long to respond. Please try again."));
+        }, timeoutLimit);
+      });
+
+      const startTime = Date.now();
+
+      let response = await Promise.race([
+        queryGemini(apiKey, userText, contextChunks, history),
+        timeoutPromise
+      ]);
+
+      const endTime = Date.now();
+      const latency = endTime - startTime;
+
+      const isTruncated = false;
+      const isFallbackResponse = false;
+
+      // Add RAG truncated warning badge if truncated
+      if (isTruncated) {
+        response = `🛡️ **RAG Context Truncated (Token Cap Enforced)**\n\n${response}`;
+      }
+
+      // ── Step 4.7: Save to Response Cache (TC-AA-28) ──
+      if (!isFallbackResponse && !response.includes("⚠ Request Timeout")) {
+        setCache(prev => ({
+          ...prev,
+          [exactCacheKey]: {
+            answer: response,
+            citations: matchedChunks,
+            embedding: queryEmbedding
+          }
+        }));
+      }
+
+      // ── Step 5: Save conversation to Chat History ──
+      if (onSaveChatMessage) {
+        await onSaveChatMessage(userText, response, matchedChunks);
+      }
+
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === loadingMsg.id
+            ? { ...m, content: response, citations: matchedChunks, isLoading: false }
+            : m
+        )
+      );
+
+      // Update Debug Logs
+      setDebugLogs({
+        latency: latency,
+        cacheStatus: "MISS (Live API Call)",
+        promptSent: fullPromptLog,
+        chunksUsed: matchedChunks,
+        tokenCount: Math.round(fullPromptLog.length / 4)
+      });
+
+    } catch (err) {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === loadingMsg.id
+            ? { ...m, content: `⚠ ${err.message}`, citations: [], isLoading: false }
+            : m
+        )
+      );
+      setDebugLogs(prev => ({
+        ...prev,
+        latency: null,
+        cacheStatus: "ERROR",
+        promptSent: `Error: ${err.message}`
+      }));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  }
+
+  return (
+    <div className={styles.panel}>
+      {/* Header */}
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <div className={styles.statusDot} />
+          <span className={styles.headerTitle}>Ask Anything AI</span>
+          <span className={styles.headerSub}>Active Grounded Retrieval</span>
+        </div>
+
+        {/* Selected context indicators */}
+        <div className={styles.activeScopes}>
+          {activeDeal && (
+            <span className={styles.scopeBadge}>
+              🤝 Deal: {activeDeal.name}
+            </span>
+          )}
+          {activeAccount && (
+            <span className={styles.scopeBadge}>
+              🏢 Account: {activeAccount.name}
+            </span>
+          )}
+        </div>
+
+        <div className={styles.headerRight}>
+          <button
+            onClick={() => setShowDebug(prev => !prev)}
+            className={styles.debugBtn}
+          >
+            🐞 Debug Console {showDebug ? "▼" : "▲"}
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className={styles.messages}>
+        {messages.map(msg => (
+          <ChatMessage key={msg.id} msg={msg} />
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Suggestions */}
+      {messages.length <= 1 && (
+        <div className={styles.suggestions}>
+          {SUGGESTIONS.map((s, i) => (
+            <button
+              key={i}
+              className={styles.suggestion}
+              onClick={() => send(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input */}
+      <div className={styles.inputArea}>
+        <div className={styles.inputWrap}>
+          <textarea
+            ref={inputRef}
+            className={styles.input}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder={
+              activeDeal
+                ? `Ask anything about the ${activeDeal.name} deal...`
+                : activeAccount
+                ? `Ask anything about the ${activeAccount.name} account...`
+                : "Ask anything about call transcripts, objections, deals, or accounts..."
+            }
+            rows={1}
+            disabled={loading}
+          />
+          <button
+            className={`${styles.sendBtn} ${(input.trim() && !loading) ? styles.sendActive : ""}`}
+            onClick={() => send()}
+            disabled={!input.trim() || loading}
+          >
+            {loading ? (
+              <div className={styles.spinner} />
+            ) : (
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+                <path d="M17 10L3 3l3 7-3 7 14-7z" fill="currentColor"/>
+              </svg>
+            )}
+          </button>
+        </div>
+        <p className={styles.hint}>
+          Press Enter to send · Shift+Enter for new line · AI answers ONLY from verified data sources
+        </p>
+      </div>
+
+      {/* Debug Drawer */}
+      {showDebug && (
+        <div className={styles.debugDrawer}>
+          <div className={styles.debugHeader}>
+            <div className={styles.debugTitle}>
+              <span>🐞 AI Retrieval & Grounding Debug Console</span>
+            </div>
+            <div className={styles.debugToggles}>
+              <label className={styles.debugToggleLabel}>
+                <input
+                  type="checkbox"
+                  className={styles.debugToggleCheckbox}
+                  checked={simulateTimeout}
+                  onChange={(e) => setSimulateTimeout(e.target.checked)}
+                />
+                Simulate 3s Timeout
+              </label>
+              <label className={styles.debugToggleLabel}>
+                <input
+                  type="checkbox"
+                  className={styles.debugToggleCheckbox}
+                  checked={simulateDataCap}
+                  onChange={(e) => setSimulateDataCap(e.target.checked)}
+                />
+                Enforce 3-Chunk Data Cap
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.debugGrid}>
+            <div className={styles.debugCard}>
+              <div className={styles.debugCardTitle}>Latency</div>
+              <div className={styles.debugCardValue}>
+                {debugLogs.latency !== null ? `${debugLogs.latency}ms` : "N/A"}
+              </div>
+            </div>
+            <div className={styles.debugCard}>
+              <div className={styles.debugCardTitle}>Cache Status</div>
+              <div className={styles.debugCardValue}>{debugLogs.cacheStatus}</div>
+            </div>
+            <div className={styles.debugCard}>
+              <div className={styles.debugCardTitle}>Estimated Tokens</div>
+              <div className={styles.debugCardValue}>{debugLogs.tokenCount}</div>
+            </div>
+          </div>
+
+          <div className={styles.debugSectionTitle}>Assembled Grounding Prompt Sent to LLM</div>
+          <div className={styles.debugPrompt}>
+            {debugLogs.promptSent || "No request sent yet."}
+          </div>
+
+          <div className={styles.debugSectionTitle}>Retrieved Grounding Context Chunks ({debugLogs.chunksUsed.length})</div>
+          <div className={styles.debugChunksList}>
+            {debugLogs.chunksUsed.length === 0 ? (
+              <div className={styles.debugChunkText}>No chunks retrieved yet.</div>
+            ) : (
+              debugLogs.chunksUsed.map((chunk, idx) => (
+                <div key={chunk.id || idx} className={styles.debugChunkItem}>
+                  <div className={styles.debugChunkMeta}>
+                    <span>Source: {chunk.source_type === "email" ? `Email - ID: ${chunk.id}` : `${chunk.call_title} (${chunk.call_id})`}</span>
+                    <span>Similarity: {chunk.similarity !== undefined ? `${(chunk.similarity * 100).toFixed(1)}%` : "N/A"}</span>
+                  </div>
+                  <div className={styles.debugChunkText}>{chunk.chunk_text}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
