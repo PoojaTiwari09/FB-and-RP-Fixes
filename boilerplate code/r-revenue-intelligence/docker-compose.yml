@@ -29,7 +29,16 @@ services:
       - "8123:8123"
       - "9000:9000"
 
-  # api service intentionally omitted — run locally via `pnpm dev`
+  api:
+    build: ./apps/api
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
 
   ai-services:
     build: ./apps/ai-services

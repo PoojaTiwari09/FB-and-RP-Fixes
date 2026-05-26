@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { ConversationLibraryView } from "../modules/m02-conversation-intelligence";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -401,121 +402,137 @@ export default function PlatformDashboard() {
     <div className="relative w-screen h-screen flex overflow-hidden z-10 select-none">
       
       {/* SIDE NAVIGATION BAR */}
-      <aside className="w-80 h-full flex flex-col justify-between glass-panel border-r border-slate-800 bg-slate-950/80 p-6 z-20">
-        <div className="flex flex-col gap-8">
-          
-          {/* Main Logo & Platform Status indicator */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-400 to-purple-500 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-cyan-500/20">
-                R
-              </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold text-sm tracking-wider text-slate-200">
-                  R-REVENUE <span className="text-cyan-400 font-medium">[INTEL]</span>
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Monolithic Command</span>
-              </div>
-            </div>
+      {activeTab !== "calls" && (
+        <aside className="w-80 h-full flex flex-col justify-between glass-panel border-r border-slate-800 bg-slate-950/80 p-6 z-20">
+          <div className="flex flex-col gap-8">
             
-            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-md bg-slate-900/60 border border-slate-800/80">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse animate-beacon" />
-              <span className="text-[11px] text-slate-300 font-mono">Platform status: <span className="text-emerald-400 font-bold">ONLINE</span></span>
+            {/* Main Logo & Platform Status indicator */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-400 to-purple-500 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-cyan-500/20">
+                  R
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-extrabold text-sm tracking-wider text-slate-200">
+                    R-REVENUE <span className="text-cyan-400 font-medium">[INTEL]</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Monolithic Command</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-md bg-slate-900/60 border border-slate-800/80">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse animate-beacon" />
+                <span className="text-[11px] text-slate-300 font-mono">Platform status: <span className="text-emerald-400 font-bold">ONLINE</span></span>
+              </div>
             </div>
+
+            {/* User profile details */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/30 border border-slate-900">
+              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700">
+                <User size={18} className="text-cyan-400" />
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-xs font-bold text-slate-200 truncate">Technical Lead</span>
+                <span className="text-[10px] text-slate-500 font-mono truncate">Role: Admin | ACME Global</span>
+              </div>
+            </div>
+
+            {/* Tab Selection Navigation */}
+            <nav className="flex flex-col gap-1.5">
+              {[
+                { id: "overview", label: "Overview Dashboard", icon: LayoutDashboard, color: "text-slate-400" },
+                { id: "calls", label: "M1 & M2 Conversions", icon: MessageSquareCode, color: "text-cyan-400" },
+                { id: "summaries", label: "M3 AI Briefings", icon: Sparkles, color: "text-purple-400" },
+                { id: "deals", label: "M4 & M5 Deals Board", icon: KanbanSquare, color: "text-emerald-400" },
+                { id: "analytics", label: "M6 & M7 Performance", icon: BarChart3, color: "text-purple-400" },
+                { id: "engagement", label: "M8 Sales Engagement", icon: Send, color: "text-cyan-400" },
+                { id: "coaching", label: "M9 Coaching Simulator", icon: GraduationCap, color: "text-amber-400" },
+                { id: "compliance", label: "M10 Compliance & Cloud", icon: ShieldCheck, color: "text-emerald-400" },
+              ].map(tab => {
+                const IconComp = tab.icon;
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 border ${
+                      isSelected
+                        ? "bg-slate-900/80 border-slate-800 text-slate-100 shadow-md shadow-black/40 font-semibold"
+                        : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                    }`}
+                  >
+                    <IconComp size={16} className={tab.color} />
+                    <span className="text-xs">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
-          {/* User profile details */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/30 border border-slate-900">
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700">
-              <User size={18} className="text-cyan-400" />
+          {/* Sidebar Footer details */}
+          <div className="flex flex-col gap-2 pt-4 border-t border-slate-900">
+            <div className="flex justify-between text-[10px] font-mono text-slate-500">
+              <span>Workspaces:</span>
+              <span className="text-cyan-400">14 Packages</span>
             </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-xs font-bold text-slate-200 truncate">Technical Lead</span>
-              <span className="text-[10px] text-slate-500 font-mono truncate">Role: Admin | ACME Global</span>
+            <div className="flex justify-between text-[10px] font-mono text-slate-500">
+              <span>DB Searchpath:</span>
+              <span className="text-emerald-400">m10_compliance</span>
+            </div>
+            <div className="flex justify-between text-[10px] font-mono text-slate-500">
+              <span>Pnpm Monorepo:</span>
+              <span className="text-slate-300">v9.x strictly</span>
             </div>
           </div>
-
-          {/* Tab Selection Navigation */}
-          <nav className="flex flex-col gap-1.5">
-            {[
-              { id: "overview", label: "Overview Dashboard", icon: LayoutDashboard, color: "text-slate-400" },
-              { id: "calls", label: "M1 & M2 Conversions", icon: MessageSquareCode, color: "text-cyan-400" },
-              { id: "summaries", label: "M3 AI Briefings", icon: Sparkles, color: "text-purple-400" },
-              { id: "deals", label: "M4 & M5 Deals Board", icon: KanbanSquare, color: "text-emerald-400" },
-              { id: "analytics", label: "M6 & M7 Performance", icon: BarChart3, color: "text-purple-400" },
-              { id: "engagement", label: "M8 Sales Engagement", icon: Send, color: "text-cyan-400" },
-              { id: "coaching", label: "M9 Coaching Simulator", icon: GraduationCap, color: "text-amber-400" },
-              { id: "compliance", label: "M10 Compliance & Cloud", icon: ShieldCheck, color: "text-emerald-400" },
-            ].map(tab => {
-              const IconComp = tab.icon;
-              const isSelected = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 border ${
-                    isSelected
-                      ? "bg-slate-900/80 border-slate-800 text-slate-100 shadow-md shadow-black/40 font-semibold"
-                      : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
-                  }`}
-                >
-                  <IconComp size={16} className={tab.color} />
-                  <span className="text-xs">{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer details */}
-        <div className="flex flex-col gap-2 pt-4 border-t border-slate-900">
-          <div className="flex justify-between text-[10px] font-mono text-slate-500">
-            <span>Workspaces:</span>
-            <span className="text-cyan-400">14 Packages</span>
-          </div>
-          <div className="flex justify-between text-[10px] font-mono text-slate-500">
-            <span>DB Searchpath:</span>
-            <span className="text-emerald-400">m10_compliance</span>
-          </div>
-          <div className="flex justify-between text-[10px] font-mono text-slate-500">
-            <span>Pnpm Monorepo:</span>
-            <span className="text-slate-300">v9.x strictly</span>
-          </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       {/* MAIN COMMAND PLATFORM */}
-      <main className="flex-1 h-full flex flex-col overflow-hidden bg-slate-950/40 z-10">
-        
-        {/* UPPER STATUS HEADER BAR */}
-        <header className="h-16 border-b border-slate-900 bg-slate-950/60 backdrop-blur-md px-8 flex items-center justify-between z-20">
-          <div className="flex items-center gap-4">
-            <span className="text-xs uppercase font-mono tracking-widest text-slate-400">Active Workspace:</span>
-            <div className="px-3 py-1 rounded bg-slate-900 border border-slate-800 text-xs font-mono font-bold text-cyan-400">
-              apps/web/
+      {activeTab === "calls" ? (
+        <main className="flex-1 w-full h-full flex flex-col overflow-hidden bg-slate-950 z-10 relative">
+          <ConversationLibraryView />
+          
+          {/* Floating back button to return to dashboard */}
+          <button 
+            onClick={() => setActiveTab("overview")}
+            className="absolute bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-full text-xs font-bold text-slate-300 shadow-xl shadow-black/50 transition-all"
+          >
+            <ArrowRight size={14} className="rotate-180" />
+            Return to Monolithic Command
+          </button>
+        </main>
+      ) : (
+        <main className="flex-1 h-full flex flex-col overflow-hidden bg-slate-950/40 z-10">
+          
+          {/* UPPER STATUS HEADER BAR */}
+          <header className="h-16 border-b border-slate-900 bg-slate-950/60 backdrop-blur-md px-8 flex items-center justify-between z-20">
+            <div className="flex items-center gap-4">
+              <span className="text-xs uppercase font-mono tracking-widest text-slate-400">Active Workspace:</span>
+              <div className="px-3 py-1 rounded bg-slate-900 border border-slate-800 text-xs font-mono font-bold text-cyan-400">
+                apps/web/
+              </div>
+              <span className="text-slate-700">|</span>
+              <span className="text-xs font-mono text-slate-500">BOILERPLATE SIMULATION</span>
             </div>
-            <span className="text-slate-700">|</span>
-            <span className="text-xs font-mono text-slate-500">BOILERPLATE SIMULATION</span>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <a href="/board/commercial" className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 border border-purple-400 text-white transition-all mr-4 cursor-pointer no-underline">
-              <span className="text-xs font-bold tracking-wide">ENTER M05 POC</span>
-            </a>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800/80">
-              <Database size={12} className="text-emerald-400" />
-              <span className="text-[10px] text-slate-300 font-mono font-bold">tenant_001</span>
+            <div className="flex items-center gap-3">
+              <a href="/board/commercial" className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 border border-purple-400 text-white transition-all mr-4 cursor-pointer no-underline">
+                <span className="text-xs font-bold tracking-wide">ENTER M05 POC</span>
+              </a>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800/80">
+                <Database size={12} className="text-emerald-400" />
+                <span className="text-[10px] text-slate-300 font-mono font-bold">tenant_001</span>
+              </div>
+              
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800/80">
+                <Lock size={12} className="text-cyan-400 animate-beacon" />
+                <span className="text-[10px] text-slate-300 font-mono font-bold">m10_data_compliance</span>
+              </div>
             </div>
-            
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800/80">
-              <Lock size={12} className="text-cyan-400 animate-beacon" />
-              <span className="text-[10px] text-slate-300 font-mono font-bold">m10_data_compliance</span>
-            </div>
-          </div>
-        </header>
+          </header>
 
-        {/* WORKSPACE VIEWPORT SCROLL CONTAINER */}
-        <div className="flex-1 overflow-y-auto p-8 relative">
+          {/* WORKSPACE VIEWPORT SCROLL CONTAINER */}
+          <div className="flex-1 overflow-y-auto p-8 relative">
           
           {/* TAB 1: OVERVIEW DASHBOARD */}
           {activeTab === "overview" && (
@@ -636,6 +653,10 @@ export default function PlatformDashboard() {
 
             </div>
           )}
+<<<<<<< HEAD
+                  {/* TAB 2: CALLS & CONVERSATION CI */}
+          {/* Note: This tab is now handled conditionally at the top-level main command platform block */}
+=======
 
           {/* TAB 2: CALLS & CONVERSATION CI */}
           {activeTab === "calls" && (
@@ -798,6 +819,7 @@ export default function PlatformDashboard() {
 
             </div>
           )}
+>>>>>>> origin/Backend-development-and-integration
 
           {/* TAB 3: M3 AI SMART BRIEFINGS & CHAT */}
           {activeTab === "summaries" && (
@@ -1540,8 +1562,8 @@ export default function PlatformDashboard() {
           )}
 
         </div>
-
       </main>
+      )}
       
     </div>
   );

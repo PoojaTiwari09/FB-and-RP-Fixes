@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R-Revenue Intelligence - Backend Features Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .feature-description {
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .sub-features {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sub-features h4 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .sub-features ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .sub-features li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .sub-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border-left: 4px solid #667eea;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .api-endpoint {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .api-method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+
+        .get { background: #28a745; color: white; }
+        .post { background: #007bff; color: white; }
+        .put { background: #ffc107; color: #333; }
+        .delete { background: #dc3545; color: white; }
+
+        .api-url {
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.5em;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .flow-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .flow-step {
+            display: inline-block;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 5px;
+            border: 2px solid #667eea;
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            color: #667eea;
+            font-size: 1.5em;
+            margin: 0 10px;
+        }
+
+        .database-table {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .database-table h4 {
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+
+        .database-table pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            background: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .nav-tab:hover {
+            border-color: #667eea;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .feature-section {
+            display: none;
+        }
+
+        .feature-section.active {
+            display: block;
+        }
+
+        .architecture-diagram {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .architecture-box {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .architecture-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sub-feature-detail {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .sub-feature-detail h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .sub-feature-detail p {
+            color: #555;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .sub-feature-detail .implementation {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .sub-feature-detail .implementation h4 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 R-Revenue Intelligence Platform</h1>
+            <p class="subtitle">Backend Features Documentation - M02 Conversation Intelligence Module</p>
+            
+            <div class="tech-stack">
+                <span class="tech-badge">NestJS</span>
+                <span class="tech-badge">TypeScript</span>
+                <span class="tech-badge">PostgreSQL</span>
+                <span class="tech-badge">Prisma ORM</span>
+                <span class="tech-badge">Groq AI (Llama)</span>
+                <span class="tech-badge">Gemini AI</span>
+                <span class="tech-badge">Meilisearch</span>
+                <span class="tech-badge">pgvector</span>
+                <span class="tech-badge">FastAPI</span>
+                <span class="tech-badge">Next.js</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Core Features</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Sub-Features</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">15+</div>
+                    <div class="stat-label">API Endpoints</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">10</div>
+                    <div class="stat-label">Database Tables</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showFeature('all')">📋 All Features</div>
+            <div class="nav-tab" onclick="showFeature('search')">🔍 Searchable Library</div>
+            <div class="nav-tab" onclick="showFeature('topic')">🏷️ AI Topic Tagger</div>
+            <div class="nav-tab" onclick="showFeature('translator')">🌐 AI Translator</div>
+            <div class="nav-tab" onclick="showFeature('transcriber')">📝 AI Transcriber</div>
+            <div class="nav-tab" onclick="showFeature('subfeatures')">🔬 Sub-Features Detail</div>
+        </div>
+
+        <div id="all-features" class="feature-section active">
+            <div class="architecture-diagram">
+                <h2 style="color: #667eea; margin-bottom: 20px;">🏗️ System Architecture</h2>
+                <div class="architecture-flow">
+                    <div class="architecture-box">Frontend (Next.js)</div>
+                    <span>→</span>
+                    <div class="architecture-box">API (NestJS)</div>
+                    <span>→</span>
+                    <div class="architecture-box">Services Layer</div>
+                    <span>→</span>
+                    <div class="architecture-box">Database (PostgreSQL)</div>
+                </div>
+                <div class="architecture-flow" style="margin-top: 20px;">
+                    <div class="architecture-box">AI Services (FastAPI)</div>
+                    <span>↔</span>
+                    <div class="architecture-box">Groq API</div>
+                    <span>↔</span>
+                    <div class="architecture-box">Gemini API</div>
+                </div>
+                <div class="architecture-flow" style="margin-top: 20px;">
+                    <div class="architecture-box">Meilisearch</div>
+                    <span>↔</span>
+                    <div class="architecture-box">pgvector</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">📊 Feature Overview</h2>
+            
+            <div class="feature-grid">
+                <!-- Searchable Library -->
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3 class="feature-title">Searchable Conversation Library</h3>
+                    <p class="feature-description">Hybrid search system combining full-text search (Meilisearch) with semantic search (pgvector) for highly accurate and context-aware search capabilities.</p>
+                    
+                    <div class="sub-features">
+                        <h4>Key Features:</h4>
+                        <ul>
+                            <li>Full-text search with typo tolerance</li>
+                            <li>Semantic search using vector embeddings</li>
+                            <li>Hybrid result blending with configurable weights</li>
+                            <li>Fuzzy matching with stemming and Levenshtein distance</li>
+                            <li>Advanced filtering (sentiment, topic, agent, channel, date)</li>
+                            <li>Snippet generation with context</li>
+                            <li>Multi-tenant RLS policies</li>
+                        </ul>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method get">GET</span>
+                        <span class="api-url">/api/v1/conversation-intelligence/conversations/search</span>
+                    </div>
+                </div>
+
+                <!-- AI Topic Tagger -->
+                <div class="feature-card">
+                    <div class="feature-icon">🏷️</div>
+                    <h3 class="feature-title">AI Topic Tagger</h3>
+                    <p class="feature-description">Intelligent system that automatically analyzes sales conversation transcripts to identify and classify discussion topics using Large Language Models.</p>
+                    
+                    <div class="sub-features">
+                        <h4>Key Features:</h4>
+                        <ul>
+                            <li>Multi-provider AI (Groq → Gemini → Keywords)</li>
+                            <li>Confidence scoring (0.0-1.0)</li>
+                            <li>Evidence snippet extraction</li>
+                            <li>Topic explanation generation</li>
+                            <li>Custom topic taxonomies</li>
+                            <li>Deduplication and threshold filtering</li>
+                            <li>Version tracking</li>
+                        </ul>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method post">POST</span>
+                        <span class="api-url">/api/v1/conversation-intelligence/topic-models</span>
+                    </div>
+                </div>
+
+                <!-- AI Translator -->
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">AI Translator</h3>
+                    <p class="feature-description">Comprehensive translation service enabling real-time translation of conversation content using Groq Llama-3.1 with intelligent caching.</p>
+                    
+                    <div class="sub-features">
+                        <h4>Key Features:</h4>
+                        <ul>
+                            <li>AI-powered translation (Groq Llama-3.1)</li>
+                            <li>Database-based caching</li>
+                            <li>Workspace language settings</li>
+                            <li>Bulk translation support</li>
+                            <li>Fallback mechanism</li>
+                            <li>Quality status tracking</li>
+                            <li>Multi-entity support</li>
+                        </ul>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method post">POST</span>
+                        <span class="api-url">/api/v1/conversation-intelligence/translation/translate</span>
+                    </div>
+                </div>
+
+                <!-- AI Transcriber -->
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3 class="feature-title">AI Transcriber (Vocabulary Correction)</h3>
+                    <p class="feature-description">Transcript processing system that enhances conversation transcripts through intelligent vocabulary correction and version tracking.</p>
+                    
+                    <div class="sub-features">
+                        <h4>Key Features:</h4>
+                        <ul>
+                            <li>Custom vocabulary rules</li>
+                            <li>Mispronunciation support</li>
+                            <li>Term variations</li>
+                            <li>Language-specific rules</li>
+                            <li>Version tracking</li>
+                            <li>Correction history logging</li>
+                            <li>Statistics dashboard</li>
+                        </ul>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <span class="api-method post">POST</span>
+                        <span class="api-url">/api/v1/conversation-intelligence/vocabulary/rules</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Searchable Library Detail -->
+        <div id="search" class="feature-section">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h2 class="feature-title">Searchable Conversation Library - Hybrid Search</h2>
+                
+                <h3 class="section-title">📖 How It Works</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">User Query</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Apply Filters</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Text Search (Meilisearch)</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Semantic Search (pgvector)</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Blend Results</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Paginate & Translate</div>
+                </div>
+
+                <h3 class="section-title">💻 Key Code Snippet</h3>
+                <div class="code-block">
+<span class="keyword">async</span> searchConversations(dto: SearchQueryDto, tenantId: <span class="keyword">string</span>) {
+  <span class="comment">// Apply filters</span>
+  <span class="keyword">let</span> filteredCorpus = <span class="keyword">this</span>.applyFilters(rawConversations, dto);
+  
+  <span class="comment">// Parallel execution</span>
+  <span class="keyword">const</span> textResults = <span class="keyword">await this</span>.searchService.executeTextSearch(filteredCorpus, query);
+  <span class="keyword">const</span> semanticResults = <span class="keyword">await this</span>.searchService.executeSemanticSearch(filteredCorpus, query);
+  
+  <span class="comment">// Blend results (0.5 text + 0.5 semantic)</span>
+  <span class="keyword">const</span> blended = <span class="keyword">this</span>.searchService.blendHybridResults(textResults, semanticResults, 0.5, 0.5);
+  
+  <span class="comment">// Paginate and enrich</span>
+  <span class="keyword">return</span> <span class="keyword">this</span>.paginateAndEnrich(blended, page, limit);
+}
+                </div>
+
+                <h3 class="section-title">🗄️ Database Schema</h3>
+                <div class="database-table">
+                    <h4>m01_calls & m02_emails</h4>
+                    <pre>
+CREATE TABLE m01_calls (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    transcript TEXT,
+    summary TEXT,
+    competitors TEXT[],
+    corrected_transcript TEXT,
+    correction_version INTEGER DEFAULT 0
+);
+
+CREATE TABLE m02_embeddings (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID NOT NULL,
+    vector DOUBLE PRECISION[] NOT NULL,
+    content_chunk TEXT NOT NULL
+);
+                    </pre>
+                </div>
+
+                <h3 class="section-title">🔌 API Endpoints</h3>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/conversations/search?query=pricing&sentiment=Positive</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/conversations/:id</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/conversations</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Topic Tagger Detail -->
+        <div id="topic" class="feature-section">
+            <div class="feature-card">
+                <div class="feature-icon">🏷️</div>
+                <h2 class="feature-title">AI Topic Tagger - Intelligent Classification</h2>
+                
+                <h3 class="section-title">📖 How It Works</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">Transcript Upload</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Fetch Topic Models</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Try Groq API</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Fallback to Gemini</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Keyword Fallback</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Deduplicate & Filter</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Save to Database</div>
+                </div>
+
+                <h3 class="section-title">💻 Key Code Snippet</h3>
+                <div class="code-block">
+<span class="keyword">async</span> tagTranscript(transcriptText: <span class="keyword">string</span>, topicDefinitions: TopicDefinition[]) {
+  <span class="comment">// Build taxonomy</span>
+  <span class="keyword">const</span> taxonomy = topicDefinitions.map(t => 
+    t.description ? <span class="string">`\${t.name}: \${t.description}`</span> : t.name
+  ).join(<span class="string">', '</span>);
+  
+  <span class="comment">// Try Groq first</span>
+  <span class="keyword">const</span> result = <span class="keyword">await this</span>.tryGroq(transcriptText, taxonomy, topicDefinitions);
+  <span class="keyword">if</span> (result?.length > 0) <span class="keyword">return</span> result;
+  
+  <span class="comment">// Fallback to Gemini</span>
+  <span class="keyword">const</span> geminiResult = <span class="keyword">await this</span>.tryGemini(transcriptText, taxonomy, topicDefinitions);
+  <span class="keyword">if</span> (geminiResult?.length > 0) <span class="keyword">return</span> geminiResult;
+  
+  <span class="comment">// Final keyword fallback</span>
+  <span class="keyword">return this</span>.keywordBasedTagging(transcriptText, topicDefinitions);
+}
+                </div>
+
+                <h3 class="section-title">🗄️ Database Schema</h3>
+                <div class="database-table">
+                    <h4>m02_topic_models & m02_topic_tags</h4>
+                    <pre>
+CREATE TABLE m02_topic_models (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    topics JSONB NOT NULL DEFAULT '[]'::jsonb,
+    type VARCHAR(50) NOT NULL DEFAULT 'global',
+    last_trained_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE m02_topic_tags (
+    id UUID PRIMARY KEY,
+    call_id UUID,
+    email_id UUID,
+    tenant_id UUID NOT NULL,
+    topic_name VARCHAR(255) NOT NULL,
+    source VARCHAR(50) NOT NULL DEFAULT 'aimodel',
+    confidence_score DECIMAL(5,4) NOT NULL,
+    explanation TEXT,
+    evidence_snippet TEXT
+);
+                    </pre>
+                </div>
+
+                <h3 class="section-title">🔌 API Endpoints</h3>
+                <div class="api-endpoint">
+                    <span class="api-method post">POST</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/topic-models</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/topic-models</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/conversations/:id/topics</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method post">POST</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/topic-models/seed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Translator Detail -->
+        <div id="translator" class="feature-section">
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h2 class="feature-title">AI Translator - Multi-Language Support</h2>
+                
+                <h3 class="section-title">📖 How It Works</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">Translation Request</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Check Cache</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Cache Hit? Return</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Cache Miss: Call Groq</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Parse Response</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Save to Cache</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Return Translation</div>
+                </div>
+
+                <h3 class="section-title">💻 Key Code Snippet</h3>
+                <div class="code-block">
+<span class="keyword">async</span> getTranslatedEntity(tenantId: <span class="keyword">string</span>, entityType: <span class="keyword">string</span>, 
+                         entityId: <span class="keyword">string</span>, sourceLang: <span class="keyword">string</span>, 
+                         targetLang: <span class="keyword">string</span>, originalText: <span class="keyword">string</span>) {
+  <span class="comment">// Check cache</span>
+  <span class="keyword">const</span> existing = <span class="keyword">await this</span>.prisma.m02TranslatedText.findFirst({
+    where: { tenantId, entityType, entityId, targetLanguage: targetLang }
+  });
+  
+  <span class="keyword">if</span> (existing) {
+    <span class="keyword">return</span> existing.translatedText; <span class="comment">// Cache hit</span>
+  }
+  
+  <span class="comment">// Translate and cache</span>
+  <span class="keyword">const</span> translatedText = <span class="keyword">await this</span>.translate(originalText, sourceLang, targetLang);
+  <span class="keyword">await this</span>.prisma.m02TranslatedText.create({
+    data: { tenantId, entityType, entityId, sourceLanguage: sourceLang, 
+            targetLanguage: targetLang, originalText, translatedText }
+  });
+  
+  <span class="keyword">return</span> translatedText;
+}
+                </div>
+
+                <h3 class="section-title">🗄️ Database Schema</h3>
+                <div class="database-table">
+                    <h4>m02_translated_texts & m02_workspace_language_settings</h4>
+                    <pre>
+CREATE TABLE m02_translated_texts (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id VARCHAR(255) NOT NULL,
+    source_language VARCHAR(10) NOT NULL,
+    target_language VARCHAR(10) NOT NULL,
+    original_text TEXT NOT NULL,
+    translated_text TEXT NOT NULL,
+    quality_status VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE m02_workspace_language_settings (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL UNIQUE,
+    default_language VARCHAR(50) NOT NULL,
+    fallback_language VARCHAR(50) NOT NULL,
+    supported_languages JSON NOT NULL DEFAULT '[]'::json
+);
+                    </pre>
+                </div>
+
+                <h3 class="section-title">🔌 API Endpoints</h3>
+                <div class="api-endpoint">
+                    <span class="api-method post">POST</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/translation/translate</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method post">POST</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/translation/translate-bulk</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/translation/workspace-settings</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method put">PUT</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/translation/workspace-settings</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Transcriber Detail -->
+        <div id="transcriber" class="feature-section">
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h2 class="feature-title">AI Transcriber - Vocabulary Correction</h2>
+                
+                <h3 class="section-title">📖 How It Works</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">Transcript Upload</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Fetch Raw Transcript</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Fetch Vocabulary Rules</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Apply Corrections (Regex)</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Log Corrections</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Update Transcript</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">Increment Version</div>
+                </div>
+
+                <h3 class="section-title">💻 Key Code Snippet</h3>
+                <div class="code-block">
+applyVocabularyCorrections(rawText: <span class="keyword">string</span>, rules: VocabularyRule[]) {
+  <span class="keyword">let</span> correctedText = rawText;
+  <span class="keyword">const</span> appliedRules = [];
+  
+  <span class="comment">// Sort by length (longest first to avoid conflicts)</span>
+  <span class="keyword">const</span> sortedRules = rules
+    .filter(r => r.isActive)
+    .sort((a, b) => b.incorrectTerm.length - a.incorrectTerm.length);
+  
+  <span class="keyword">for</span> (<span class="keyword">const</span> rule <span class="keyword">of</span> sortedRules) {
+    <span class="comment">// Word-boundary regex matching</span>
+    <span class="keyword">const</span> regex = <span class="keyword">new</span> RegExp(<span class="string">`\\b\${rule.incorrectTerm}\\b`</span>, <span class="string">'gi'</span>);
+    <span class="keyword">const</span> matches = correctedText.match(regex);
+    
+    <span class="keyword">if</span> (matches) {
+      correctedText = correctedText.replace(regex, rule.correctTerm);
+      appliedRules.push({ originalTerm: rule.incorrectTerm, correctedTerm: rule.correctTerm });
+    }
+  }
+  
+  <span class="keyword">return</span> { correctedText, appliedRules };
+}
+                </div>
+
+                <h3 class="section-title">🗄️ Database Schema</h3>
+                <div class="database-table">
+                    <h4>m02_vocabulary_corrections & m02_transcript_corrections</h4>
+                    <pre>
+CREATE TABLE m02_vocabulary_corrections (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    incorrect_term VARCHAR(255) NOT NULL,
+    correct_term VARCHAR(255) NOT NULL,
+    category VARCHAR(50) DEFAULT 'Custom',
+    mispronunciations TEXT[] DEFAULT '{}',
+    variations TEXT[] DEFAULT '{}',
+    language VARCHAR(10) DEFAULT 'en',
+    is_active BOOLEAN DEFAULT true
+);
+
+CREATE TABLE m02_transcript_corrections (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    transcript_id UUID NOT NULL,
+    original_term VARCHAR(255) NOT NULL,
+    corrected_term VARCHAR(255) NOT NULL,
+    applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+                    </pre>
+                </div>
+
+                <h3 class="section-title">🔌 API Endpoints</h3>
+                <div class="api-endpoint">
+                    <span class="api-method post">POST</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/vocabulary/rules</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/vocabulary/rules</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method delete">DELETE</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/vocabulary/rules/:id</span>
+                </div>
+                <div class="api-endpoint">
+                    <span class="api-method get">GET</span>
+                    <span class="api-url">/api/v1/conversation-intelligence/vocabulary/stats</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-Features Detail Section -->
+        <div id="subfeatures" class="feature-section">
+            <h2 class="section-title">🔬 Detailed Sub-Features Explanation</h2>
+            
+            <!-- Searchable Library Sub-Features -->
+            <h3 style="color: #667eea; margin: 30px 0 20px 0; font-size: 1.8em;">🔍 Searchable Library - Sub-Features</h3>
+            
+            <div class="sub-feature-detail">
+                <h3>1. Full-Text Search with Typo Tolerance</h3>
+                <p>Implements fuzzy search using Meilisearch's built-in typo tolerance. Handles misspellings, partial matches, and phonetic variations automatically.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Uses Meilisearch's `typoTolerance` configuration with ranking rules. Falls back to local stemming and Levenshtein distance when Meilisearch is unavailable.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>2. Semantic Search Using Vector Embeddings</h3>
+                <p>Converts text to vector embeddings using AI models, then performs cosine similarity search to find conceptually similar content beyond exact keyword matches.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Uses pgvector for PostgreSQL vector storage. Embeddings generated via AI Services endpoint. Falls back to concept-based keyword mapping when vector search unavailable.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>3. Hybrid Result Blending</h3>
+                <p>Combines results from text search and semantic search using configurable weights (default 0.5/0.5) to provide the most relevant results.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Algorithm: `finalScore = (textScore * textWeight) + (semanticScore * semanticWeight)`. Deduplicates by entity ID, keeps best snippet from either source.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>4. Fuzzy Matching with Stemming</h3>
+                <p>Applies linguistic stemming to reduce words to their root form (e.g., "pricing" → "price") for broader matching capabilities.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Custom stemming function for English. Combined with Levenshtein distance for edit-distance-based matching when exact matches fail.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>5. Advanced Filtering</h3>
+                <p>Multi-dimensional filtering including sentiment (Positive/Negative/Neutral), topic tags, agent name, channel type (call/email), and date ranges with presets.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Filter pipeline applies filters sequentially. Date presets (Today, This week, This month, etc.) converted to actual date ranges before query execution.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>6. Snippet Generation</h3>
+                <p>Extracts relevant context around matched terms to provide users with preview snippets showing why a result matched their query.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Extracts 40 characters before and 60 characters after match point. Truncates at word boundaries for readability.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>7. Multi-Tenant RLS Policies</h3>
+                <p>Row-Level Security ensures all search results are automatically scoped to the requesting tenant's data, preventing cross-tenant data leakage.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>PostgreSQL RLS policies use `app.current_tenant_id` session parameter. All queries include tenant_id in WHERE clause for additional safety.</p>
+                </div>
+            </div>
+
+            <!-- AI Topic Tagger Sub-Features -->
+            <h3 style="color: #667eea; margin: 30px 0 20px 0; font-size: 1.8em;">🏷️ AI Topic Tagger - Sub-Features</h3>
+            
+            <div class="sub-feature-detail">
+                <h3>1. Multi-Provider AI Fallback</h3>
+                <p>Three-tier fallback strategy: Groq (Llama-3.3) → Gemini-2.0 → Keyword-based matching ensures topic tagging works even if primary AI providers fail.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Sequential API calls with try-catch blocks. Each provider uses same prompt structure for consistency. Keyword fallback uses predefined mapping.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>2. Confidence Scoring</h3>
+                <p>Each detected topic assigned a confidence score (0.0-1.0) indicating AI's certainty. Only topics above threshold (default 0.70) are stored.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>AI returns confidence in response. Normalized to 0-1 range. Filtered by threshold before database storage to ensure quality.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>3. Evidence Snippet Extraction</h3>
+                <p>Extracts direct quotes from transcript (max 100 chars) that support the topic detection, providing transparency and audit trail.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>AI instructed to find supporting quotes. Stored in `evidence_snippet` field. Displayed in UI to show why topic was tagged.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>4. Topic Explanation Generation</h3>
+                <p>AI generates 1-2 sentence explanations for why each topic was detected, helping users understand the classification logic.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Part of AI prompt response. Stored in `explanation` field. Provides context for manual review and quality assurance.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>5. Custom Topic Taxonomies</h3>
+                <p>Tenants can define custom topic models with their own taxonomies, descriptions, and categorization (global vs tenant-specific).</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Stored as JSONB in `m02_topic_models.topics`. Each topic has name and optional description. Type field distinguishes global from custom.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>6. Deduplication and Threshold Filtering</h3>
+                <p>Removes duplicate topic assignments and filters out low-confidence detections to maintain quality of topic tags.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Case-insensitive deduplication using Set. Sorted by confidence before filtering. Configurable threshold (default 0.70) allows tuning.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>7. Version Tracking</h3>
+                <p>Topic models track when they were last trained/updated, enabling audit trail and version management of taxonomies.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`last_trained_at` timestamp in topic models. Updated on any taxonomy change. Allows rollback to previous versions if needed.</p>
+                </div>
+            </div>
+
+            <!-- AI Translator Sub-Features -->
+            <h3 style="color: #667eea; margin: 30px 0 20px 0; font-size: 1.8em;">🌐 AI Translator - Sub-Features</h3>
+            
+            <div class="sub-feature-detail">
+                <h3>1. AI-Powered Translation</h3>
+                <p>Uses Groq Llama-3.1-8b-instant model for high-quality translations across multiple languages with context awareness.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Direct API call to Groq chat completions. Temperature 0.3 for consistent output. Prompt engineered to return only translated text.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>2. Database-Based Caching</h3>
+                <p>All translations cached in `m02_translated_texts` table to avoid redundant API calls for the same content.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Cache key: tenantId + entityType + entityId + targetLanguage. Cache checked before API call. Results stored after successful translation.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>3. Workspace Language Settings</h3>
+                <p>Tenant-specific configuration for default language, fallback language, and supported languages for automatic translation.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Stored in `m02_workspace_language_settings`. Auto-created with defaults if not exists. Used by search and detail views.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>4. Bulk Translation Support</h3>
+                <p>Efficiently translates arrays of text in a single API call, reducing overhead for multiple items (e.g., diarized transcripts).</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Single API call with JSON array prompt. Validates array length matches input. Temperature 0.1 for precise array formatting.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>5. Fallback Mechanism</h3>
+                <p>When AI translation fails, returns mock translation with language prefix (e.g., "[ES] original text") to ensure system continues functioning.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Try-catch around API call. On error, returns `[LANG] original_text` format. Sets `fallback: true` flag for bulk operations.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>6. Quality Status Tracking</h3>
+                <p>Tracks translation quality status (success/failure) to monitor AI performance and identify problematic translations.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`quality_status` field in cache table. Currently set to 'success' on successful translation. Can be extended with scoring.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>7. Multi-Entity Support</h3>
+                <p>Translates different entity types: summaries, coaching suggestions, search titles, search snippets, and full transcripts.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`entity_type` field in cache table distinguishes content types. Different caching strategies per entity type if needed.</p>
+                </div>
+            </div>
+
+            <!-- AI Transcriber Sub-Features -->
+            <h3 style="color: #667eea; margin: 30px 0 20px 0; font-size: 1.8em;">📝 AI Transcriber - Sub-Features</h3>
+            
+            <div class="sub-feature-detail">
+                <h3>1. Custom Vocabulary Rules</h3>
+                <p>Users can define custom incorrect→correct term mappings to fix common transcription errors specific to their domain.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Stored in `m02_vocabulary_corrections`. Each rule has incorrect_term, correct_term, category, language. Tenant-scoped for isolation.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>2. Mispronunciation Support</h3>
+                <p>Supports mapping of common mispronunciations to correct terms, capturing variations like "sales-forse" → "Salesforce".</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`mispronunciations` TEXT[] field stores array of mispronunciations. Can be extended to match these in addition to main term.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>3. Term Variations</h3>
+                <p>Supports alternative spellings and variations of terms to handle different transcription styles and accents.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`variations` TEXT[] field stores alternative spellings. Currently stored for future use in matching logic.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>4. Language-Specific Rules</h3>
+                <p>Vocabulary rules can be language-specific, allowing different correction sets for different languages (e.g., English vs Spanish).</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`language` field (default 'en'). Rules filtered by language when applying corrections. Enables multi-language support.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>5. Version Tracking</h3>
+                <p>Tracks correction version for each transcript, enabling audit trail and rollback to previous versions if needed.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>`correction_version` field in calls/emails tables. Increments on each correction. Starts at 0 (uncorrected).</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>6. Correction History Logging</h3>
+                <p>Every correction applied is logged in `m02_transcript_corrections` table with original term, corrected term, and timestamp.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Each replacement creates a record. Enables analytics on most common corrections and audit trail for compliance.</p>
+                </div>
+            </div>
+
+            <div class="sub-feature-detail">
+                <h3>7. Statistics Dashboard</h3>
+                <p>Provides metrics on vocabulary correction usage: total rules, corrections this month, and percentage of enhanced transcripts.</p>
+                <div class="implementation">
+                    <h4>Implementation:</h4>
+                    <p>Aggregates from vocabulary_corrections and transcript_corrections tables. Calculates enhancement percentage from correction_version > 0.</p>
+                </div>
+            </div>
+        </div>
+
+        <footer style="background: white; padding: 30px; border-radius: 15px; margin-top: 30px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+            <h3 style="color: #667eea; margin-bottom: 15px;">📚 Additional Resources</h3>
+            <p style="color: #666; margin-bottom: 10px;">
+                <strong>README Files:</strong>
+            </p>
+            <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <a href="README_SEARCHABLE_LIBRARY.md" style="color: #667eea; text-decoration: none;">Searchable Library</a>
+                <a href="README_AI_TOPIC_TAGGER.md" style="color: #667eea; text-decoration: none;">AI Topic Tagger</a>
+                <a href="README_AI_TRANSLATOR.md" style="color: #667eea; text-decoration: none;">AI Translator</a>
+                <a href="README_AI_TRANSCRIBER.md" style="color: #667eea; text-decoration: none;">AI Transcriber</a>
+            </div>
+            <p style="color: #999; margin-top: 20px; font-size: 0.9em;">
+                R-Revenue Intelligence Platform - M02 Conversation Intelligence Module<br>
+                Generated on: <span id="currentDate"></span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function showFeature(featureId) {
+            // Hide all sections
+            document.querySelectorAll('.feature-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            if (featureId === 'all') {
+                document.getElementById('all-features').classList.add('active');
+            } else {
+                document.getElementById(featureId).classList.add('active');
+            }
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    </script>
+</body>
+</html>
