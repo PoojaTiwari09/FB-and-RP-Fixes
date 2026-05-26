@@ -1,12 +1,6 @@
-import 'reflect-metadata';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
-import * as path   from 'path';
-import * as express from 'express';
-import * as multer  from 'multer';
-import * as fs      from 'fs';
-
-// Load .env before anything else
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule }   from './app.module';

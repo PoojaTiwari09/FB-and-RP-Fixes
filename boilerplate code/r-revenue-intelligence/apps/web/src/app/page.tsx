@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ConversationLibraryView } from "../modules/m02-conversation-intelligence";
-import Link from "next/link";
+import RevenueGraphDashboard from "../modules/m10-data-compliance/components/RevenueGraphDashboard/index";
+import DataCloudDashboard from "../modules/m10-data-compliance/components/DataCloudDashboard/index";
 import {
   LayoutDashboard,
   MessageSquareCode,
@@ -33,7 +34,29 @@ interface CoachingFeedback {
   recommendation: string;
 }
 
-// Mock Data representing M1-M10 modules records
+// ─── M10 Sub-tab Switcher ──────────────────────────────────────────────────────
+function M10TabSwitcher() {
+  const [m10Tab, setM10Tab] = React.useState<'revenue-graph' | 'data-cloud'>('revenue-graph');
+  const btnStyle = (active: boolean): React.CSSProperties => ({
+    background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
+    border: active ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.07)',
+    color: active ? '#818cf8' : '#64748b',
+    padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: active ? 700 : 500,
+    cursor: 'pointer', transition: 'all .2s ease', display: 'flex', alignItems: 'center', gap: 8,
+  });
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <button style={btnStyle(m10Tab === 'revenue-graph')} onClick={() => setM10Tab('revenue-graph')}><span>🕸️</span> Revenue Graph</button>
+        <button style={btnStyle(m10Tab === 'data-cloud')}    onClick={() => setM10Tab('data-cloud')}><span>☁️</span> Data Cloud</button>
+      </div>
+      {m10Tab === 'revenue-graph' && <RevenueGraphDashboard />}
+      {m10Tab === 'data-cloud'    && <DataCloudDashboard />}
+    </div>
+  );
+}
+
+
 const mockCalls = [
   {
     id: "call_001",
@@ -653,173 +676,8 @@ export default function PlatformDashboard() {
 
             </div>
           )}
-<<<<<<< HEAD
                   {/* TAB 2: CALLS & CONVERSATION CI */}
           {/* Note: This tab is now handled conditionally at the top-level main command platform block */}
-=======
-
-          {/* TAB 2: CALLS & CONVERSATION CI */}
-          {activeTab === "calls" && (
-            <div className="grid grid-cols-3 gap-8">
-              
-              {/* Call Library Directory (M1 Ingestion) */}
-              <div className="col-span-1 glass-panel p-6 flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-sm font-bold text-slate-200">M1 Interaction Library</h3>
-                  <p className="text-[11px] text-slate-400">Captured native calls and integrations feed.</p>
-                </div>
-
-                {/* Call Transcription button — redirects to /calls */}
-                <Link
-                  href="/calls"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/15 hover:border-cyan-400/60 text-cyan-400 hover:text-cyan-300 transition-all duration-200 group shadow-sm hover:shadow-cyan-500/10"
-                >
-                  <div className="flex items-center gap-2">
-                    <MessageSquareCode size={14} className="flex-shrink-0" />
-                    <span className="text-xs font-semibold tracking-wide">Call Transcription</span>
-                  </div>
-                  <ArrowRight size={13} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
-                </Link>
-                
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Search transcripts or tracker..."
-                    className="cyber-input pl-9"
-                    defaultValue="Sarah expansion review"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2 mt-2">
-                  {mockCalls.map((call) => {
-                    const isSelected = selectedCall.id === call.id;
-                    return (
-                      <button
-                        key={call.id}
-                        onClick={() => setSelectedCall(call)}
-                        className={`p-4 rounded-lg text-left transition-all border ${
-                          isSelected
-                            ? "bg-slate-900 border-cyan-500/40"
-                            : "bg-slate-900/30 border-slate-900 hover:border-slate-800"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start gap-2 mb-2">
-                          <span className="text-xs font-bold text-slate-200 truncate">{call.title}</span>
-                          <span className={`badge ${call.status === "Processed" ? "badge-cyan" : "badge-amber"}`}>
-                            {call.status}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
-                          <span>{call.date}</span>
-                          <span>Duration: {call.duration}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Call Player, Transcript & Grader (M2 Intelligence) */}
-              <div className="col-span-2 flex flex-col gap-6">
-                
-                {/* Audio player block */}
-                <div className="glass-panel p-6 flex flex-col gap-4 bg-gradient-to-r from-slate-950/60 to-slate-900/40">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-300">{selectedCall.title}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">Attendees: {selectedCall.attendees.join(" • ")}</span>
-                    </div>
-                    <span className="badge badge-purple">M2 CI Graded</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 bg-slate-950/60 p-3 rounded-lg border border-slate-900">
-                    <button
-                      onClick={() => setIsAudioPlaying(!isAudioPlaying)}
-                      className="w-10 h-10 rounded-full bg-cyan-400 hover:bg-cyan-300 flex items-center justify-center text-slate-950 shadow-md shadow-cyan-500/10 cursor-pointer"
-                    >
-                      {isAudioPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
-                    </button>
-                    
-                    <div className="flex-1 flex flex-col gap-1">
-                      <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${audioProgress}%` }} />
-                      </div>
-                      <div className="flex justify-between text-[9px] font-mono text-slate-500">
-                        <span>{isAudioPlaying ? "0:14" : "0:00"}</span>
-                        <span>{selectedCall.duration}</span>
-                      </div>
-                    </div>
-
-                    <Volume2 size={16} className="text-slate-400" />
-                  </div>
-                </div>
-
-                {/* Scorecard Grading Sidebar & Transcript Bubbles */}
-                <div className="grid grid-cols-3 gap-6 flex-1">
-                  
-                  {/* Transcript panel */}
-                  <div className="col-span-2 glass-panel p-6 flex flex-col gap-4 max-h-[360px] overflow-y-auto">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 font-mono border-b border-slate-900 pb-2">
-                      M2 Ingested Transcript
-                    </h4>
-                    
-                    <div className="flex flex-col gap-4">
-                      {selectedCall.transcript.map((item, index) => (
-                        <div key={index} className="flex flex-col gap-1">
-                          <span className="text-[10px] font-mono text-cyan-400 font-bold">{item.speaker}</span>
-                          <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/30 p-2.5 rounded border border-slate-900/80">
-                            {item.text}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Grading details */}
-                  <div className="col-span-1 glass-panel p-6 flex flex-col gap-4">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 font-mono border-b border-slate-900 pb-2">
-                      M2 CI Scorecard
-                    </h4>
-
-                    <div className="flex items-center justify-between p-3 rounded bg-purple-500/5 border border-purple-500/20">
-                      <span className="text-xs text-slate-300">Auditor Grade:</span>
-                      <span className="text-sm font-black text-purple-400">{selectedCall.scorecard.auditorGrade}</span>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[10px] font-mono uppercase text-slate-500">Extracted Themes:</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {selectedCall.scorecard.themes.map((theme, i) => (
-                          <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 font-medium">
-                            {theme}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 mt-2">
-                      <span className="text-[10px] font-mono uppercase text-slate-500">Buying Signals:</span>
-                      <div className="flex flex-col gap-1">
-                        {selectedCall.scorecard.buyingSignals.map((sig, i) => (
-                          <div key={i} className="flex items-center gap-2 text-xs text-slate-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            <span>{sig}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-          )}
->>>>>>> origin/Backend-development-and-integration
 
           {/* TAB 3: M3 AI SMART BRIEFINGS & CHAT */}
           {activeTab === "summaries" && (
@@ -1453,111 +1311,8 @@ export default function PlatformDashboard() {
 
           {/* TAB 8: M10 GOVERNANCE & DATA CLOUD */}
           {activeTab === "compliance" && (
-            <div className="grid grid-cols-2 gap-8">
-              
-              {/* Compliance Policy Toggle Panel */}
-              <div className="glass-panel p-6 flex flex-col gap-6 h-fit">
-                <div className="flex justify-between items-center border-b border-slate-900 pb-3">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck size={16} className="text-emerald-400" />
-                    <h3 className="text-sm font-bold text-slate-200">M10 Compliance Controls</h3>
-                  </div>
-                  <span className="badge badge-emerald">Active Governance</span>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {[
-                    { label: "GDPR Regional Enforcement", desc: "Require explicit opt-in consent parameters for EU contacts prior to sales messaging.", val: gdprToggle, set: setGdprToggle },
-                    { label: "CCPA Restriction Gates", desc: "Automatically sync opt-out sale flags and prevent California contact dispatches.", val: ccpaToggle, set: setCcpaToggle },
-                    { label: "Fail-Closed Safety Mode", desc: "Immediately block actions if contact communication opt-out state is missing or timed out.", val: failClosedToggle, set: setFailClosedToggle }
-                  ].map((policy, i) => (
-                    <div key={i} className="p-4 rounded-lg bg-slate-900/60 border border-slate-800/80 flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1 overflow-hidden">
-                        <span className="text-xs font-bold text-slate-200">{policy.label}</span>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">{policy.desc}</p>
-                      </div>
-                      
-                      <label className="cyber-switch flex-shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={policy.val}
-                          onChange={(e) => policy.set(e.target.checked)}
-                        />
-                        <span className="cyber-slider" />
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Data Cloud Warehouse Connector sync */}
-              <div className="flex flex-col gap-6">
-                
-                {/* Connector stats card */}
-                <div className="glass-panel p-6 flex flex-col gap-4 bg-gradient-to-tr from-slate-950/60 to-slate-900/30">
-                  <div className="flex justify-between items-center border-b border-slate-900 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Database size={16} className="text-cyan-400 animate-beacon" />
-                      <h3 className="text-sm font-bold text-slate-200">M10 Data Cloud Adapter</h3>
-                    </div>
-                    <span className="badge badge-cyan">Snowflake</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded bg-slate-900 border border-slate-800 flex flex-col gap-1">
-                      <span className="text-[9px] font-mono text-slate-500 uppercase">Export status:</span>
-                      <span className="text-xs font-bold text-slate-200">{isExporting ? "Synchronizing..." : exportStatus}</span>
-                    </div>
-
-                    <div className="p-3 rounded bg-slate-900 border border-slate-800 flex flex-col gap-1">
-                      <span className="text-[9px] font-mono text-slate-500 uppercase">Checkpoint cursor:</span>
-                      <span className="text-xs font-bold text-emerald-400 font-mono">2026-05-19 02:00 UTC</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end mt-2">
-                    <button
-                      onClick={runDataCloudSync}
-                      disabled={isExporting}
-                      className="btn-cyber btn-cyber-cyan cursor-pointer"
-                    >
-                      {isExporting ? <RefreshCw size={12} className="animate-spin text-cyan-400" /> : <RefreshCw size={12} />}
-                      <span>Trigger Daily Export Job</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Ingestion logs */}
-                <div className="glass-panel p-5 flex flex-col gap-3 h-56 bg-slate-950/80">
-                  <div className="flex items-center gap-2 border-b border-slate-900 pb-2">
-                    <Lock size={12} className="text-slate-500" />
-                    <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">Lock & Sync Execution Ledger</span>
-                  </div>
-
-                  <div className="flex-grow overflow-y-auto flex flex-col gap-1.5 font-mono text-[9px] leading-relaxed pr-2 text-slate-400">
-                    {exportLogs.length === 0 ? (
-                      <span className="text-slate-600 text-center block pt-8">Click &quot;Trigger Daily Export Job&quot; to see the active sync process simulation.</span>
-                    ) : (
-                      exportLogs.map((log, i) => (
-                        <div
-                          key={i}
-                          className={`p-1.5 rounded ${
-                            log.startsWith("✓")
-                              ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-400 font-bold border"
-                              : log.includes("Lock acquired")
-                              ? "bg-cyan-950/20 border-cyan-500/20 text-cyan-400 border"
-                              : "bg-slate-900/30 text-slate-400"
-                          }`}
-                        >
-                          {log}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
+            <div className="w-full h-full overflow-y-auto">
+              <M10TabSwitcher />
             </div>
           )}
 
