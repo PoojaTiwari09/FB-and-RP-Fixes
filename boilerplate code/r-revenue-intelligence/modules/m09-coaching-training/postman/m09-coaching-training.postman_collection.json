@@ -1,0 +1,516 @@
+{
+  "info": {
+    "_postman_id": "6bd46d50-9e0d-4d92-a9ff-9a0f52494fd3",
+    "name": "M09 Coaching Training API",
+    "description": "Postman collection for the m09-coaching-training NestJS service. Start with the Test folder to seed users/scenarios, generate a token, then use the Sessions, Scenarios, Analytics, Coaching, and Training requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4001/api"
+    },
+    {
+      "key": "repId",
+      "value": "rep-xyz"
+    },
+    {
+      "key": "managerId",
+      "value": "manager-abc"
+    },
+    {
+      "key": "orgId",
+      "value": "org-123"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "scenarioId",
+      "value": "scenario-1"
+    },
+    {
+      "key": "voiceId",
+      "value": "Xb7hH8MSUJpSbSDYk0k2"
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "assignmentId",
+      "value": ""
+    },
+    {
+      "key": "noteId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Test Setup",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/test/health"
+          }
+        },
+        {
+          "name": "Seed Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.repId) pm.collectionVariables.set('repId', data.repId);",
+                  "if (data.managerId) pm.collectionVariables.set('managerId', data.managerId);",
+                  "if (data.orgId) pm.collectionVariables.set('orgId', data.orgId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/test/seed"
+          }
+        },
+        {
+          "name": "Generate Rep Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{repId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/test/token"
+          }
+        },
+        {
+          "name": "Generate Manager Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{managerId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/test/token"
+          }
+        },
+        {
+          "name": "Smoke Test",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/test/smoke"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Get Voices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/sessions/get-voices"
+          }
+        },
+        {
+          "name": "List My Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions"
+          }
+        },
+        {
+          "name": "List Completed Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/my"
+          }
+        },
+        {
+          "name": "Start Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.sessionId) pm.collectionVariables.set('sessionId', data.sessionId);",
+                  "if (data.id) pm.collectionVariables.set('sessionId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenarioId\": \"{{scenarioId}}\",\n  \"voiceId\": \"{{voiceId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/sessions/start"
+          }
+        },
+        {
+          "name": "Get Session By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{sessionId}}"
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"message\": \"We help reduce ramp time and improve rep consistency. What matters most to you right now?\"\n}"
+            },
+            "url": "{{baseUrl}}/sessions/message"
+          }
+        },
+        {
+          "name": "Send Message Alias Text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"text\": \"Can you share your biggest concern about budget or rollout effort?\"\n}"
+            },
+            "url": "{{baseUrl}}/sessions/message"
+          }
+        },
+        {
+          "name": "End Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/sessions/end"
+          }
+        },
+        {
+          "name": "Retry Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/sessions/retry"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scenarios",
+      "item": [
+        {
+          "name": "List Scenarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/scenarios"
+          }
+        },
+        {
+          "name": "Get Scenario By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/scenarios/{{scenarioId}}"
+          }
+        },
+        {
+          "name": "Create Scenario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"persona_name\": \"Budget Ben\",\n  \"persona_type\": \"skeptical-buyer\",\n  \"difficulty\": \"intermediate\",\n  \"context_text\": \"You are a cautious buyer who worries about budget, ROI, and implementation risk.\",\n  \"custom_prompt\": \"Challenge vague ROI claims and ask for a concrete rollout plan.\",\n  \"voice_id\": \"{{voiceId}}\",\n  \"target_skills\": [\"discovery\", \"objection_handling\"],\n  \"evaluation_focus\": \"discovery depth\",\n  \"objection_style\": \"budget-heavy\",\n  \"personality_traits\": \"skeptical, analytical\"\n}"
+            },
+            "url": "{{baseUrl}}/scenarios"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "My Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/analytics/my"
+          }
+        },
+        {
+          "name": "My Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/analytics/my-notes"
+          }
+        },
+        {
+          "name": "My Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/analytics/my-assignments"
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/analytics/dashboard"
+          }
+        },
+        {
+          "name": "Team Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/analytics/team"
+          }
+        },
+        {
+          "name": "Training Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/analytics/training-report"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coaching",
+      "item": [
+        {
+          "name": "Get Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/coaching/notes"
+          }
+        },
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/coaching/recommendations"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Training",
+      "item": [
+        {
+          "name": "Get Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/training/assignments"
+          }
+        },
+        {
+          "name": "Create Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repIds\": [\"{{repId}}\"],\n  \"scenarioId\": \"{{scenarioId}}\",\n  \"deadline\": \"2026-06-01T10:00:00.000Z\",\n  \"priority\": \"High\"\n}"
+            },
+            "url": "{{baseUrl}}/training/assignments"
+          }
+        }
+      ]
+    }
+  ]
+}

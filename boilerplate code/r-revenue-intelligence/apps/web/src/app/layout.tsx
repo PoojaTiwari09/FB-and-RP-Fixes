@@ -21,6 +21,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+import SessionSync from "@/modules/m05-account-intelligence/components/SessionSync";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,8 +30,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={plusJakartaSans.variable}>
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
       <body style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
-        <div className="cyber-grid" />
+        <SessionSync />
         {children}
       </body>
     </html>

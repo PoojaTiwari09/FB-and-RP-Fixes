@@ -97,5 +97,8 @@ jobs:
           SCHEMA_FILE="packages/database/prisma/schema.prisma"
           echo "Auditing Prisma schema models for Tenant Isolation..."
           
+          # Generate Prisma Client types before building
+          pnpm --filter database run db:generate
+
           # Compile NestJS api
           pnpm --filter api run build

@@ -36,8 +36,9 @@
 html,
 body {
   width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--text-primary);
   background: var(--bg-dark);
   font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
