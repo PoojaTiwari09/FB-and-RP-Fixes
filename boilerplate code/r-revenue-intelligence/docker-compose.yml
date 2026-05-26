@@ -30,9 +30,7 @@ services:
       - "9000:9000"
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    build: ./apps/api
     ports:
       - "3001:3001"
     depends_on:
@@ -50,6 +48,7 @@ services:
       - "8000:8000"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY}
 
 volumes:
   pgdata:

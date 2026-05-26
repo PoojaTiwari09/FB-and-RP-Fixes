@@ -3,7 +3,7 @@ packages:
   - packages/*
   - modules/*
 
-ignoredBuiltDependencies:
+onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/client'
   - '@prisma/engines'

@@ -1,17 +1,132 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model M09CoachingTrainingRecord {
-  id        String   @id @default(uuid())
-  tenantId  String
-  name      String
-  createdAt DateTime @default(now())
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  name                String?
+  role                String               // 'admin' | 'manager' | 'rep' | 'org_admin'
+  status              String               @default("active")
+  org_id              String
+  manager_id          String?
+  password            String?
+  created_at          DateTime             @default(now())
 
-  @@map("m09_coaching_training")
+  // Relations
+  sessionsAsRep       TrainingSession[]    @relation("RepSessions")
+  notesAsManager      TrainingSession[]    @relation("ManagerNotes")
+  assignmentsAsRep    TrainingAssignment[] @relation("RepAssignments")
+  assignmentsAsMgr    TrainingAssignment[] @relation("ManagerAssignments")
+  recommendations     CoachingRecommendation[]
+  coachingNotesAsRep  CoachingNote[]       @relation("RepCoachingNotes")
+  coachingNotesAsMgr  CoachingNote[]       @relation("ManagerCoachingNotes")
+}
+
+model TrainingScenario {
+  id                  String               @id @default(uuid())
+  org_id              String
+  persona_name        String
+  persona_type        String
+  context_text        String
+  difficulty          String               // 'beginner' | 'intermediate' | 'advanced'
+  custom_prompt       String?
+  voice_id            String?
+  manager_id          String?
+  created_at          DateTime             @default(now())
+
+  // Relations
+  sessions            TrainingSession[]
+  assignments         TrainingAssignment[]
+}
+
+model TrainingSession {
+  id                  String               @id @default(uuid())
+  rep_id              String
+  scenario_id         String
+  manager_id          String?
+  messages_json       Json                 // Array of IChatMessage
+  feedback_json       Json?                // Scorecard, metrics or coaching note
+  selected_voice_id   String?
+  completed_at        DateTime?
+  created_at          DateTime             @default(now())
+  is_practice         Boolean              @default(false)
+  hints_used          Int                  @default(0)
+
+  // Relations
+  rep                 User                 @relation("RepSessions", fields: [rep_id], references: [id])
+  manager             User?                @relation("ManagerNotes", fields: [manager_id], references: [id])
+  scenario            TrainingScenario     @relation(fields: [scenario_id], references: [id])
+  assignments         TrainingAssignment[]
+}
+
+model TrainingAssignment {
+  id                  String               @id @default(uuid())
+  rep_id              String
+  scenario_id         String
+  manager_id          String
+  session_id          String?
+  status              String               @default("Pending") // 'Pending' | 'In Progress' | 'Completed'
+  priority            String               @default("Medium")  // 'Low' | 'Medium' | 'High'
+  deadline            DateTime
+  assigned_at         DateTime             @default(now())
+  completed_at        DateTime?
+  attempt_count       Int                  @default(0)
+  max_attempts        Int?                 @default(3)
+  max_hints           Int?                 @default(5)
+  best_score          Int                  @default(0)
+  best_session_id     String?
+  manager_score       Int?
+  manager_note        String?
+
+  // Relations
+  rep                 User                 @relation("RepAssignments", fields: [rep_id], references: [id])
+  scenario            TrainingScenario     @relation(fields: [scenario_id], references: [id])
+  manager             User                 @relation("ManagerAssignments", fields: [manager_id], references: [id])
+  session             TrainingSession?     @relation(fields: [session_id], references: [id])
+}
+
+model CoachingRecommendation {
+  id                  String               @id @default(uuid())
+  rep_id              String
+  focus_area          String
+  weakest_skill       String
+  recommendation_text String
+  suggested_action    String
+  priority            String               @default("Medium")
+  status              String               @default("active")
+  generated_at        DateTime             @default(now())
+
+  // Relations
+  rep                 User                 @relation(fields: [rep_id], references: [id])
+}
+
+model CoachingNote {
+  id                  String               @id @default(uuid())
+  rep_id              String
+  manager_id          String?
+  org_id              String
+  content             String
+  priority            String               @default("Medium")
+  is_agent_generated  Boolean              @default(false)
+  weakest_skill       String?
+  created_at          DateTime             @default(now())
+
+  // Relations
+  rep                 User                 @relation("RepCoachingNotes", fields: [rep_id], references: [id])
+  manager             User?                @relation("ManagerCoachingNotes", fields: [manager_id], references: [id])
+}
+
+model AiVoice {
+  id                  String               @id
+  name                String
+  is_active           Boolean              @default(true)
+
+  @@map("ai_voices")
 }

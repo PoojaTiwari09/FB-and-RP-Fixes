@@ -1,0 +1,4 @@
+﻿C:\Users\Relanto\Desktop\Multilingual_ChatBot\venv\Lib\site-packages\pip\_vendor\urllib3\util\proxy.py
+C:\Users\Relanto\Desktop\Multilingual_ChatBot\venv\Lib\site-packages\torch\fx\proxy.py
+C:\Users\Relanto\Desktop\Multilingual_ChatBot\venv\Lib\site-packages\urllib3\util\proxy.py
+C:\Users\Relanto\Desktop\Multilingual_ChatBot\venv\Lib\site-packages\websockets\proxy.py
