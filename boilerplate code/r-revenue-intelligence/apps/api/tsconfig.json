@@ -15,6 +15,30 @@
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
+    "target": "ES2022",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@/services/*": ["../modules/m04-deal-intelligence/services/*"],
+      "@/controllers/*": ["../modules/m04-deal-intelligence/controllers/*"],
+      "@/entities/*": ["../modules/m04-deal-intelligence/entities/*"],
+      "@/schemas/*": ["../modules/m04-deal-intelligence/schemas/*"],
+      "@/guards/*": ["../modules/m04-deal-intelligence/guards/*"],
+      "@/interfaces/*": ["../modules/m04-deal-intelligence/interfaces/*"],
+      "@/decorators/*": ["../modules/m04-deal-intelligence/decorators/*"],
+      "@/repositories/*": ["../modules/m04-deal-intelligence/repositories/*"],
+      "@/middleware/*": ["../modules/m04-deal-intelligence/middleware/*"]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false
+  },
+  "exclude": ["../modules/**", "node_modules", "dist"]
     "baseUrl": ".",
     "paths": {},
     "types": ["node", "jest"]

@@ -1,0 +1,126 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Session,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
+import { AuthService } from '@/services/auth.service';
+import { LoginDto, RegisterDto, AuthResponseDto, UserResponseDto } from '@/schemas';
+import { AuthGuard } from '@/guards/auth.guard';
+import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+
+@ApiTags('Authentication')
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  @ApiOperation({
+    summary: 'Register a new user',
+    description: 'Create a new user account with email and password',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully registered',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User with this email already exists',
+  })
+  async register(@Body() registerDto: RegisterDto): Promise<UserResponseDto> {
+    return this.authService.register(registerDto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Login user',
+    description: 'Authenticate user with email and password, creates a session',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials',
+  })
+  async login(
+    @Body() loginDto: LoginDto,
+    @Session() session: Record<string, any>,
+  ): Promise<AuthResponseDto> {
+    const user = await this.authService.login(loginDto, session.id);
+
+    // Store user ID in session
+    session.userId = user.id;
+
+    return {
+      message: 'Login successful',
+      user,
+    };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Logout user',
+    description: 'Destroy the current session and logout the user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Logout successful',
+  })
+  async logout(@Session() session: Record<string, any>): Promise<{ message: string }> {
+    await this.authService.logout(session.id);
+    session.destroy();
+
+    return {
+      message: 'Logout successful',
+    };
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Get current user',
+    description: 'Get the currently authenticated user details',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user details',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated',
+  })
+  async getCurrentUser(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
+    const user = await this.authService.getUserById(req.user.id);
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isActive: user.isActive,
+      lastLoginAt: user.lastLoginAt,
+    };
+  }
+}
