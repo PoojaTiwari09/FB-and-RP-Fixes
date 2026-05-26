@@ -1,144 +1,105 @@
-# R-Revenue Intelligence Monorepo Boilerplate
+# R-Revenue Intelligence Platform 🚀
 
-Welcome to the **R-Revenue Intelligence Platform**—an enterprise-grade AI-powered revenue intelligence platform built to capture customer interactions across the full sales lifecycle and convert them into structured business insights.
-
-This repository uses a high-performance **pnpm workspaces** and **Turborepo** monorepo layout, integrating NestJS, Python FastAPI, and Next.js SPA clients into a single, unified codebase.
+Welcome to the **R-Revenue Intelligence Platform**, an advanced, full-stack Monorepo designed to act as a futuristic enterprise revenue operations command center. This platform provides deep conversational intelligence, AI-driven insights, hybrid search, and actionable CRM analytics.
 
 ---
 
-## 🛠️ Repository Quick-Start
+## 📖 What is this platform?
 
-1. **Initialize Git**:
-   ```bash
-   git init
-   git remote add origin <your-github-repo-url>
-   git checkout -b develop
-   ```
+In simple terms, this platform is a "Search Engine for Revenue Teams." It records, transcribes, and analyzes sales calls, emails, and meetings. It then provides a **Searchable Conversation Library** where sales reps and managers can easily search, filter, and review historical conversations to gain insights, coach their teams, and close more deals.
 
-2. **Commit & Push Initial Scaffold**:
-   ```bash
-   git add .
-   git commit -m "chore: scaffold modular monolith boilerplate with platform core and 10 modules"
-   git push -u origin develop
-   ```
+Think of it as a blend of **Gong.io** (conversational analytics) and an advanced AI Search Engine!
 
 ---
 
-## 💻 Local Development Setup (Dual-Approach Options)
+## ✨ Core Features & What it Does
 
-You can run the entire platform locally utilizing one of the two following approaches, depending on your system resources and configuration preferences:
+### 1. 🔍 Searchable Conversation Library
+A central hub where all interactions (Sales Calls & Emails) are stored. You can search for specific words or phrases mentioned in calls across your entire organization.
 
-### 🐳 Option A: With Docker (Recommended)
-This approach leverages containerized services to run the entire backend and database infrastructure out-of-the-box with a single command.
+### 2. 🧠 Hybrid AI Search (Text + Semantic)
+We don't just match exact keywords. The platform uses a dual-engine hybrid search:
+- **Full-Text Search:** Finds exact word matches (e.g., "Pricing").
+- **Semantic Vector Search:** Uses AI to understand the *meaning* behind your search. If you search for "Costing," it will also pull up conversations discussing "Pricing," "Discounts," or "Financials."
 
-1. **Spin up local infrastructure and application containers**:
-   ```bash
-   # In the repository root
-   docker-compose up -d
-   ```
-   *This starts Postgres (with `pgvector` on port 5432), Redis (on port 6379), Meilisearch (on port 7700), ClickHouse (on port 8123/9000), and all backend microservices.*
+### 3. 🎛️ Advanced Deal & Call Filters
+Filter through thousands of calls in seconds using deep metadata:
+- **CRM Context:** Filter by Deal Stage (Prospecting, Discovery, Closed Won, etc.).
+- **Call Metadata:** Filter by Duration, Call Direction (Inbound/Outbound), and Media Type.
+- **AI Classification:** Filter by AI-detected Call Topics and Sentiment (Positive, Neutral, Negative).
+- **Interaction Metrics:** Filter by Talk Ratio (Rep vs. Customer) and the number of questions asked.
 
-2. **Sync the Database Schema**:
-   Prisma compiles database queries at the runtime layer. Generate the client typings and push the master schema to your local Postgres container:
-   ```bash
-   # Compile schemas and types globally
-   pnpm --workspace-concurrency=1 -r db:generate
-   
-   # Push master schema to local DB
-   npx prisma db push --schema=packages/database/prisma/schema.prisma
-   ```
+### 4. 📊 Dynamic Sorting
+Instantly sort your filtered conversations by:
+- **Date** (Most recent calls first)
+- **Duration** (Longest calls first)
+- **QA Score** (Highest scoring calls first)
 
-3. **Access Services locally**:
-   * **Frontend PanelSPA**: `http://localhost:3000`
-   * **NestJS Gateway API**: `http://localhost:3001`
-   * **FastAPI AI Server**: `http://localhost:8000`
+### 5. 💾 Gong-Style CSV Export
+Need the data in Excel? You can export the active, filtered list of conversations directly to a CSV file. The export allows you to pick specific columns (Call Metadata, CRM Fields, Tracker Data, Interaction Metrics) and generates the file instantly.
 
 ---
 
-### 🔌 Option B: Without Docker (Native Host Setup)
-If you prefer not to run Docker or want to avoid local container virtualization overhead, you can run all services natively on your host machine.
+## 🛠️ Tech Stack & Architecture
 
-#### **Prerequisites**:
-- Install **Node.js 20 LTS** and **pnpm** globally.
-- Install **Python 3.11** globally (required for AI and transcription services).
-- Install and start **PostgreSQL** natively (or point to a free remote DB like Supabase/Neon).
-- Install and start **Redis** natively (or point to a cloud service like Upstash).
+This is a modern, enterprise-grade Modular Monolith (Monorepo) managed by **TurboRepo**.
 
-#### **Setup & Run Steps**:
+### Frontend (Client-side)
+- **Next.js 14** (App Router) & **React**
+- **Vanilla CSS** with a custom "Light Mode Slate" design system (`globals.css`)
+- **Lucide Icons** for beautiful, scalable UI graphics
 
-1. **Configure local environment variables**:
-   Create a `.env` file in your repository root directory and define the native connection strings:
-   ```env
-   # Local or Cloud Postgres Connection
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/revenue_intel?schema=public"
-
-   # Local or Cloud Redis Host configuration
-   REDIS_HOST="localhost"
-   REDIS_PORT="6379"
-
-   # FastAPI Endpoint
-   AI_SERVICE_URL="http://localhost:8000"
-   ```
-
-2. **Initialize Database Typings & Tables**:
-   Push the global shared schema models directly to your native/cloud PostgreSQL instance:
-   ```bash
-   # Run sequential generator typings
-   pnpm --workspace-concurrency=1 -r db:generate
-   
-   # Synchronize models with your target DB instance
-   npx prisma db push --schema=packages/database/prisma/schema.prisma
-   ```
-
-3. **Launch the Node applications**:
-   ```bash
-   # Install monorepo dependencies
-   pnpm install
-   
-   # Launch Next.js and NestJS API in parallel
-   pnpm dev
-   ```
-
-4. **Launch the Python FastAPI AI Service**:
-   Open a separate terminal window and run:
-   ```bash
-   cd apps/ai-services
-   python -m venv venv
-   source venv/bin/activate  # (On Windows: venv\Scripts\activate)
-   pip install -r requirements.txt
-   uvicorn app.main:app --port 8000 --reload
-   ```
+### Backend (Server-side)
+- **NestJS** framework for scalable backend architecture
+- **Prisma ORM** for database interactions
+- **PostgreSQL** with **pgvector** extension for AI vector embeddings and semantic search
 
 ---
 
-## 📦 Monorepo Workspace Directory Layout
+## 🚀 How to Run the Application Locally
+
+The project is built to run effortlessly using `pnpm`.
+
+### 1. Navigate to the App Directory
+Open your terminal and navigate to the project root:
+```bash
+cd "boilerplate code\r-revenue-intelligence"
+```
+
+### 2. Install Dependencies (If you haven't already)
+```bash
+pnpm install
+```
+
+### 3. Start the Development Server
+Run this single command to start both the Frontend and Backend simultaneously:
+```bash
+pnpm dev
+```
+*(You can also use `pnpm run dev`)*
+
+### 4. Access the Platform
+Once the server is running, open your web browser and go to:
+👉 **[http://localhost:3000](http://localhost:3000)**
+
+You will land directly on the fully-styled Revenue Portal command center!
+
+---
+
+## 📂 Project Structure
 
 ```text
 r-revenue-intelligence/
 ├── apps/
-│   ├── web/               # Next.js 14 SPA Dashboard
-│   ├── api/               # NestJS Core Gateway Orchestrator
-│   └── ai-services/       # FastAPI Python AI/ML Inference engine
-├── modules/               # Root-level Decoupled Monorepo Workspaces
-│   ├── platform-core/     # Global Core Auth, JWT guards, Central Prisma services
-│   └── m01-m10/           # Features code workspaces (M1 Capture through M10 Compliance)
-└── packages/
-    ├── database/          # Central database base models and migrations
-    └── shared-types/      # Centralized Event schemas & DTO bindings
+│   └── web/                   # Next.js Frontend Application
+│       ├── src/app/           # Routing & Global Styles (globals.css)
+│       └── src/modules/       # Feature Modules (e.g., m02-conversation-intelligence)
+├── modules/                   # NestJS Backend Modules
+│   └── m02-conversation-intelligence/  # Core logic for Hybrid Search & Database
+├── database/                  # Prisma Schemas and Seed Data
+├── package.json               # Root dependencies
+└── turbo.json                 # Turborepo build pipeline config
 ```
 
 ---
-
-## 🎯 Modular Sprint Development Workflow
-
-To prevent workspace conflicts during parallel development across our module teams, adhere strictly to the following Git branching guidelines:
-
-1. **Base branches**:
-   * `main`: Reflects the production state. Never commit directly to `main`.
-   * `develop`: Active monorepo integration target.
-2. **Module Integration Branches (`module/mX-*`)**:
-   * Each team works within one persistent sprint staging branch (e.g. `module/m04-deal-intelligence`).
-3. **Feature branches**:
-   * Cut individual feature branches directly from your parent `module/mX-*` branch (e.g. `feature/m4-RRI-401-deals-board-ui`).
-   * When complete, open a PR to merge back into `module/mX-*`.
-   * Once fully integrated and stable, the Tech Lead merges `module/mX-*` into the main `develop` branch.
+*Built by the Technical Architecture & Relanto Engineering Team.*

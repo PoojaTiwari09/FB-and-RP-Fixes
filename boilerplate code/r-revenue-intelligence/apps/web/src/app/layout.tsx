@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import "../modules/m03-ai-summaries-genai/app/globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-inter",
+});
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -9,17 +16,16 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "R-Revenue Intelligence — Boilerplate Platform Hub",
-  description: "Futuristic enterprise revenue operations command center driving capturing, deep conversation intelligence, AI summaries, deal drivers, forecasting, and cross-cutting GDPR/CCPA data compliance.",
-  keywords: ["Revenue Intelligence", "Next.js 14", "Modular Monolith", "Speech-to-Text", "RAG", "Data Export"],
-  authors: [{ name: "Technical Architecture Team & Relanto Engineering" }],
+  title: "R-Revenue Intelligence Platform",
+  description: "Enterprise-grade AI-powered revenue intelligence platform",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#02040c",
   width: "device-width",
   initialScale: 1,
 };
+
+import SessionSync from "@/modules/m05-account-intelligence/components/SessionSync";
 
 export default function RootLayout({
   children,
@@ -27,9 +33,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
-      <body style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
-        <div className="cyber-grid" />
+    <html lang="en" className={`${inter.variable} ${plusJakartaSans.variable}`}>
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body style={{ fontFamily: "var(--font-inter), var(--font-plus-jakarta), Inter, sans-serif", background: "#f9fafb" }}>
+        <SessionSync />
         {children}
       </body>
     </html>

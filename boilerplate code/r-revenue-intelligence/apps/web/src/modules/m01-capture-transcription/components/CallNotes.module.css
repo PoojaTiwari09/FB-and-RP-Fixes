@@ -1,0 +1,19 @@
+.wrapper { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.header { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+.inputRow { display: flex; gap: 8px; align-items: flex-start; }
+.textarea { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #e2e8f0; font-size: 14px; padding: 10px 12px; resize: vertical; outline: none; font-family: inherit; }
+.textarea:focus { border-color: #6366f1; }
+.saveBtn { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cancelBtn { background: rgba(255,255,255,0.06); color: #94a3b8; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.noteCard { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px; }
+.noteText { margin: 0 0 8px; font-size: 14px; color: #cbd5e1; line-height: 1.6; }
+.noteMeta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #475569; }
+.noteActions { display: flex; gap: 8px; }
+.actionBtn { background: none; border: none; cursor: pointer; font-size: 12px; color: #64748b; padding: 0; }
+.actionBtn:hover { color: #94a3b8; }
+.actionBtn.danger:hover { color: #ef4444; }
+.editRow { display: flex; flex-direction: column; gap: 8px; }
+.editActions { display: flex; gap: 8px; }
+.empty { text-align: center; color: #475569; font-size: 13px; padding: 16px; }
