@@ -1,0 +1,182 @@
+.app {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: var(--header-h);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.breadHome {
+  color: var(--text3);
+}
+
+.breadSep {
+  color: var(--text3);
+}
+
+.breadCurrent {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.apiStatus {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text2);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  transition: all 0.15s;
+}
+
+.apiStatus:hover {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.apiDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.apiConnected { background: var(--green); }
+.apiDisconnected { background: var(--red); }
+
+.apiEdit {
+  font-size: 13px;
+  color: var(--text3);
+  margin-left: 2px;
+}
+
+/* Loading banner */
+.loadingBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  height: 30px;
+  font-size: 12px;
+  color: #3ECF8E;
+  background: rgba(62, 207, 142, 0.06);
+  border-bottom: 1px solid rgba(62, 207, 142, 0.15);
+  flex-shrink: 0;
+}
+
+.loadingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3ECF8E;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Schema-missing banner */
+.schemaBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: rgba(251, 191, 36, 0.08);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.schemaIcon {
+  font-size: 15px;
+  flex-shrink: 0;
+  color: #fbbf24;
+}
+
+.schemaText {
+  flex: 1;
+  font-size: 12.5px;
+  color: #d9a72a;
+  line-height: 1.4;
+  min-width: 200px;
+}
+.schemaText strong { color: #fbbf24; }
+
+.schemaBtns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.schemaBtn {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.schemaBtn:hover { background: rgba(251, 191, 36, 0.25); }
+
+.schemaReconnect {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #7e8fa8;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.schemaReconnect:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.apiWarning { background: #fbbf24; }
+
+/* Content area */
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
