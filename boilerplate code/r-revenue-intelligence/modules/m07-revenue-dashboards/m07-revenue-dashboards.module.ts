@@ -1,20 +1,17 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
-import { M07RevenueDashboardsController } from './controllers/m07.controller';
-import { M07RevenueDashboardsService } from './services/m07.service';
-import { M07RevenueDashboardsWorker } from './workers/m07.worker';
-import { M07RevenueDashboardsRepository } from './repositories/m07.repository';
+import { PassportModule } from '@nestjs/passport';
+import { M07DealAccountController } from './controllers/m07.controller';
+import { M07DealAccountService } from './services/m07.service';
+import { JwtStrategy } from './auth/jwt.strategy';
 import { PrismaModule } from './database/prisma.module';
-import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
 
 @Module({
   imports: [
     PrismaModule,
-    EventPublisherModule,
-    BullModule.registerQueue({ name: 'm07-queue' }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
-  controllers: [M07RevenueDashboardsController],
-  providers: [M07RevenueDashboardsService, M07RevenueDashboardsWorker, M07RevenueDashboardsRepository],
-  exports: [M07RevenueDashboardsService],
+  controllers: [M07DealAccountController],
+  providers: [M07DealAccountService, JwtStrategy],
+  exports: [M07DealAccountService],
 })
 export class M07RevenueDashboardsModule {}

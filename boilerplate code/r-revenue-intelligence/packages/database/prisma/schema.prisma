@@ -1,21 +1,462 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema", "postgresqlExtensions"]
+  output          = "../node_modules/.prisma/client"
+}
+
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [pgvector(map: "vector", schema: "public")]
-}
-
-generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  extensions = [vector]
+  schemas    = ["dashboards", "public"]
 }
 
 // ─────────────────────────────────────────────────────────────
 // Platform Core
 // ─────────────────────────────────────────────────────────────
 model Tenant {
+  id         String      @id @default(cuid())
+  name       String
+  slug       String      @unique
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  accounts   Account[]
+  calls      Call[]
+  dashboards Dashboard[]
+  datasets   Dataset[]
+  deals      Deal[]
+  users      User[]
+
+  @@schema("public")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  name         String
+  role         UserRole
+  dashboards   Dashboard[] @relation("DashboardOwner")
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
+  @@schema("public")
+}
+
+model Account {
+  id         String   @id @default(cuid())
+  tenantId   String
+  externalId String?
+  name       String
+  ownerName  String?
+  industry   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deals      Deal[]
+
+  @@index([tenantId, name])
+  @@schema("public")
+}
+
+model Deal {
+  id              String    @id @default(cuid())
+  tenantId        String
+  externalId      String?
+  accountId       String?
+  ownerId         String?
+  name            String
+  amount          Decimal   @db.Decimal(18, 2)
+  stage           String
+  closeDate       DateTime?
+  quarter         String
+  isWon           Boolean   @default(false)
+  confidenceScore Int?
+  riskScore       Int?
+  riskLabel       String?
+  riskFlags       String[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  account         Account?  @relation(fields: [accountId], references: [id])
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, quarter, ownerId])
+  @@schema("public")
+}
+
+model Call {
+  id             String   @id @default(cuid())
+  tenantId       String
+  externalId     String?
+  dealId         String?
+  accountId      String?
+  ownerName      String?
+  durationSec    Int?
+  occurredAt     DateTime
+  transcriptText String?
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, occurredAt])
+  @@schema("public")
+}
+
+model Dataset {
+  id              String                @id @default(cuid())
+  tenantId        String
+  createdById     String
+  name            String
+  description     String?
+  sourceMode      String
+  dataSourceId    String?
+  selectedObjects Json
+  selectedFields  Json
+  mappingStatus   String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  tenant          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  dataSource      DataSource?           @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
+  relationships   DatasetRelationship[]
+  datasetObjects  DatasetObject[]
+  datasetFields   DatasetField[]
+
+  @@index([tenantId, createdById])
+  @@schema("public")
+}
+
+model DatasetRelationship {
+  id                String             @id @default(cuid())
+  datasetId         String
+  sourceObject      String
+  sourceField       String
+  targetObject      String
+  targetField       String
+  status            RelationshipStatus
+  validationMessage String?
+  dataset           Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, status])
+  @@schema("public")
+}
+
+model Dashboard {
+  id             String                   @id @default(cuid())
+  tenantId       String
+  ownerId        String
+  datasetId      String?
+  title          String
+  description    String?
+  visibility     DashboardShareVisibility @default(PRIVATE)
+  status         DashboardStatus          @default(DRAFT)
+  isTemplate     Boolean                  @default(false)
+  shareToken     String?                  @unique
+  snapshot       Json?
+  lastSnapshotAt DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  owner          User                     @relation("DashboardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tenant         Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  widgets        Widget[]
+
+  @@index([tenantId, ownerId])
+  @@schema("public")
+}
+
+model Widget {
+  id          String     @id @default(cuid())
+  dashboardId String
+  type        WidgetType
+  title       String
+  config      Json
+  position    Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  dashboard   Dashboard  @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@index([dashboardId, position])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model coachingrecommendations {
+  recid              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  snapshotid         String   @db.Uuid
+  tenantid           String   @db.Uuid
+  userid             String   @db.Uuid
+  recommendationtext String
+  category           String?
+  confidencescore    Decimal? @db.Decimal
+  generatedat        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantid, snapshotid, generatedat(sort: Desc)], map: "idx_coachingrecommendations_tenant_snapshot")
+  @@schema("dashboards")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model coachingsnapshots {
+  snapshotid       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
+  userid           String   @db.Uuid
+  period           String
+  talkratio        Decimal? @db.Decimal
+  longestmonologue Decimal? @db.Decimal
+  questionrate     Decimal? @db.Decimal
+  interactivity    Decimal? @db.Decimal
+  toptopics        Json?
+  callcount        Int?
+  computedat       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([tenantid, userid, period], map: "uq_coachingsnapshots_tenant_user_period")
+  @@index([tenantid, userid, period], map: "idx_coachingsnapshots_tenant_user_period")
+  @@schema("dashboards")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model dashboardconfigs {
+  configid         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
+  userid           String   @db.Uuid
+  layout           Json
+  visiblewidgets   Json?
+  daterangedefault String?
+  createdat        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([tenantid, userid], map: "uq_dashboardconfigs_tenant_user")
+  @@index([tenantid, userid], map: "idx_dashboardconfigs_tenant_user")
+  @@schema("dashboards")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model DashboardConfig {
+  configId       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid @map("config_id")
+  tenantId       String   @db.Uuid @map("tenant_id")
+  userId         String   @db.Uuid @map("user_id")
+  visibleWidgets Json     @map("visible_widgets")
+  gridLayout     Json     @map("grid_layout")
+  defaultFilters Json     @map("default_filters")
+  createdAt      DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt      DateTime @updatedAt @db.Timestamptz(6) @map("updated_at")
+
+  @@unique([tenantId, userId], map: "uq_dashboard_configs_tenant_user")
+  @@index([tenantId, userId], map: "idx_dashboard_configs_tenant_user")
+  @@schema("dashboards")
+  @@map("dashboard_configs")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model DashboardSnapshot {
+  snapshotId       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid @map("snapshot_id")
+  tenantId         String   @db.Uuid @map("tenant_id")
+  periodKey        String   @map("period_key")
+  metricName       String   @map("metric_name")
+  dimensionScopes  Json     @map("dimension_scopes")
+  dimensionKey     String   @map("dimension_key")
+  cachedValue      Decimal  @db.Decimal(18, 4) @map("cached_value")
+  computedAt       DateTime @default(now()) @db.Timestamptz(6) @map("computed_at")
+  updatedAt        DateTime @updatedAt @db.Timestamptz(6) @map("updated_at")
+
+  @@unique([tenantId, periodKey, metricName, dimensionKey], map: "uq_dashboard_snapshots_tenant_period_metric_dimkey")
+  @@index([tenantId, periodKey, metricName], map: "idx_dashboard_snapshots_tenant_period_metric")
+  @@schema("dashboards")
+  @@map("dashboard_snapshots")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model trainerscenarios {
+  scenarioid         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid           String   @db.Uuid
+  name               String
+  personadescription String?
+  context            String?
+  difficulty         String?
+  scorecardid        String?  @db.Uuid
+  createdby          String   @db.Uuid
+  createdat          DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantid, createdat(sort: Desc)], map: "idx_trainerscenarios_tenant_created")
+  @@schema("dashboards")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model trainersessions {
+  sessionid       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scenarioid      String    @db.Uuid
+  tenantid        String    @db.Uuid
+  userid          String    @db.Uuid
+  conversation    Json
+  scorecardresult Json?
+  status          String
+  completedat     DateTime? @db.Timestamptz(6)
+  createdat       DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantid, userid, status, createdat(sort: Desc)], map: "idx_trainersessions_tenant_user_status")
+  @@schema("dashboards")
+}
+
+model DataSource {
+  id           String   @id @default(cuid())
+  tenantId     String
+  sourceName   String
+  sourceType   String
+  accessToken  String?
+  refreshToken String?
+  createdAt    DateTime @default(now())
+
+  objects  DataSourceObject[]
+  datasets Dataset[]
+
+  @@schema("public")
+}
+
+model DataSourceObject {
+  id           String   @id @default(cuid())
+  dataSourceId String
+  objectName   String
+  displayName  String
+  createdAt    DateTime @default(now())
+
+  dataSource     DataSource        @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  fields         DataSourceField[]
+  datasetObjects DatasetObject[]
+
+  @@schema("public")
+  @@map("data_source_objects")
+}
+
+model DataSourceField {
+  id          String   @id @default(cuid())
+  objectId    String
+  fieldName   String
+  displayName String
+  fieldType   String
+  createdAt   DateTime @default(now())
+
+  object        DataSourceObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  datasetFields DatasetField[]
+
+  @@unique([objectId, fieldName])
+  @@schema("public")
+  @@map("data_source_fields")
+}
+
+model DataSourceRelationship {
+  id               String   @id @default(cuid())
+  sourceObjectId   String
+  targetObjectId   String
+  relationshipType String
+  sourceField      String
+  targetField      String
+  createdAt        DateTime @default(now())
+
+  @@schema("public")
+  @@map("data_source_relationships")
+}
+
+model DatasetObject {
+  id        String @id @default(cuid())
+  datasetId String
+  objectId  String
+
+  dataset          Dataset          @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  dataSourceObject DataSourceObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+model DatasetField {
+  id        String @id @default(cuid())
+  datasetId String
+  fieldId   String
+
+  dataset         Dataset         @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  dataSourceField DataSourceField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+model Team {
   id        String   @id @default(uuid())
+  tenantId  String
   name      String
+  parentId  String?
+  parent    Team?    @relation("TeamHierarchy", fields: [parentId], references: [id])
+  children  Team[]   @relation("TeamHierarchy")
+  managerId String?
+  members   String[]
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@schema("public")
+}
+
+model DashboardAccess {
+  id          String   @id @default(uuid())
+  tenantId    String
+  dashboardId String
+  userId      String
+  grantedBy   String
+  canView     Boolean  @default(true)
+  canEdit     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([dashboardId, userId])
+  @@index([tenantId, dashboardId])
+  @@schema("public")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SALES_REP
+  ANALYST
+  EXECUTIVE
+
+  @@schema("public")
+}
+
+enum RelationshipStatus {
+  AUTO_DETECTED
+  MANUAL_OVERRIDE
+  REJECTED
+
+  @@schema("public")
+}
+
+enum DashboardShareVisibility {
+  PRIVATE
+  TEAM
+  LINK
+
+  @@schema("public")
+}
+
+enum WidgetType {
+  KPI
+  BAR
+  LINE
+  PIE
+  FUNNEL
+  AREA
+  COLUMN
+  DONUT
+  GAUGE
+  TABLE
+  PERFORMANCE
+  ATTAINMENT_TREND
+  FORECAST
+  TRENDS
+  CHANGES
+
+  @@schema("public")
+}
+
+enum DashboardStatus {
+  DRAFT
+  PUBLISHED
+
+  @@schema("public")
 }
 
 // ─────────────────────────────────────────────────────────────

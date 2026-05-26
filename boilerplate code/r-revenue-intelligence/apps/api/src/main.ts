@@ -1,7 +1,4 @@
-import * as path from 'path';
-import * as dotenv from 'dotenv';
-dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
-
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule }   from './app.module';
 
@@ -17,7 +14,7 @@ const upload   = multerFn({
     filename:    (_req: any, file: any, cb: any) => {
       const suffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       const ext    = path.extname(file.originalname) || '.mp3';
-      cb(null, `call-${suffix}${ext}`);
+      cb(https://github.com/santhoshraajrelanto/r-revenue-intelligence-monorepo/pull/38/conflict?name=boilerplate%2Bcode%252Fr-revenue-intelligence%252Fapps%252Fapi%252Fsrc%252Fmain.ts&ancestor_oid=a877b1720873891b4e6eadefa97f59da94f3cc1b&base_oid=e67a4c9bd655fd662a18d9d0d293e368582a86c4&head_oid=ae0bda236c975ee76419674ac27d39bd39db4f9anull, `call-${suffix}${ext}`);
     },
   }),
   limits: { fileSize: 500 * 1024 * 1024 },
