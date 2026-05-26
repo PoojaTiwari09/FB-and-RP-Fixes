@@ -1,0 +1,9 @@
+.wrapper { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 20px; }
+.bar { display: flex; height: 10px; border-radius: 100px; overflow: hidden; background: rgba(255,255,255,0.06); margin: 12px 0; }
+.segment { height: 100%; transition: width 0.5s ease; }
+.title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.legend { display: flex; gap: 20px; }
+.legendItem { display: flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.speaker { font-size: 13px; color: #94a3b8; }
+.pct { font-size: 14px; font-weight: 700; color: #e2e8f0; }

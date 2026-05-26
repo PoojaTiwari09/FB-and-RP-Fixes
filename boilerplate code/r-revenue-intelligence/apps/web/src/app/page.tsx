@@ -1,6 +1,31 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import App from "../modules/m03-ai-summaries-genai/app/page";
+import {
+  LayoutDashboard,
+  MessageSquareCode,
+  Sparkles,
+  KanbanSquare,
+  BarChart3,
+  Send,
+  GraduationCap,
+  ShieldCheck,
+  Play,
+  Pause,
+  Volume2,
+  Search,
+  ArrowRight,
+  CornerDownRight,
+  CheckCircle2,
+  Database,
+  Lock,
+  RefreshCw,
+  User,
+  Flame,
+  Info
+} from "lucide-react";
 
 interface CoachingFeedback {
   score: number;
@@ -82,12 +107,79 @@ export default function PlatformDashboard() {
 
   // M4 Deals Board stage advancement simulation
   const [deals, setDeals] = useState([
-    { id: "deal_01", name: "ACME Corp Seat Scale-up", amount: "$120,000", stage: "Discovery", account: "ACME Corp", owner: "John" },
+    { id: "opp-acme-q2", name: "ACME Corp Seat Scale-up", amount: "$120,000", stage: "Discovery", account: "ACME Corp", owner: "John" },
     { id: "deal_02", name: "Coca-Cola POC Deal", amount: "$45,000", stage: "Proposal", account: "Coca-Cola Ltd", owner: "John" },
     { id: "deal_03", name: "Tesla Ingestion Rollout", amount: "$350,000", stage: "Negotiation", account: "Tesla Inc", owner: "Alice" }
   ]);
   const [stageLogs, setStageLogs] = useState<string[]>([]);
   const [activeStageSyncId, setActiveStageSyncId] = useState<string | null>(null);
+
+  // ── M18: AI-Extracted Deal Intelligence ────────────────────────────────
+  const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
+  const [dealIntelligence, setDealIntelligence] = useState<any>(null);
+  const [loadingDealIntel, setLoadingDealIntel] = useState(false);
+  const [dealSyncing, setDealSyncing] = useState(false);
+  const [editingResultId, setEditingResultId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+
+  const fetchDealIntelligence = async (dealId: string) => {
+    setLoadingDealIntel(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/ai-extractor/deals/${dealId}/intelligence`);
+      if (res.ok) {
+        const data = await res.json();
+        setDealIntelligence(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch deal intelligence:", e);
+    } finally {
+      setLoadingDealIntel(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedDealId) {
+      fetchDealIntelligence(selectedDealId);
+    } else {
+      setDealIntelligence(null);
+    }
+  }, [selectedDealId]);
+
+  const handleUpdateDealIntel = async (resultId: string, value: string) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/ai-extractor/deals/results/${resultId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extractedValue: value }),
+      });
+      if (res.ok && selectedDealId) {
+        setEditingResultId(null);
+        fetchDealIntelligence(selectedDealId);
+        setStageLogs(prev => [...prev, `[M18 AI Extractor] Manual override updated for result ${resultId} to "${value}".`]);
+      }
+    } catch (e) {
+      console.error("Failed to update result:", e);
+    }
+  };
+
+  const handleSyncDealToCRM = async (dealId: string) => {
+    setDealSyncing(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/ai-extractor/deals/${dealId}/sync`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.syncLogs) {
+          setStageLogs(prev => [...prev, ...data.syncLogs]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to sync deal to CRM:", e);
+    } finally {
+      setDealSyncing(false);
+    }
+  };
 
   // M8 Email Composer State
   const [emailTo, setEmailTo] = useState("sarah@acme.com");
@@ -414,6 +506,9 @@ export default function PlatformDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <a href="/board/commercial" className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 border border-purple-400 text-white transition-all mr-4 cursor-pointer no-underline">
+              <span className="text-xs font-bold tracking-wide">ENTER M05 POC</span>
+            </a>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800/80">
               <Database size={12} className="text-emerald-400" />
               <span className="text-[10px] text-slate-300 font-mono font-bold">tenant_001</span>
@@ -559,6 +654,20 @@ export default function PlatformDashboard() {
                   <h3 className="text-sm font-bold text-slate-200">M1 Interaction Library</h3>
                   <p className="text-[11px] text-slate-400">Captured native calls and integrations feed.</p>
                 </div>
+
+                {/* Call Transcription button — redirects to /calls */}
+                <Link
+                  href="/calls"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/15 hover:border-cyan-400/60 text-cyan-400 hover:text-cyan-300 transition-all duration-200 group shadow-sm hover:shadow-cyan-500/10"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquareCode size={14} className="flex-shrink-0" />
+                    <span className="text-xs font-semibold tracking-wide">Call Transcription</span>
+                  </div>
+                  <ArrowRight size={13} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
+                </Link>
                 
                 <div className="relative">
                   <Search size={14} className="absolute left-3 top-3.5 text-slate-500" />
@@ -794,15 +903,15 @@ export default function PlatformDashboard() {
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
                   <h1 className="text-2xl font-bold tracking-tight text-slate-100">M4 Deal Intelligence Board</h1>
-                  <p className="text-sm text-slate-400">Advance pipeline stages which dynamically triggers an ADR-005 CRM synchronizing logging.</p>
+                  <p className="text-sm text-slate-400">Advance pipeline stages or edit AI-extracted intelligence properties, which syncs to HubSpot.</p>
                 </div>
-                <span className="badge badge-emerald">Enforced ADR-005 Pattern</span>
+                <span className="badge badge-emerald">Enforced ADR-005 & M18 AI Sync</span>
               </div>
 
-              <div className="grid grid-cols-4 gap-8">
+              <div className="grid grid-cols-12 gap-8">
                 
                 {/* Column columns (Kanban board layout) */}
-                <div className="col-span-3 grid grid-cols-3 gap-6">
+                <div className="col-span-8 grid grid-cols-3 gap-6">
                   {["Discovery", "Proposal", "Negotiation"].map(columnStage => {
                     const stageDeals = deals.filter(d => d.stage === columnStage);
                     return (
@@ -813,74 +922,220 @@ export default function PlatformDashboard() {
                         </div>
 
                         <div className="flex flex-col gap-3">
-                          {stageDeals.map(deal => (
-                            <div key={deal.id} className="p-4 rounded-lg bg-slate-900/60 border border-slate-800/80 flex flex-col gap-3 group hover:border-slate-700 transition-all">
-                              <div className="flex flex-col">
-                                <span className="text-xs font-bold text-slate-200">{deal.name}</span>
-                                <span className="text-[10px] text-slate-500">{deal.account} • Rep: {deal.owner}</span>
-                              </div>
-                              
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs font-black text-emerald-400">{deal.amount}</span>
+                          {stageDeals.map(deal => {
+                            const isSelected = selectedDealId === deal.id;
+                            return (
+                              <div
+                                key={deal.id}
+                                onClick={() => setSelectedDealId(deal.id)}
+                                className={`p-4 rounded-lg bg-slate-900/60 border flex flex-col gap-3 group transition-all cursor-pointer ${
+                                  isSelected ? "border-purple-500 shadow-[0_0_15px_-3px_rgba(168,85,247,0.4)]" : "border-slate-800/80 hover:border-slate-700"
+                                }`}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-slate-200">{deal.name}</span>
+                                  <span className="text-[10px] text-slate-500">{deal.account} • Rep: {deal.owner}</span>
+                                </div>
                                 
-                                {columnStage !== "Negotiation" && (
-                                  <button
-                                    onClick={() => advanceDealStage(deal.id)}
-                                    disabled={activeStageSyncId !== null}
-                                    className="btn-cyber btn-cyber-emerald py-1 px-2.5 text-[9px] font-mono flex items-center gap-1 cursor-pointer"
-                                  >
-                                    {activeStageSyncId === deal.id ? (
-                                      <RefreshCw size={10} className="animate-spin text-emerald-400" />
-                                    ) : (
-                                      <>
-                                        <span>Advance</span>
-                                        <ArrowRight size={10} />
-                                      </>
-                                    )}
-                                  </button>
-                                )}
+                                <div className="flex justify-between items-center" onClick={e => e.stopPropagation()}>
+                                  <span className="text-xs font-black text-emerald-400">{deal.amount}</span>
+                                  
+                                  {columnStage !== "Negotiation" && (
+                                    <button
+                                      onClick={() => advanceDealStage(deal.id)}
+                                      disabled={activeStageSyncId !== null}
+                                      className="btn-cyber btn-cyber-emerald py-1 px-2.5 text-[9px] font-mono flex items-center gap-1 cursor-pointer"
+                                    >
+                                      {activeStageSyncId === deal.id ? (
+                                        <RefreshCw size={10} className="animate-spin text-emerald-400" />
+                                      ) : (
+                                        <>
+                                          <span>Advance</span>
+                                          <ArrowRight size={10} />
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Visual side logger panel (ADR-005) */}
-                <div className="col-span-1 glass-panel p-5 flex flex-col gap-4 h-[420px] bg-slate-950/80">
-                  <div className="flex items-center gap-2 border-b border-slate-900 pb-2">
-                    <Database size={14} className="text-cyan-400 animate-beacon" />
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">ADR-005 Event Ingestion</h4>
+                <div className="col-span-4 flex flex-col gap-6">
+                  {/* AI-Extracted Deal Intelligence Panel */}
+                  <div className="glass-panel p-5 flex flex-col gap-4 bg-slate-950/80">
+                    <div className="flex justify-between items-center border-b border-slate-900 pb-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-purple-400 animate-beacon" />
+                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">AI Deal Intelligence</h4>
+                      </div>
+                      {selectedDealId && (
+                        <button
+                          onClick={() => handleSyncDealToCRM(selectedDealId)}
+                          disabled={dealSyncing}
+                          className="btn-cyber btn-cyber-purple py-1 px-2 text-[9px] font-mono flex items-center gap-1 cursor-pointer"
+                        >
+                          {dealSyncing ? (
+                            <RefreshCw size={10} className="animate-spin text-purple-400" />
+                          ) : (
+                            <>
+                              <Database size={10} />
+                              <span>CRM Sync</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex-grow overflow-y-auto flex flex-col gap-3 pr-1 max-h-[300px]">
+                      {!selectedDealId ? (
+                        <div className="text-slate-600 flex flex-col items-center justify-center h-full text-center p-4 py-8">
+                          <Sparkles size={24} className="text-slate-700 mb-2" />
+                          <span className="text-xs">Select any deal card to load real-time AI-extracted CRM fields and trigger writes.</span>
+                        </div>
+                      ) : loadingDealIntel ? (
+                        <div className="text-slate-500 flex items-center justify-center gap-2 py-12 text-xs font-mono">
+                          <RefreshCw size={14} className="animate-spin text-purple-400" />
+                          <span>Querying RAG & CRM mappings...</span>
+                        </div>
+                      ) : !dealIntelligence || !dealIntelligence.results || dealIntelligence.results.length === 0 ? (
+                        <div className="text-slate-600 flex flex-col items-center justify-center text-center p-4 py-8">
+                          <Info size={20} className="text-slate-700 mb-2" />
+                          <span className="text-[10px] leading-relaxed">No AI extractions found. Upload a call with Opportunity ID &ldquo;opp-acme-q2&rdquo; to populate structured insights automatically!</span>
+                        </div>
+                      ) : (
+                        dealIntelligence.results.map((res: any) => {
+                          const isEditing = editingResultId === res.id;
+                          const score = Math.round(res.confidenceScore * 100);
+                          const isHigh = score >= 80;
+                          const isMedium = score >= 50 && score < 80;
+                          return (
+                            <div key={res.id} className="p-3 rounded bg-slate-900/80 border border-slate-800/80 flex flex-col gap-2">
+                              <div className="flex justify-between items-start">
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-mono text-slate-500 uppercase">{res.field.fieldName}</span>
+                                  <span className="text-xs font-bold text-slate-300">{res.field.fieldLabel}</span>
+                                </div>
+                                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                                  isHigh ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/20" :
+                                  isMedium ? "bg-amber-950/40 text-amber-400 border border-amber-500/20" :
+                                  "bg-rose-950/40 text-rose-400 border border-rose-500/20"
+                                }`}>
+                                  {score}% Conf
+                                </span>
+                              </div>
+
+                              {isEditing ? (
+                                <div className="flex gap-2 items-center mt-1">
+                                  {res.field.dataType === "enum" ? (
+                                    <select
+                                      value={editingValue}
+                                      onChange={(e) => setEditingValue(e.target.value)}
+                                      className="cyber-input py-1 text-xs flex-1"
+                                    >
+                                      <option value="">Select Option</option>
+                                      {res.field.enumOptions.map((opt: string) => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                      ))}
+                                    </select>
+                                  ) : res.field.dataType === "boolean" ? (
+                                    <select
+                                      value={editingValue}
+                                      onChange={(e) => setEditingValue(e.target.value)}
+                                      className="cyber-input py-1 text-xs flex-1"
+                                    >
+                                      <option value="true">True</option>
+                                      <option value="false">False</option>
+                                    </select>
+                                  ) : (
+                                    <input
+                                      type="text"
+                                      value={editingValue}
+                                      onChange={(e) => setEditingValue(e.target.value)}
+                                      className="cyber-input py-1 text-xs flex-1"
+                                    />
+                                  )}
+                                  <button
+                                    onClick={() => handleUpdateDealIntel(res.id, editingValue)}
+                                    className="btn-cyber btn-cyber-emerald py-1 px-2 text-[10px]"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingResultId(null)}
+                                    className="btn-cyber py-1 px-2 text-[10px] text-slate-400 border-slate-700"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex justify-between items-center bg-slate-950/50 p-2 rounded border border-slate-900">
+                                  <span className="text-xs text-slate-200 font-medium">
+                                    {res.extractedValue ?? <em className="text-slate-600">Not extracted</em>}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setEditingResultId(res.id);
+                                      setEditingValue(res.extractedValue ?? "");
+                                    }}
+                                    className="text-[10px] font-mono text-cyan-400 hover:underline cursor-pointer"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
+                              )}
+
+                              {res.rawEvidence && (
+                                <div className="text-[9px] text-slate-500 italic border-l-2 border-slate-800 pl-2 leading-relaxed">
+                                  &ldquo;{res.rawEvidence}&rdquo;
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex-grow overflow-y-auto flex flex-col gap-2 font-mono text-[9px] leading-relaxed pr-2 text-slate-400">
-                    {stageLogs.length === 0 ? (
-                      <div className="text-slate-600 flex flex-col items-center justify-center h-full text-center p-4">
-                        <Info size={24} className="text-slate-700 mb-2" />
-                        <span>Click &quot;Advance&quot; on any deal card above to simulate the ADR-005 CRM synchronizing flow.</span>
-                      </div>
-                    ) : (
-                      stageLogs.map((log, i) => {
-                        const isSuccess = log.startsWith("✓") || log.includes("SUCCESS");
-                        const isCRM = log.includes("[CRM Endpoint]");
-                        return (
-                          <div
-                            key={i}
-                            className={`p-2 rounded border ${
-                              isSuccess
-                                ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-400 font-bold"
-                                : isCRM
-                                ? "bg-purple-950/20 border-purple-500/20 text-purple-400"
-                                : "bg-slate-900 border-slate-800 text-slate-400"
-                            }`}
-                          >
-                            {log}
-                          </div>
-                        );
-                      })
-                    )}
+                  {/* Visual side logger panel (ADR-005) */}
+                  <div className="glass-panel p-5 flex flex-col gap-4 h-[300px] bg-slate-950/80">
+                    <div className="flex items-center gap-2 border-b border-slate-900 pb-2">
+                      <Database size={14} className="text-cyan-400 animate-beacon" />
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">ADR-005 Event Ingestion</h4>
+                    </div>
+
+                    <div className="flex-grow overflow-y-auto flex flex-col gap-2 font-mono text-[9px] leading-relaxed pr-2 text-slate-400">
+                      {stageLogs.length === 0 ? (
+                        <div className="text-slate-600 flex flex-col items-center justify-center h-full text-center p-4">
+                          <Info size={24} className="text-slate-700 mb-2" />
+                          <span>Click &quot;Advance&quot; on any deal card above to simulate the ADR-005 CRM synchronizing flow.</span>
+                        </div>
+                      ) : (
+                        stageLogs.map((log, i) => {
+                          const isSuccess = log.startsWith("✓") || log.includes("SUCCESS") || log.includes("Success");
+                          const isCRM = log.includes("[CRM Endpoint]") || log.includes("[Sync Engine]");
+                          return (
+                            <div
+                              key={i}
+                              className={`p-2 rounded border ${
+                                isSuccess
+                                  ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-400 font-bold"
+                                  : isCRM
+                                  ? "bg-purple-950/20 border-purple-500/20 text-purple-400"
+                                  : "bg-slate-900 border-slate-800 text-slate-400"
+                              }`}
+                            >
+                              {log}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
 
