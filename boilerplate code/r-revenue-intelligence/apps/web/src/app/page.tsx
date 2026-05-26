@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KpiCard } from "../components/kpi-card";
+import { KpiCard } from "@/modules/m07-revenue-dashboards/components/kpi-card";
 
 export default function HomePage() {
   return (
