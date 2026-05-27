@@ -41,13 +41,13 @@ export class AiExtractionSubscriber {
     private readonly aiClient:    AiExtractionClient,
   ) {}
 
-  @OnEvent('transcription.completed', { async: true })
+  @OnEvent('call.transcription.completed', { async: true })
   async handleTranscriptionCompleted(
     payload: TranscriptionCompletedPayload,
   ): Promise<void> {
     const { tenantId, callId } = payload;
     this.logger.log(
-      `[AiExtraction] transcription.completed received — callId=${callId}`,
+      `[AiExtraction] call.transcription.completed received — callId=${callId}`,
     );
 
     // ── Load the saved transcript + utterances from DB ─────────────────

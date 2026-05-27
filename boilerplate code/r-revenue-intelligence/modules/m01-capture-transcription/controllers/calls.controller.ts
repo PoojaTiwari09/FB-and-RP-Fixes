@@ -55,6 +55,20 @@ export class CallsController {
     return this.svc.getCallDetail(id, req.tenantId);
   }
 
+  // ── DELETE /calls/:id — hard delete call + cascade transcripts/notes/shares ──
+  @Delete('calls/:id')
+  @HttpCode(HttpStatus.OK)
+  deleteCall(@Param('id') id: string, @Req() req: Record<string, string>) {
+    return this.svc.deleteCall(id, req.tenantId);
+  }
+
+  // ── POST /calls/:id/extract-ai — manual re-run of AI extraction (CT-15) ─
+  @Post('calls/:id/extract-ai')
+  @HttpCode(HttpStatus.ACCEPTED)
+  extractAi(@Param('id') id: string, @Req() req: Record<string, string>) {
+    return this.svc.triggerAiExtraction(id, req.tenantId);
+  }
+
   // ── GET /calls/:id/search?q=keyword — in-call search (CT-21) ─────────
   @Get('calls/:id/search')
   searchWithinCall(

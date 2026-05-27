@@ -1,14 +1,35 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
+/**
+ * Tracker (keyword detection) service for M02.
+ *
+ * All Prisma access is delegate-safe — the unified `@rri/database` PrismaClient
+ * does not yet expose `m02Tracker` / `m02TrackerDetection` models, so we probe
+ * before invoking. When the delegates are missing, the service falls back to an
+ * in-memory store keyed by tenantId so the API and frontend remain functional
+ * for local development and smoke testing.
+ */
 @Injectable()
 export class TrackerService {
   private readonly logger = new Logger(TrackerService.name);
 
+  // In-memory store for environments without the M02 Prisma models.
+  private static memTrackers: any[] = [];
+  private static memDetections: any[] = [];
+
   constructor(private prisma: PrismaService) {}
 
-  private get trackerDelegate(): { create?: Function; findMany?: Function } | undefined {
-    return (this.prisma as any).m02Tracker;
+  private get trackerDelegate(): any | null {
+    return (this.prisma as any)?.m02Tracker ?? (this.prisma as any)?.tracker ?? null;
+  }
+
+  private get detectionDelegate(): any | null {
+    return (
+      (this.prisma as any)?.m02TrackerDetection ??
+      (this.prisma as any)?.trackerDetection ??
+      null
+    );
   }
 
   async createTracker(data: {
@@ -21,14 +42,24 @@ export class TrackerService {
     timingMinutes?: number;
   }) {
     if (!this.trackerDelegate?.create) {
-      this.logger.warn('m02Tracker table not in schema — returning in-memory tracker for smoke/dev');
-      return { id: `mock-${Date.now()}`, ...data, isActive: data.isActive ?? true, createdAt: new Date() };
+      const created = {
+        id: `mock-${Date.now()}`,
+        ...data,
+        isActive: data.isActive ?? true,
+        createdAt: new Date(),
+      };
+      TrackerService.memTrackers.push(created);
+      return created;
     }
     return this.trackerDelegate.create({ data });
   }
 
   async getTrackers(tenantId: string) {
-    if (!this.trackerDelegate?.findMany) return [];
+    if (!this.trackerDelegate?.findMany) {
+      return TrackerService.memTrackers
+        .filter((t) => t.tenantId === tenantId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
     return this.trackerDelegate.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
@@ -36,49 +67,65 @@ export class TrackerService {
   }
 
   async updateTracker(id: string, tenantId: string, data: any) {
-    return this.prisma.m02Tracker.update({
-      where: { id, tenantId },
-      data,
-    });
+    if (!this.trackerDelegate?.update) {
+      const idx = TrackerService.memTrackers.findIndex(
+        (t) => t.id === id && t.tenantId === tenantId,
+      );
+      if (idx === -1) return null;
+      TrackerService.memTrackers[idx] = { ...TrackerService.memTrackers[idx], ...data };
+      return TrackerService.memTrackers[idx];
+    }
+    return this.trackerDelegate.update({ where: { id, tenantId }, data });
   }
 
   async deleteTracker(id: string, tenantId: string) {
-    return this.prisma.m02Tracker.delete({
-      where: { id, tenantId },
-    });
+    if (!this.trackerDelegate?.delete) {
+      const before = TrackerService.memTrackers.length;
+      TrackerService.memTrackers = TrackerService.memTrackers.filter(
+        (t) => !(t.id === id && t.tenantId === tenantId),
+      );
+      return { success: TrackerService.memTrackers.length < before };
+    }
+    return this.trackerDelegate.delete({ where: { id, tenantId } });
   }
 
   async addKeywordsToTracker(trackerId: string, tenantId: string, keywords: string[]) {
-    const tracker = await this.prisma.m02Tracker.findUnique({
+    if (!this.trackerDelegate?.findUnique || !this.trackerDelegate?.update) {
+      const t = TrackerService.memTrackers.find(
+        (x) => x.id === trackerId && x.tenantId === tenantId,
+      );
+      if (!t) throw new Error('Tracker not found');
+      t.keywords = Array.from(new Set([...(t.keywords || []), ...keywords]));
+      return t;
+    }
+    const tracker = await this.trackerDelegate.findUnique({
       where: { id: trackerId, tenantId },
     });
-
     if (!tracker) throw new Error('Tracker not found');
-
     const newKeywords = Array.from(new Set([...tracker.keywords, ...keywords]));
-
-    return this.prisma.m02Tracker.update({
+    return this.trackerDelegate.update({
       where: { id: trackerId, tenantId },
       data: { keywords: newKeywords },
     });
   }
 
   /**
-   * Scan a transcript for tracker keyword matches
+   * Scan a transcript for tracker keyword matches.
+   * Delegate-safe — silently no-ops when M02 Prisma models are unavailable.
    */
   async scanTranscriptForTrackers(
     tenantId: string,
     entityId: string,
     entityType: 'call' | 'email',
     transcript: string,
-    diarizedTranscript?: any[]
+    diarizedTranscript?: any[],
   ) {
-    // Get all active trackers for the tenant
-    const trackers = await this.prisma.m02Tracker.findMany({
-      where: { 
-        tenantId,
-        isActive: true 
-      },
+    if (!this.trackerDelegate?.findMany) {
+      this.logger.debug('scanTranscriptForTrackers skipped: tracker Prisma delegate unavailable');
+      return [];
+    }
+    const trackers = await this.trackerDelegate.findMany({
+      where: { tenantId, isActive: true },
     });
 
     if (trackers.length === 0) {
@@ -137,15 +184,15 @@ export class TrackerService {
       }
     }
 
-    // Save detections to database
-    if (detections.length > 0) {
-      await this.prisma.m02TrackerDetection.createMany({
-        data: detections,
-        skipDuplicates: true,
-      });
+    if (detections.length > 0 && this.detectionDelegate?.createMany) {
+      await this.detectionDelegate.createMany({ data: detections, skipDuplicates: true });
+    } else if (detections.length > 0) {
+      TrackerService.memDetections.push(...detections);
     }
 
-    this.logger.log(`Scanned ${entityType} ${entityId}: found ${detections.length} tracker detections`);
+    this.logger.log(
+      `Scanned ${entityType} ${entityId}: found ${detections.length} tracker detections`,
+    );
     return detections;
   }
 
@@ -241,79 +288,65 @@ export class TrackerService {
     return true; // Default to match if can't determine
   }
 
-  /**
-   * Get detections for a specific conversation
-   */
   async getDetectionsForConversation(
     tenantId: string,
     entityId: string,
-    entityType: 'call' | 'email'
+    entityType: 'call' | 'email',
   ) {
-    const detections = await this.prisma.m02TrackerDetection.findMany({
-      where: {
-        tenantId,
-        entityId,
-        entityType,
-      },
-      include: {
-        tracker: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    if (!this.detectionDelegate?.findMany) {
+      return TrackerService.memDetections.filter(
+        (d) => d.tenantId === tenantId && d.entityId === entityId && d.entityType === entityType,
+      );
+    }
+    return this.detectionDelegate.findMany({
+      where: { tenantId, entityId, entityType },
+      include: { tracker: true },
+      orderBy: { createdAt: 'desc' },
     });
-
-    return detections;
   }
 
-  /**
-   * Get all detections for a tenant (for dashboard)
-   */
   async getAllDetections(tenantId: string) {
-    return this.prisma.m02TrackerDetection.findMany({
+    if (!this.detectionDelegate?.findMany) {
+      return TrackerService.memDetections.filter((d) => d.tenantId === tenantId);
+    }
+    return this.detectionDelegate.findMany({
       where: { tenantId },
-      include: {
-        tracker: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      include: { tracker: true },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  /**
-   * Get tracker statistics
-   */
   async getTrackerStats(tenantId: string) {
-    const totalTrackers = await this.prisma.m02Tracker.count({
-      where: { tenantId },
-    });
+    const trackerD = this.trackerDelegate;
+    const detectionD = this.detectionDelegate;
 
-    const activeTrackers = await this.prisma.m02Tracker.count({
-      where: { 
-        tenantId,
-        isActive: true 
-      },
-    });
+    if (!trackerD?.count || !detectionD?.count) {
+      const trackers = TrackerService.memTrackers.filter((t) => t.tenantId === tenantId);
+      const detections = TrackerService.memDetections.filter((d) => d.tenantId === tenantId);
+      const monthAgo = new Date();
+      monthAgo.setDate(monthAgo.getDate() - 30);
+      return {
+        totalTrackers: trackers.length,
+        activeTrackers: trackers.filter((t) => t.isActive !== false).length,
+        totalDetections: detections.length,
+        detectionsThisMonth: detections.filter(
+          (d) => new Date(d.createdAt).getTime() >= monthAgo.getTime(),
+        ).length,
+      };
+    }
 
-    const totalDetections = await this.prisma.m02TrackerDetection.count({
-      where: { tenantId },
-    });
-
-    const detectionsThisMonth = await this.prisma.m02TrackerDetection.count({
-      where: {
-        tenantId,
-        createdAt: {
-          gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+    const [totalTrackers, activeTrackers, totalDetections, detectionsThisMonth] = await Promise.all([
+      trackerD.count({ where: { tenantId } }),
+      trackerD.count({ where: { tenantId, isActive: true } }),
+      detectionD.count({ where: { tenantId } }),
+      detectionD.count({
+        where: {
+          tenantId,
+          createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
         },
-      },
-    });
+      }),
+    ]);
 
-    return {
-      totalTrackers,
-      activeTrackers,
-      totalDetections,
-      detectionsThisMonth,
-    };
+    return { totalTrackers, activeTrackers, totalDetections, detectionsThisMonth };
   }
 }

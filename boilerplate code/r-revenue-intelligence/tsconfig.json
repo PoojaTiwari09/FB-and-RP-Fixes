@@ -11,5 +11,14 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/dist",
+    "**/node_modules",
+    "**/modules/**/features/**",
+    "**/EXAMPLE_ONLY*",
+    "**/r-ri/**"
+  ]
 }

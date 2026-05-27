@@ -155,58 +155,98 @@ export class TranslationService {
     return translatedText;
   }
 
-  async getWorkspaceSettings(tenantId: string) {
-    if (!this.prisma.m02WorkspaceLanguageSettings) {
-      return { defaultLanguage: 'English', fallbackLanguage: 'English', supportedLanguages: ['English'] };
-    }
-    
-    let settings = await this.prisma.m02WorkspaceLanguageSettings.findUnique({
-      where: { tenantId }
-    });
+  // In-memory store for workspace language preferences when the M02 Prisma
+  // delegate isn't available on the unified client. Keyed by tenantId.
+  private static workspaceSettings: Map<string, {
+    defaultLanguage: string;
+    fallbackLanguage: string;
+    supportedLanguages: string[];
+  }> = new Map();
 
-    if (!settings) {
-      settings = await this.prisma.m02WorkspaceLanguageSettings.create({
-        data: {
-          tenantId,
-          defaultLanguage: 'English',
-          fallbackLanguage: 'English',
-          supportedLanguages: ['English']
-        }
-      });
-    }
-
-    return {
-      defaultLanguage: settings.defaultLanguage,
-      fallbackLanguage: settings.fallbackLanguage,
-      supportedLanguages: Array.isArray(settings.supportedLanguages) ? settings.supportedLanguages : JSON.parse(settings.supportedLanguages as string || '["English"]')
-    };
+  private get workspaceDelegate(): any | null {
+    return (
+      (this.prisma as any)?.m02WorkspaceLanguageSettings ??
+      (this.prisma as any)?.workspaceLanguageSettings ??
+      null
+    );
   }
 
-  async updateWorkspaceSettings(tenantId: string, data: { defaultLanguage?: string, fallbackLanguage?: string, supportedLanguages?: string[] }) {
-    if (!this.prisma.m02WorkspaceLanguageSettings) return null;
-
-    const existing = await this.prisma.m02WorkspaceLanguageSettings.findUnique({
-      where: { tenantId }
-    });
-
-    if (existing) {
-      return this.prisma.m02WorkspaceLanguageSettings.update({
-        where: { tenantId },
-        data: {
-          ...(data.defaultLanguage && { defaultLanguage: data.defaultLanguage }),
-          ...(data.fallbackLanguage && { fallbackLanguage: data.fallbackLanguage }),
-          ...(data.supportedLanguages && { supportedLanguages: data.supportedLanguages })
+  async getWorkspaceSettings(tenantId: string) {
+    const delegate = this.workspaceDelegate;
+    if (delegate?.findUnique) {
+      try {
+        let settings = await delegate.findUnique({ where: { tenantId } });
+        if (!settings) {
+          settings = await delegate.create({
+            data: {
+              tenantId,
+              defaultLanguage: 'English',
+              fallbackLanguage: 'English',
+              supportedLanguages: ['English'],
+            },
+          });
         }
-      });
-    } else {
-      return this.prisma.m02WorkspaceLanguageSettings.create({
-        data: {
-          tenantId,
-          defaultLanguage: data.defaultLanguage || 'English',
-          fallbackLanguage: data.fallbackLanguage || 'English',
-          supportedLanguages: data.supportedLanguages || ['English']
-        }
-      });
+        return {
+          defaultLanguage: settings.defaultLanguage,
+          fallbackLanguage: settings.fallbackLanguage,
+          supportedLanguages: Array.isArray(settings.supportedLanguages)
+            ? settings.supportedLanguages
+            : JSON.parse((settings.supportedLanguages as string) || '["English"]'),
+        };
+      } catch (err: any) {
+        this.logger.warn(`getWorkspaceSettings via Prisma failed (${err.message}); using memory store`);
+      }
     }
+
+    const existing = TranslationService.workspaceSettings.get(tenantId);
+    if (existing) return existing;
+    const defaults = {
+      defaultLanguage: 'English',
+      fallbackLanguage: 'English',
+      supportedLanguages: ['English'],
+    };
+    TranslationService.workspaceSettings.set(tenantId, defaults);
+    return defaults;
+  }
+
+  async updateWorkspaceSettings(
+    tenantId: string,
+    data: { defaultLanguage?: string; fallbackLanguage?: string; supportedLanguages?: string[] },
+  ) {
+    const delegate = this.workspaceDelegate;
+    if (delegate?.upsert) {
+      try {
+        const updated = await delegate.upsert({
+          where: { tenantId },
+          update: {
+            ...(data.defaultLanguage && { defaultLanguage: data.defaultLanguage }),
+            ...(data.fallbackLanguage && { fallbackLanguage: data.fallbackLanguage }),
+            ...(data.supportedLanguages && { supportedLanguages: data.supportedLanguages }),
+          },
+          create: {
+            tenantId,
+            defaultLanguage: data.defaultLanguage || 'English',
+            fallbackLanguage: data.fallbackLanguage || 'English',
+            supportedLanguages: data.supportedLanguages || ['English'],
+          },
+        });
+        return updated;
+      } catch (err: any) {
+        this.logger.warn(`updateWorkspaceSettings via Prisma failed (${err.message}); using memory store`);
+      }
+    }
+
+    const current = TranslationService.workspaceSettings.get(tenantId) ?? {
+      defaultLanguage: 'English',
+      fallbackLanguage: 'English',
+      supportedLanguages: ['English'],
+    };
+    const next = {
+      defaultLanguage: data.defaultLanguage ?? current.defaultLanguage,
+      fallbackLanguage: data.fallbackLanguage ?? current.fallbackLanguage,
+      supportedLanguages: data.supportedLanguages ?? current.supportedLanguages,
+    };
+    TranslationService.workspaceSettings.set(tenantId, next);
+    return next;
   }
 }

@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
-import useSupabaseData from "../hooks/useSupabaseData";
+import useM03Workspace from "../hooks/useM03Workspace";
 import AskAnythingSidebar from "../components/ask-anything/AskAnythingSidebar";
 import ChatPanel from "../components/ask-anything/ChatPanel";
-import ApiKeyModal from "../components/ask-anything/ApiKeyModal";
-import SupabaseModal from "../components/ask-anything/SupabaseModal";
 import styles from "./AskAnythingPage.module.css";
 
 export default function AskAnythingPage() {
-  const [apiKey, setApiKey]                 = useState("");
-  const [showApiModal, setShowApiModal]     = useState(false);
-  const [showSbModal, setShowSbModal]       = useState(false);
   const currentUser                         = "admin";
 
   // Scoped context states for RAG vector search
@@ -20,22 +15,11 @@ export default function AskAnythingPage() {
   const [chatSessionId, setChatSessionId]   = useState("");
 
   // Supabase data hook
-  const db = useSupabaseData();
+  const db = useM03Workspace();
 
-  // Load API key and initialize chat session ID on mount
   useEffect(() => {
-    const key = localStorage.getItem("gemini_key") || "";
-    setApiKey(key);
     setChatSessionId(Date.now().toString());
-    if (!key) {
-      setShowApiModal(true);
-    }
   }, []);
-
-  function saveKey(k) {
-    localStorage.setItem("gemini_key", k);
-    setApiKey(k);
-  }
 
   // ── Scoped Context Toggles ─────────────────────────────
   function handleDealSelect(deal) {
@@ -84,10 +68,6 @@ export default function AskAnythingPage() {
     setChatSessionId(Date.now().toString());
   }
 
-  function handleSbSave() {
-    db.refetch();
-  }
-
   return (
     <div className={styles.askApp}>
       <AskAnythingSidebar
@@ -115,25 +95,9 @@ export default function AskAnythingPage() {
           </div>
 
           <div className={styles.topbarActions}>
-            {/* Supabase status indicator */}
-            <div
-              className={styles.apiStatus}
-              style={{ marginRight: 8 }}
-              onClick={() => setShowSbModal(true)}
-              title="Configure Supabase"
-            >
-              <span
-                className={`${styles.apiDot} ${db.connected ? styles.apiConnected : db.schemaError ? styles.apiWarning : styles.apiDisconnected}`}
-              />
-              <span>{db.connected ? "Supabase Live" : db.schemaError ? "Schema Needed" : "Demo Data"}</span>
-              <span className={styles.apiEdit}>⚙</span>
-            </div>
-
-            {/* AI Key connection status */}
-            <div className={styles.apiStatus} onClick={() => setShowApiModal(true)}>
-              <span className={`${styles.apiDot} ${apiKey ? styles.apiConnected : styles.apiDisconnected}`} />
-              <span>{apiKey ? "Groq Live" : "No API Key"}</span>
-              <span className={styles.apiEdit}>⚙</span>
+            <div className={styles.apiStatus} style={{ marginRight: 8 }} title="NestJS API">
+              <span className={`${styles.apiDot} ${db.connected ? styles.apiConnected : styles.apiDisconnected}`} />
+              <span>{db.connected ? "API Connected" : "API Offline"}</span>
             </div>
           </div>
         </div>
@@ -142,23 +106,7 @@ export default function AskAnythingPage() {
         {db.loading && (
           <div className={styles.loadingBanner}>
             <span className={styles.loadingDot} />
-            Syncing data with Supabase…
-          </div>
-        )}
-
-        {/* Setup instruction banner for missing tables */}
-        {db.schemaError && !db.loading && (
-          <div className={styles.schemaBanner}>
-            <span className={styles.schemaIcon}>⚠</span>
-            <div className={styles.schemaText}>
-              <strong>Database tables not found.</strong>
-              {" "}Open the Supabase modal, copy the SQL schema, and run it in your{" "}
-              <strong>Supabase SQL Editor</strong> — then click Reconnect.
-            </div>
-            <div className={styles.schemaBtns}>
-              <button className={styles.schemaBtn} onClick={() => setShowSbModal(true)}>Open Setup</button>
-              <button className={styles.schemaReconnect} onClick={() => db.refetch()}>Reconnect</button>
-            </div>
+            Loading workspace data…
           </div>
         )}
 
@@ -166,7 +114,6 @@ export default function AskAnythingPage() {
         <div className={styles.askContent}>
           <ChatPanel
             key={`${chatSessionId}-${currentUser}`}
-            apiKey={apiKey}
             currentUser={currentUser}
             activeDeal={activeDeal}
             activeAccount={activeAccount}
@@ -181,16 +128,6 @@ export default function AskAnythingPage() {
         </div>
       </div>
 
-      {showApiModal && (
-        <ApiKeyModal current={apiKey} onSave={saveKey} onClose={() => setShowApiModal(false)} />
-      )}
-      {showSbModal && (
-        <SupabaseModal
-          connected={db.connected}
-          onSave={handleSbSave}
-          onClose={() => setShowSbModal(false)}
-        />
-      )}
     </div>
   );
 }

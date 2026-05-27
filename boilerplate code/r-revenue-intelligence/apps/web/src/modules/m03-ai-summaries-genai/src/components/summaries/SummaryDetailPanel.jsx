@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getSupabaseClient } from "../../lib/supabase";
+import { getBrief, generateBrief } from "../../api/m03Api";
 import {
   Sparkles, ChevronDown, ChevronUp, Copy, RefreshCw,
   FileText, AlertCircle, Loader2, BookOpen, History, Share2,
@@ -345,23 +345,11 @@ export function SummaryDetailPanel({ briefType, entityId }) {
     setActiveCitation(null);
 
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase) throw new Error("Supabase client is not configured");
-
-      const { data, error: dbErr } = await supabase
-        .from("ai_briefs")
-        .select("id, generated_summary")
-        .eq("brief_type", briefType)
-        .eq("entity_id", eid)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (dbErr) throw dbErr;
-      if (!data) {
+      const body = await getBrief(briefType, eid);
+      if (!body?.data) {
         setNoBrief(true);
       } else {
-        setSummary(data.generated_summary);
+        setSummary(body.data);
       }
     } catch (err) {
       setError(err?.message ?? "Failed to load brief");
@@ -384,9 +372,8 @@ export function SummaryDetailPanel({ briefType, entityId }) {
     setError(null);
     setActiveCitation(null);
     try {
-      const res  = await fetch(`/api/ai-summaries/${briefType}-brief/${entityId}`, { method: "POST" });
-      const body = await res.json();
-      if (!res.ok || !body.success) throw new Error(body.error || `HTTP ${res.status}`);
+      const body = await generateBrief(briefType, entityId);
+      if (!body?.success) throw new Error(body.error || "Generation failed");
       await fetchBrief(entityId);
     } catch (err) {
       setError(err.message);

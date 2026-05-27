@@ -2,6 +2,24 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TopicRepository, TopicDefinition } from '../repositories/topic.repository';
 import { AiTopicTaggerService } from './ai-topic-tagger.service';
 
+/**
+ * Topic tagging orchestrator — the single AI pipeline entry-point for M02.
+ *
+ * Pipeline:
+ *   1. Fetch tenant-specific topic taxonomy from `TopicRepository.getTopicModels`.
+ *   2. Call {@link AiTopicTaggerService.tagTranscript} (Groq → Gemini → keyword fallback).
+ *   3. De-duplicate + threshold filter via `deduplicateAndFilterTopics`.
+ *   4. Persist surviving tags via `TopicRepository.createTopicTag`.
+ *
+ * HTTP handlers should NOT call this service directly for single-conversation
+ * CRUD — use {@link TopicTagService} instead. They MAY call this service for
+ * the batch endpoint (`POST /conversations/batch-tag`).
+ *
+ * Service responsibility map for M02 topic tagging:
+ *   • TopicTagService        → CRUD (manual add / delete)
+ *   • TopicTaggingService    → orchestrator (this file)
+ *   • AiTopicTaggerService   → AI provider client
+ */
 @Injectable()
 export class TopicTaggingService {
   private readonly logger = new Logger(TopicTaggingService.name);

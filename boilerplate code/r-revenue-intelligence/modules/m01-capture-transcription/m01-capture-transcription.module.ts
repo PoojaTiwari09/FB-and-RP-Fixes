@@ -1,22 +1,27 @@
-import { Module }        from '@nestjs/common';
-import { BullModule }    from '@nestjs/bullmq';
+import { Module }     from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 
-// Controllers
-import { M01CaptureTranscriptionController } from './controllers/m01.controller';
-import { CallsController }                   from './controllers/calls.controller';
+// Controllers (real, production)
+import { CallsController }   from './controllers/calls.controller';
+import { UploadController }  from './controllers/upload.controller';
+import { WebhookController } from './controllers/webhook.controller';
 
 // Services
-import { M01CaptureTranscriptionService } from './services/m01.service';
-import { CallService }                    from './services/call.service';
-import { PiiRedactionService }            from './services/pii-redaction.service';
+import { CallService }              from './services/call.service';
+import { PiiRedactionService }      from './services/pii-redaction.service';
+import { AuditLogService }          from './services/audit-log.service';
+import { AiExtractionClient }       from './services/ai-extraction.client';
+import { AiExtractionSubscriber }   from './services/ai-extraction.subscriber';
 
 // Repositories
-import { M01CaptureTranscriptionRepository } from './repositories/m01.repository';
-import { CallRepository }                    from './repositories/call.repository';
-import { TranscriptRepository }              from './repositories/transcript.repository';
-import { NotesRepository }                   from './repositories/notes.repository';
-import { SearchRepository, ShareRepository } from './repositories/search.repository';
-import { NextStepsRepository }                   from './repositories/next-steps.repository';
+import { CallRepository }       from './repositories/call.repository';
+import { TranscriptRepository } from './repositories/transcript.repository';
+import { NotesRepository }      from './repositories/notes.repository';
+import { NextStepsRepository }  from './repositories/next-steps.repository';
+import {
+  SearchRepository,
+  ShareRepository,
+} from './repositories/search.repository';
 
 // Infrastructure
 import { PrismaModule }         from './database/prisma.module';
@@ -25,6 +30,26 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
 // Workers
 import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
 
+/**
+ * M01 — Capture & Transcription
+ *
+ * The foundational lifecycle module for the platform. Every other module
+ * (M02–M10) consumes calls / transcripts produced here, so this module is
+ * responsible for:
+ *
+ *   1. Persistence of CallRecord / Transcript / Utterance / CallNote / CallShare
+ *   2. Audio capture (direct upload + Zoom/Teams webhooks)
+ *   3. ASR via AssemblyAI (BullMQ worker on m01-queue)
+ *   4. PII redaction (US-04) before any text touches the DB
+ *   5. Emission of `transcription.completed` → consumed by M02/M03/M05
+ *   6. Local AI pipeline subscriber that calls apps/ai-services for
+ *      summary / highlights / talk-ratio (US-12/13/14)
+ *   7. Audit trail (US-30) for every state transition
+ *
+ * NOTE: The mock M01CaptureTranscriptionController/Service/Repository was
+ * removed in the M01 deep validation pass — it shadowed real routes with
+ * hard-coded responses and confused downstream consumers.
+ */
 @Module({
   imports: [
     PrismaModule,
@@ -32,28 +57,37 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     BullModule.registerQueue({ name: 'm01-queue' }),
   ],
   controllers: [
-    M01CaptureTranscriptionController,
     CallsController,
+    UploadController,
+    WebhookController,
   ],
   providers: [
     // Services
-    M01CaptureTranscriptionService,
     CallService,
     PiiRedactionService,
+    AuditLogService,
+    AiExtractionClient,
+    AiExtractionSubscriber,
     // Repositories
-    M01CaptureTranscriptionRepository,
     CallRepository,
     TranscriptRepository,
     NotesRepository,
+    NextStepsRepository,
     SearchRepository,
     ShareRepository,
-    NextStepsRepository,
     // Workers
     M01CaptureTranscriptionWorker,
   ],
   exports: [
-    M01CaptureTranscriptionService,
     CallService,
+    CallRepository,
+    TranscriptRepository,
+    NotesRepository,
+    NextStepsRepository,
+    SearchRepository,
+    ShareRepository,
+    AuditLogService,
+    PiiRedactionService,
   ],
 })
 export class M01CaptureTranscriptionModule {}

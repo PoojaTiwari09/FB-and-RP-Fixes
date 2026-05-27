@@ -73,4 +73,10 @@ export class CallRepository {
       data:  { transcriptStatus: 'skipped', skipReason },
     });
   }
+
+  // ── Hard delete a call + its transcripts/utterances/notes/shares (cascade) ──
+  // Golden Rule #9: tenantId is part of the where clause to prevent cross-tenant delete.
+  async deleteById(id: string, tenantId: string) {
+    return this.prisma.callRecord.deleteMany({ where: { id, tenantId } });
+  }
 }

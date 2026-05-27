@@ -655,6 +655,42 @@ model Integration {
 }
 
 // ─────────────────────────────────────────────────────────────
+// M03: AI Summaries & GenAI
+// ─────────────────────────────────────────────────────────────
+
+model AiBrief {
+  id               String   @id @default(uuid())
+  tenantId         String
+  briefType        String
+  entityId         String
+  generatedSummary String?  @db.Text
+  generationStatus String?  @default("pending")
+  sourceReferences Json?
+  llmModel         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([tenantId, briefType, entityId])
+  @@index([tenantId, briefType])
+  @@map("ai_briefs")
+  @@schema("public")
+}
+
+model AiChatHistory {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String?
+  question  String   @db.Text
+  answer    String   @db.Text
+  citations Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@map("ai_chat_history")
+  @@schema("public")
+}
+
+// ─────────────────────────────────────────────────────────────
 // M-18: AI Data Extractor
 // ─────────────────────────────────────────────────────────────
 

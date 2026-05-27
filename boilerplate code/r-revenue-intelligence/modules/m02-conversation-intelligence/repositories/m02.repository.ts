@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {
   ConversationRecord,
@@ -7,88 +7,102 @@ import {
   SavedSearchDto,
 } from '../interfaces/search.interface';
 
+/**
+ * Demo tenant UUID used by the seed script. Only valid as a *seed* identifier —
+ * the runtime resolution of tenantId always comes from the request context via
+ * `TenantGuard`. The string is intentionally a real UUID so seeded rows pass
+ * Prisma uuid validation; it is **not** a fallback for unauthenticated calls.
+ */
+const DEV_SEED_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
 @Injectable()
 export class M02ConversationIntelligenceRepository {
-  private static conversations: ConversationRecord[] = [];
-  private static savedSearches: SavedSearchRecord[] = [];
-  private static syncLogs: SearchSyncLog[] = [];
+  private static readonly logger = new Logger(M02ConversationIntelligenceRepository.name);
+  private static demoCorpusByTenant: Map<string, ConversationRecord[]> = new Map();
+  private static savedSearchesByTenant: Map<string, SavedSearchRecord[]> = new Map();
+  private static syncLogsByTenant: Map<string, SearchSyncLog[]> = new Map();
 
-  constructor(private readonly prisma: PrismaService) {
-    const tenantId = '00000000-0000-0000-0000-000000000001'; // Match seeded tenantId from seed.ts
-    if (M02ConversationIntelligenceRepository.conversations.length === 0) {
-      M02ConversationIntelligenceRepository.conversations = this.generateSampleCorpus(tenantId);
-      M02ConversationIntelligenceRepository.savedSearches = this.generateSampleSavedSearches(tenantId);
-      M02ConversationIntelligenceRepository.syncLogs = this.generateSampleSyncLogs(tenantId);
-    }
-    
-    // Seed standard tables in the background if the database is online and empty
-    this.seedDatabaseIfConnected(tenantId);
+  constructor(private readonly prisma: PrismaService) {}
+
+  // ── Delegate helpers ─────────────────────────────────────────────────────
+  // The unified `@rri/database` PrismaClient exposes M01 models as `callRecord`,
+  // `transcript`, `utterance`, etc. Older module schemas referenced `m01Call`,
+  // `m02Email`, `m02Tracker`, `m02SavedSearch` — those don't exist on the
+  // unified client. We probe each delegate before use to stay crash-safe.
+
+  private get callRecordDelegate(): any | null {
+    const p = this.prisma as any;
+    return p?.callRecord ?? p?.m01Call ?? null;
   }
 
-  private get db(): any {
-    return this.prisma;
+  private get transcriptDelegate(): any | null {
+    const p = this.prisma as any;
+    return p?.transcript ?? null;
   }
 
-  private async seedDatabaseIfConnected(tenantId: string) {
-    try {
-      const callCount = await this.db.m01Call.count();
-      if (callCount === 0) {
-        console.log('[Repository] Seeding empty PostgreSQL tables from local high-fidelity corpus...');
-        const corpus = M02ConversationIntelligenceRepository.conversations;
-        
-        for (const item of corpus) {
-          if (item.channel === 'call') {
-            await this.db.m01Call.create({
-              data: {
-                tenantId,
-                title: item.title,
-                durationSeconds: parseInt(item.duration.replace(/\D/g, '') || '600', 10) * 60,
-                transcript: item.transcript
-              }
-            });
-          } else {
-            await this.db.m02Email.create({
-              data: {
-                tenantId,
-                subject: item.title,
-                body: item.transcript,
-                sender: `${item.agentName.toLowerCase()}@revenueportal.com`,
-                recipient: `${item.customerName.toLowerCase().replace(/\s/g, '')}@client.com`
-              }
-            });
-          }
-        }
-        console.log('[Repository] Seeding completed successfully!');
-      }
-    } catch (err: any) {
-      console.warn('[Repository] Dynamic seeding bypassed (database offline or tables not migrated).', err.message);
-    }
+  private get emailDelegate(): any | null {
+    // The unified DB has `emails` but no Prisma model is exported yet.
+    // M02 returns [] for the email channel until M08 finalises the Email model.
+    const p = this.prisma as any;
+    return p?.email ?? p?.m02Email ?? null;
+  }
+
+  private get savedSearchDelegate(): any | null {
+    const p = this.prisma as any;
+    return p?.savedSearch ?? p?.m02SavedSearch ?? null;
+  }
+
+  private get syncLogDelegate(): any | null {
+    const p = this.prisma as any;
+    return p?.searchIndexSyncLog ?? p?.m02SearchIndexSyncLog ?? null;
+  }
+
+  // Lazy demo corpus accessor — only generated on first access per tenant.
+  private demoCorpusFor(tenantId: string): ConversationRecord[] {
+    const cached = M02ConversationIntelligenceRepository.demoCorpusByTenant.get(tenantId);
+    if (cached) return cached;
+    const corpus = this.generateSampleCorpus(tenantId);
+    M02ConversationIntelligenceRepository.demoCorpusByTenant.set(tenantId, corpus);
+    M02ConversationIntelligenceRepository.savedSearchesByTenant.set(
+      tenantId,
+      this.generateSampleSavedSearches(tenantId),
+    );
+    M02ConversationIntelligenceRepository.syncLogsByTenant.set(
+      tenantId,
+      this.generateSampleSyncLogs(tenantId),
+    );
+    M02ConversationIntelligenceRepository.logger.log(
+      `Generated ${corpus.length} demo conversations for tenant ${tenantId} (DB delegates unavailable).`,
+    );
+    return corpus;
   }
 
   private mapCallToConversation(c: any): ConversationRecord {
-    const company = c.title.split(' ')[0] || 'Client Corp';
-    const durationMinutes = Math.floor(c.durationSeconds / 60);
-    const durationSeconds = c.durationSeconds % 60;
-    const duration = `${durationMinutes}m ${durationSeconds}s`;
+    const company = c.title?.split(' ')[0] || 'Client Corp';
+    const durationSec = Number(c.durationSeconds ?? c.durationSec ?? 0);
+    const durationMinutes = Math.floor(durationSec / 60);
+    const remSeconds = durationSec % 60;
+    const duration = `${durationMinutes}m ${remSeconds}s`;
+    const transcriptText = c.transcript?.fullText ?? c.transcript ?? c.transcriptText ?? '';
 
     return {
       id: c.id,
       tenantId: c.tenantId,
-      title: c.title,
+      title: c.title ?? 'Untitled call',
       channel: 'call',
       customerName: `${company} Team`,
-      agentName: 'Jessica',
-      date: c.createdAt.toISOString(),
+      agentName: c.callOwner ?? c.ownerName ?? 'Jessica',
+      date: (c.callDate ?? c.occurredAt ?? c.createdAt)?.toISOString?.() ?? new Date().toISOString(),
       duration,
       sentiment: 'Positive',
       sentimentScore: 0.85,
       overallScore: 88,
       topics: ['Pricing Strategy', 'Feature Discovery'],
-      summary: `Call regarding ${c.title}. ${c.transcript?.substring(0, 100)}...`,
-      transcript: c.transcript || '',
+      summary: `Call regarding ${c.title}. ${transcriptText.substring(0, 100)}...`,
+      transcript: transcriptText,
       diarizedTranscript: [
-        { speaker: 'Speaker 1 (Agent)', text: `Hi there, this is Jessica from the team. Great to connect with you.`, start: 0, end: 5 },
-        { speaker: 'Speaker 2 (Customer)', text: c.transcript || '', start: 6, end: 80 }
+        { speaker: 'Speaker 1 (Agent)', text: `Hi there, great to connect with you.`, start: 0, end: 5 },
+        { speaker: 'Speaker 2 (Customer)', text: transcriptText, start: 6, end: 80 },
       ],
       scorecard: {
         greeting: 9.0,
@@ -96,11 +110,11 @@ export class M02ConversationIntelligenceRepository {
         productExplanation: 8.8,
         objectionHandling: 8.2,
         nextStep: 9.0,
-        closingQuality: 8.7
+        closingQuality: 8.7,
       },
       competitorsDetected: [],
-      coachingSuggestion: 'Excellent talk-to-listen ratio. Good alignment on custom solutions.',
-      keywords: ['Pricing', 'SLA', 'Uptime']
+      coachingSuggestion: 'Excellent talk-to-listen ratio.',
+      keywords: ['Pricing', 'SLA', 'Uptime'],
     };
   }
 
@@ -138,148 +152,205 @@ export class M02ConversationIntelligenceRepository {
   }
 
   async findAllConversations(tenantId: string): Promise<ConversationRecord[]> {
-    try {
-      const calls = await this.db.m01Call.findMany({
-        where: { tenantId }
-      });
-      const emails = await this.db.m02Email.findMany({
-        where: { tenantId }
-      });
-      
-      if (calls.length > 0 || emails.length > 0) {
-        const mappedCalls = (calls || []).map((c: any) => this.mapCallToConversation(c));
-        const mappedEmails = (emails || []).map((e: any) => this.mapEmailToConversation(e));
-        return [...mappedCalls, ...mappedEmails];
+    if (!tenantId) throw new Error('tenantId is required');
+
+    const calls = await this.safeFindCalls(tenantId);
+    const emails = await this.safeFindEmails(tenantId);
+
+    if (calls.length === 0 && emails.length === 0) {
+      // Real DB has no data for this tenant — surface the demo corpus only when
+      // tenantId is the documented dev seed so we never leak data across tenants.
+      if (tenantId === DEV_SEED_TENANT_ID) {
+        return this.demoCorpusFor(tenantId);
       }
-    } catch (err: any) {
-      console.warn('[Repository] Failed to query PostgreSQL database. Falling back to simulator.', err.message);
+      return [];
     }
-    return M02ConversationIntelligenceRepository.conversations;
+
+    return [
+      ...calls.map((c: any) => this.mapCallToConversation(c)),
+      ...emails.map((e: any) => this.mapEmailToConversation(e)),
+    ];
   }
 
   async findConversationById(id: string, tenantId: string): Promise<ConversationRecord | undefined> {
+    if (!tenantId) throw new Error('tenantId is required');
+
     try {
-      if (id.startsWith('call-') || id.includes('-')) {
-        const c = await this.db.m01Call.findFirst({
-          where: { id, tenantId }
+      const callDelegate = this.callRecordDelegate;
+      if (callDelegate?.findFirst) {
+        const c = await callDelegate.findFirst({
+          where: { id, tenantId },
+          include: callDelegate === (this.prisma as any).callRecord ? { transcript: true } : undefined,
         });
         if (c) return this.mapCallToConversation(c);
       }
-      const e = await this.db.m02Email.findFirst({
-        where: { id, tenantId }
-      });
-      if (e) return this.mapEmailToConversation(e);
-    } catch (err: any) {
-      console.warn('[Repository] DB fetch for single conversation failed.', err.message);
-    }
-    return M02ConversationIntelligenceRepository.conversations.find(
-      c => c.id === id
-    );
-  }
 
-  async findSavedSearches(tenantId: string, userId: string): Promise<SavedSearchRecord[]> {
-    try {
-      const searches = await this.db.m02SavedSearch.findMany({
-        where: { tenantId }
-      });
-      if (searches.length > 0) {
-        return searches.map((s: any) => ({
-          id: s.id,
-          tenantId: s.tenantId,
-          userId: s.userId,
-          name: s.name,
-          queryString: s.queryString || '',
-          filters: typeof s.filters === 'string' ? JSON.parse(s.filters) : (s.filters as Record<string, any>),
-          createdAt: s.createdAt.toISOString(),
-          updatedAt: s.updatedAt.toISOString()
-        }));
+      const emailDelegate = this.emailDelegate;
+      if (emailDelegate?.findFirst) {
+        const e = await emailDelegate.findFirst({ where: { id, tenantId } });
+        if (e) return this.mapEmailToConversation(e);
       }
     } catch (err: any) {
-      console.warn('[Repository] DB fetch for saved searches failed.', err.message);
+      M02ConversationIntelligenceRepository.logger.warn(
+        `DB fetch for single conversation failed: ${err.message}`,
+      );
     }
-    return M02ConversationIntelligenceRepository.savedSearches;
+
+    // Fall back to demo corpus only for the dev tenant.
+    if (tenantId !== DEV_SEED_TENANT_ID) return undefined;
+    return this.demoCorpusFor(tenantId).find((c) => c.id === id);
   }
 
-  async createSavedSearch(data: SavedSearchDto, tenantId: string, userId: string): Promise<SavedSearchRecord> {
+  async findSavedSearches(tenantId: string, _userId: string): Promise<SavedSearchRecord[]> {
+    if (!tenantId) throw new Error('tenantId is required');
+
     try {
-      const newSearch = await this.db.m02SavedSearch.create({
-        data: {
-          tenantId,
-          userId: userId || '00000000-0000-0000-0000-000000000002',
-          name: data.name,
-          queryString: data.queryString || '',
-          filters: data.filters || {}
+      const delegate = this.savedSearchDelegate;
+      if (delegate?.findMany) {
+        const searches = await delegate.findMany({ where: { tenantId } });
+        if (searches.length > 0) {
+          return searches.map((s: any) => ({
+            id: s.id,
+            tenantId: s.tenantId,
+            userId: s.userId,
+            name: s.name,
+            queryString: s.queryString || '',
+            filters:
+              typeof s.filters === 'string'
+                ? JSON.parse(s.filters)
+                : (s.filters as Record<string, any>),
+            createdAt: s.createdAt.toISOString(),
+            updatedAt: s.updatedAt.toISOString(),
+          }));
         }
-      });
-      return {
-        id: newSearch.id,
-        tenantId: newSearch.tenantId,
-        userId: newSearch.userId,
-        name: newSearch.name,
-        queryString: newSearch.queryString || '',
-        filters: newSearch.filters as Record<string, any>,
-        createdAt: newSearch.createdAt.toISOString(),
-        updatedAt: newSearch.updatedAt.toISOString()
-      };
+      }
     } catch (err: any) {
-      console.warn('[Repository] DB create saved search failed.', err.message);
+      M02ConversationIntelligenceRepository.logger.warn(
+        `DB fetch for saved searches failed: ${err.message}`,
+      );
+    }
+
+    if (tenantId !== DEV_SEED_TENANT_ID) return [];
+    return M02ConversationIntelligenceRepository.savedSearchesByTenant.get(tenantId) ?? [];
+  }
+
+  async createSavedSearch(
+    data: SavedSearchDto,
+    tenantId: string,
+    userId: string,
+  ): Promise<SavedSearchRecord> {
+    if (!tenantId) throw new Error('tenantId is required');
+    if (!userId) throw new Error('userId is required');
+
+    try {
+      const delegate = this.savedSearchDelegate;
+      if (delegate?.create) {
+        const newSearch = await delegate.create({
+          data: {
+            tenantId,
+            userId,
+            name: data.name,
+            queryString: data.queryString || '',
+            filters: data.filters || {},
+          },
+        });
+        return {
+          id: newSearch.id,
+          tenantId: newSearch.tenantId,
+          userId: newSearch.userId,
+          name: newSearch.name,
+          queryString: newSearch.queryString || '',
+          filters: newSearch.filters as Record<string, any>,
+          createdAt: newSearch.createdAt.toISOString(),
+          updatedAt: newSearch.updatedAt.toISOString(),
+        };
+      }
+    } catch (err: any) {
+      M02ConversationIntelligenceRepository.logger.warn(
+        `DB create saved search failed: ${err.message}`,
+      );
     }
 
     const newSearch: SavedSearchRecord = {
       id: `saved-search-${Date.now()}`,
       tenantId,
-      userId: userId || 'user-456',
+      userId,
       name: data.name,
       queryString: data.queryString || '',
       filters: data.filters || {},
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    M02ConversationIntelligenceRepository.savedSearches.push(newSearch);
+    const list = M02ConversationIntelligenceRepository.savedSearchesByTenant.get(tenantId) ?? [];
+    list.push(newSearch);
+    M02ConversationIntelligenceRepository.savedSearchesByTenant.set(tenantId, list);
     return newSearch;
   }
 
   async findSyncLogs(tenantId: string): Promise<SearchSyncLog[]> {
+    if (!tenantId) throw new Error('tenantId is required');
     try {
-      const logs = await this.db.m02SearchIndexSyncLog.findMany({
-        where: { tenantId }
-      });
-      if (logs.length > 0) {
-        return logs.map((l: any) => ({
-          id: l.id,
-          tenantId: l.tenantId,
-          entityType: l.entityType as 'transcript' | 'email',
-          idempotencyKey: l.idempotencyKey,
-          indexedAt: l.indexedAt.toISOString()
-        }));
+      const delegate = this.syncLogDelegate;
+      if (delegate?.findMany) {
+        const logs = await delegate.findMany({ where: { tenantId } });
+        if (logs.length > 0) {
+          return logs.map((l: any) => ({
+            id: l.id,
+            tenantId: l.tenantId,
+            entityType: l.entityType as 'transcript' | 'email',
+            idempotencyKey: l.idempotencyKey,
+            indexedAt: l.indexedAt?.toISOString?.(),
+          }));
+        }
       }
     } catch (err: any) {
-      console.warn('[Repository] DB fetch sync logs failed.', err.message);
+      M02ConversationIntelligenceRepository.logger.warn(
+        `DB fetch sync logs failed: ${err.message}`,
+      );
     }
-    return M02ConversationIntelligenceRepository.syncLogs;
+    if (tenantId !== DEV_SEED_TENANT_ID) return [];
+    return M02ConversationIntelligenceRepository.syncLogsByTenant.get(tenantId) ?? [];
   }
 
-  async createSyncLog(data: { entityType: 'transcript' | 'email'; entityId?: string; idempotencyKey?: string; recordsSynced?: number }, tenantId: string): Promise<SearchSyncLog> {
+  async createSyncLog(
+    data: {
+      entityType: 'transcript' | 'email';
+      entityId?: string;
+      idempotencyKey?: string;
+      recordsSynced?: number;
+    },
+    tenantId: string,
+  ): Promise<SearchSyncLog> {
+    if (!tenantId) throw new Error('tenantId is required');
+    if (!data.entityId) {
+      throw new Error('entityId is required when creating a sync log');
+    }
+
     try {
-      const newLog = await this.db.m02SearchIndexSyncLog.create({
-        data: {
-          tenantId,
-          entityType: data.entityType,
-          entityId: data.entityId || '00000000-0000-0000-0000-000000000003',
-          syncStatus: 'COMPLETED',
-          idempotencyKey: data.idempotencyKey || `key-${Date.now()}`,
-          indexedAt: new Date()
-        }
-      });
-      return {
-        id: newLog.id,
-        tenantId: newLog.tenantId,
-        entityType: newLog.entityType as 'transcript' | 'email',
-        idempotencyKey: newLog.idempotencyKey,
-        indexedAt: newLog.indexedAt.toISOString()
-      };
+      const delegate = this.syncLogDelegate;
+      if (delegate?.create) {
+        const newLog = await delegate.create({
+          data: {
+            tenantId,
+            entityType: data.entityType,
+            entityId: data.entityId,
+            syncStatus: 'COMPLETED',
+            idempotencyKey: data.idempotencyKey || `key-${Date.now()}`,
+            indexedAt: new Date(),
+          },
+        });
+        return {
+          id: newLog.id,
+          tenantId: newLog.tenantId,
+          entityType: newLog.entityType as 'transcript' | 'email',
+          idempotencyKey: newLog.idempotencyKey,
+          indexedAt: newLog.indexedAt?.toISOString?.(),
+        };
+      }
     } catch (err: any) {
-      console.warn('[Repository] DB create sync log failed.', err.message);
+      M02ConversationIntelligenceRepository.logger.warn(
+        `DB create sync log failed: ${err.message}`,
+      );
     }
 
     const newLog: SearchSyncLog = {
@@ -288,10 +359,45 @@ export class M02ConversationIntelligenceRepository {
       entityType: data.entityType,
       lastSyncedAt: new Date().toISOString(),
       recordsSynced: data.recordsSynced || 1,
-      idempotencyKey: data.idempotencyKey || `key-${Date.now()}`
+      idempotencyKey: data.idempotencyKey || `key-${Date.now()}`,
     };
-    M02ConversationIntelligenceRepository.syncLogs.push(newLog);
+    const list = M02ConversationIntelligenceRepository.syncLogsByTenant.get(tenantId) ?? [];
+    list.push(newLog);
+    M02ConversationIntelligenceRepository.syncLogsByTenant.set(tenantId, list);
     return newLog;
+  }
+
+  // ── private DB probes ────────────────────────────────────────────────────
+
+  private async safeFindCalls(tenantId: string): Promise<any[]> {
+    const delegate = this.callRecordDelegate;
+    if (!delegate?.findMany) return [];
+    try {
+      const isUnified = delegate === (this.prisma as any).callRecord;
+      return await delegate.findMany({
+        where: { tenantId },
+        ...(isUnified ? { include: { transcript: true } } : {}),
+        orderBy: isUnified ? { callDate: 'desc' } : { createdAt: 'desc' },
+      });
+    } catch (err: any) {
+      M02ConversationIntelligenceRepository.logger.warn(
+        `findAllConversations.calls failed: ${err.message}`,
+      );
+      return [];
+    }
+  }
+
+  private async safeFindEmails(tenantId: string): Promise<any[]> {
+    const delegate = this.emailDelegate;
+    if (!delegate?.findMany) return [];
+    try {
+      return await delegate.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+    } catch (err: any) {
+      M02ConversationIntelligenceRepository.logger.warn(
+        `findAllConversations.emails failed: ${err.message}`,
+      );
+      return [];
+    }
   }
 
 
@@ -646,12 +752,15 @@ export class M02ConversationIntelligenceRepository {
     return corpus;
   }
 
+  /** Demo saved searches use the documented seed user UUID, never a literal "user-456". */
+  private static readonly DEV_SEED_USER_ID = '00000000-0000-0000-0000-000000000002';
+
   private generateSampleSavedSearches(tenantId: string): any[] {
     return [
       {
         id: 'saved-search-001',
         tenantId,
-        userId: 'user-456',
+        userId: M02ConversationIntelligenceRepository.DEV_SEED_USER_ID,
         name: 'Enterprise Pricing Calls',
         queryString: 'pricing volume discount',
         filters: { topic: 'Pricing Strategy', sentiment: 'Positive' },
@@ -661,7 +770,7 @@ export class M02ConversationIntelligenceRepository {
       {
         id: 'saved-search-002',
         tenantId,
-        userId: 'user-456',
+        userId: M02ConversationIntelligenceRepository.DEV_SEED_USER_ID,
         name: 'Negative Sentiment Alerts',
         queryString: '',
         filters: { sentiment: 'Negative' },

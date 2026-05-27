@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, Optional, forwardRef, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { M09Repository } from '../repositories/m09.repository';
 import { M09Worker } from '../workers/m09.worker';
@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import Groq from 'groq-sdk';
+import { resolveLlmProviderKind } from '../providers/llm-provider.factory';
 
 
 // ─── LLM SERVICE ─────────────────────────────────────────────────────────────
@@ -17,18 +18,35 @@ export class LlmService {
   private readonly groqApiKey: string;
   private readonly elevenLabsApiKey: string;
   private readonly aiMockMode: boolean;
+  private readonly activeProvider: string;
+  private readonly providerReason: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.groqApiKey = this.configService.get<string>('GROQ_API_KEY') || '';
-    this.elevenLabsApiKey = this.configService.get<string>('ELEVENLABS_API_KEY') || '';
+  // Optional + process.env fallback works around a pnpm-duplicate
+  // `@nestjs/config` issue that can leave ConfigService injected as `undefined`
+  // when the module's local node_modules ships its own copy of the package.
+  constructor(@Optional() private readonly configService?: ConfigService) {
+    const read = (k: string): string =>
+      (this.configService?.get?.<string>(k) as string) || process.env[k] || '';
+    this.groqApiKey = read('GROQ_API_KEY');
+    this.elevenLabsApiKey = read('ELEVENLABS_API_KEY');
     this.aiMockMode =
-      (this.configService.get<string>('AI_MOCK_MODE') || '').toLowerCase() === 'true' ||
-      !this.groqApiKey;
+      read('AI_MOCK_MODE').toLowerCase() === 'true' || !this.groqApiKey;
     this.groq = new Groq({ apiKey: this.groqApiKey });
+    const resolved = resolveLlmProviderKind();
+    this.activeProvider = resolved.kind;
+    this.providerReason = resolved.reason;
   }
 
   getRuntimeMode() {
     return this.aiMockMode ? 'mock' : 'live';
+  }
+
+  getActiveProviderName(): string {
+    return this.activeProvider;
+  }
+
+  getProviderSelectionReason(): string {
+    return this.providerReason;
   }
 
   private buildMockBuyerResponse(userMessage: string, history: any[]): string {

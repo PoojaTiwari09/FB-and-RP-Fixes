@@ -6,24 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api/ai-summaries': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/api/admin': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/api/share': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/api/feedback': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3001',
         changeOrigin: true,
       },
     },

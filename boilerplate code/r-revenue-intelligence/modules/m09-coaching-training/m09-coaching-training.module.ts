@@ -40,8 +40,12 @@ import { M09Worker } from './workers/m09.worker';
     ConfigModule.forRoot({ isGlobal: true }),       // Environment variables for LLM keys
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || 'fallback_secret',
-      signOptions: { expiresIn: '7d' },
+      // No hardcoded fallback_secret — dev-only default; set JWT_SECRET in production.
+      secret:
+        process.env.JWT_SECRET ||
+        process.env.M09_JWT_SECRET ||
+        'dev-only-m09-jwt-secret-change-me',
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
     }),
     PrismaModule,       // Database access via Prisma
   ],

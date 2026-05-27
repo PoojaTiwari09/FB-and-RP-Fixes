@@ -1,67 +1,73 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UnauthorizedException, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { TrackerService } from '../services/tracker.service';
 
+/**
+ * Tracker management — keyword-trigger detections across calls & emails (TDD: AI Smart Tracker).
+ *
+ * `TenantGuard` is applied at the class level: missing or unverified tenant context
+ * yields a 401 BEFORE any handler runs. Handlers therefore trust `req.tenantId`.
+ */
 @Controller('api/v1/conversation-intelligence/trackers')
+@UseGuards(TenantGuard)
 export class TrackerController {
   constructor(private readonly trackerService: TrackerService) {}
 
   @Post()
-  async createTracker(
-    @Headers('x-tenant-id') tenantId: string,
-    @Body() body: any
-  ) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.trackerService.createTracker({ ...body, tenantId });
+  async createTracker(@Req() req: Record<string, any>, @Body() body: any) {
+    return this.trackerService.createTracker({ ...body, tenantId: req.tenantId });
   }
 
   @Get()
-  async getTrackers(@Headers('x-tenant-id') tenantId: string) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.trackerService.getTrackers(tenantId);
+  async getTrackers(@Req() req: Record<string, any>) {
+    return this.trackerService.getTrackers(req.tenantId);
   }
 
   @Get('stats')
-  async getStats(@Headers('x-tenant-id') tenantId: string) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.trackerService.getTrackerStats(tenantId);
+  async getStats(@Req() req: Record<string, any>) {
+    return this.trackerService.getTrackerStats(req.tenantId);
   }
 
   @Get('detections')
-  async getAllDetections(@Headers('x-tenant-id') tenantId: string) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.trackerService.getAllDetections(tenantId);
+  async getAllDetections(@Req() req: Record<string, any>) {
+    return this.trackerService.getAllDetections(req.tenantId);
   }
 
   @Get('detections/:entityId')
   async getDetectionsForConversation(
-    @Headers('x-tenant-id') tenantId: string,
+    @Req() req: Record<string, any>,
     @Param('entityId') entityId: string,
-    @Query('entityType') entityType: string = 'call'
+    @Query('entityType') entityType: string = 'call',
   ) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
     return this.trackerService.getDetectionsForConversation(
-      tenantId,
+      req.tenantId,
       entityId,
-      entityType as 'call' | 'email'
+      entityType as 'call' | 'email',
     );
   }
 
   @Put(':id')
   async updateTracker(
-    @Headers('x-tenant-id') tenantId: string,
+    @Req() req: Record<string, any>,
     @Param('id') id: string,
-    @Body() body: any
+    @Body() body: any,
   ) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.trackerService.updateTracker(id, tenantId, body);
+    return this.trackerService.updateTracker(id, req.tenantId, body);
   }
 
   @Delete(':id')
-  async deleteTracker(
-    @Headers('x-tenant-id') tenantId: string,
-    @Param('id') id: string
-  ) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.trackerService.deleteTracker(id, tenantId);
+  async deleteTracker(@Req() req: Record<string, any>, @Param('id') id: string) {
+    return this.trackerService.deleteTracker(id, req.tenantId);
   }
 }

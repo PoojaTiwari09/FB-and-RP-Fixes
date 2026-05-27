@@ -44,9 +44,9 @@ export type SearchQueryDto = z.infer<typeof SearchQuerySchema>;
 
 // ── List calls query ──────────────────────────────────────────────────────
 export const ListCallsQuerySchema = z.object({
-  status:  z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
+  status:  z.enum(['pending', 'processing', 'completed', 'failed', 'skipped']).optional(),
   source:  z.enum(['zoom', 'teams', 'meet', 'dialer', 'manual']).optional(),
-  sortBy:  z.enum(['callDate', 'title', 'durationSeconds', 'transcriptStatus']).default('callDate'),
+  sortBy:  z.enum(['callDate', 'title', 'durationSeconds', 'transcriptStatus', 'createdAt']).default('callDate'),
   order:   z.enum(['asc', 'desc']).default('desc'),
   limit:   z.coerce.number().int().min(1).max(100).default(20),
   offset:  z.coerce.number().int().min(0).default(0),

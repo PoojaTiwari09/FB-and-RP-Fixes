@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "../../lib/supabase";
+import { fetchWorkspace } from "../../api/m03Api";
 import { Phone, Briefcase, Building2, UserCircle, AlertCircle, RefreshCw } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -157,84 +157,54 @@ export function EntityListPanel({ briefType, selectedId, onSelect }) {
     setError(null);
 
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        throw new Error("Supabase is not configured yet. Configure Supabase credentials to access CRM records.");
-      }
+      const ws = await fetchWorkspace();
 
       if (briefType === "call") {
-        const { data, error: err } = await supabase
-          .from("calls")
-          .select("id, title, meeting_date:started_at, duration:duration_seconds, account_id, accounts(account_name:name)")
-          .order("started_at", { ascending: false })
-          .limit(100);
-
-        if (err) throw err;
-        const mapped = (data ?? []).map((r) => ({
-          id: r.id,
-          title: r.title,
-          meeting_date: r.meeting_date,
-          duration: r.duration ? Math.round(r.duration / 60) : null,
-          source_platform: "CRM",
-          account_id: r.account_id,
-          account_name: r.accounts?.account_name ?? null,
-        }));
-        setEntities(mapped);
-
+        setEntities(
+          (ws.calls ?? []).map((r) => ({
+            id: r.id,
+            title: r.title,
+            meeting_date: r.created_at,
+            duration: null,
+            source_platform: "CRM",
+            account_id: r.account_id || r.accountId,
+            account_name: null,
+          })),
+        );
       } else if (briefType === "deal") {
-        const { data, error: err } = await supabase
-          .from("deals")
-          .select("id, deal_name:name, stage, value:amount, status, account_id, accounts(account_name:name)")
-          .order("created_at", { ascending: false })
-          .limit(100);
-
-        if (err) throw err;
-        const mapped = (data ?? []).map((r) => ({
-          id: r.id,
-          deal_name: r.deal_name,
-          stage: r.stage,
-          value: r.value ? parseFloat(r.value) : null,
-          status: r.status,
-          account_id: r.account_id,
-          account_name: r.accounts?.account_name ?? null,
-        }));
-        setEntities(mapped);
-
+        setEntities(
+          (ws.deals ?? []).map((r) => ({
+            id: r.id,
+            deal_name: r.name,
+            stage: r.stage,
+            value: null,
+            status: "Open",
+            account_id: r.account_id || r.accountId,
+            account_name: null,
+          })),
+        );
       } else if (briefType === "account") {
-        const { data, error: err } = await supabase
-          .from("accounts")
-          .select("id, account_name:name, industry, company_size:segment")
-          .order("name", { ascending: true })
-          .limit(100);
-
-        if (err) throw err;
-        const mapped = (data ?? []).map((r) => ({
-          id: r.id,
-          account_name: r.account_name,
-          industry: r.industry,
-          relationship_status: "Active",
-          company_size: r.company_size || "Mid-Market",
-        }));
-        setEntities(mapped);
-
+        setEntities(
+          (ws.accounts ?? []).map((r) => ({
+            id: r.id,
+            account_name: r.name,
+            industry: r.industry || "Technology",
+            relationship_status: "Active",
+            company_size: "Mid-Market",
+          })),
+        );
       } else {
-        const { data, error: err } = await supabase
-          .from("contacts")
-          .select("id, full_name:name, role:role_title, account_id, accounts(account_name:name)")
-          .order("name", { ascending: true })
-          .limit(100);
-
-        if (err) throw err;
-        const mapped = (data ?? []).map((r) => ({
-          id: r.id,
-          full_name: r.full_name,
-          role: r.role,
-          account_id: r.account_id,
-          account_name: r.accounts?.account_name ?? null,
-          influence_level: "Medium",
-          sentiment_score: 0.8,
-        }));
-        setEntities(mapped);
+        setEntities(
+          (ws.contacts ?? []).map((r) => ({
+            id: r.id,
+            full_name: r.name,
+            role: r.role || "Stakeholder",
+            account_id: r.account_id || r.accountId,
+            account_name: null,
+            influence_level: "Medium",
+            sentiment_score: 0.8,
+          })),
+        );
       }
 
     } catch (err) {

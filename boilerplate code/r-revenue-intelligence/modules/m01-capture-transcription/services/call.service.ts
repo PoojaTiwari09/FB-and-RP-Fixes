@@ -138,10 +138,28 @@ export class CallService {
       assemblyAiJobId?: string;
     },
   ) {
-    await this.transcripts.create({ tenantId, callId, ...transcriptData });
+    const tx = await this.transcripts.create({ tenantId, callId, ...transcriptData });
     await this.calls.updateStatus(callId, tenantId, 'completed');
-    // CT-10: emit event for downstream consumers (M3 AI Summaries etc.)
-    await this.events.publish('transcription.completed', { tenantId, callId });
+
+    // CT-10: emit BOTH the canonical platform name (`call.transcription.completed`,
+    // consumed by M02/M03/M08/M10 per their TDDs) and the legacy short name
+    // (`transcription.completed`) for backward compatibility with the in-process
+    // AiExtractionSubscriber. Once all consumers move to the canonical name we
+    // can drop the legacy emission.
+    const envelope = {
+      tenantId,
+      callId,
+      transcriptId: tx?.id,
+      sourceType: 'call',
+      sourcePlatform: 'm01-capture-transcription',
+      sourceRecordId: callId,
+      occurredAt: new Date().toISOString(),
+      participants: [],
+      crmHints: {},
+      artifacts: { transcriptId: tx?.id, assemblyAiJobId: transcriptData.assemblyAiJobId },
+    };
+    await this.events.publish('call.transcription.completed', envelope);
+    await this.events.publish('transcription.completed',     envelope);
   }
 
   // ── Internal: called by worker on failure ─────────────────────────────
@@ -157,5 +175,59 @@ export class CallService {
   //   'unsupported_call_type'  | 'unsupported_call_source'
   async markSkipped(callId: string, tenantId: string, skipReason: string) {
     await this.calls.updateSkipped(callId, tenantId, skipReason);
+  }
+
+  // ── Hard delete (cascade): removes call + transcripts/utterances/notes/shares ──
+  async deleteCall(callId: string, tenantId: string) {
+    const exists = await this.calls.findById(callId, tenantId);
+    if (!exists) throw new NotFoundException(`Call ${callId} not found`);
+    const res = await this.calls.deleteById(callId, tenantId);
+    return { success: res.count > 0 };
+  }
+
+  // ── Manual AI extraction trigger ───────────────────────────────────────
+  // Re-fires `transcription.completed` so the AiExtractionSubscriber re-runs
+  // the summary / highlights / talk-ratio pipeline. Used by the frontend
+  // "Re-run AI" button (CT-15) and as an admin recovery path when the
+  // upstream LLM service was temporarily unavailable.
+  async triggerAiExtraction(callId: string, tenantId: string) {
+    const call = await this.calls.findById(callId, tenantId);
+    if (!call) throw new NotFoundException(`Call ${callId} not found`);
+
+    const transcript = await this.transcripts.findByCallId(callId, tenantId);
+    if (!transcript) {
+      throw new BadRequestException(
+        `Call ${callId} has no transcript yet — wait for transcription to complete`,
+      );
+    }
+
+    const envelope = {
+      tenantId,
+      callId,
+      transcriptId: transcript.id,
+      sourceType: 'call',
+      sourcePlatform: 'm01-capture-transcription',
+      sourceRecordId: callId,
+      occurredAt: new Date().toISOString(),
+      participants: [],
+      crmHints: {},
+      artifacts: { transcriptId: transcript.id, manualReplay: true },
+    };
+    await this.events.publish('call.transcription.completed', envelope);
+    await this.events.publish('transcription.completed',     envelope);
+
+    return {
+      accepted: true,
+      callId,
+      transcriptId: transcript.id,
+      message: 'AI extraction pipeline triggered',
+    };
+  }
+
+  // ── Internal: called by worker on failure ─────────────────────────────
+  async publishTranscriptionFailed(callId: string, tenantId: string, reason: string) {
+    await this.events.publish('call.transcription.failed', {
+      tenantId, callId, reason, occurredAt: new Date().toISOString(),
+    });
   }
 }

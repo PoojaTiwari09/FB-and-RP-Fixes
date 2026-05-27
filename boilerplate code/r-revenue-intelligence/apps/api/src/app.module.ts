@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
+import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
 
 // ── Backend modules ──────────────────────────────────────────────────────────
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
@@ -45,6 +50,26 @@ const sharedBackendModules = [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
+    }),
+    // EventEmitter2 — backbone of the domain event bus (`transcription.completed`,
+    // `call.shared`, …). Registered once at the root so every module's
+    // @OnEvent subscribers receive emissions from EventPublisherService.
+    EventEmitterModule.forRoot({
+      wildcard: true,
+      delimiter: '.',
+      newListener: false,
+      removeListener: false,
+      maxListeners: 50,
+      verboseMemoryLeak: false,
+    }),
+    // EventPublisherModule is @Global, so any module can use the publisher.
+    EventPublisherModule,
+    // Expose the local uploads directory as static assets so the frontend
+    // <AudioPlayer/> can stream audio uploaded via POST /calls/upload.
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+      serveStaticOptions: { fallthrough: true },
     }),
     // We register BullMQ unconditionally with lazyConnect so per-module
     // `BullModule.registerQueue(...)` calls (M01, M03, …) don't blow up at

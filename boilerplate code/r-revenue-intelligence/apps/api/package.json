@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/main.ts",
+    "dev": "ts-node --transpile-only -P ./tsconfig.json src/main.ts",
     "build": "tsc",
-    "start": "tsx src/main.ts",
+    "start": "ts-node --transpile-only -P ./tsconfig.json src/main.ts",
     "start:prod": "node dist/apps/api/src/main.js",
     "test": "jest"
   },

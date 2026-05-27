@@ -1,0 +1,3 @@
+# Optional — tests also work with Python stdlib only (urllib).
+# Install for slightly nicer HTTP error messages:
+requests>=2.28.0

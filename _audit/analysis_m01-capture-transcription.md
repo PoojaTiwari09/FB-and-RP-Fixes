@@ -146,16 +146,24 @@ Maps to these models in `final_product/schema.prisma`:
 
 ---
 
-## 8. Gaps & debts
+## 8. Gaps & debts (post deep-validation)
 
-| Severity | Issue |
-| -------- | ----- |
-| HIGH | `repositories/m01.repository.ts` is a mock (returns hard-coded JSON). Remove + delete the matching `m01.service.ts` calls. |
-| HIGH | Worker depends on `assemblyai` SDK at runtime; if pnpm hoists it differently in CI, the `require('assemblyai')` may break (mitigated by the `.default ?? .AssemblyAI` fallback). |
-| MEDIUM | `prisma/schema.prisma` ships a placeholder `M01CaptureTranscriptionRecord` model. Delete after unification. |
-| MEDIUM | `AiExtractionResult.evidenceTimestampMs` typed `String?` in unified schema (should be `Int?`). |
-| LOW | `UploadController` saves to a `process.cwd()`-relative `uploads/audio` directory. In production this needs S3 / signed URLs. |
-| LOW | `localFallbackExtraction(...)` (now removed from `apps/api/src/main.ts` per §A1) should live in M01 if still needed. |
+| Severity | Issue | Status |
+| -------- | ----- | ------ |
+| ~~HIGH~~ | `repositories/m01.repository.ts` is a mock (returns hard-coded JSON). | ✅ **Removed** in the deep-validation pass (along with the mock controller + service). |
+| ~~HIGH~~ | `prisma/schema.prisma` placeholder model. | ✅ **Removed**. |
+| ~~HIGH~~ | `EventPublisherService` was a `console.log` stub — every `@OnEvent` subscriber was silently dead. | ✅ **Replaced** with EventEmitter2-backed publisher; emits both canonical and legacy event names. |
+| ~~HIGH~~ | `UploadController` and `WebhookController` were defined but never registered in `M01CaptureTranscriptionModule`. | ✅ **Registered**. |
+| ~~HIGH~~ | `TenantGuard` returned `false` (body-less 403). | ✅ Now throws explicit `UnauthorizedException` (401). |
+| ~~HIGH~~ | Transcript `create` not idempotent — worker retry hit `Unique constraint failed`. | ✅ **Upserted** inside a `$transaction`. |
+| ~~MEDIUM~~ | Frontend `deleteCall` and `extractAI` calls had no backend routes. | ✅ Added `DELETE /calls/:id` and `POST /calls/:id/extract-ai`. |
+| ~~MEDIUM~~ | M10 expected canonical event name `call.transcription.completed`; M01 published `transcription.completed`. | ✅ M01 now emits both. |
+| ~~MEDIUM~~ | GIN fulltext index missing. | ✅ Created (`_audit/m01_create_fts_indexes.sql`). |
+| ~~MEDIUM~~ | Zod errors surfaced as 500. | ✅ Global `ZodExceptionFilter` returns RFC-7807 400 responses. |
+| HIGH | Worker depends on `assemblyai` SDK at runtime; require pattern can break under pnpm hoisting. | Mitigated (assertion + fallback) — full fix tracked. |
+| MEDIUM | `AiExtractionResult.evidenceTimestampMs` typed `String?` in unified schema (should be `Int?`). | Not in M01 — tracked for M18 / AI Extractor. |
+| LOW | `UploadController` saves to a `process.cwd()`-relative `uploads/audio` directory. Production needs S3 / signed URLs. | Open (RR-M01-03). |
+| LOW | M10 BullMQ bridge — M01 emits the event over EventEmitter2 but doesn’t enqueue it onto M10’s `revenue-graph-linking` queue. | Open (RR-M10-01). |
 
 ---
 

@@ -68,7 +68,7 @@ export class AuditLogService {
       await this.prisma.auditLog.create({
         data: {
           tenantId:   entry.tenantId,
-          actorId:    entry.actorId   ?? null,
+          actorId:    entry.actorId,                  // optional; let Prisma omit when undefined
           actorType:  entry.actorType ?? 'system',
           action:     entry.action,
           entityType: entry.entityType,

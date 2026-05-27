@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { getSupabaseClient } from "../../lib/supabase";
+import { getBrief } from "../../api/m03Api";
 import {
   X, History, Clock, Cpu, RotateCcw,
   GitCompare, Loader2, AlertCircle, CheckCircle2, BookOpen, Lightbulb,
@@ -297,17 +297,20 @@ function DrawerContent({ briefType, entityId, currentSummary, onRestoreVersion, 
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase) throw new Error("Supabase client is not configured");
-      const { data, error: err } = await supabase
-        .from("brief_history")
-        .select("id, version_number, model_used, prompt_version, generated_by, created_at, metadata, generated_summary")
-        .eq("entity_id", entityId)
-        .eq("brief_type", briefType)
-        .order("version_number", { ascending: false })
-        .limit(20);
-      if (err) throw err;
-      setHistory(data ?? []);
+      const body = await getBrief(briefType, entityId);
+      if (body?.data) {
+        setHistory([
+          {
+            id: body.id || "current",
+            version_number: 1,
+            model_used: "nest-api",
+            created_at: new Date().toISOString(),
+            generated_summary: body.data,
+          },
+        ]);
+      } else {
+        setHistory([]);
+      }
     } catch (err) {
       setError(err?.message ?? "Failed to load history");
     } finally {

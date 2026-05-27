@@ -570,91 +570,18 @@ export class TestController {
     private readonly sessionsService: SessionsService,
     private readonly analyticsService: AnalyticsService,
     private readonly llmService: LlmService,
+    private readonly jwtService: JwtService,
   ) {}
 
   private async ensureSeedData() {
-    const orgId = 'org-123';
     const hashedPassword = await bcrypt.hash('password123', 10);
-
-    const manager = await this.prisma.user.upsert({
-      where: { email: 'manager@example.com' },
-      update: {},
-      create: {
-        id: 'manager-abc',
-        email: 'manager@example.com',
-        name: 'John Manager',
-        role: 'manager',
-        status: 'active',
-        password: hashedPassword,
-        org_id: orgId,
-      },
-    });
-
-    const rep = await this.prisma.user.upsert({
-      where: { email: 'rep@example.com' },
-      update: {},
-      create: {
-        id: 'rep-xyz',
-        email: 'rep@example.com',
-        name: 'Sarah SalesRep',
-        role: 'rep',
-        status: 'active',
-        password: hashedPassword,
-        org_id: orgId,
-        manager_id: 'manager-abc',
-      },
-    });
-
-    const voices = [
-      { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Rachel', is_active: true },
-      { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel (Old)', is_active: true },
-    ];
-    for (const v of voices) {
-      await this.prisma.aiVoice.upsert({
-        where: { id: v.id },
-        update: {},
-        create: v,
-      });
-    }
-
-    const scenarios = [
-      {
-        id: 'scenario-1',
-        org_id: orgId,
-        manager_id: 'manager-abc',
-        persona_name: 'Objection Oliver (Enterprise Buyer)',
-        persona_type: 'competitive',
-        difficulty: 'intermediate',
-        context_text: 'You are Oliver, an enterprise software buyer who is highly skeptical of cloud migration and very price sensitive.',
-        custom_prompt: 'Respond to the sales rep with pricing objections and express preference for legacy on-prem solutions.',
-        voice_id: 'Xb7hH8MSUJpSbSDYk0k2',
-      },
-      {
-        id: 'scenario-2',
-        org_id: orgId,
-        manager_id: 'manager-abc',
-        persona_name: 'Closing Clara (Fast-growing Startup CEO)',
-        persona_type: 'assertive',
-        difficulty: 'advanced',
-        context_text: 'You are Clara, CEO of a high-growth tech startup. You need speed of execution and are willing to pay for premium features.',
-        custom_prompt: 'Assess if the sales rep can communicate speed and agility. Agree to a contract if they demonstrate speed and value.',
-        voice_id: '21m00Tcm4TlvDq8ikWAM',
-      }
-    ];
-    for (const s of scenarios) {
-      await this.prisma.trainingScenario.upsert({
-        where: { id: s.id },
-        update: {},
-        create: s,
-      });
-    }
-
+    const seed = this.repository.seedTestData(hashedPassword);
     return {
       success: true,
       message: 'Test data seeded successfully',
-      repId: rep.id,
-      managerId: manager.id,
-      orgId,
+      repId: seed.repId,
+      managerId: seed.managerId,
+      orgId: seed.orgId,
     };
   }
 
@@ -662,18 +589,18 @@ export class TestController {
   @Get('health')
   async health() {
     await this.prisma.$queryRawUnsafe('SELECT 1');
-
-    const [users, scenarios, voices] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.trainingScenario.count(),
-      this.prisma.aiVoice.count(),
-    ]);
+    const scenarios = await this.repository.findAllScenarios(
+      '00000000-0000-0000-0000-000000000001',
+    ).catch(() => []);
 
     return {
       success: true,
       database: 'up',
       aiMode: this.llmService.getRuntimeMode(),
-      counts: { users, scenarios, voices },
+      provider: this.llmService.getActiveProviderName(),
+      counts: {
+        scenarios: scenarios.length,
+      },
       timestamp: new Date().toISOString(),
     };
   }
@@ -687,12 +614,14 @@ export class TestController {
   @Public()
   @Post('token')
   async generateToken(@Body() dto: { userId: string }) {
-    const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
-    const payload = Buffer.from(JSON.stringify({ sub: dto.userId })).toString('base64url');
-    const signature = 'dummy-signature';
-    return {
-      token: `${header}.${payload}.${signature}`,
-    };
+    const user = await this.repository.getUserById(dto.userId);
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      org_id: user.org_id,
+    });
+    return { token, userId: user.id, org_id: user.org_id, role: user.role };
   }
 
   @Public()

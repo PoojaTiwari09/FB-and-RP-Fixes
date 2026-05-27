@@ -30,23 +30,31 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     VocabularyCorrectionController,
   ],
   providers: [
+    // Application services
     M02ConversationIntelligenceService,
     HybridSearchService,
     TrackerService,
     TopicManagementService,
-    TopicTagService,
+    TopicTagService,         // CRUD
+    TopicTaggingService,     // orchestrator
+    AiTopicTaggerService,    // AI provider client
+    TranslationService,
+    VocabularyCorrectionService,
+    // Repositories
+    M02ConversationIntelligenceRepository,
+    TopicRepository,
+  ],
+  exports: [
+    M02ConversationIntelligenceService,
+    HybridSearchService,
+    TrackerService,
+    TopicManagementService,
     TopicTaggingService,
     AiTopicTaggerService,
     TranslationService,
     VocabularyCorrectionService,
     M02ConversationIntelligenceRepository,
     TopicRepository,
-  ],
-  exports: [
-    M02ConversationIntelligenceService,
-    TrackerService,
-    TopicManagementService,
-    TranslationService,
   ],
 })
 export class M02ConversationIntelligenceModule {}

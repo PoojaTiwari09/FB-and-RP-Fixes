@@ -30,34 +30,56 @@ export class TranscriptRepository {
 
   // ── CT-03 / CT-04: Store transcript + utterances atomically ──────────
   // US-04: PII redaction runs here — before ANY data is written to the DB.
+  // Idempotent: on retry (worker re-runs) we overwrite text + recreate
+  // utterances cleanly without orphaning the previous batch.
   async create(data: CreateTranscriptData) {
-    // 1. Redact PII from the full transcript text
     const { redactedText: redactedFullText } = this.pii.redact(data.fullText);
-
-    // 2. Redact PII from every individual utterance
     const redactedUtterances = this.pii.redactUtterances(data.utterances);
 
-    return this.prisma.transcript.create({
-      data: {
-        tenantId:        data.tenantId,
-        callId:          data.callId,
-        fullText:        redactedFullText,      // ✅ safe — no raw PII
-        assemblyAiJobId: data.assemblyAiJobId,
-        utterances: {
-          create: redactedUtterances.map((u) => ({
-            tenantId:        data.tenantId,     // US-32: RLS tenantId on each row
-            speaker:         u.speaker,
-            text:            u.text,            // ✅ redacted text stored
-            originalText:    u.originalText,    // audit-only field
-            startMs:         u.startMs,
-            endMs:           u.endMs,
-            confidence:      u.confidence,
-            isLowConfidence: u.confidence < LOW_CONFIDENCE_THRESHOLD,
-            sequenceIndex:   u.sequenceIndex,
-          })),
+    const utteranceRows = redactedUtterances.map((u) => ({
+      tenantId:        data.tenantId,
+      speaker:         u.speaker,
+      text:            u.text,
+      originalText:    u.originalText,
+      startMs:         u.startMs,
+      endMs:           u.endMs,
+      confidence:      u.confidence,
+      isLowConfidence: u.confidence < LOW_CONFIDENCE_THRESHOLD,
+      sequenceIndex:   u.sequenceIndex,
+    }));
+
+    // callId is @unique on Transcript so we can safely upsert.
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.transcript.findUnique({
+        where: { callId: data.callId },
+        select: { id: true },
+      });
+
+      if (existing) {
+        // Wipe old utterances + replace; preserves the transcript ID so
+        // downstream extraction results that link by callId stay aligned.
+        await tx.utterance.deleteMany({ where: { transcriptId: existing.id } });
+        return tx.transcript.update({
+          where: { id: existing.id },
+          data: {
+            fullText:        redactedFullText,
+            assemblyAiJobId: data.assemblyAiJobId,
+            utterances: { create: utteranceRows },
+          },
+          include: { utterances: { orderBy: { sequenceIndex: 'asc' } } },
+        });
+      }
+
+      return tx.transcript.create({
+        data: {
+          tenantId:        data.tenantId,
+          callId:          data.callId,
+          fullText:        redactedFullText,
+          assemblyAiJobId: data.assemblyAiJobId,
+          utterances: { create: utteranceRows },
         },
-      },
-      include: { utterances: { orderBy: { sequenceIndex: 'asc' } } },
+        include: { utterances: { orderBy: { sequenceIndex: 'asc' } } },
+      });
     });
   }
 

@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ChatMessage from "./ChatMessage";
-import { queryGemini, buildSystemPrompt } from "../../services/gemini";
-import { generateEmbedding, localSemanticSearch, chunkTranscript } from "../../services/embeddings";
-import { getSupabaseClient } from "../../lib/supabase";
+import { askQuery } from "../../api/m03Api";
 import styles from "./ChatPanel.module.css";
 
 const SUGGESTIONS = [
@@ -159,10 +157,6 @@ export default function ChatPanel({
     setRequestTimestamps([...activeTimestamps, nowTime]);
 
     try {
-      if (!apiKey) {
-        throw new Error("No API key set. Click ⚙ in the header to add your API key.");
-      }
-
       // ── Date Window Time Parsing Filter ──
       const lowerText = userText.toLowerCase();
       let startDate = null;
@@ -192,246 +186,38 @@ export default function ChatPanel({
         endDate = new Date();
       }
 
-      // ── Step 1: Generate Embedding ──
-      const queryEmbedding = await generateEmbedding(apiKey, userText);
-
-      // ── Step 1.5: Response Caching Check (Exact & Semantic) ──
-      const cacheKeyPrefix = `query_cache:${currentUser}:${activeDealId || 'global'}:${activeAccountId || 'global'}:`;
-      const exactCacheKey = `${cacheKeyPrefix}${userText.toLowerCase().trim()}`;
-      
-      let cacheHit = null;
-      let cacheStatus = "MISS";
-      
+      const exactCacheKey = `query_cache:${currentUser}:${activeDealId || "global"}:${activeAccountId || "global"}:${userText.toLowerCase().trim()}`;
       if (cache[exactCacheKey]) {
-        cacheHit = cache[exactCacheKey];
-        cacheStatus = "HIT (Exact)";
-      } else {
-        // Semantic Match Check
-        let bestScore = -1;
-        let bestKey = null;
-        for (const [key, item] of Object.entries(cache)) {
-          if (key.startsWith(cacheKeyPrefix)) {
-            let dotProduct = 0;
-            const cachedEmb = item.embedding;
-            if (cachedEmb && cachedEmb.length === 768 && queryEmbedding.length === 768) {
-              for (let i = 0; i < 768; i++) {
-                dotProduct += queryEmbedding[i] * cachedEmb[i];
-              }
-            }
-            if (dotProduct > bestScore) {
-              bestScore = dotProduct;
-              bestKey = key;
-            }
-          }
-        }
-        if (bestScore > 0.98 && bestKey) {
-          cacheHit = cache[bestKey];
-          cacheStatus = "HIT (Semantic)";
-        }
-      }
-
-      if (cacheHit) {
-        setTimeout(() => {
-          setMessages(prev =>
-            prev.map(m =>
-              m.id === loadingMsg.id
-                ? {
-                    id: Date.now() + 4,
-                    role: "assistant",
-                    content: cacheHit.answer,
-                    citations: cacheHit.citations,
-                    isCached: true,
-                    cacheStatus: cacheStatus,
-                    isLoading: false
-                  }
-                : m
-            )
-          );
-          setLoading(false);
-          setDebugLogs({
-            latency: 15,
-            cacheStatus: cacheStatus,
-            promptSent: "Served from Cache. No LLM query sent.",
-            chunksUsed: cacheHit.citations,
-            tokenCount: 0
-          });
-        }, 50);
+        const cacheHit = cache[exactCacheKey];
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === loadingMsg.id
+              ? { ...m, content: cacheHit.answer, citations: cacheHit.citations, isLoading: false, isCached: true }
+              : m
+          )
+        );
+        setLoading(false);
         return;
       }
 
-      // ── Step 2: Retrieve Top Relevant Transcript Chunks (RAG) ──
-      const sb = getSupabaseClient();
-      let matchedChunks = [];
-
-      if (sb) {
-        try {
-          const { data: chunks, error: rpcErr } = await sb.rpc("match_transcript_chunks", {
-            query_embedding: queryEmbedding,
-            match_threshold: 0.1,
-            match_count: 5,
-            p_deal_id: activeDealId,
-            p_account_id: activeAccountId
-          });
-
-          if (rpcErr) throw rpcErr;
-          if (chunks && chunks.length > 0) {
-            matchedChunks = chunks.map(c => {
-              const parentCall = calls.find(call => call.id === c.call_id);
-              return {
-                ...c,
-                call_title: parentCall?.title || "Call Transcript"
-              };
-            });
-          } else {
-            matchedChunks = localSemanticSearch(queryEmbedding, calls, [], activeDealId, activeAccountId, userText);
-          }
-        } catch (rpcErr) {
-          console.warn("RPC vector match failed, falling back to client-side match:", rpcErr);
-          matchedChunks = localSemanticSearch(queryEmbedding, calls, [], activeDealId, activeAccountId, userText);
-        }
-      } else {
-        matchedChunks = localSemanticSearch(queryEmbedding, calls, [], activeDealId, activeAccountId, userText);
-      }
-
-      // ── Step 2.5: Apply Date-Time Window Bounds Filter if parsed ──
-      if (startDate || endDate) {
-        const matchingCallIds = calls.filter(call => {
-          const cDate = new Date(call.date || call.created_at);
-          if (isNaN(cDate.getTime())) return true;
-          if (startDate && cDate < startDate) return false;
-          if (endDate && cDate > endDate) return false;
-          return true;
-        }).map(c => c.id);
-
-        matchedChunks = matchedChunks.filter(chunk => matchingCallIds.includes(chunk.call_id));
-      }
-
-      // Ensure we associate call_title with local chunks too
-      matchedChunks = matchedChunks.map(c => {
-        if (c.source_type === "email") return c;
-        const parentCall = calls.find(call => call.id === c.call_id);
-        return {
-          ...c,
-          call_title: parentCall?.title || "Call Transcript"
-        };
-      });
-
-      // ── Step 2.6: Keyword Citation Booster ──
-      const keywordsToCallIds = {
-        acme: ["CL001", "CL004"],
-        john: ["CL001"],
-        harlow: ["CL001"],
-        tom: ["CL004"],
-        priya: ["CL001", "CL004"],
-        technova: ["CL002"],
-        sara: ["CL002"],
-        kim: ["CL002"],
-        raj: ["CL002"],
-        healthos: ["CL003"],
-        patel: ["CL003"],
-        globalbank: ["CL005"],
-        "global bank": ["CL005"],
-        chen: ["CL005"],
-        michael: ["CL005"]
-      };
-
-      const boostedCallIds = new Set();
-      Object.entries(keywordsToCallIds).forEach(([kw, callIds]) => {
-        if (lowerText.includes(kw)) {
-          callIds.forEach(id => boostedCallIds.add(id));
-        }
-      });
-
-      boostedCallIds.forEach(callId => {
-        const call = calls.find(c => c.id === callId);
-        if (call && !matchedChunks.some(chunk => chunk.call_id === callId)) {
-          const chunks = chunkTranscript(call.transcript || "");
-          if (chunks.length > 0) {
-            matchedChunks.unshift({
-              id: `BOOSTED_${callId}_0`,
-              call_id: callId,
-              chunk_text: chunks[0],
-              call_title: call.title,
-              similarity: 0.95
-            });
-          }
-        }
-      });
-
-      // ── Step 3: Gather Supporting CRM Records for LLM context ──
-      const scopedDeals = activeDealId 
-        ? deals.filter(d => d.id === activeDealId)
-        : (activeAccountId ? deals.filter(d => d.accountId === activeAccountId) : deals);
-
-      const contextChunks = [];
-
-      if (activeDeal) {
-        contextChunks.push({ type: "deal", data: activeDeal });
-      }
-      if (activeAccount) {
-        contextChunks.push({ type: "account", data: activeAccount });
-      }
-
-      // Add retrieved chunks (calls + emails)
-      matchedChunks.forEach(chunk => {
-        contextChunks.push({
-          type: "transcript_chunk",
-          data: chunk
-        });
-      });
-
-      scopedDeals.slice(0, 3).forEach(d => {
-        contextChunks.push({ type: "deal_record", data: d });
-      });
-
-      // Assembled system & user prompt logs for debugging (TC-AA-13)
-      const fullSystemPrompt = buildSystemPrompt(contextChunks);
-      const fullPromptLog = `SYSTEM PROMPT:\n=================\n${fullSystemPrompt}\n\nUSER PROMPT:\n=================\n${userText}`;
-
-      // ── Step 4: Call LLM with RAG constraints and Timeout (TC-AA-15) ──
-      const history = messages
-        .filter(m => !m.isLoading && m.id !== "welcome")
-        .slice(-6)
-        .map(m => ({ role: m.role, content: m.content }));
-
-      const timeoutLimit = simulateTimeout ? 3000 : 8000;
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("Request Timeout: The LLM API took too long to respond. Please try again."));
-        }, timeoutLimit);
-      });
-
       const startTime = Date.now();
+      const result = await askQuery({
+        query: userText,
+        contextType: activeDealId ? "DEAL" : "ACCOUNT",
+        contextId: activeDealId || activeAccountId || undefined,
+      });
+      const latency = Date.now() - startTime;
+      const response = result.answer || "No answer returned.";
+      const matchedChunks = (result.citations || []).map((c) => ({
+        ...c,
+        call_title: c.call_title || "Call Transcript",
+      }));
 
-      let response = await Promise.race([
-        queryGemini(apiKey, userText, contextChunks, history),
-        timeoutPromise
-      ]);
+      setCache((prev) => ({
+        ...prev,
+        [exactCacheKey]: { answer: response, citations: matchedChunks },
+      }));
 
-      const endTime = Date.now();
-      const latency = endTime - startTime;
-
-      const isTruncated = false;
-      const isFallbackResponse = false;
-
-      // Add RAG truncated warning badge if truncated
-      if (isTruncated) {
-        response = `🛡️ **RAG Context Truncated (Token Cap Enforced)**\n\n${response}`;
-      }
-
-      // ── Step 4.7: Save to Response Cache (TC-AA-28) ──
-      if (!isFallbackResponse && !response.includes("⚠ Request Timeout")) {
-        setCache(prev => ({
-          ...prev,
-          [exactCacheKey]: {
-            answer: response,
-            citations: matchedChunks,
-            embedding: queryEmbedding
-          }
-        }));
-      }
-
-      // ── Step 5: Save conversation to Chat History ──
       if (onSaveChatMessage) {
         await onSaveChatMessage(userText, response, matchedChunks);
       }
@@ -444,13 +230,12 @@ export default function ChatPanel({
         )
       );
 
-      // Update Debug Logs
       setDebugLogs({
-        latency: latency,
-        cacheStatus: "MISS (Live API Call)",
-        promptSent: fullPromptLog,
+        latency,
+        cacheStatus: "MISS (NestJS API)",
+        promptSent: userText,
         chunksUsed: matchedChunks,
-        tokenCount: Math.round(fullPromptLog.length / 4)
+        tokenCount: Math.round(userText.length / 4),
       });
 
     } catch (err) {

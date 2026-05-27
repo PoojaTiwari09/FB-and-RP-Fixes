@@ -3,6 +3,25 @@ packages:
   - packages/*
   - modules/*
 
+# pnpm 10+ reads catalog/overrides from this file (the "pnpm.overrides" field
+# in package.json is no longer honoured). All Nest packages MUST resolve to a
+# single instance — otherwise class-identity-based DI (ConfigService, etc.)
+# silently injects `undefined` in modules whose local node_modules has a
+# duplicate copy.
+overrides:
+  '@nestjs/core': '10.4.22'
+  '@nestjs/common': '10.4.22'
+  '@nestjs/config': '3.3.0'
+  '@nestjs/event-emitter': '2.1.1'
+  '@nestjs/jwt': '10.2.0'
+  '@nestjs/passport': '11.0.5'
+  '@nestjs/platform-express': '10.4.22'
+  # CRITICAL: a single reflect-metadata is non-negotiable. Two copies create
+  # two `Reflect.getMetadata` symbols, so Nest decorators write metadata on
+  # one global while DI reads from the other → ConfigService etc. are
+  # silently injected as `undefined`.
+  'reflect-metadata': '0.2.2'
+
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/client'

@@ -11,6 +11,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { ZodExceptionFilter } from './zod-exception.filter';
 
 // ─── Upload directory ─────────────────────────────────────────────────────────
 // Some flows (M-01 audio upload) need a place to drop files before AssemblyAI
@@ -36,6 +37,8 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
+  // Convert ZodError raised inside controllers into structured 400 responses.
+  app.useGlobalFilters(new ZodExceptionFilter());
 
   const port = parseInt(process.env.PORT || '3001', 10);
   await app.listen(port);

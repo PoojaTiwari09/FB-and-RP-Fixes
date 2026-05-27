@@ -18,6 +18,20 @@ export interface TranscriptAnalysisResult {
   competitors: string[];
 }
 
+/**
+ * AI provider client — wraps the Groq / Gemini chat-completion endpoints used to
+ * tag transcripts against a taxonomy. Owns the prompt construction, response
+ * parsing, retry/fallback chain (Groq → Gemini → keyword), normalisation of
+ * topic names, confidence clamping, and deduplication.
+ *
+ * Service responsibility map for M02 topic tagging:
+ *   • TopicTagService        → CRUD
+ *   • TopicTaggingService    → orchestrator
+ *   • AiTopicTaggerService   → AI provider client (this file)
+ *
+ * This service is intentionally stateless and free of repository dependencies
+ * so it can be re-used by M03 (Smart Summaries) and M09 (Coaching).
+ */
 @Injectable()
 export class AiTopicTaggerService {
   private readonly logger = new Logger(AiTopicTaggerService.name);

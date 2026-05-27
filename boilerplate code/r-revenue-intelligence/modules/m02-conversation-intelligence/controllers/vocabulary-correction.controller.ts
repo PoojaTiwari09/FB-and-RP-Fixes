@@ -1,45 +1,62 @@
-import { Controller, Get, Post, Body, Param, Delete, Headers, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { VocabularyCorrectionService } from '../services/vocabulary-correction.service';
 
+/**
+ * Vocabulary correction rules — applied to transcripts to normalise jargon /
+ * mis-pronunciations (TDD Appendix 16).
+ *
+ * `TenantGuard` is enforced at the class level.
+ */
 @Controller('api/v1/conversation-intelligence/vocabulary')
+@UseGuards(TenantGuard)
 export class VocabularyCorrectionController {
   constructor(private readonly vocabService: VocabularyCorrectionService) {}
 
   @Post()
   async createRule(
-    @Headers('x-tenant-id') tenantId: string,
-    @Body() body: { incorrectTerm: string; correctTerm: string; language?: string; category?: string; mispronunciations?: string[]; variations?: string[] }
+    @Req() req: Record<string, any>,
+    @Body() body: {
+      incorrectTerm: string;
+      correctTerm: string;
+      language?: string;
+      category?: string;
+      mispronunciations?: string[];
+      variations?: string[];
+    },
   ) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
     return this.vocabService.createRule(
-      tenantId, 
-      body.incorrectTerm, 
-      body.correctTerm, 
-      body.language, 
-      body.category, 
-      body.mispronunciations, 
-      body.variations
+      req.tenantId,
+      body.incorrectTerm,
+      body.correctTerm,
+      body.language,
+      body.category,
+      body.mispronunciations,
+      body.variations,
     );
   }
 
   @Get()
-  async getRules(@Headers('x-tenant-id') tenantId: string) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.vocabService.getRules(tenantId);
+  async getRules(@Req() req: Record<string, any>) {
+    return this.vocabService.getRules(req.tenantId);
   }
 
   @Get('stats')
-  async getStats(@Headers('x-tenant-id') tenantId: string) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.vocabService.getStats(tenantId);
+  async getStats(@Req() req: Record<string, any>) {
+    return this.vocabService.getStats(req.tenantId);
   }
 
   @Delete(':id')
-  async deleteRule(
-    @Headers('x-tenant-id') tenantId: string,
-    @Param('id') id: string
-  ) {
-    if (!tenantId) throw new UnauthorizedException('Tenant ID required');
-    return this.vocabService.deleteRule(id, tenantId);
+  async deleteRule(@Req() req: Record<string, any>, @Param('id') id: string) {
+    return this.vocabService.deleteRule(id, req.tenantId);
   }
 }
