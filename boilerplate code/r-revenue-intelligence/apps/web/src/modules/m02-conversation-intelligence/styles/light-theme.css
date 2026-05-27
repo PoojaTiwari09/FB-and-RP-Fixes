@@ -1,0 +1,1555 @@
+/*
+ * ══════════════════════════════════════════════════════
+ * DealsIQX — Light Theme Global Overrides
+ * Inspired by SalesCommand professional design system
+ * ══════════════════════════════════════════════════════
+ */
+
+/* ── Root App Container ── */
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+[data-theme='light'] .app,
+[data-theme='light'] [class*="_app_"] {
+  background: var(--bg-gradient) !important;
+}
+
+/* ── Main Layout ── */
+[data-theme='light'] [class*="_main_"] {
+  background: transparent !important;
+}
+
+[data-theme='light'] [class*="_content_"] {
+  background: transparent !important;
+}
+
+[data-theme='light'] [class*="_content_"]::before {
+  background-image:
+    linear-gradient(rgba(70,75,212,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70,75,212,0.03) 1px, transparent 1px) !important;
+}
+
+/* ── Topbar ── */
+[data-theme='light'] [class*="_topbar_"] {
+  background: rgba(248, 249, 255, 0.95) !important;
+  border-bottom-color: #c7c4d7 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+[data-theme='light'] [class*="_topbar_"]::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(70,75,212,0.15) 50%, transparent 100%) !important;
+}
+
+[data-theme='light'] [class*="_breadHome_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_breadHome_"]:hover {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_breadSep_"] {
+  color: #767586 !important;
+}
+
+[data-theme='light'] [class*="_breadCurrent_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_themeToggle_"] {
+  background: #ffffff !important;
+  border-color: #c7c4d7 !important;
+  color: #0b1c30 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+[data-theme='light'] [class*="_apiStatus_"] {
+  background: #ffffff !important;
+  border-color: #c7c4d7 !important;
+  color: #213145 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
+/* ── Sidebar ── */
+[data-theme='light'] [class*="_sidebar_"],
+[data-theme='light'] [class*="_sidebarContainer_"] {
+  background: rgba(224, 233, 255, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border-right-color: rgba(70,75,212,0.15) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.03) !important;
+}
+
+[data-theme='light'] [class*="_logo_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_navItem_"],
+[data-theme='light'] [class*="_navLink_"],
+[data-theme='light'] [class*="_sidebarItem_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_navItem_"]:hover,
+[data-theme='light'] [class*="_navLink_"]:hover,
+[data-theme='light'] [class*="_sidebarItem_"]:hover {
+  background: #dce9ff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_navItemActive_"],
+[data-theme='light'] [class*="_navLinkActive_"],
+[data-theme='light'] [class*="_sidebarItemActive_"],
+[data-theme='light'] [class*="_active_"] {
+  background: #6063ee !important;
+  color: #ffffff !important;
+}
+
+[data-theme='light'] [class*="_sidebarLabel_"],
+[data-theme='light'] [class*="_groupLabel_"] {
+  color: #767586 !important;
+}
+
+[data-theme='light'] [class*="_pipelineLabel_"],
+[data-theme='light'] [class*="_pipelineAmount_"] {
+  color: #213145 !important;
+}
+
+[data-theme='light'] [class*="_kpiBar_"],
+[data-theme='light'] [class*="_miniStat_"] {
+  background: #ffffff !important;
+  border-color: #dce9ff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_kpiValue_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_kpiLabel_"] {
+  color: #464554 !important;
+}
+
+/* ── Dashboard / Command Center ── */
+[data-theme='light'] [class*="_view_"],
+[data-theme='light'] [class*="_container_"] {
+  background: transparent !important;
+  color: #0b1c30 !important;
+}
+
+/* Metric / KPI Cards */
+[data-theme='light'] [class*="Card"],
+[data-theme='light'] [class*="_card_"],
+[data-theme='light'] [class*="_metricCard_"],
+[data-theme='light'] [class*="_kpiCard_"],
+[data-theme='light'] [class*="_statCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05) !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_cardLabel_"],
+[data-theme='light'] [class*="_metricLabel_"],
+[data-theme='light'] [class*="_statLabel_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_cardValue_"],
+[data-theme='light'] [class*="_metricValue_"],
+[data-theme='light'] [class*="_statValue_"] {
+  color: #0b1c30 !important;
+}
+
+/* Section Headers */
+[data-theme='light'] [class*="_sectionHeader_"],
+[data-theme='light'] [class*="_sectionTitle_"],
+[data-theme='light'] h1,
+[data-theme='light'] h2,
+[data-theme='light'] h3 {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_subtitle_"],
+[data-theme='light'] [class*="_description_"],
+[data-theme='light'] p {
+  color: #464554 !important;
+}
+
+/* ── Tables & Lists ── */
+[data-theme='light'] [class*="_table_"],
+[data-theme='light'] [class*="_tableRow_"],
+[data-theme='light'] table {
+  background: #ffffff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_tableHeader_"],
+[data-theme='light'] th {
+  background: #f8f9ff !important;
+  color: #464554 !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_tableRow_"]:hover,
+[data-theme='light'] tr:hover {
+  background: #eff4ff !important;
+}
+
+[data-theme='light'] [class*="_tableCell_"],
+[data-theme='light'] td {
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+/* ── Deals View ── */
+[data-theme='light'] [class*="_dealCard_"],
+[data-theme='light'] [class*="_dealItem_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_dealCard_"]:hover,
+[data-theme='light'] [class*="_dealItem_"]:hover {
+  border-color: rgba(70,75,212,0.3) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+}
+
+[data-theme='light'] [class*="_dealName_"],
+[data-theme='light'] [class*="_companyName_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_dealValue_"],
+[data-theme='light'] [class*="_amount_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_dealStage_"],
+[data-theme='light'] [class*="_stage_"] {
+  color: #464554 !important;
+}
+
+/* ── Pipeline ── */
+[data-theme='light'] [class*="_stageColumn_"],
+[data-theme='light'] [class*="_pipelineStage_"] {
+  background: #eff4ff !important;
+  border-color: #c7c4d7 !important;
+}
+
+[data-theme='light'] [class*="_stageHeader_"] {
+  color: #0b1c30 !important;
+  background: #e5eeff !important;
+  border-color: #c7c4d7 !important;
+}
+
+/* ── Revenue / Charts ── */
+[data-theme='light'] [class*="_chartContainer_"],
+[data-theme='light'] [class*="_chart_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_chartLabel_"],
+[class*="_chartLegend_"] {
+  color: #464554 !important;
+}
+
+/* ── Analyze Docs ── */
+[data-theme='light'] [class*="_leftPanel_"],
+[data-theme='light'] [class*="_leftPane_"] {
+  background: #f8f9ff !important;
+  border-right-color: #c7c4d7 !important;
+}
+
+[data-theme='light'] [class*="_rightPanel_"],
+[data-theme='light'] [class*="_rightPane_"] {
+  background: transparent !important;
+}
+
+[data-theme='light'] [class*="_uploadZone_"] {
+  background: rgba(70,75,212,0.03) !important;
+  border-color: rgba(70,75,212,0.25) !important;
+}
+
+[data-theme='light'] [class*="_uploadZone_"]:hover {
+  background: rgba(70,75,212,0.06) !important;
+  border-color: #4648d4 !important;
+  box-shadow: 0 4px 16px rgba(70,75,212,0.1) !important;
+}
+
+[data-theme='light'] [class*="_uploadText_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_uploadHint_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_fileItem_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_fileItem_"]:hover {
+  background: #eff4ff !important;
+}
+
+[data-theme='light'] [class*="_fileName_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_fileSize_"] {
+  color: #767586 !important;
+}
+
+[data-theme='light'] [class*="_textInput_"],
+[data-theme='light'] input,
+[data-theme='light'] textarea,
+[data-theme='light'] select {
+  background: #ffffff !important;
+  border-color: #c7c4d7 !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_textInput_"]::placeholder,
+[data-theme='light'] input::placeholder,
+[data-theme='light'] textarea::placeholder {
+  color: #767586 !important;
+}
+
+[data-theme='light'] [class*="_tab_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_tabActive_"] {
+  color: #4648d4 !important;
+  border-bottom-color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_analysisTab_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_analysisTabActive_"] {
+  background: rgba(70,75,212,0.08) !important;
+  border-color: rgba(70,75,212,0.3) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_analysisTabs_"] {
+  background: #f8f9ff !important;
+  border-bottom-color: #c7c4d7 !important;
+}
+
+[data-theme='light'] [class*="_compareBtn_"],
+[data-theme='light'] [class*="_analyzeBtn_"] {
+  background: linear-gradient(135deg, #4648d4, #6063ee) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(70,75,212,0.3) !important;
+}
+
+[data-theme='light'] [class*="_summaryCard_"] {
+  background: rgba(70,75,212,0.04) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+}
+
+[data-theme='light'] [class*="_summaryCard_"]::before {
+  background: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_summaryHeader_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_summaryText_"],
+[data-theme='light'] [class*="_insightItem_"] {
+  color: #213145 !important;
+}
+
+[data-theme='light'] [class*="_insightItem_"] {
+  background: rgba(70,75,212,0.03) !important;
+  border-left-color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_emptyState_"] {
+  background: transparent !important;
+}
+
+[data-theme='light'] [class*="_emptyTitle_"] {
+  background: linear-gradient(90deg, #4648d4, #006a61) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-theme='light'] [class*="_emptyText_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_featureChip_"] {
+  background: rgba(70,75,212,0.08) !important;
+  border-color: rgba(70,75,212,0.2) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_modeDesc_"] {
+  color: #464554 !important;
+  border-left-color: #4648d4 !important;
+  background: rgba(70,75,212,0.04) !important;
+}
+
+[data-theme='light'] [class*="_modeBtnActive_"] {
+  background: rgba(70,75,212,0.12) !important;
+  color: #4648d4 !important;
+  border-color: rgba(70,75,212,0.3) !important;
+}
+
+/* ── Analyze Call ── */
+[data-theme='light'] [class*="_view_"] {
+  background: var(--bg-gradient) !important;
+}
+
+[data-theme='light'] [class*="_leftPane_"] {
+  background: #f8f9ff !important;
+  border-right-color: #c7c4d7 !important;
+}
+
+[data-theme='light'] [class*="_title_"] {
+  background: linear-gradient(90deg, #4648d4, #006a61) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-theme='light'] [class*="_title_"] span {
+  -webkit-text-fill-color: #0b1c30 !important;
+  filter: none !important;
+}
+
+[data-theme='light'] [class*="_subtitle_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_dropZone_"],
+[data-theme='light'] [class*="_dropzone_"] {
+  border-color: rgba(70,75,212,0.25) !important;
+  background: rgba(70,75,212,0.03) !important;
+}
+
+[data-theme='light'] [class*="_dropZone_"]:hover {
+  border-color: #4648d4 !important;
+  background: rgba(70,75,212,0.06) !important;
+  box-shadow: 0 4px 16px rgba(70,75,212,0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+[data-theme='light'] [class*="_dropText_"],
+[data-theme='light'] [class*="_dropSub_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_schemaBox_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_schemaTitle_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_schemaField_"] {
+  background: rgba(70,75,212,0.06) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+  color: #213145 !important;
+}
+
+[data-theme='light'] [class*="_pipeline_"],
+[data-theme='light'] [class*="_pipelineStep_"] {
+  background: rgba(70,75,212,0.04) !important;
+  border-color: rgba(70,75,212,0.12) !important;
+}
+
+[data-theme='light'] [class*="_pipelineLabel_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_pipelineSub_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_pipelineIcon_"] {
+  background: rgba(70,75,212,0.08) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+}
+
+[data-theme='light'] [class*="_analyzeBtn_"] {
+  background: linear-gradient(135deg, #4648d4, #6063ee) !important;
+  box-shadow: 0 4px 12px rgba(70,75,212,0.3) !important;
+}
+
+[data-theme='light'] [class*="_progressBar_"] {
+  background: rgba(70,75,212,0.06) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+}
+
+[data-theme='light'] [class*="_progressFill_"],
+[data-theme='light'] [class*="_progressDot_"] {
+  background: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_emptyState_"],
+[data-theme='light'] [class*="_analyzingState_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_results_"],
+[data-theme='light'] [class*="_resultsHeader_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_resultsTitle_"] {
+  background: linear-gradient(90deg, #4648d4, #006a61) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-theme='light'] [class*="_section_"] {
+  background: #f8f9ff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_sectionLabel_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_listItem_"] {
+  background: rgba(70,75,212,0.03) !important;
+  border-color: rgba(70,75,212,0.08) !important;
+  color: #213145 !important;
+}
+
+[data-theme='light'] [class*="_summaryCard_"] {
+  background: rgba(70,75,212,0.04) !important;
+  border-color: rgba(70,75,212,0.12) !important;
+}
+
+[data-theme='light'] [class*="_metricCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_metricLabel_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_metricValue_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_scoreCircle_"] {
+  background: #f8f9ff !important;
+}
+
+[data-theme='light'] [class*="_transcriptPanel_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_transcriptFilters_"] {
+  background: #f8f9ff !important;
+  border-bottom-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_filterBtn_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_filterActive_"] {
+  color: #4648d4 !important;
+  background: rgba(70,75,212,0.08) !important;
+  border-bottom-color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_transcriptLine_"]:hover {
+  background: #eff4ff !important;
+}
+
+[data-theme='light'] [class*="_transcriptText_"] {
+  color: #213145 !important;
+}
+
+/* ── Chat Panel ── */
+[data-theme='light'] [class*="_chatContainer_"],
+[data-theme='light'] [class*="_chatPanel_"],
+[data-theme='light'] [class*="_chatWindow_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_message_"][class*="_user_"],
+[data-theme='light'] [class*="_userMessage_"] {
+  background: rgba(70,75,212,0.08) !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_message_"][class*="_ai_"],
+[data-theme='light'] [class*="_aiMessage_"],
+[data-theme='light'] [class*="_assistantMessage_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_chatInput_"] {
+  background: #ffffff !important;
+  border-color: #c7c4d7 !important;
+  color: #0b1c30 !important;
+}
+
+/* AI Model Menu in Light Mode */
+[data-theme='light'] [class*="_modelToggleBtn_"] {
+  background: #f8f9ff !important;
+  border-color: #dce9ff !important;
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_modelToggleBtn_"]:hover {
+  background: #eff4ff !important;
+  border-color: #c7c4d7 !important;
+}
+
+[data-theme='light'] [class*="_modelToggleProvider_"] {
+  color: #4648d4 !important;
+  opacity: 0.8;
+}
+
+[data-theme='light'] [class*="_modelMenu_"] {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(12px) !important;
+  border-color: #dce9ff !important;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.02) !important;
+}
+
+[data-theme='light'] [class*="_modelMenuItem_"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_modelMenuItem_"]:hover {
+  background: #eff4ff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_modelMenuItemActive_"] {
+  background: rgba(70,75,212,0.1) !important;
+  color: #4648d4 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme='light'] [class*="_modelItemProvider_"] {
+  background: rgba(70,75,212,0.06) !important;
+  color: #767586 !important;
+}
+
+/* ── Modals ── */
+[data-theme='light'] [class*="_modal_"],
+[data-theme='light'] [class*="_Modal_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+}
+
+[data-theme='light'] [class*="_modalTitle_"],
+[data-theme='light'] [class*="_modalHeader_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_modalOverlay_"],
+[data-theme='light'] [class*="_overlay_"] {
+  background: rgba(11,28,48,0.5) !important;
+}
+
+/* ── Buttons ── */
+[data-theme='light'] button:not([class*="_analyzeBtn_"]):not([class*="_compareBtn_"]):not([class*="_themeToggle_"]):not([class*="_modeBtnActive_"]) {
+  color: inherit;
+}
+
+/* ── Loading / Progress ── */
+[data-theme='light'] [class*="_loadingSpinner_"],
+[data-theme='light'] [class*="_spinner_"] {
+  border-color: rgba(70,75,212,0.15) !important;
+  border-top-color: #4648d4 !important;
+}
+
+/* ── Badges & Tags ── */
+[data-theme='light'] [class*="_badge_"],
+[data-theme='light'] [class*="_tag_"],
+[data-theme='light'] [class*="_chip_"] {
+  background: rgba(70,75,212,0.08) !important;
+  color: #4648d4 !important;
+  border-color: rgba(70,75,212,0.15) !important;
+}
+
+/* ── Scrollbars in light mode ── */
+[data-theme='light'] ::-webkit-scrollbar-track {
+  background: #f8f9ff !important;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: #c7c4d7 !important;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: #4648d4 !important;
+}
+
+/* ── Live Assist ── */
+[data-theme='light'] [class*="_liveAssist_"],
+[data-theme='light'] [class*="_LiveAssist_"] {
+  background: transparent !important;
+  color: #0b1c30 !important;
+}
+
+/* ── Revenue View ── */
+[data-theme='light'] [class*="_revenueCard_"],
+[data-theme='light'] [class*="_forecastCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+/* ── Contacts View ── */
+[data-theme='light'] [class*="_contactCard_"],
+[data-theme='light'] [class*="_contactRow_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+/* ── Tasks View ── */
+[data-theme='light'] [class*="_taskCard_"],
+[data-theme='light'] [class*="_taskItem_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+/* ── Dashboard View ── */
+[data-theme='light'] [class*="_kpiFlipContainer_"],
+[data-theme='light'] [class*="_kpiCardFront_"],
+[data-theme='light'] [class*="_kpiCardBack_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_kpiBackLabel_"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_kpiBackVal_"] {
+  color: #0b1c30 !important;
+}
+
+/* ── Version Diff Specific ── */
+[data-theme='light'] [class*="_versionCard_"],
+[data-theme='light'] [class*="_diffCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_diffAspect_"] {
+  color: #4648d4 !important;
+}
+
+/* ── Landing Page ── */
+[data-theme='light'] [class*="_landing_"],
+[data-theme='light'] [class*="_Landing_"],
+[data-theme='light'] [class*="_hero_"],
+[data-theme='light'] [class*="_heroSection_"] {
+  background: var(--bg-gradient) !important;
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_heroTitle_"],
+[data-theme='light'] [class*="_headline_"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_featureCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  color: #0b1c30 !important;
+}
+
+/* ── Ensure Color Override for Gradient Text in Light ── */
+[data-theme='light'] [class*="_gradientText_"] {
+  background: linear-gradient(90deg, #4648d4, #006a61) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* ══════════════════════════════════════════
+   PRECISE SIDEBAR MODULE OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_sidebar"] {
+  background: rgba(224, 233, 255, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border-right-color: rgba(70,75,212,0.15) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.03) !important;
+}
+
+[data-theme='light'] [class*="_brand"] {
+  background: rgba(255,255,255,0.8) !important;
+  border-bottom-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_logoText"] {
+  background: linear-gradient(90deg, #4648d4, #006a61) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-theme='light'] [class*="_badge"] {
+  background: rgba(70,75,212,0.12) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_metricLabel"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_metricVal"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_metricDivider"] {
+  background: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_metricsStrip"] {
+  background: rgba(70,75,212,0.03) !important;
+  border-bottom: 1px solid #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_nav"] {
+  border-bottom-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_navItem"] {
+  color: #464554 !important;
+  background: transparent !important;
+}
+
+[data-theme='light'] [class*="_navItem"]:hover {
+  background: #dce9ff !important;
+  color: #0b1c30 !important;
+  border-color: rgba(70,75,212,0.2) !important;
+}
+
+[data-theme='light'] [class*="_navItem"][class*="_active"] {
+  background: #4648d4 !important;
+  color: #ffffff !important;
+  border-left-color: #006a61 !important;
+  box-shadow: 0 4px 12px rgba(70,75,212,0.25) !important;
+}
+
+[data-theme='light'] [class*="_navCount"] {
+  background: rgba(70,75,212,0.08) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_navBadge"] {
+  background: rgba(70,75,212,0.08) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_sectionLabel"] {
+  color: #767586 !important;
+}
+
+[data-theme='light'] [class*="_section"] {
+  border-bottom-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_stageName"] {
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_stageVal"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_progressBar"] {
+  background: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_progressFill"] {
+  background: linear-gradient(90deg, #4648d4, #006a61) !important;
+  box-shadow: none !important;
+}
+
+[data-theme='light'] [class*="_dealItem"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_dealItem"]:hover {
+  background: #eff4ff !important;
+  border-color: rgba(70,75,212,0.3) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+[data-theme='light'] [class*="_dealName"] {
+  color: #0b1c30 !important;
+}
+
+[data-theme='light'] [class*="_dealVal"] {
+  color: #006a61 !important;
+}
+
+[data-theme='light'] [class*="_dealProb"] {
+  color: #767586 !important;
+}
+
+[data-theme='light'] [class*="_probBar"] {
+  background: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_footer"] {
+  background: rgba(255,255,255,0.8) !important;
+  border-top-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_footerText"] {
+  color: #464554 !important;
+}
+
+[data-theme='light'] [class*="_repAvatar"] {
+  background: rgba(70,75,212,0.10) !important;
+  color: #4648d4 !important;
+  border-color: #dce9ff !important;
+}
+
+/* ══════════════════════════════════════════
+   LANDING PAGE PRECISE OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="LandingPage"],
+[data-theme='light'] [class*="landing"] {
+  background: var(--bg-gradient) !important;
+}
+
+[data-theme='light'] [class*="_hero"] {
+  background: transparent !important;
+}
+
+/* Force all text visible in light mode */
+[data-theme='light'] span,
+[data-theme='light'] label,
+[data-theme='light'] li,
+[data-theme='light'] td,
+[data-theme='light'] th {
+  color: var(--text);
+}
+
+/* Keep white text on dark buttons */
+[data-theme='light'] button[class*="_active"],
+[data-theme='light'] button[class*="Btn"]:not([class*="ghost"]):not([class*="outline"]) {
+  color: inherit;
+}
+
+/* ══════════════════════════════════════════
+   TASKS & FOLLOW-UPS OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_summary_"] {
+  background: var(--bg) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+[data-theme='light'] [class*="_summaryCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_summaryVal_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_filter_"] {
+  background: #ffffff !important;
+  border-color: var(--border) !important;
+  color: var(--text2) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme='light'] [class*="_filter_"]:hover {
+  background: #eff4ff !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+[data-theme='light'] [class*="_filter_"][class*="_active_"] {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 12px rgba(70,75,212,0.25) !important;
+}
+
+[data-theme='light'] [class*="_taskCard_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_taskTitle_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_checkbox_"]:not([class*="_checked_"]) {
+  border-color: var(--border) !important;
+}
+
+[data-theme='light'] [class*="_checkbox_"]:hover:not([class*="_checked_"]) {
+  border-color: var(--accent) !important;
+  background: rgba(70,75,212,0.05) !important;
+}
+
+
+/* ══════════════════════════════════════════
+   CONTACTS & ACCOUNTS OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_list_"] {
+  background: #ffffff !important;
+  border-right-color: var(--border) !important;
+}
+
+[data-theme='light'] [class*="_contactName_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_contactRow_"] {
+  border-bottom-color: #f1f5f9 !important;
+}
+
+[data-theme='light'] [class*="_contactRow_"]:hover {
+  background: #f8faff !important;
+}
+
+[data-theme='light'] [class*="_contactRow_"][class*="_rowActive_"] {
+  background: #eff4ff !important;
+  box-shadow: inset 3px 0 0 var(--accent) !important;
+}
+
+[data-theme='light'] [class*="_detail_"] {
+  background: var(--bg) !important;
+}
+
+[data-theme='light'] [class*="_detailName_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_detailTitle_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_fields_"],
+[data-theme='light'] [class*="_notesSection_"],
+[data-theme='light'] [class*="_healthSection_"],
+[data-theme='light'] [class*="_accStat_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_fieldVal_"],
+[data-theme='light'] [class*="_accStatVal_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_fieldLabel_"],
+[data-theme='light'] [class*="_notesText_"],
+[data-theme='light'] [class*="_healthTop_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_avatar_"],
+[data-theme='light'] [class*="_bigAvatar_"] {
+  background: rgba(70,75,212,0.10) !important;
+  color: #4648d4 !important;
+  border-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_tab_"] {
+  background: #ffffff !important;
+  border-color: var(--border) !important;
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_tab_"][class*="_active_"] {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 2px 10px rgba(70,75,212,0.25) !important;
+}
+
+[data-theme='light'] [class*="_search_"] {
+  background: #ffffff !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+
+/* ══════════════════════════════════════════
+   CALL RECORDINGS OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_listPane_"] {
+  background: #ffffff !important;
+  border-right-color: var(--border) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_listHeader_"] {
+  background: var(--bg) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+[data-theme='light'] [class*="_callType_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_callCard_"] {
+  border-bottom-color: #f1f5f9 !important;
+}
+
+[data-theme='light'] [class*="_callCard_"]:hover {
+  background: #f8faff !important;
+}
+
+[data-theme='light'] [class*="_callCard_"][class*="_callActive_"] {
+  background: #eff4ff !important;
+  box-shadow: inset 3px 0 0 var(--accent) !important;
+}
+
+[data-theme='light'] [class*="_detailPane_"] {
+  background: var(--bg) !important;
+}
+
+[data-theme='light'] [class*="_detailType_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_summary_"],
+[data-theme='light'] [class*="_moment_"],
+[data-theme='light'] [class*="_objection_"],
+[data-theme='light'] [class*="_nextStep_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_momentIndex_"] {
+  background: rgba(70,75,212,0.10) !important;
+  color: #4648d4 !important;
+  border-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_outcomeBanner_"] {
+  background: rgba(0,106,97,0.06) !important;
+  border-color: rgba(0,106,97,0.15) !important;
+  color: #006a61 !important;
+  backdrop-filter: none !important;
+}
+
+
+/* ══════════════════════════════════════════
+   DEALS VIEW OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_tablePane_"] {
+  background: var(--bg) !important;
+}
+
+[data-theme='light'] [class*="_tableHeader_"] {
+  background: var(--bg) !important;
+  border-bottom-color: var(--border) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_filterBtn_"] {
+  background: #ffffff !important;
+  border-color: var(--border) !important;
+  color: var(--text2) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme='light'] [class*="_filterBtn_"]:hover {
+  background: #eff4ff !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+[data-theme='light'] [class*="_filterActive_"] {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 12px rgba(70,75,212,0.25) !important;
+}
+
+[data-theme='light'] [class*="_tableHead_"] {
+  background: #f1f5f9 !important;
+  border-bottom-color: var(--border) !important;
+  color: var(--text3) !important;
+}
+
+[data-theme='light'] [class*="_tableRow_"] {
+  border-bottom-color: #f1f5f9 !important;
+}
+
+[data-theme='light'] [class*="_tableRow_"]:hover {
+  background: #f8faff !important;
+}
+
+[data-theme='light'] [class*="_tableRow_"][class*="_rowActive_"] {
+  background: #eff4ff !important;
+  box-shadow: inset 4px 0 0 var(--accent) !important;
+}
+
+[data-theme='light'] [class*="_companyInit_"] {
+  background: rgba(70,75,212,0.10) !important;
+  color: #4648d4 !important;
+  border-color: #dce9ff !important;
+}
+
+[data-theme='light'] [class*="_colCompany_"] strong {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_valCell_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_dateCell_"],
+[data-theme='light'] [class*="_ownerCell_"] {
+  color: var(--text3) !important;
+}
+
+
+/* ══════════════════════════════════════════
+   PIPELINE BOARD OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_board_"] {
+  background: var(--bg) !important;
+}
+
+[data-theme='light'] [class*="_colHeader_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_colName_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_colVal_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_colCount_"] {
+  background: rgba(70,75,212,0.08) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_card_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_cardCo_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_cardName_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_cardProbVal_"] {
+  color: var(--text3) !important;
+}
+
+[data-theme='light'] [class*="_cardProbBar_"] {
+  background: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_detailPane_"] {
+  background: #ffffff !important;
+  border-left-color: var(--border) !important;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_detailName_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_detailNotes_"],
+[data-theme='light'] [class*="_activity_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_stat_"] {
+  background: #f8f9ff !important;
+  border-color: #e5eeff !important;
+}
+
+[data-theme='light'] [class*="_statVal_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_askAIBtn_"] {
+  background: rgba(70,75,212,0.08) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+  color: #4648d4 !important;
+}
+
+[data-theme='light'] [class*="_detailInit_"] {
+  background: rgba(70,75,212,0.10) !important;
+  color: #4648d4 !important;
+  border-color: #dce9ff !important;
+}
+
+
+/* ══════════════════════════════════════════
+   LIVE ASSIST OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_view_"] {
+  background: var(--bg) !important;
+}
+
+[data-theme='light'] [class*="_view_"]::before,
+[data-theme='light'] [class*="_view_"]::after {
+  display: none !important;
+}
+
+[data-theme='light'] [class*="_statusBar_"] {
+  background: #ffffff !important;
+  border-color: var(--border) !important;
+  color: var(--text2) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_dot_"]:not([class*="Live"]) {
+  background: #c7c4d7 !important;
+}
+
+[data-theme='light'] [class*="_panel_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_headline_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_nextAction_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_card_"],
+[data-theme='light'] [class*="_signalCard_"] {
+  background: #f8f9ff !important;
+  border-color: #e5eeff !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_item_"],
+[data-theme='light'] [class*="_signal_"],
+[data-theme='light'] [class*="_segment_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_metricBox_"] {
+  background: #f8f9ff !important;
+  border-color: #e5eeff !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_metricBox_"] > *:last-child {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_transcriptNow_"] {
+  background: #f8f9ff !important;
+  border-color: #e5eeff !important;
+  color: var(--text2) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_select_"] {
+  background: #ffffff !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_select_"] option {
+  background: #ffffff !important;
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_windowBadge_"] {
+  background: rgba(70,75,212,0.08) !important;
+  color: var(--text2) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+}
+
+[data-theme='light'] [class*="_time_"] {
+  color: var(--text3) !important;
+}
+
+
+/* ══════════════════════════════════════════
+   AI ASSISTANT / CHAT OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_panel_"] {
+  background: var(--bg) !important;
+}
+
+[data-theme='light'] [class*="_headerTitle_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_headerSub_"] {
+  color: var(--text3) !important;
+  border-left-color: var(--border) !important;
+}
+
+[data-theme='light'] [class*="_suggestion_"] {
+  background: #ffffff !important;
+  border-color: var(--border) !important;
+  color: var(--text2) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_suggestion_"]:hover {
+  background: #eff4ff !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+[data-theme='light'] [class*="_inputArea_"] {
+  background: var(--bg) !important;
+  border-top-color: var(--border) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_inputWrap_"] {
+  background: #ffffff !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme='light'] [class*="_input_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_assistantText_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_assistantText_"] strong {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_assistantText_"] h1,
+[data-theme='light'] [class*="_assistantText_"] h2,
+[data-theme='light'] [class*="_assistantText_"] h3 {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_assistantText_"] li {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_userBubble_"] {
+  background: rgba(70,75,212,0.10) !important;
+  color: var(--text) !important;
+  border-color: rgba(70,75,212,0.25) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_avatar_"] {
+  background: rgba(70,75,212,0.08) !important;
+  border-color: rgba(70,75,212,0.15) !important;
+  box-shadow: none !important;
+}
+
+[data-theme='light'] [class*="_chartWrap_"] {
+  background: #ffffff !important;
+  border-color: #e5eeff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  backdrop-filter: none !important;
+}
+
+
+/* ══════════════════════════════════════════
+   DASHBOARD / COMMAND CENTER OVERRIDES
+   ══════════════════════════════════════════ */
+
+[data-theme='light'] [class*="_header_"] {
+  background: var(--bg) !important;
+  border-bottom-color: var(--border) !important;
+  backdrop-filter: none !important;
+}
+
+[data-theme='light'] [class*="_title_"] {
+  color: var(--text) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--text) !important;
+  filter: none !important;
+}
+
+[data-theme='light'] [class*="_sub_"],
+[data-theme='light'] [class*="_date_"] {
+  color: var(--text2) !important;
+}
+
+[data-theme='light'] [class*="_breadCurrent_"] {
+  color: var(--text) !important;
+}
+
+[data-theme='light'] [class*="_breadItem_"] {
+  color: var(--text2) !important;
+}
+
