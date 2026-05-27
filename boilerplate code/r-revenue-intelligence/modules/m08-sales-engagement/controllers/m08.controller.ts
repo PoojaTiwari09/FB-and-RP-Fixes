@@ -24,7 +24,7 @@ import {
   CreateNoteSchema 
 } from '../schemas/m08.schema';
 
-@Controller('api/v1/m08-sales-engagement')
+@Controller('api/v1/sales-engagement')
 @UseGuards(TenantGuard)
 export class M08SalesEngagementController {
   constructor(

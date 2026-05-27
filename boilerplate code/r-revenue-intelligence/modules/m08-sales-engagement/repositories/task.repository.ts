@@ -66,7 +66,6 @@ export class M08TaskRepository {
       search?: string;
     }
   ) {
-    if (!(this.prisma as any).task?.findMany) return [];
     const where: any = { tenantId };
 
     if (filters.userId) {

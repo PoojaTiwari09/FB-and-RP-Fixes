@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { InjectRepository } from '@/database/inject-repository';
+import { M04EntityRepository as Repository, Between } from '@/database/m04-entity.repository';
 import { DealActivity, ActivityType } from '@/entities/deal-activity.entity';
 import { Deal } from '@/entities/deal.entity';
 import {

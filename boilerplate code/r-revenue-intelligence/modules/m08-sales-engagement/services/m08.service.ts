@@ -268,9 +268,19 @@ export class M08SalesEngagementService {
 
   private async triggerOutreachAlerts(tenantId: string, enrollmentId: string, actionType: string) {
     try {
-      // Simulate calling third-party integration Slack Webhook and Email sender
-      console.log(`[Slack Integration] New opportunity enrolled in GTM Sales Playbook. Slack notice dispatched.`);
-      console.log(`[Email Integration] Outbound Rep Guidance Email alert successfully sent.`);
+      await this.events.publish('notification.alert.requested', {
+        tenantId,
+        channel: 'slack',
+        body: `Sales play enrollment ${actionType}: ${enrollmentId}`,
+        metadata: { enrollmentId, actionType, module: 'm08-sales-engagement' },
+      });
+      await this.events.publish('notification.alert.requested', {
+        tenantId,
+        channel: 'email',
+        subject: 'Sales play enrollment',
+        body: `Enrollment ${enrollmentId} — action: ${actionType}`,
+        metadata: { enrollmentId, actionType, module: 'm08-sales-engagement' },
+      });
     } catch (e) {
       console.error('[Integration Alerts Suppressed] Non-blocking notification issue.', e);
     }

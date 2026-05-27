@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@/database/inject-repository';
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
 import { Deal } from '@/entities/deal.entity';
 import { DealPlaybook } from '@/entities/deal-playbook.entity';
 import { DealWarning } from '@/entities/deal-warning.entity';

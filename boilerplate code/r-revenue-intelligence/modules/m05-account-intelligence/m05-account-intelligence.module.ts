@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 
 import { M05AccountIntelligenceController } from './controllers/m05.controller';
+import { M05TestController } from './controllers/m05-test.controller';
+import { assertM05WebhookSecretConfigured } from './config/m05-env';
 import { AccountsController } from './controllers/accounts.controller';
 import { ActivitiesController } from './controllers/activities.controller';
 import { BoardsController } from './controllers/boards.controller';
@@ -37,6 +39,7 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
   ],
   controllers: [
     M05AccountIntelligenceController,
+    M05TestController,
     AccountsController,
     ActivitiesController,
     BoardsController,
@@ -62,4 +65,8 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
   ],
   exports: [M05AccountIntelligenceService],
 })
-export class M05AccountIntelligenceModule {}
+export class M05AccountIntelligenceModule {
+  constructor() {
+    assertM05WebhookSecretConfigured();
+  }
+}

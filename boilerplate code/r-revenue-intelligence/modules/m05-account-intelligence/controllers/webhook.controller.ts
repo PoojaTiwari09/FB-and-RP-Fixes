@@ -1,18 +1,8 @@
 /**
- * webhook.controller.ts
- * =====================
- * POST /sync/hubspot-webhook
+ * HubSpot CRM webhooks — POST /api/v1/account-intelligence/webhooks/hubspot
  *
- * Receives HubSpot CRM webhooks and upserts only the changed record.
- *
- * SETUP STEPS (ngrok, local dev):
- * 1. Run: ngrok http 3001
- * 2. Copy the https URL (e.g. https://abc123.ngrok.io)
- * 3. HubSpot → Private App → Webhooks → Add endpoint:
- *    URL: https://abc123.ngrok.io/sync/hubspot-webhook
- *    Events: company.propertyChange, contact.propertyChange, deal.propertyChange
- *
- * Signature validation is optional in local dev (HUBSPOT_WEBHOOK_SECRET env var).
+ * HMAC secret: M05_HUBSPOT_WEBHOOK_SECRET (see Environment Variables Registry-M5).
+ * Legacy alias HUBSPOT_WEBHOOK_SECRET is supported for local migration only.
  */
 
 import {
@@ -22,9 +12,12 @@ import {
   Headers,
   HttpCode,
   Logger,
+  UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { getSupabase } from '../config/supabase';
+import { getM05HubspotWebhookSecret, isProductionLike } from '../config/m05-env';
 
 interface HubSpotWebhookEvent {
   appId: number;
@@ -32,8 +25,8 @@ interface HubSpotWebhookEvent {
   subscriptionId: number;
   portalId: number;
   occurredAt: number;
-  subscriptionType: string;  // e.g. "company.propertyChange"
-  objectId: number;           // HubSpot object ID
+  subscriptionType: string;
+  objectId: number;
   propertyName: string;
   propertyValue: string;
   changeSource: string;
@@ -48,19 +41,34 @@ export class WebhookController {
   @HttpCode(200)
   async receiveWebhook(
     @Body() events: HubSpotWebhookEvent[],
-    @Headers('x-hubspot-signature') signature: string,
     @Headers('x-hubspot-signature-v3') signatureV3: string,
   ) {
-    // ── Signature validation (optional, skip if secret not configured) ──
-    const secret = process.env.HUBSPOT_WEBHOOK_SECRET;
-    if (secret && signatureV3) {
+    const secret = getM05HubspotWebhookSecret();
+
+    if (isProductionLike() && !secret) {
+      throw new BadRequestException(
+        'M05_HUBSPOT_WEBHOOK_SECRET must be configured in production/staging',
+      );
+    }
+
+    if (secret) {
+      if (!signatureV3) {
+        throw new UnauthorizedException('Missing x-hubspot-signature-v3 header');
+      }
       const expected = createHmac('sha256', secret)
         .update(JSON.stringify(events))
         .digest('base64');
-      if (expected !== signatureV3) {
-        this.logger.warn('[WEBHOOK] Invalid signature — rejecting');
-        return { rejected: true };
+      const expectedBuf = Buffer.from(expected);
+      const receivedBuf = Buffer.from(signatureV3);
+      if (
+        expectedBuf.length !== receivedBuf.length ||
+        !timingSafeEqual(expectedBuf, receivedBuf)
+      ) {
+        this.logger.warn('[WEBHOOK] Invalid HMAC signature — rejecting');
+        throw new UnauthorizedException('Invalid webhook signature');
       }
+    } else {
+      this.logger.warn('[WEBHOOK] M05_HUBSPOT_WEBHOOK_SECRET unset — skipping HMAC (dev only)');
     }
 
     if (!Array.isArray(events) || events.length === 0) {
@@ -87,10 +95,6 @@ export class WebhookController {
     const prop = event.propertyName;
     const val = event.propertyValue;
 
-    this.logger.debug(
-      `[WEBHOOK] ${event.subscriptionType} id=${objectId} ${prop}=${val}`,
-    );
-
     if (event.subscriptionType.startsWith('company.')) {
       await this.upsertCompanyProperty(objectId, prop, val);
     } else if (event.subscriptionType.startsWith('contact.')) {
@@ -100,7 +104,6 @@ export class WebhookController {
     }
   }
 
-  // ── Property maps ────────────────────────────────────────────────────
   private readonly COMPANY_PROP_MAP: Record<string, string> = {
     name: 'name',
     domain: 'domain',
@@ -111,6 +114,7 @@ export class WebhookController {
     exit_arr: 'exit_arr',
     segment: 'segment',
     board_assignment: 'board',
+    hubspot_owner_id: 'hubspot_owner_id',
   };
 
   private readonly CONTACT_PROP_MAP: Record<string, string> = {
@@ -134,21 +138,32 @@ export class WebhookController {
     val: string,
   ): Promise<void> {
     const col = this.COMPANY_PROP_MAP[prop];
-    if (!col) return; // unknown property — skip
+    if (!col) return;
 
     let coercedVal: any = val;
     if (col === 'employee_count') coercedVal = val ? parseInt(val, 10) : null;
     if (col === 'exit_arr') coercedVal = val ? parseFloat(val) : null;
 
+    const patch: Record<string, unknown> = { [col]: coercedVal };
+
+    if (col === 'hubspot_owner_id' && val) {
+      const { data: existing } = await this.supabase
+        .from('crm_companies')
+        .select('assigned_rep_id')
+        .eq('hubspot_id', hubspotId)
+        .maybeSingle();
+      if (!existing?.assigned_rep_id) {
+        patch.assigned_rep_id = val;
+      }
+    }
+
     const { error } = await this.supabase
       .from('crm_companies')
-      .update({ [col]: coercedVal })
+      .update(patch)
       .eq('hubspot_id', hubspotId);
 
     if (error) {
       this.logger.error(`[WEBHOOK] company update error: ${error.message}`);
-    } else {
-      this.logger.log(`[WEBHOOK] Updated crm_companies[${hubspotId}].${col} = ${val}`);
     }
   }
 

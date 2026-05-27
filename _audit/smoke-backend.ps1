@@ -45,9 +45,10 @@ $all += Test-Route "M03 module root" GET "$Base/api/v1/ai-summaries-genai"
 Write-Host "M04 skipped (not in AppModule)" -ForegroundColor Yellow
 
 Write-Host "M05 Account Intelligence" -ForegroundColor Cyan
+$all += Test-Route "M05 test health" GET "$Base/api/v1/account-intelligence/test/health"
 $all += Test-Route "M05 accounts" GET "$Base/api/v1/account-intelligence/accounts?board_slug=demo" -Ok @(200,400,500)
 $all += Test-Route "M05 activities by company" GET "$Base/api/v1/account-intelligence/activities/demo-company" -Ok @(200,404,500)
-$all += Test-Route "M05 module root" GET "$Base/api/v1/account-intelligence"
+$all += Test-Route "M05 module info" GET "$Base/api/v1/account-intelligence"
 
 Write-Host "M06 Forecasting" -ForegroundColor Cyan
 $m06h = @{ "x-tenant-id" = "demo-tenant-01" }

@@ -82,7 +82,7 @@ export class HubSpotClientService {
         }),
       );
 
-      return response.data;
+      return (response as { data: T }).data;
     } catch (error) {
       this.handleError(error as AxiosError);
     }

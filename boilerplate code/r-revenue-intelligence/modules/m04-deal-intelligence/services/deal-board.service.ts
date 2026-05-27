@@ -14,6 +14,9 @@ import {
   BoardResponseDto,
   BoardListItemResponseDto,
   PaginatedBoardResponseDto,
+  BoardTabResponseDto,
+  BoardColumnResponseDto,
+  BoardPermissionResponseDto,
 } from '@/schemas';
 import { DealBoard, BoardStatus, AuditAction, AuditEntityType } from '@/entities';
 
@@ -350,9 +353,9 @@ export class DealBoardService {
       updatedAt: board.updatedAt,
       publishedAt: board.publishedAt,
       filters: board.filters || [],
-      tabs: board.tabs || [],
-      columns: board.columns || [],
-      permissions: board.permissions || [],
+      tabs: (board.tabs || []) as unknown as BoardTabResponseDto[],
+      columns: (board.columns || []) as unknown as BoardColumnResponseDto[],
+      permissions: (board.permissions || []) as unknown as BoardPermissionResponseDto[],
     };
   }
 

@@ -6,7 +6,7 @@ import { z } from 'zod';
 // ─── Register Connection ──────────────────────────────────────────────────────
 export const RegisterConnectionSchema = z.object({
   destination: z.enum(['postgres', 'snowflake', 'bigquery', 's3', 'databricks', 'redshift']),
-  destinationName: z.string().min(1).max(100),
+  destinationName: z.string().min(1).max(100).optional(),
   config: z.record(z.unknown()).optional().default({}),
 });
 export type RegisterConnectionDto = z.infer<typeof RegisterConnectionSchema>;
@@ -29,5 +29,6 @@ export const ExportJobSchema = z.object({
   windowStart: z.string().datetime().optional(),
   windowEnd: z.string().datetime().optional(),
   idempotencyKey: z.string(),
+  runId: z.string().uuid().optional(),
 });
 export type ExportJobDto = z.infer<typeof ExportJobSchema>;

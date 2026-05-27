@@ -7,8 +7,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@/database/inject-repository';
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
 import { Deal, DealStage, ForecastCategory, AuditAction, AuditEntityType } from '@/entities';
 import { DealRepository, DealFilters } from '@/repositories/deal.repository';
 import { AuditLogService } from './audit-log.service';

@@ -304,6 +304,7 @@ model M10DataCloudExportRun {
   completedAt  DateTime?
   errorMessage String?
   rowsExported Int       @default(0)
+  filePaths    Json?
 
   connection M10DataCloudConnection @relation(fields: [connectionId], references: [id])
 

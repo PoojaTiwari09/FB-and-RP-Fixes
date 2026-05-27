@@ -29,6 +29,18 @@ export class SessionUserMiddleware implements NestMiddleware {
       }
     }
 
+    // Dev/API smoke: allow demo headers when no session (aligns with M01/M03 patterns)
+    if (!(req as any).user && req.headers['x-user-id']) {
+      (req as any).user = {
+        id: String(req.headers['x-user-id']),
+        email: String(req.headers['x-email'] || 'dev@m04.local'),
+        firstName: 'Dev',
+        lastName: 'User',
+        role: String(req.headers['x-role'] || 'MANAGER'),
+        isActive: true,
+      };
+    }
+
     next();
   }
 }

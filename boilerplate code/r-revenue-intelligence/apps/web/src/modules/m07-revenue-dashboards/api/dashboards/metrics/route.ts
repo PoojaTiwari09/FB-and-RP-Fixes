@@ -43,8 +43,8 @@ function writeMetricConfig(layout: any, next: MetricConfig): any {
 export async function GET(request: Request) {
   try {
     const { userId, tenantId } = resolveUser(request);
-    const config = await prisma.dashboardconfigs.findUnique({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const config = await prisma.dashboardConfig.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
     });
     const cfg = readMetricConfig(config?.layout);
     return NextResponse.json(cfg);
@@ -74,17 +74,17 @@ export async function PATCH(request: Request) {
       .filter((m: any) => m && typeof m === "object" && typeof m.id === "string" && typeof m.name === "string")
       .slice(0, 200);
 
-    const existing = await prisma.dashboardconfigs.findUnique({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const existing = await prisma.dashboardConfig.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
     });
     const nextLayout = writeMetricConfig(existing?.layout, { renames: safeRenames, custom: safeCustom });
 
-    await prisma.dashboardconfigs.upsert({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    await prisma.dashboardConfig.upsert({
+      where: { tenantId_userId: { tenantId, userId } },
       update: { layout: nextLayout },
       create: {
-        tenantid: tenantId,
-        userid: userId,
+        tenantId,
+        userId,
         layout: nextLayout,
       } as any,
     });

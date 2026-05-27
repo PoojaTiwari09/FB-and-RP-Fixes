@@ -53,7 +53,6 @@ export class M08WorkflowRepository {
   }
 
   async findWorkflows(tenantId: string, filters: { isActive?: boolean } = {}) {
-    if (!(this.prisma as any).workflow?.findMany) return [];
     const where: any = { tenantId };
     if (filters.isActive !== undefined) {
       where.isActive = filters.isActive;
@@ -66,7 +65,12 @@ export class M08WorkflowRepository {
 
   // --- WORKFLOW RUNS ---
 
-  async createWorkflowRun(tenantId: string, workflowId: string, data: { dealId?: string; contactId?: string; variables: any }) {
+  async createWorkflowRun(
+    tenantId: string,
+    workflowId: string,
+    data: { dealId?: string; contactId?: string; triggerPayload?: any; variables?: any },
+  ) {
+    const triggerPayload = data.triggerPayload ?? data.variables ?? {};
     return this.prisma.workflowRun.create({
       data: {
         tenantId,
@@ -75,7 +79,8 @@ export class M08WorkflowRepository {
         contactId: data.contactId || null,
         status: 'running',
         currentStepIndex: 0,
-        variables: data.variables || {},
+        triggerPayload,
+        variables: data.variables ?? triggerPayload,
         logs: [],
       },
     });

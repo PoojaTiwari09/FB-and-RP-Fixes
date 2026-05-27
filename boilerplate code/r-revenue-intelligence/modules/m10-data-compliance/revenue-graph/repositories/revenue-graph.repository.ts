@@ -54,6 +54,26 @@ export class RevenueGraphRepository {
     });
   }
 
+  async listAccountsForMatching(tenantId: string, limit = 500): Promise<any[]> {
+    if (!(this.prisma as any).m10Account?.findMany) return [];
+    return this.prisma.m10Account.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, domain: true, crmAccountId: true },
+      take: limit,
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  async listContactsForMatching(tenantId: string, limit = 500): Promise<any[]> {
+    if (!(this.prisma as any).m10Contact?.findMany) return [];
+    return this.prisma.m10Contact.findMany({
+      where: { tenantId },
+      select: { id: true, email: true, name: true, accountId: true },
+      take: limit,
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
   async upsertAccount(
     tenantId: string,
     data: {

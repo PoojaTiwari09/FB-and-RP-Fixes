@@ -58,10 +58,18 @@ export class DataCloudRepository {
     rowsExported?: number;
     errorMessage?: string;
     completedAt?: Date;
+    filePaths?: Record<string, unknown>;
   }): Promise<any> {
     return this.prisma.m10DataCloudExportRun.update({
       where: { id: runId },
       data,
+    });
+  }
+
+  async findExportRunById(tenantId: string, runId: string): Promise<any | null> {
+    return this.prisma.m10DataCloudExportRun.findFirst({
+      where: { id: runId, tenantId },
+      include: { connection: true },
     });
   }
 

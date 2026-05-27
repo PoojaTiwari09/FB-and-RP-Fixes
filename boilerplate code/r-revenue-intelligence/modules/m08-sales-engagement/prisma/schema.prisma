@@ -268,7 +268,8 @@ model WorkflowRun {
   contactId        String?  @map("contact_id") @db.Uuid
   status           String   @default("running")
   currentStepIndex Int      @default(0) @map("current_step_index")
-  variables        Json
+  triggerPayload   Json     @default("{}") @map("trigger_payload")
+  variables        Json     @default("{}")
   logs             Json     @default("[]")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz

@@ -33,6 +33,16 @@ import type {
   RelationshipGraphDto,
 } from '../dto/response-revenue-graph.dto';
 
+import {
+  rankAccountCandidates,
+  rankContactCandidates,
+  pickBestCandidate,
+  inferAccountFromContacts,
+  extractDomain,
+  isFreeMailDomain,
+  normalizeName,
+} from '../entity-resolution/entity-resolution.engine';
+
 // Env-driven configuration — M10_ prefix per monorepo convention (TDD §8)
 const MIN_CONFIDENCE = parseFloat(process.env.M10_ENTITY_RESOLUTION_MIN_CONFIDENCE ?? '0.78');
 const AI_ENABLED = process.env.M10_REVENUE_GRAPH_ENABLED !== 'false';
@@ -225,7 +235,7 @@ export class RevenueGraphService {
       const resolvedAccount = await this.resolveAccount(tenantId, intake, resolvedContacts, rulesConfig);
 
       // Step 4: Resolve deal — open deals on account (TDD §5.2.3)
-      const resolvedDeal = await this.resolveDeal(tenantId, intake, resolvedAccount, rulesConfig);
+      const resolvedDeal = await this.resolveDeal(tenantId, intake, resolvedAccount, resolvedContacts, rulesConfig);
 
       // Step 5: Build link array
       let finalLinks: EntityLinkResult[] = [
@@ -238,7 +248,12 @@ export class RevenueGraphService {
       const overallConfidence = this.calculateOverallConfidence(resolvedContacts, resolvedAccount, resolvedDeal);
       let aiAssisted = false;
 
-      if (AI_ENABLED && overallConfidence !== 'high' && finalLinks.length === 0) {
+      const needsAi =
+        finalLinks.length === 0 ||
+        (resolvedAccount === null && resolvedContacts.length > 0) ||
+        overallConfidence === 'low';
+
+      if (AI_ENABLED && needsAi) {
         const aiResult = await this.callAiEntityResolution(tenantId, activity.id, intake, resolvedContacts, resolvedAccount, resolvedDeal);
         if (aiResult) {
           aiAssisted = true;
@@ -308,15 +323,33 @@ export class RevenueGraphService {
 
   private async resolveContacts(tenantId: string, intake: NormalizedIntake) {
     const results: Array<{ id: string; confidence: ConfidenceLevel; signals: string[] }> = [];
+    const allContacts = await this.repo.listContactsForMatching(tenantId);
 
     for (const p of intake.participants) {
-      if (p.role === 'external' && p.email) {
+      if (p.role !== 'external') continue;
+
+      if (p.email) {
         const contact = await this.repo.findContactByEmail(tenantId, p.email);
-        if (contact) results.push({ id: contact.id, confidence: 'high', signals: ['email_exact_match'] });
+        if (contact) {
+          results.push({ id: contact.id, confidence: 'high', signals: ['email_exact_match'] });
+          continue;
+        }
+      }
+
+      if (p.name) {
+        const ranked = rankContactCandidates(p.email, p.name, allContacts);
+        const { best, ambiguous } = pickBestCandidate(ranked);
+        if (best && !ambiguous && !results.find(r => r.id === best.id)) {
+          results.push({
+            id: best.id,
+            confidence: best.confidence as ConfidenceLevel,
+            signals: [...best.signals, 'layer2_fuzzy_contact'],
+          });
+        }
       }
     }
 
-    for (const crmContactId of (intake.crmHints?.contactIds ?? [])) {
+    for (const crmContactId of intake.crmHints?.contactIds ?? []) {
       const contact = await this.repo.findContactById(tenantId, crmContactId);
       if (contact && !results.find(r => r.id === contact.id)) {
         results.push({ id: contact.id, confidence: 'high', signals: ['crm_hint_contact_id'] });
@@ -329,7 +362,7 @@ export class RevenueGraphService {
   private async resolveAccount(
     tenantId: string,
     intake: NormalizedIntake,
-    _contacts: Array<{ id: string }>,
+    resolvedContacts: Array<{ id: string }>,
     rulesConfig: Record<string, any>,
   ) {
     if (intake.crmHints?.accountId) {
@@ -338,16 +371,50 @@ export class RevenueGraphService {
     }
 
     const ignoredDomains: string[] = rulesConfig.ignoredDomains ?? ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
-    const externalDomains = intake.participants
-      .filter(p => p.role === 'external' && p.email.includes('@'))
-      .map(p => p.email.split('@')[1])
-      .filter(d => d && !ignoredDomains.includes(d));
+    const allAccounts = await this.repo.listAccountsForMatching(tenantId);
 
-    for (const domain of externalDomains) {
-      const { data: accounts } = await this.repo.findAccounts(tenantId, { search: domain });
-      const match = accounts.find((a: any) => a.domain === domain);
-      if (match) return { id: match.id, confidence: 'high' as ConfidenceLevel, signals: ['email_domain_exact_match'] };
+    const externalDomains = intake.participants
+      .filter(p => p.role === 'external' && p.email?.includes('@'))
+      .map(p => extractDomain(p.email)!)
+      .filter(d => d && !ignoredDomains.includes(d) && !isFreeMailDomain(d));
+
+    for (const domain of [...new Set(externalDomains)]) {
+      const match = allAccounts.find((a: any) => (a.domain ?? '').toLowerCase() === domain.toLowerCase());
+      if (match) {
+        return { id: match.id, confidence: 'high' as ConfidenceLevel, signals: ['email_domain_exact_match'] };
+      }
     }
+
+    const companyHints = intake.participants
+      .filter(p => p.role === 'external' && p.name)
+      .map(p => normalizeName(p.name!))
+      .filter(Boolean);
+
+    for (const hint of companyHints) {
+      const ranked = rankAccountCandidates(hint, undefined, allAccounts, { ignoredDomains });
+      const { best, ambiguous } = pickBestCandidate(ranked);
+      if (best && !ambiguous) {
+        return {
+          id: best.id,
+          confidence: best.confidence as ConfidenceLevel,
+          signals: [...best.signals, 'layer2_fuzzy_account'],
+        };
+      }
+    }
+
+    const contactRows = await this.repo.listContactsForMatching(tenantId);
+    const linked = resolvedContacts
+      .map(rc => contactRows.find((c: any) => c.id === rc.id))
+      .filter(Boolean) as Array<{ id: string; accountId?: string | null }>;
+    const inferredId = inferAccountFromContacts(linked);
+    if (inferredId) {
+      return {
+        id: inferredId,
+        confidence: 'medium' as ConfidenceLevel,
+        signals: ['layer3_contact_account_inference'],
+      };
+    }
+
     return null;
   }
 
@@ -355,6 +422,7 @@ export class RevenueGraphService {
     tenantId: string,
     intake: NormalizedIntake,
     resolvedAccount: { id: string } | null,
+    resolvedContacts: Array<{ id: string }>,
     rulesConfig: Record<string, any>,
   ) {
     if (intake.crmHints?.dealId) {
@@ -369,9 +437,23 @@ export class RevenueGraphService {
       if (preferOpen && openDeals.length === 1) {
         return { id: openDeals[0].id, confidence: 'high' as ConfidenceLevel, signals: ['single_open_deal_on_account'] };
       } else if (openDeals.length > 1) {
-        return { id: openDeals[0].id, confidence: 'medium' as ConfidenceLevel, signals: ['most_recent_open_deal_on_account'] };
+        return { id: openDeals[0].id, confidence: 'medium' as ConfidenceLevel, signals: ['most_recent_open_deal_on_account', 'ambiguous_multiple_open_deals'] };
       }
     }
+
+    if (resolvedContacts.length > 0 && !resolvedAccount) {
+      const contactRows = await this.repo.listContactsForMatching(tenantId);
+      for (const rc of resolvedContacts) {
+        const row = contactRows.find((c: any) => c.id === rc.id);
+        if (row?.accountId) {
+          const openDeals = await this.repo.findOpenDealsByAccount(tenantId, row.accountId);
+          if (openDeals.length === 1) {
+            return { id: openDeals[0].id, confidence: 'medium' as ConfidenceLevel, signals: ['layer3_deal_via_contact_account'] };
+          }
+        }
+      }
+    }
+
     return null;
   }
 

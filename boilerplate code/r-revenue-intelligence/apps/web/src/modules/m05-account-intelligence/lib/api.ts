@@ -13,6 +13,7 @@ import type {
 } from '@/modules/m05-account-intelligence/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const M05_API = `${API_URL}/api/v1/account-intelligence`;
 const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
@@ -32,22 +33,22 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 
 // ── Boards ────────────────────────────────────────────────────────────
 export async function fetchBoards(): Promise<BoardConfig[]> {
-  const data = await fetchJson<{ boards: BoardConfig[] }>(`${API_URL}/boards`);
+  const data = await fetchJson<{ boards: BoardConfig[] }>(`${M05_API}/boards`);
   return data.boards;
 }
 
 export async function fetchBoard(slug: string): Promise<BoardConfig> {
-  const data = await fetchJson<{ board: BoardConfig }>(`${API_URL}/boards/${slug}`);
+  const data = await fetchJson<{ board: BoardConfig }>(`${M05_API}/boards/${slug}`);
   return data.board;
 }
 
 export async function fetchTeam(): Promise<TeamMember[]> {
-  const data = await fetchJson<{ team: TeamMember[] }>(`${API_URL}/boards/team`);
+  const data = await fetchJson<{ team: TeamMember[] }>(`${M05_API}/boards/team`);
   return data.team;
 }
 
 export async function fetchPermissions(role: string): Promise<PermissionProfile> {
-  const data = await fetchJson<{ permissions: PermissionProfile }>(`${API_URL}/boards/permissions/${role}`);
+  const data = await fetchJson<{ permissions: PermissionProfile }>(`${M05_API}/boards/permissions/${role}`);
   return data.permissions;
 }
 
@@ -68,11 +69,11 @@ export async function fetchAccounts(params: {
       searchParams.set(key, String(value));
     }
   });
-  return fetchJson<AccountsResponse>(`${API_URL}/accounts?${searchParams}`);
+  return fetchJson<AccountsResponse>(`${M05_API}/accounts?${searchParams}`);
 }
 
 export async function fetchAccountDetail(hubspotId: string): Promise<AccountDetail> {
-  return fetchJson<AccountDetail>(`${API_URL}/accounts/${hubspotId}`);
+  return fetchJson<AccountDetail>(`${M05_API}/accounts/${hubspotId}`);
 }
 
 // ── Activities ────────────────────────────────────────────────────────
@@ -94,7 +95,7 @@ export async function fetchActivities(
   if (pageSize) params.set('page_size', String(pageSize));
   
   const data = await fetchJson<{ activities: ActivityInfo[], total: number }>(
-    `${API_URL}/activities/${companyHubspotId}?${params}`,
+    `${M05_API}/activities/${companyHubspotId}?${params}`,
   );
   return data;
 }
@@ -106,7 +107,7 @@ export async function editCompany(
   value: string,
   role: string,
 ): Promise<{ success: boolean; hubspot_updated: boolean; supabase_updated: boolean }> {
-  return fetchJson(`${API_URL}/edits/company/${hubspotId}`, {
+  return fetchJson(`${M05_API}/edits/company/${hubspotId}`, {
     method: 'PATCH',
     body: JSON.stringify({ field, value, role }),
   });
@@ -118,7 +119,7 @@ export async function editDeal(
   value: string,
   role: string,
 ): Promise<{ success: boolean; hubspot_updated: boolean; supabase_updated: boolean }> {
-  return fetchJson(`${API_URL}/edits/deal/${dealId}`, {
+  return fetchJson(`${M05_API}/edits/deal/${dealId}`, {
     method: 'PATCH',
     body: JSON.stringify({ field, value, role }),
   });
@@ -130,7 +131,7 @@ export async function editSupplementary(
   value: string,
   role: string,
 ): Promise<{ success: boolean; supabase_updated: boolean }> {
-  return fetchJson(`${API_URL}/edits/supplementary/${companyHubspotId}`, {
+  return fetchJson(`${M05_API}/edits/supplementary/${companyHubspotId}`, {
     method: 'PATCH',
     body: JSON.stringify({ field, value, role }),
   });
@@ -138,7 +139,7 @@ export async function editSupplementary(
 
 // ── Todos ─────────────────────────────────────────────────────────────
 export async function fetchTodos(companyHubspotId: string): Promise<TodoItem[]> {
-  const data = await fetchJson<{ todos: TodoItem[] }>(`${API_URL}/todos/${companyHubspotId}`);
+  const data = await fetchJson<{ todos: TodoItem[] }>(`${M05_API}/todos/${companyHubspotId}`);
   return data.todos;
 }
 
@@ -148,7 +149,7 @@ export async function createTodo(
   content: string,
   role: string,
 ): Promise<TodoItem> {
-  const data = await fetchJson<{ todo: TodoItem }>(`${API_URL}/todos/${companyHubspotId}`, {
+  const data = await fetchJson<{ todo: TodoItem }>(`${M05_API}/todos/${companyHubspotId}`, {
     method: 'POST',
     body: JSON.stringify({ type, content, role }),
   });
@@ -159,7 +160,7 @@ export async function updateTodo(
   todoId: string,
   updates: { content?: string; completed?: boolean },
 ): Promise<TodoItem> {
-  const data = await fetchJson<{ todo: TodoItem }>(`${API_URL}/todos/${todoId}`, {
+  const data = await fetchJson<{ todo: TodoItem }>(`${M05_API}/todos/${todoId}`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
   });
@@ -167,7 +168,7 @@ export async function updateTodo(
 }
 
 export async function deleteTodo(todoId: string): Promise<void> {
-  await fetchJson(`${API_URL}/todos/${todoId}`, { method: 'DELETE' });
+  await fetchJson(`${M05_API}/todos/${todoId}`, { method: 'DELETE' });
 }
 
 // ── AI ────────────────────────────────────────────────────────────────
@@ -178,7 +179,7 @@ export async function generateSummary(
   briefType: string = 'full',
   forceRefresh: boolean = false,
 ): Promise<{ brief: AIBrief; generated_at: string; cached: boolean; insufficient_data: boolean }> {
-  return fetchJson(`${API_URL}/ai/summary`, {
+  return fetchJson(`${M05_API}/ai/summary`, {
     method: 'POST',
     body: JSON.stringify({
       company_hubspot_id: companyHubspotId,
@@ -195,7 +196,7 @@ export async function askAI(
   message: string,
   conversationHistory: { role: string; content: string }[],
 ): Promise<{ reply: string; citations: any[]; insufficient_data: boolean }> {
-  return fetchJson(`${API_URL}/ai/chat`, {
+  return fetchJson(`${M05_API}/ai/chat`, {
     method: 'POST',
     body: JSON.stringify({
       company_hubspot_id: companyHubspotId,
@@ -207,7 +208,7 @@ export async function askAI(
 
 // ── Board Updates (Admin/Manager) ─────────────────────────────────────
 export async function updateBoard(slug: string, data: any): Promise<BoardConfig> {
-  const result = await fetchJson<{ board: BoardConfig }>(`${API_URL}/boards/${slug}`, {
+  const result = await fetchJson<{ board: BoardConfig }>(`${M05_API}/boards/${slug}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -215,18 +216,18 @@ export async function updateBoard(slug: string, data: any): Promise<BoardConfig>
 }
 
 export async function duplicateBoard(slug: string): Promise<BoardConfig> {
-  const result = await fetchJson<{ board: BoardConfig }>(`${API_URL}/boards/${slug}/duplicate`, {
+  const result = await fetchJson<{ board: BoardConfig }>(`${M05_API}/boards/${slug}/duplicate`, {
     method: 'POST',
   });
   return result.board;
 }
 
 export async function deleteBoard(slug: string): Promise<{ success: boolean; deleted_slug: string }> {
-  return fetchJson(`${API_URL}/boards/${slug}`, { method: 'DELETE' });
+  return fetchJson(`${M05_API}/boards/${slug}`, { method: 'DELETE' });
 }
 
 export async function createBoard(step: number, data: any): Promise<{ step?: number; valid?: boolean; board?: BoardConfig }> {
-  return fetchJson(`${API_URL}/boards`, {
+  return fetchJson(`${M05_API}/boards`, {
     method: 'POST',
     body: JSON.stringify({ step, data }),
   });
@@ -237,7 +238,7 @@ export async function addColumn(slug: string, col: {
   label?: string;
   visible_to_roles?: string[];
 }): Promise<{ column: any }> {
-  return fetchJson(`${API_URL}/boards/${slug}/columns`, {
+  return fetchJson(`${M05_API}/boards/${slug}/columns`, {
     method: 'POST',
     body: JSON.stringify(col),
   });
@@ -249,14 +250,14 @@ export async function updateColumn(slug: string, colId: string, updates: {
   visible_to_roles?: string[];
   width?: number;
 }): Promise<{ column: any }> {
-  return fetchJson(`${API_URL}/boards/${slug}/columns/${colId}`, {
+  return fetchJson(`${M05_API}/boards/${slug}/columns/${colId}`, {
     method: 'PUT',
     body: JSON.stringify(updates),
   });
 }
 
 export async function deleteColumn(slug: string, colId: string): Promise<{ success: boolean }> {
-  return fetchJson(`${API_URL}/boards/${slug}/columns/${colId}`, { method: 'DELETE' });
+  return fetchJson(`${M05_API}/boards/${slug}/columns/${colId}`, { method: 'DELETE' });
 }
 
 export async function updateBriefConfig(slug: string, config: {
@@ -264,7 +265,7 @@ export async function updateBriefConfig(slug: string, config: {
   brief_type?: string;
   brief_period_days?: number;
 }): Promise<{ board: BoardConfig }> {
-  return fetchJson(`${API_URL}/boards/${slug}/brief-config`, {
+  return fetchJson(`${M05_API}/boards/${slug}/brief-config`, {
     method: 'PATCH',
     body: JSON.stringify(config),
   });
@@ -281,7 +282,7 @@ export async function triggerSync(role: string): Promise<{
   error?: string;
   message?: string;
 }> {
-  return fetchJson(`${API_URL}/sync/trigger`, {
+  return fetchJson(`${M05_API}/sync/trigger`, {
     method: 'POST',
     body: JSON.stringify({ role }),
   });
@@ -300,5 +301,5 @@ export async function fetchSyncStatus(): Promise<{
   next_sync_in_seconds: number | null;
   is_syncing: boolean;
 }> {
-  return fetchJson(`${API_URL}/sync/status`);
+  return fetchJson(`${M05_API}/sync/status`);
 }

@@ -213,7 +213,7 @@ async function main() {
         region: 'NA',
         ownerUserId: REP_USER_ID,
         annualRecurringRevenue: 500000,
-        healthscore: 0.78,
+        healthScore: 0.78,
         createdAt: now,
       },
     }),

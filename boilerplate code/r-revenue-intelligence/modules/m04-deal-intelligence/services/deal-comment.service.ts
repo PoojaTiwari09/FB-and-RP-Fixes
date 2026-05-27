@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@/database/inject-repository';
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
 import { DealComment } from '@/entities/deal-comment.entity';
 import { Deal } from '@/entities/deal.entity';
 import {

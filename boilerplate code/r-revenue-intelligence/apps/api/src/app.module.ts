@@ -6,12 +6,13 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
+import { PlatformNotificationModule } from '../../../modules/platform-core/notifications/platform-notification.module';
 
 // ── Backend modules ──────────────────────────────────────────────────────────
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
 import { M03AiSummariesGenaiModule } from '../../../modules/m03-ai-summaries-genai/m03-ai-summaries-genai.module';
-// import { M04DealIntelligenceModule } from '../../../modules/m04-deal-intelligence/m04-deal-intelligence.module';
+import { M04DealIntelligenceModule } from '../../../modules/m04-deal-intelligence/m04-deal-intelligence.module';
 import { M05AccountIntelligenceModule } from '../../../modules/m05-account-intelligence/m05-account-intelligence.module';
 import { M06ForecastingPredictionModule } from '../../../modules/m06-forecasting-prediction/m06-forecasting-prediction.module';
 import { M07RevenueDashboardsModule } from '../../../modules/m07-revenue-dashboards/m07-revenue-dashboards.module';
@@ -34,6 +35,7 @@ const sharedBackendModules = [
   M01CaptureTranscriptionModule,
   M02ConversationIntelligenceModule,
   M03AiSummariesGenaiModule,
+  M04DealIntelligenceModule,
   M05AccountIntelligenceModule,
   M06ForecastingPredictionModule,
   M07RevenueDashboardsModule,
@@ -64,6 +66,7 @@ const sharedBackendModules = [
     }),
     // EventPublisherModule is @Global, so any module can use the publisher.
     EventPublisherModule,
+    PlatformNotificationModule,
     // Expose the local uploads directory as static assets so the frontend
     // <AudioPlayer/> can stream audio uploaded via POST /calls/upload.
     ServeStaticModule.forRoot({
@@ -86,8 +89,6 @@ const sharedBackendModules = [
       },
     }),
     ...sharedBackendModules,
-    // M04 remains commented until its Prisma schema is reconciled against
-    // final_product/schema.prisma. See _audit/analysis_m04-deal-intelligence.md.
   ],
 })
 export class AppModule {

@@ -1,19 +1,23 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
-import { TenantGuard } from '../../platform-core/guards/tenant.guard';
-import { M05AccountIntelligenceService } from '../services/m05.service';
+import { Controller, Get } from '@nestjs/common';
+import { getM05Enabled } from '../config/m05-env';
 
+/**
+ * Module metadata only — account CRUD/list lives under AccountsController (/accounts).
+ */
 @Controller('api/v1/account-intelligence')
-@UseGuards(TenantGuard)
 export class M05AccountIntelligenceController {
-  constructor(private readonly service: M05AccountIntelligenceService) {}
-
   @Get()
-  findAll(@Req() req: any) {
-    return this.service.findAll(req.tenantId);
-  }
-
-  @Post()
-  create(@Body() dto: any, @Req() req: any) {
-    return this.service.create(dto, req.tenantId);
+  getModuleInfo() {
+    return {
+      module: 'm05-account-intelligence',
+      enabled: getM05Enabled(),
+      version: '1.0.0',
+      routes: {
+        accounts: '/api/v1/account-intelligence/accounts',
+        boards: '/api/v1/account-intelligence/boards',
+        webhooks: '/api/v1/account-intelligence/webhooks/hubspot',
+        health: '/api/v1/account-intelligence/test/health',
+      },
+    };
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { getSupabase } from '../config/supabase';
+import { getCanonicalAssignedRepId } from '../domain/account-ownership';
 
 interface AccountQueryParams {
   board_slug: string;
@@ -262,10 +263,19 @@ export class AccountsService {
         type: company.type,
         exit_arr: parseFloat(company.exit_arr) || 0,
         contacts_count: contactCounts[company.hubspot_id] || 0,
-        assigned_rep: {
-          id: company.assigned_rep_id,
-          name: TEAM_MAP[company.assigned_rep_id] || company.assigned_rep_id || 'Unassigned',
-        },
+        assigned_rep: (() => {
+          const repId = getCanonicalAssignedRepId(company);
+          return {
+            id: repId,
+            name: (repId && TEAM_MAP[repId]) || repId || 'Unassigned',
+          };
+        })(),
+        health_score:
+          company.healthscore != null
+            ? Number(company.healthscore)
+            : company.health_score != null
+              ? Number(company.health_score)
+              : null,
         last_activity_date: lastActDate,
         last_activity_days: lastActDays,
         zero_activity_flag: lastActDays !== null ? lastActDays > 21 : true,

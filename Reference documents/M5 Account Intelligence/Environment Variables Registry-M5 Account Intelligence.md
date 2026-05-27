@@ -99,6 +99,11 @@ These variables configure structured logging verbosities, Sentry exception targe
 | **`AUTH_JWT_AUDIENCE`** | Yes | `authenticated` | Security/Auth | API | Target audience verified in incoming token signatures. |
 | **`AUTH_JWT_PUBLIC_KEY`** | Yes | `-----BEGIN PUBLIC KEY-----`| Security/Auth | API | RSA-256 public signature key or JWKS endpoints. |
 | **`RLS_ENFORCEMENT_REQUIRED`**| Yes | `true` | Security/Auth | API, Workers | Startup guardrail blocking database queries without RLS contexts. |
+| **`M05_HUBSPOT_WEBHOOK_SECRET`** | Yes (prod) | `replace-me` | Security/Auth | API | HMAC secret for HubSpot webhook signature (`x-hubspot-signature-v3`). Required in staging/production. Legacy alias `HUBSPOT_WEBHOOK_SECRET` supported locally only. |
+| **`HUBSPOT_ACCESS_TOKEN`** | No | `pat-...` | Upstream API | API, Workers | HubSpot private app token for CRM sync (`sync.service`). |
+| **`HUBSPOT_PORTAL_ID`** | No | `12345678` | Upstream API | API | HubSpot portal id for deep links. |
+| **`SUPABASE_URL`** | Yes (boards runtime) | `https://xxx.supabase.co` | PostgreSQL | API | Supabase project URL for `crm_*` account board tables until full Prisma cutover. |
+| **`SUPABASE_SERVICE_ROLE_KEY`** | Yes (boards runtime) | `eyJ...` | PostgreSQL | API | Service role key for server-side Supabase access. |
 
 ---
 
@@ -159,4 +164,13 @@ AUTH_JWT_ISSUER=https://example.supabase.co/auth/v1
 AUTH_JWT_AUDIENCE=authenticated
 AUTH_JWT_PUBLIC_KEY=replace-me-with-rsa-key
 RLS_ENFORCEMENT_REQUIRED=true
+
+# HubSpot + webhooks (M05 runtime)
+M05_HUBSPOT_WEBHOOK_SECRET=replace-me-local-dev
+HUBSPOT_ACCESS_TOKEN=
+HUBSPOT_PORTAL_ID=
+
+# Supabase CRM store (account boards until unified Prisma)
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 ```

@@ -37,7 +37,7 @@ export class DataCloudWorker extends WorkerHost {
       throw new Error('UNRECOVERABLE: tenantId required for data export job');
     }
 
-    await this.service.runScheduledExport(tenantId, connectionId);
+    await this.service.runScheduledExport(tenantId, connectionId, (job.data as any).runId);
     this.logger.log(`Export job [id=${job.id}] completed for tenant=${tenantId}`);
   }
 

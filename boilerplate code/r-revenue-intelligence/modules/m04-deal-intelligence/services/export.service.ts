@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@/database/inject-repository';
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
 import { Deal } from '@/entities/deal.entity';
 import { DealBoard } from '@/entities/deal-board.entity';
 import { DealActivity } from '@/entities/deal-activity.entity';
@@ -251,7 +251,8 @@ export class ExportService {
   private async fetchPlaybook(dto: ExportRequestDto): Promise<any[]> {
     if (!dto.dealId) {
       // Fallback: return playbook items for the first available deal in the database!
-      const firstDeal = await this.dealRepository.findOne({ select: ['id'] });
+      const deals = await this.dealRepository.find({ take: 1 });
+      const firstDeal = deals[0];
       if (firstDeal) {
         return this.playbookRepository.find({
           where: { dealId: firstDeal.id },

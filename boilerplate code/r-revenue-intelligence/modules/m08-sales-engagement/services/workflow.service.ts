@@ -1,13 +1,17 @@
 import { Injectable, Inject, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { M08WorkflowRepository } from '../repositories/workflow.repository';
 import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
 import { CreateWorkflowDto, UpdateWorkflowDto, SubmitApprovalDto } from '../schemas/workflow.schema';
+import { EXECUTE_WORKFLOW_RUN_JOB, M08_WORKFLOW_RUNS_QUEUE } from '../queues/m08-queue.constants';
 
 @Injectable()
 export class M08WorkflowService {
   constructor(
     @Inject(M08WorkflowRepository) private readonly repo: M08WorkflowRepository,
-    @Inject(EventPublisherService) private readonly events: EventPublisherService
+    @Inject(EventPublisherService) private readonly events: EventPublisherService,
+    @InjectQueue(M08_WORKFLOW_RUNS_QUEUE) private readonly workflowRunsQueue: Queue,
   ) {}
 
   // --- WORKFLOW DRAFT & LIFECYCLE ---
@@ -57,17 +61,36 @@ export class M08WorkflowService {
           const run = await this.repo.createWorkflowRun(tenantId, wf.id, {
             dealId: payload.dealId,
             contactId: payload.contactId,
+            triggerPayload: payload,
             variables: payload,
           });
 
-          // Kickoff async run execution
-          await this.executeWorkflowRun(tenantId, run.id);
+          await this.enqueueWorkflowRun(tenantId, run.id);
           triggeredRuns.push(run);
         }
       }
     }
 
     return triggeredRuns;
+  }
+
+  async enqueueWorkflowRun(tenantId: string, runId: string) {
+    const jobId = `${tenantId}:${runId}`;
+    await this.workflowRunsQueue.add(
+      EXECUTE_WORKFLOW_RUN_JOB,
+      { tenantId, runId },
+      {
+        jobId,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    );
+  }
+
+  async getWorkflowRuns(tenantId: string, workflowId?: string) {
+    return this.repo.findWorkflowRuns(tenantId, workflowId);
   }
 
   // --- BRANCH ENGINE & ROUTING LOGIC ---
@@ -207,7 +230,14 @@ export class M08WorkflowService {
     }
 
     if (step.type === 'email_compose') {
-      console.log(`[Email Compose Step] Sending automated outreach sequence to prospect.`);
+      await this.events.publish('notification.alert.requested', {
+        tenantId,
+        channel: 'email',
+        subject: step.subject ?? 'Workflow outreach',
+        body: step.body ?? 'Automated outreach from workflow run ' + run.id,
+        recipient: (run.variables as any)?.ownerEmail,
+        metadata: { runId: run.id, stepType: 'email_compose' },
+      });
     }
   }
 

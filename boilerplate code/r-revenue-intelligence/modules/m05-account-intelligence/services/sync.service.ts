@@ -12,6 +12,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import * as hubspot from '@hubspot/api-client';
+import { assignedRepIdForHubSpotUpsert } from '../domain/account-ownership';
 import { getSupabase } from '../config/supabase';
 
 // HubSpot pipeline stage → human-readable label
@@ -157,6 +158,15 @@ export class SyncService {
         100, after, properties,
       );
 
+      const hubspotIds = response.results.map((c) => c.id);
+      const { data: existingRows } = await this.supabase
+        .from('crm_companies')
+        .select('hubspot_id, assigned_rep_id')
+        .in('hubspot_id', hubspotIds);
+      const existingRepByHubspot = new Map(
+        (existingRows || []).map((r) => [r.hubspot_id, r.assigned_rep_id]),
+      );
+
       const rows = response.results.map((c) => ({
         hubspot_id: c.id,
         local_id: c.properties.local_id || null,
@@ -172,6 +182,10 @@ export class SyncService {
         segment: c.properties.segment || null,
         board: c.properties.board_assignment || null,
         hubspot_owner_id: c.properties.hubspot_owner_id || null,
+        assigned_rep_id: assignedRepIdForHubSpotUpsert(
+          existingRepByHubspot.get(c.id),
+          c.properties.hubspot_owner_id || null,
+        ),
       }));
 
       if (rows.length > 0) {

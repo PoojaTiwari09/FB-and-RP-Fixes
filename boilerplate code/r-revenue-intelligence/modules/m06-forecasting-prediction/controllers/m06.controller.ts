@@ -49,6 +49,24 @@ export class M06ForecastingPredictionController {
     return this.service.getAiPrediction(tenantId, id, mappedBaseline, region, repUserId);
   }
 
+  @Post('periods/:id/ai-prediction/run')
+  async runAiPrediction(
+    @Param('id') id: string,
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    return this.service.requestAiPrediction(tenantId, id);
+  }
+
+  @Get('periods/:id/ai-prediction/status')
+  async getAiPredictionStatus(
+    @Param('id') id: string,
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    return this.service.getAiPredictionJobStatus(tenantId, id);
+  }
+
   @Get('periods/:id/board')
   async getBoard(
     @Param('id') id: string,

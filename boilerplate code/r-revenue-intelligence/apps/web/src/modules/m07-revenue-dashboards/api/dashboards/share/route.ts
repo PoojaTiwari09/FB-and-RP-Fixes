@@ -3,7 +3,7 @@
  * GET    /api/dashboards/share?token=xxx — return the shared dashboard (read-only)
  * DELETE /api/dashboards/share — revoke the share token for one dashboard
  *
- * Token storage: dashboardconfigs.visiblewidgets is a JSON column repurposed to hold
+ * Token storage: DashboardConfig.visibleWidgets is a JSON column repurposed to hold
  * a per-dashboard token map:
  *   { shareTokens: { [dashboardId]: { token, visibility, createdAt } } }
  *
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     }
 
     // Validate that this dashboard belongs to the requesting user
-    const config = await prisma.dashboardconfigs.findUnique({
+    const config = await prisma.dashboardConfig.findUnique({
       where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
     });
 
@@ -83,18 +83,18 @@ export async function POST(request: Request) {
     const token = randomBytes(18).toString('base64url');
 
     // Read existing token store and upsert the entry for this dashboard
-    const tokenStore = readTokenStore(config?.visiblewidgets);
+    const tokenStore = readTokenStore(config?.visibleWidgets);
     tokenStore.shareTokens[dashboardId] = { token, visibility, createdAt: new Date().toISOString() };
 
-    await prisma.dashboardconfigs.upsert({
+    await prisma.dashboardConfig.upsert({
       where:  { tenantid_userid: { tenantid: tenantId, userid: userId } },
-      update: { visiblewidgets: tokenStore as any },
+      update: { visibleWidgets: tokenStore as any },
       create: {
-        tenantid:        tenantId,
-        userid:          userId,
+        tenantId,
+        userId,
         layout:          { dashboards: [] } as any,
-        visiblewidgets:  tokenStore as any,
-        daterangedefault: 'CURRENT_QUARTER',
+        visibleWidgets:  tokenStore as any,
+        dateRangeDefault: 'CURRENT_QUARTER',
       },
     });
 
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
 }
 
 // ── GET: read shared dashboard by token ──────────────────────────────────────
-// Scans all dashboardconfigs in the tenant for a matching token.
+// Scans all DashboardConfig rows for a matching token (tenant filter recommended when auth lands).
 // Enforces visibility: PRIVATE tokens return 403.
 export async function GET(request: Request) {
   try {
@@ -122,14 +122,14 @@ export async function GET(request: Request) {
     if (!token) return NextResponse.json({ error: 'token is required' }, { status: 400 });
 
     // Search all config rows (all tenants since we don't have real auth yet)
-    const allConfigs = await prisma.dashboardconfigs.findMany();
+    const allConfigs = await prisma.dashboardConfig.findMany();
 
     let matchedConfig: any = null;
     let matchedDashboardId: string | null = null;
     let matchedEntry: TokenEntry | null = null;
 
     for (const cfg of allConfigs) {
-      const store = readTokenStore(cfg.visiblewidgets);
+      const store = readTokenStore(cfg.visibleWidgets);
       for (const [dashboardId, entry] of Object.entries(store.shareTokens)) {
         if (entry.token === token) {
           matchedConfig      = cfg;
@@ -215,7 +215,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'dashboardId is required' }, { status: 400 });
     }
 
-    const config = await prisma.dashboardconfigs.findUnique({
+    const config = await prisma.dashboardConfig.findUnique({
       where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
     });
 
@@ -232,9 +232,9 @@ export async function DELETE(request: Request) {
     // Remove just this dashboard's token entry
     delete tokenStore.shareTokens[dashboardId];
 
-    await prisma.dashboardconfigs.update({
+    await prisma.dashboardConfig.update({
       where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
-      data:  { visiblewidgets: tokenStore as any },
+      data:  { visibleWidgets: tokenStore as any },
     });
 
     return NextResponse.json({ success: true, message: 'Share token revoked successfully' });

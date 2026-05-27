@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { HubSpotClientService } from '../../platform-core/integrations/hubspot-client.service';
 
 const HUBSPOT_AUTH_URL = 'https://app.hubspot.com/oauth/authorize';
 const HUBSPOT_TOKEN_URL = 'https://api.hubapi.com/oauth/v1/token';
@@ -131,20 +132,7 @@ export class HubSpotService {
       'hs_deal_stage_probability', 'description', 'hubspot_owner_id', 'hs_object_id',
     ].join(',');
 
-    const url = new URL(HUBSPOT_DEALS_URL);
-    url.searchParams.set('limit', '50');
-    url.searchParams.set('properties', properties);
-
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new UnauthorizedException(`HubSpot Deals API error: ${err}`);
-    }
-
-    const data = await res.json() as { results: any[] };
+    const data = await this.hubspotClient.getCrmDealsPage(accessToken, properties.split(','), '50');
     const hsDeals = data.results ?? [];
 
     // Resolve open period

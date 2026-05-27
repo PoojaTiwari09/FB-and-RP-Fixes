@@ -28,6 +28,20 @@ export class M08TaskService {
     return this.repo.findTasks(tenantId, filters);
   }
 
+  async getMyTasks(tenantId: string, userId: string, status?: string) {
+    return this.repo.findTasks(tenantId, {
+      userId,
+      ...(status ? { status } : {}),
+    });
+  }
+
+  async getOverdueTasks(tenantId: string, userId: string) {
+    return this.repo.findTasks(tenantId, {
+      userId,
+      dueDateRange: 'overdue',
+    });
+  }
+
   async getTaskById(tenantId: string, taskId: string) {
     return this.repo.findTaskById(tenantId, taskId);
   }

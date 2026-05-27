@@ -3,9 +3,10 @@
 // Canonical API prefix: /api/v1/m10-data-compliance (TDD §7)
 
 import {
-  Controller, Get, Post, Param, Query, Body,
+  Controller, Get, Post, Param, Query, Body, Res,
   UseGuards, Req, HttpCode, HttpStatus, Logger, ParseUUIDPipe,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { Request } from 'express';
 
 import { DataCloudService } from '../services/data-cloud.service';
@@ -80,5 +81,25 @@ export class DataCloudController {
   ) {
     this.logger.debug(`GET exports/runs — tenant=${req.tenantId}`);
     return this.service.getExportRuns(req.tenantId, connectionId);
+  }
+
+  @Get('exports/runs/:runId/download')
+  async downloadExport(
+    @Req() req: AuthenticatedRequest,
+    @Param('runId', new ParseUUIDPipe()) runId: string,
+    @Query('dataset') dataset: string,
+    @Query('format') format: 'csv' | 'parquet' = 'csv',
+    @Res() res: Response,
+  ) {
+    const { stream, path, contentType } = await this.service.getExportDownloadStream(
+      req.tenantId,
+      runId,
+      dataset,
+      format,
+    );
+    const filename = `${dataset}.${format === 'csv' ? 'csv' : 'parquet'}`;
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    stream.pipe(res);
   }
 }

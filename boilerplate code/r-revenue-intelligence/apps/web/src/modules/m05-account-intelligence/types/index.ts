@@ -84,6 +84,7 @@ export interface AccountSummary {
   manager_note: string | null;
   next_qbr_date: string | null;
   ai_risk_score: number;
+  health_score?: number | null;
   risk_label: string;
   strategic_priority: boolean;
   open_deals_summary: {

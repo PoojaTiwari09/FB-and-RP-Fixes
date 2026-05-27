@@ -143,8 +143,8 @@ export async function GET(request: Request) {
     const minConf = url.searchParams.get('minConfidence');
     const maxConf = url.searchParams.get('maxConfidence');
 
-    const config = await prisma.dashboardconfigs.findUnique({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const config = await prisma.dashboardConfig.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
     });
 
     const snapshots = await prisma.coachingsnapshots.findMany({
@@ -192,8 +192,8 @@ export async function GET(request: Request) {
     // Fetch configs belonging to OTHER users in the same tenant.
     // Include only dashboards they have explicitly shared (access = TEAM or LINK).
     // PRIVATE dashboards from other users are never returned.
-    const otherConfigs = await prisma.dashboardconfigs.findMany({
-      where: { tenantid: tenantId, userid: { not: userId } },
+    const otherConfigs = await prisma.dashboardConfig.findMany({
+      where: { tenantId, userId: { not: userId } },
     });
 
     const sharedDashboards: SavedDashboard[] = otherConfigs.flatMap((cfg: any) =>
@@ -201,7 +201,7 @@ export async function GET(request: Request) {
         .filter((d: SavedDashboard) => d.access === 'TEAM' || d.access === 'LINK')
         .map((d: SavedDashboard) => ({
           ...d,
-          sharedFrom: cfg.userid,
+          sharedFrom: cfg.userId,
           readOnly:   true,   // shared dashboards cannot be edited by non-owners
         }))
     );
@@ -249,8 +249,8 @@ export async function POST(request: Request) {
       const sourceDashboardId = body.sourceDashboardId as string;
       if (!sourceDashboardId) return NextResponse.json({ error: 'sourceDashboardId required' }, { status: 400 });
 
-      const config = await prisma.dashboardconfigs.findUnique({
-        where: { tenantid_userid: { tenantid: tenantId, userid: userId } }
+      const config = await prisma.dashboardConfig.findUnique({
+        where: { tenantId_userId: { tenantId, userId } }
       });
       const dashboards = parseLayout(config?.layout);
       const source = dashboards.find((d: any) => d.id === sourceDashboardId);
@@ -271,10 +271,10 @@ export async function POST(request: Request) {
       };
       dashboards.push(cloned);
 
-      await prisma.dashboardconfigs.upsert({
-        where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+      await prisma.dashboardConfig.upsert({
+        where: { tenantId_userId: { tenantId, userId } },
         update: { layout: { dashboards } as any },
-        create: { tenantid: tenantId, userid: userId, layout: { dashboards } as any, visiblewidgets: {} as any, daterangedefault: 'CURRENT_QUARTER' },
+        create: { tenantId: tenantId, userId: userId, layout: { dashboards } as any, visibleWidgets: {} as any, dateRangeDefault: 'CURRENT_QUARTER' },
       });
       return NextResponse.json({ success: true, dashboard: cloned, dashboards });
     }
@@ -283,8 +283,8 @@ export async function POST(request: Request) {
     const now        = new Date().toISOString();
 
     // Load existing config to get the current dashboards array
-    const config = await prisma.dashboardconfigs.findUnique({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const config = await prisma.dashboardConfig.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
     });
     const existingDashboards = parseLayout(config?.layout);
 
@@ -295,8 +295,8 @@ export async function POST(request: Request) {
     // it belongs to another user. If so, deny the write — edits must go to the
     // owner's own config. (Creating a brand-new dashboard with a fresh id is fine.)
     if (incomingId && idx < 0) {
-      const otherConfigs = await prisma.dashboardconfigs.findMany({
-        where: { tenantid: tenantId, userid: { not: userId } },
+      const otherConfigs = await prisma.dashboardConfig.findMany({
+        where: { tenantId, userId: { not: userId } },
       });
       const existsElsewhere = otherConfigs.some((cfg: any) =>
         parseLayout(cfg.layout).some((d: SavedDashboard) => d.id === incomingId)
@@ -353,20 +353,20 @@ export async function POST(request: Request) {
 
     const layout = { dashboards: updatedDashboards };
 
-    const saved = await prisma.dashboardconfigs.upsert({
-      where:  { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const saved = await prisma.dashboardConfig.upsert({
+      where:  { tenantId_userId: { tenantId, userId } },
       update: {
         layout:           layout as any,
         // Store the most-recently saved dashboard's timeRange as the default.
         // All 4 values (CURRENT_QUARTER, LAST_QUARTER, ALL_TIME, CUSTOM_RANGE) are persisted.
-        daterangedefault: entry.timeRange ?? 'CURRENT_QUARTER',
+        dateRangeDefault: entry.timeRange ?? 'CURRENT_QUARTER',
       },
       create: {
-        tenantid:         tenantId,
-        userid:           userId,
+        tenantId:         tenantId,
+        userId:           userId,
         layout:           layout as any,
-        visiblewidgets:   {} as any,  // token store lives here — do not overwrite with widget IDs
-        daterangedefault: entry.timeRange ?? 'CURRENT_QUARTER',
+        visibleWidgets:   {} as any,  // token store lives here — do not overwrite with widget IDs
+        dateRangeDefault: entry.timeRange ?? 'CURRENT_QUARTER',
       },
     });
 
@@ -395,8 +395,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'dashboardId is required' }, { status: 400 });
     }
 
-    const config = await prisma.dashboardconfigs.findUnique({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const config = await prisma.dashboardConfig.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
     });
     const existing = parseLayout(config?.layout);
     const idx = existing.findIndex(d => d.id === dashboardId);
@@ -404,8 +404,8 @@ export async function PATCH(request: Request) {
     // ── Sharing enforcement (write) ──────────────────────────────────────────
     if (idx < 0) {
       // Dashboard not in this user's config — check if it belongs to another user
-      const otherConfigs = await prisma.dashboardconfigs.findMany({
-        where: { tenantid: tenantId, userid: { not: userId } },
+      const otherConfigs = await prisma.dashboardConfig.findMany({
+        where: { tenantId, userId: { not: userId } },
       });
       const existsElsewhere = otherConfigs.some((cfg: any) =>
         parseLayout(cfg.layout).some((d: SavedDashboard) => d.id === dashboardId)
@@ -430,19 +430,19 @@ export async function PATCH(request: Request) {
     const updatedList = existing.map((d, i) => i === idx ? updated : d);
     const layout = { dashboards: updatedList };
 
-    await prisma.dashboardconfigs.upsert({
-      where:  { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    await prisma.dashboardConfig.upsert({
+      where:  { tenantId_userId: { tenantId, userId } },
       update: {
         layout:           layout as any,
-        daterangedefault: updated.timeRange ?? 'CURRENT_QUARTER',
+        dateRangeDefault: updated.timeRange ?? 'CURRENT_QUARTER',
         // visiblewidgets not updated — data lives in layout JSON (column kept for schema compat)
       },
       create: {
-        tenantid:         tenantId,
-        userid:           userId,
+        tenantId:         tenantId,
+        userId:           userId,
         layout:           layout as any,
-        visiblewidgets:   updated.items.map((w: any) => w.id),  // required for new row schema
-        daterangedefault: updated.timeRange ?? 'CURRENT_QUARTER',
+        visibleWidgets:   updated.items.map((w: any) => w.id),  // required for new row schema
+        dateRangeDefault: updated.timeRange ?? 'CURRENT_QUARTER',
       },
     });
 
@@ -466,8 +466,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'id query param required' }, { status: 400 });
     }
 
-    const config = await prisma.dashboardconfigs.findUnique({
-      where: { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    const config = await prisma.dashboardConfig.findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
     });
     const existing = parseLayout(config?.layout);
     const idx      = existing.findIndex(d => d.id === dashboardId);
@@ -475,8 +475,8 @@ export async function DELETE(request: Request) {
     // ── Sharing enforcement (write) ──────────────────────────────────────────
     if (idx < 0) {
       // Dashboard not in this user's config — check if it belongs to another user
-      const otherConfigs = await prisma.dashboardconfigs.findMany({
-        where: { tenantid: tenantId, userid: { not: userId } },
+      const otherConfigs = await prisma.dashboardConfig.findMany({
+        where: { tenantId, userId: { not: userId } },
       });
       const existsElsewhere = otherConfigs.some((cfg: any) =>
         parseLayout(cfg.layout).some((d: SavedDashboard) => d.id === dashboardId)
@@ -492,15 +492,15 @@ export async function DELETE(request: Request) {
 
     const updated = existing.filter(d => d.id !== dashboardId);
 
-    await prisma.dashboardconfigs.upsert({
-      where:  { tenantid_userid: { tenantid: tenantId, userid: userId } },
+    await prisma.dashboardConfig.upsert({
+      where:  { tenantId_userId: { tenantId, userId } },
       update: { layout: { dashboards: updated } as any },
       create: {
-        tenantid:         tenantId,
-        userid:           userId,
+        tenantId:         tenantId,
+        userId:           userId,
         layout:           { dashboards: updated } as any,
-        visiblewidgets:   [],           // required for new row schema
-        daterangedefault: 'CURRENT_QUARTER',
+        visibleWidgets:   [],           // required for new row schema
+        dateRangeDefault: 'CURRENT_QUARTER',
       },
     });
 

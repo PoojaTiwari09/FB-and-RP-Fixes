@@ -73,7 +73,7 @@ const DATASETS = [
   {
     datasetId: "REVENUE_DEALS",
     name: "Revenue Deals Dataset",
-    source: "ClickHouse / PostgreSQL",
+    source: "PostgreSQL (Prisma)",
     fields: [
       { name: "dealName", type: "string" },
       { name: "amount", type: "number" },
@@ -645,7 +645,7 @@ export class M07DealAccountService {
         return {
           generatedQuery: "Data Studio Governed Metric Lookup",
           sourceEngine: "Data Studio Snapshots",
-          clickhouseLogs: "Found pre-computed metric in snapshot cache",
+          queryLogs: "Found pre-computed metric in snapshot cache",
           data: snapshots.map(s => ({
             label: s.periodKey,
             value: Number(s.cachedValue),
@@ -665,17 +665,11 @@ export class M07DealAccountService {
     }
     const generatedQuery = `SELECT ${selectClause} FROM ${fromClause} WHERE ${whereClauses.join(" AND ")} GROUP BY ${xAxis};`;
 
-    let clickhouseLogs = "";
+    const queryLogs = `Executing governed PostgreSQL aggregation for: [${generatedQuery}]`;
     let data: any[] = [];
-    const sourceEngine = "PostgreSQL Fallback";
+    const sourceEngine = "PostgreSQL (Prisma)";
 
-    try {
-      clickhouseLogs += `Attempting primary ClickHouse execution with query: [${generatedQuery}]\n`;
-      throw new Error("ClickHouse cluster connection timed out (resilient offline fallback active)");
-    } catch (err: any) {
-      clickhouseLogs += `ClickHouse primary engine error: ${err.message}. Falling back gracefully to PostgreSQL layer...\n`;
-
-      if (datasetId === "REVENUE_DEALS") {
+    if (datasetId === "REVENUE_DEALS") {
         const rows = await this.prisma.deal.findMany({
           where: { tenantId },
           include: { account: true },
@@ -762,7 +756,6 @@ export class M07DealAccountService {
           return { label, value };
         });
       }
-    }
 
     if (xAxis === "quarter" || xAxis === "period") {
       const quarters = ["Q1", "Q2", "Q3", "Q4"];
@@ -785,7 +778,7 @@ export class M07DealAccountService {
     return {
       generatedQuery,
       sourceEngine,
-      clickhouseLogs,
+      queryLogs,
       data,
     };
   }

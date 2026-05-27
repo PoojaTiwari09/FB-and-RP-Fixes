@@ -46,18 +46,27 @@ model User {
 }
 
 model Account {
-  id         String   @id @default(cuid())
-  tenantId   String
-  externalId String?
-  name       String
-  ownerName  String?
-  industry   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  deals      Deal[]
+  id               String   @id @default(cuid())
+  tenantId         String
+  externalId       String?
+  name             String
+  ownerName        String?
+  industry         String?
+  /// Canonical rep for boards/filters (maps assigned_rep_id in CRM store)
+  assignedRepId    String?  @map("assigned_rep_id")
+  /// HubSpot owner object id — CRM sync only, not used for app filtering
+  hubspotOwnerId   String?  @map("hubspot_owner_id")
+  /// Platform User.id (M01 auth) when account is tied to a logged-in owner
+  ownerUserId      String?  @map("owner_user_id")
+  healthScore      Float?   @map("healthscore")
+  crmRecordId      String?  @map("crm_record_id")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deals            Deal[]
 
   @@index([tenantId, name])
+  @@index([tenantId, assignedRepId])
   @@schema("public")
 }
 
@@ -212,36 +221,21 @@ model coachingsnapshots {
   @@schema("dashboards")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model dashboardconfigs {
-  configid         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantid         String   @db.Uuid
-  userid           String   @db.Uuid
-  layout           Json
-  visiblewidgets   Json?
-  daterangedefault String?
-  createdat        DateTime @default(now()) @db.Timestamptz(6)
-
-  @@unique([tenantid, userid], map: "uq_dashboardconfigs_tenant_user")
-  @@index([tenantid, userid], map: "idx_dashboardconfigs_tenant_user")
-  @@schema("dashboards")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// Per-user dashboard layout persistence (M07). Canonical model — maps to dashboards.dashboardconfigs.
+/// Former duplicate `dashboard_configs` table model removed (unused at runtime).
 model DashboardConfig {
-  configId       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid @map("config_id")
-  tenantId       String   @db.Uuid @map("tenant_id")
-  userId         String   @db.Uuid @map("user_id")
-  visibleWidgets Json     @map("visible_widgets")
-  gridLayout     Json     @map("grid_layout")
-  defaultFilters Json     @map("default_filters")
-  createdAt      DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
-  updatedAt      DateTime @updatedAt @db.Timestamptz(6) @map("updated_at")
+  configId         String   @id @default(dbgenerated("gen_random_uuid()")) @map("configid")
+  tenantId         String   @db.Uuid @map("tenantid")
+  userId           String   @db.Uuid @map("userid")
+  layout           Json
+  visibleWidgets   Json?    @map("visiblewidgets")
+  dateRangeDefault String?  @map("daterangedefault")
+  createdAt        DateTime @default(now()) @db.Timestamptz(6) @map("createdat")
 
-  @@unique([tenantId, userId], map: "uq_dashboard_configs_tenant_user")
-  @@index([tenantId, userId], map: "idx_dashboard_configs_tenant_user")
+  @@unique([tenantId, userId], map: "uq_dashboardconfigs_tenant_user")
+  @@index([tenantId, userId], map: "idx_dashboardconfigs_tenant_user")
   @@schema("dashboards")
-  @@map("dashboard_configs")
+  @@map("dashboardconfigs")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -757,5 +751,668 @@ model AiExtractionResult {
   @@index([tenantId, callId])
   @@index([tenantId, fieldId])
   @@map("m18_ai_extraction_results")
+  @@schema("public")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 — Forecasting & Prediction (centralized; was module-local Prisma)
+// ─────────────────────────────────────────────────────────────
+
+model ForecastPeriod {
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  startDate     DateTime
+  endDate       DateTime
+  revenueTarget Float
+  status        String
+  isLocked      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  snapshots     AiForecastSnapshot[]
+  submissions   ForecastSubmission[]
+  executiveSnapshots ForecastExecutiveSnapshot[]
+  predictionJobs     M06PredictionJob[]
+
+  @@index([tenantId, status])
+  @@map("forecast_periods")
+  @@schema("public")
+}
+
+model AiForecastSnapshot {
+  snapshotId          String   @id @default(uuid())
+  tenantId            String
+  periodId            String
+  predictedAmount     Float
+  confidenceRangeLow  Float
+  confidenceRangeHigh Float
+  modelInputs         Json
+  inputPipelineValue  Float?
+  regionBreakdown     Json?
+  computedAt          DateTime @default(now())
+  idempotencyKey      String   @unique
+
+  period              ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, periodId, computedAt])
+  @@map("ai_forecast_snapshots")
+  @@schema("public")
+}
+
+model ForecastSubmission {
+  id               String    @id @default(uuid())
+  tenantId         String
+  periodId         String
+  repUserId        String
+  lob              String
+  version          Int       @default(1)
+  commitForecast   Float
+  bestCaseForecast Float?
+  notes            String?
+  status           String
+  submittedAt      DateTime?
+  managerOverride  Float?
+  managerComment   String?
+  managerId        String?
+  managerName      String?
+  approvedAt       DateTime?
+  reopenedAt       DateTime?
+  overriddenAt     DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, periodId, repUserId])
+  @@map("forecast_submissions")
+  @@schema("public")
+}
+
+model ForecastAuditLog {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  forecastSubmissionId String
+  action               String
+  actorId              String
+  actorName            String?
+  actorRole            String
+  metadata             Json?
+  createdAt            DateTime @default(now())
+
+  @@map("forecast_audit_log")
+  @@schema("public")
+}
+
+model ForecastExecutiveSnapshot {
+  id               String   @id @default(uuid())
+  tenantId         String
+  periodId         String
+  baseline         String?
+  region           String?
+  submissionId     String?
+  payload          Json
+  computedAt       DateTime @default(now())
+  idempotencyKey   String   @unique
+
+  period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, periodId, computedAt])
+  @@map("forecast_executive_snapshots")
+  @@schema("public")
+}
+
+model M06PredictionJob {
+  id               String    @id @default(uuid())
+  tenantId         String
+  periodId         String
+  status           String
+  trigger          String
+  idempotencyKey   String    @unique
+  error            String?
+  createdAt        DateTime  @default(now())
+  startedAt        DateTime?
+  completedAt      DateTime?
+
+  period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, periodId, status])
+  @@map("m06_prediction_jobs")
+  @@schema("public")
+}
+
+model PipelineCoverageMetrics {
+  id                    String   @id @default(uuid())
+  tenantId              String
+  periodId              String
+  openPipelineValue     Float
+  weightedPipelineValue Float
+  closedWonAmount       Float
+  coverageRatio         Float
+  computedAt            DateTime @default(now())
+
+  @@map("pipeline_coverage_metrics")
+  @@schema("public")
+}
+
+model HistoricalConversionRate {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  fromStage          String
+  toStage            String
+  conversionRate     Float
+  sampleSize         Int
+  computedFromPeriod String
+  periodName         String?
+  computedAt         DateTime @default(now())
+
+  @@map("historical_conversion_rates")
+  @@schema("public")
+}
+
+model CrmDeal {
+  id               String    @id @default(uuid())
+  tenantId         String
+  dealName         String
+  stage            String
+  amount           Float
+  closeDate        DateTime
+  probability      Float?
+  isClosedWon      Boolean   @default(false)
+  isClosedLost     Boolean   @default(false)
+  region           String?
+  lob              String?
+  repUserId        String?
+  hubspotId        String?
+  lastActivityDate DateTime?
+  riskReason       String?
+  source           String    @default("seed")
+  createdBy        String    @default("system")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId, hubspotId])
+  @@map("crm_deals")
+  @@schema("public")
+}
+
+/// M06 forecast module users (table `users` — distinct from platform `User`)
+model ForecastUser {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  repId     String?
+  managerId String?
+  region    String?
+  teamName  String?
+  createdAt DateTime @default(now())
+
+  @@map("users")
+  @@schema("public")
+}
+
+model Quota {
+  id        String   @id @default(uuid())
+  tenantId  String
+  periodId  String
+  repUserId String
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, periodId, repUserId])
+  @@map("quotas")
+  @@schema("public")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 — Sales Engagement (canonical Prisma mappings)
+// ─────────────────────────────────────────────────────────────
+
+model SalesPlay {
+  id                String           @id @default(uuid()) @db.Uuid
+  tenantId          String           @db.Uuid
+  name              String
+  steps             Json
+  triggerConditions Json
+  createdBy         String           @db.Uuid
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime         @updatedAt @db.Timestamptz(6)
+  enrollments       PlayEnrollment[]
+  adherenceLogs     PlayAdherenceLog[]
+
+  @@index([tenantId, isActive])
+  @@map("sales_plays")
+  @@schema("public")
+}
+
+model PlayEnrollment {
+  id             String               @id @default(uuid()) @db.Uuid
+  tenantId       String               @db.Uuid
+  playId         String               @db.Uuid
+  dealId         String               @db.Uuid
+  userId         String               @db.Uuid
+  currentStep    Int                  @default(1)
+  status         String               @default("active")
+  triggerEventId String?              @db.Uuid
+  enrolledAt     DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime             @updatedAt @db.Timestamptz(6)
+  play           SalesPlay            @relation(fields: [playId], references: [id], onDelete: Cascade)
+  completions    PlayStepCompletion[]
+  notes          PlayNote[]
+  adherenceLogs  PlayAdherenceLog[]
+
+  @@unique([tenantId, playId, dealId, triggerEventId])
+  @@index([tenantId, dealId, status])
+  @@index([tenantId, userId, status])
+  @@map("play_enrollments")
+  @@schema("public")
+}
+
+model PlayStepCompletion {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @db.Uuid
+  enrollmentId String         @db.Uuid
+  stepId       Int
+  completedBy  String         @db.Uuid
+  completedAt  DateTime       @default(now()) @db.Timestamptz(6)
+  notes        String?
+  enrollment   PlayEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("play_step_completions")
+  @@schema("public")
+}
+
+model PlayNote {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @db.Uuid
+  enrollmentId String         @db.Uuid
+  userId       String         @db.Uuid
+  noteText     String
+  createdAt    DateTime       @default(now()) @db.Timestamptz(6)
+  enrollment   PlayEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("play_notes")
+  @@schema("public")
+}
+
+model PlayAdherenceLog {
+  id             String         @id @default(uuid()) @db.Uuid
+  tenantId       String         @db.Uuid
+  enrollmentId   String         @db.Uuid
+  userId         String         @db.Uuid
+  playId         String         @db.Uuid
+  adherenceScore Float
+  calculatedAt   DateTime       @default(now()) @db.Timestamptz(6)
+  play           SalesPlay      @relation(fields: [playId], references: [id], onDelete: Cascade)
+  enrollment     PlayEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("play_adherence_logs")
+  @@schema("public")
+}
+
+/// M08 Engage To-Do task (table `tasks` — not M04 deal tasks)
+model Task {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  type        String
+  description String
+  dueDate     DateTime @map("due_date") @db.Timestamptz(6)
+  priority    Int      @default(2)
+  source      String
+  sourceId    String?  @map("source_id")
+  status      String   @default("pending")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, source, sourceId])
+  @@index([tenantId, userId, status, dueDate])
+  @@map("tasks")
+  @@schema("public")
+}
+
+model Workflow {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  name              String
+  description       String?
+  triggerType       String   @map("trigger_type")
+  triggerConditions Json     @map("trigger_conditions")
+  definition        Json
+  version           Int      @default(1)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, isActive])
+  @@map("workflows")
+  @@schema("public")
+}
+
+model WorkflowRun {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  workflowId       String   @map("workflow_id") @db.Uuid
+  dealId           String?  @map("deal_id") @db.Uuid
+  contactId        String?  @map("contact_id") @db.Uuid
+  status           String   @default("running")
+  currentStepIndex Int      @default(0) @map("current_step_index")
+  triggerPayload   Json     @default("{}") @map("trigger_payload")
+  variables        Json     @default("{}")
+  logs             Json     @default("[]")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, workflowId, status])
+  @@map("workflow_runs")
+  @@schema("public")
+}
+
+model Approval {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  runId            String?  @map("run_id") @db.Uuid
+  workflowId       String?  @map("workflow_id") @db.Uuid
+  type             String
+  title            String
+  description      String
+  status           String   @default("pending")
+  approverId       String?  @map("approver_id") @db.Uuid
+  thresholdDetails Json?    @map("threshold_details")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, status])
+  @@map("approvals")
+  @@schema("public")
+}
+
+model WorkflowException {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  runId        String?   @map("run_id") @db.Uuid
+  workflowId   String?   @map("workflow_id") @db.Uuid
+  errorCode    String    @map("error_code")
+  errorMessage String    @map("error_message")
+  stackTrace   String?   @map("stack_trace")
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([tenantId, resolved])
+  @@map("workflow_exceptions")
+  @@schema("public")
+}
+
+model IntegrationState {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  provider  String
+  status    String   @default("connected")
+  config    Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, provider])
+  @@map("integration_states")
+  @@schema("public")
+}
+
+model WorkflowAuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  workflowId String?  @map("workflow_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([tenantId, workflowId])
+  @@map("workflow_audit_logs")
+  @@schema("public")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 — Data & Compliance / Revenue Graph / Data Cloud
+// ─────────────────────────────────────────────────────────────
+
+model M10Account {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @db.Uuid
+  crmAccountId String?
+  name         String
+  domain       String?
+  region       String?
+  industry     String?
+  crmSource    String?
+  crmSyncedAt  DateTime? @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(6)
+  deals            M10Deal[]
+  contacts         M10Contact[]
+  activities       M10Activity[]
+  interactionLinks M10InteractionLink[]
+
+  @@index([tenantId])
+  @@index([tenantId, domain])
+  @@map("m10_accounts")
+  @@schema("public")
+}
+
+model M10Contact {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @db.Uuid
+  crmContactId String?
+  accountId    String?   @db.Uuid
+  email        String
+  name         String?
+  title        String?
+  crmSource    String?
+  crmSyncedAt  DateTime? @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(6)
+  account          M10Account?          @relation(fields: [accountId], references: [id])
+  dealContacts     M10DealContact[]
+  interactionLinks M10InteractionLink[]
+  activities       M10Activity[]
+
+  @@index([tenantId, email])
+  @@map("m10_contacts")
+  @@schema("public")
+}
+
+model M10Deal {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  crmDealId   String?
+  accountId   String?   @db.Uuid
+  name        String
+  stage       String?
+  amount      Float?
+  currency    String?   @default("USD")
+  closeDate   DateTime? @db.Timestamptz(6)
+  ownerId     String?
+  crmSource   String?
+  crmSyncedAt DateTime? @db.Timestamptz(6)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+  account          M10Account?          @relation(fields: [accountId], references: [id])
+  dealContacts     M10DealContact[]
+  interactionLinks M10InteractionLink[]
+  activities       M10Activity[]
+
+  @@index([tenantId, accountId, isActive])
+  @@map("m10_deals")
+  @@schema("public")
+}
+
+model M10DealContact {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  dealId    String   @db.Uuid
+  contactId String   @db.Uuid
+  role      String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  deal    M10Deal    @relation(fields: [dealId], references: [id])
+  contact M10Contact @relation(fields: [contactId], references: [id])
+
+  @@unique([tenantId, dealId, contactId])
+  @@map("m10_deal_contacts")
+  @@schema("public")
+}
+
+model M10Activity {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @db.Uuid
+  idempotencyKey  String   @unique
+  sourceType      String
+  sourcePlatform  String?
+  sourceRecordId  String?
+  occurredAt      DateTime @db.Timestamptz(6)
+  accountId       String?  @db.Uuid
+  contactId       String?  @db.Uuid
+  dealId          String?  @db.Uuid
+  ownerId         String?
+  status          String   @default("received")
+  transcriptId    String?
+  calendarEventId String?
+  emailThreadId   String?
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+  account          M10Account?          @relation(fields: [accountId], references: [id])
+  contact          M10Contact?          @relation(fields: [contactId], references: [id])
+  deal             M10Deal?             @relation(fields: [dealId], references: [id])
+  interactionLinks M10InteractionLink[]
+
+  @@index([tenantId, status])
+  @@map("m10_activities")
+  @@schema("public")
+}
+
+model M10InteractionLink {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @db.Uuid
+  activityId      String   @db.Uuid
+  entityType      String
+  entityId        String   @db.Uuid
+  linkedAccountId String?  @db.Uuid
+  linkedContactId String?  @db.Uuid
+  linkedDealId    String?  @db.Uuid
+  confidence      String
+  signals         Json     @default("[]")
+  explanation     Json     @default("{}")
+  aiAssisted      Boolean  @default(false)
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+  activity M10Activity  @relation(fields: [activityId], references: [id])
+  account  M10Account?  @relation(fields: [linkedAccountId], references: [id])
+  contact  M10Contact?  @relation(fields: [linkedContactId], references: [id])
+  deal     M10Deal?     @relation(fields: [linkedDealId], references: [id])
+
+  @@unique([tenantId, activityId, entityType, entityId])
+  @@map("m10_interaction_links")
+  @@schema("public")
+}
+
+model M10LinkDecisionLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  activityId     String   @db.Uuid
+  idempotencyKey String
+  candidatesJson Json
+  selectedLinks  Json
+  rejectedLinks  Json
+  aiRequestSent  Boolean  @default(false)
+  aiResponseJson Json?
+  processingMs   Int?
+  outcome        String
+  failureReason  String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantId, activityId])
+  @@map("m10_link_decision_logs")
+  @@schema("public")
+}
+
+model M10MappingRuleSet {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  name      String
+  isActive  Boolean  @default(true)
+  config    Json     @default("{}")
+  createdBy String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([tenantId, isActive])
+  @@map("m10_mapping_rule_sets")
+  @@schema("public")
+}
+
+model M10CrmSyncState {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @db.Uuid
+  crmSource     String
+  entityType    String
+  lastSyncedAt  DateTime? @db.Timestamptz(6)
+  lastCursor    String?
+  status        String    @default("idle")
+  errorMessage  String?
+  recordsSynced Int       @default(0)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenantId, crmSource, entityType])
+  @@map("m10_crm_sync_states")
+  @@schema("public")
+}
+
+model M10DataCloudConnection {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  destination String
+  config      Json     @default("{}")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  exportRuns  M10DataCloudExportRun[]
+
+  @@index([tenantId])
+  @@map("m10_data_cloud_connections")
+  @@schema("public")
+}
+
+model M10DataCloudExportRun {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @db.Uuid
+  connectionId String    @db.Uuid
+  status       String    @default("pending")
+  startedAt    DateTime  @default(now()) @db.Timestamptz(6)
+  completedAt  DateTime? @db.Timestamptz(6)
+  errorMessage String?
+  rowsExported Int       @default(0)
+  filePaths    Json?
+  connection   M10DataCloudConnection @relation(fields: [connectionId], references: [id])
+
+  @@index([tenantId])
+  @@map("m10_data_cloud_export_runs")
+  @@schema("public")
+}
+
+model M10DataCloudCheckpoint {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  domain     String
+  lastCursor String?
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenantId, domain])
+  @@map("m10_data_cloud_checkpoints")
   @@schema("public")
 }

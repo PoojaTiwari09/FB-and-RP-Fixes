@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, In, Between, LessThan, MoreThan } from 'typeorm';
 import { Deal, DealStage, ForecastCategory } from '@/entities';
+import { InjectRepository } from '../database/inject-repository';
+import { Between, In, M04EntityRepository } from '../database/m04-entity.repository';
 
 export interface DealFilters {
   ownerId?: string;
@@ -19,12 +19,12 @@ export interface DealFilters {
 export class DealRepository {
   constructor(
     @InjectRepository(Deal)
-    private readonly dealRepository: Repository<Deal>,
+    private readonly dealRepository: M04EntityRepository<Deal>,
   ) {}
 
   async create(deal: Partial<Deal>): Promise<Deal> {
     const newDeal = this.dealRepository.create(deal);
-    return this.dealRepository.save(newDeal);
+    return this.dealRepository.save(newDeal) as Promise<Deal>;
   }
 
   async findById(id: string, relations: string[] = []): Promise<Deal | null> {
@@ -106,10 +106,9 @@ export class DealRepository {
     const skip = (page - 1) * limit;
     const queryBuilder = this.dealRepository.createQueryBuilder('deal');
 
-    // Apply board filters dynamically
     boardFilters.forEach((filter, index) => {
       const paramName = `filter_${index}`;
-      
+
       switch (filter.operator) {
         case 'EQUALS':
           queryBuilder.andWhere(`deal.${filter.fieldName} = :${paramName}`, {
@@ -182,10 +181,7 @@ export class DealRepository {
     return this.dealRepository.find({
       where: {
         closeDate: Between(today, futureDate),
-        stage: In([
-          DealStage.PROPOSAL,
-          DealStage.NEGOTIATION,
-        ]),
+        stage: In([DealStage.PROPOSAL, DealStage.NEGOTIATION]),
       },
       order: { closeDate: 'ASC' },
     });
@@ -213,7 +209,7 @@ export class DealRepository {
 
     const result = await queryBuilder.select('SUM(deal.amount)', 'total').getRawOne();
 
-    return parseFloat(result?.total || '0');
+    return parseFloat(String(result?.total || '0'));
   }
 
   async countByStage(): Promise<Record<string, number>> {
@@ -224,8 +220,8 @@ export class DealRepository {
       .groupBy('deal.stage')
       .getRawMany();
 
-    return results.reduce((acc, row) => {
-      acc[row.stage] = parseInt(row.count, 10);
+    return results.reduce<Record<string, number>>((acc, row) => {
+      acc[String(row.stage)] = parseInt(String(row.count), 10);
       return acc;
     }, {});
   }

@@ -3,7 +3,7 @@ import { M08TaskService } from '../services/task.service';
 import { CreateTaskSchema, UpdateTaskStatusSchema, ReassignTaskSchema } from '../schemas/task.schema';
 
 // Simulated Platform AuthGuard for workspace compliance check
-@Controller('api/v1/m08-sales-engagement/tasks')
+@Controller('api/v1/sales-engagement/tasks')
 export class M08TaskController {
   constructor(
     @Inject(M08TaskService) private readonly taskService: M08TaskService
@@ -43,6 +43,20 @@ export class M08TaskController {
     }
 
     return this.taskService.getTasks(tenantId, filters);
+  }
+
+  @Get('my-tasks')
+  async getMyTasks(@Req() req: any, @Query('status') status?: string) {
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000000';
+    const currentUserId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+    return this.taskService.getMyTasks(tenantId, currentUserId, status);
+  }
+
+  @Get('overdue')
+  async getOverdueTasks(@Req() req: any) {
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000000';
+    const currentUserId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+    return this.taskService.getOverdueTasks(tenantId, currentUserId);
   }
 
   @Get(':id')

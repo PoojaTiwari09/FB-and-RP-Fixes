@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, In } from 'typeorm';
 import {
   DealBoard,
   BoardFilter,
@@ -11,25 +9,29 @@ import {
   BoardAudience,
   PermissionRole,
 } from '@/entities';
+import { InjectRepository } from '../database/inject-repository';
+import { M04EntityRepository } from '../database/m04-entity.repository';
+
+type FindOptionsWhere<T> = Partial<Record<keyof T & string, unknown>>;
 
 @Injectable()
 export class DealBoardRepository {
   constructor(
     @InjectRepository(DealBoard)
-    private readonly boardRepository: Repository<DealBoard>,
+    private readonly boardRepository: M04EntityRepository<DealBoard>,
     @InjectRepository(BoardFilter)
-    private readonly filterRepository: Repository<BoardFilter>,
+    private readonly filterRepository: M04EntityRepository<BoardFilter>,
     @InjectRepository(BoardTab)
-    private readonly tabRepository: Repository<BoardTab>,
+    private readonly tabRepository: M04EntityRepository<BoardTab>,
     @InjectRepository(BoardColumn)
-    private readonly columnRepository: Repository<BoardColumn>,
+    private readonly columnRepository: M04EntityRepository<BoardColumn>,
     @InjectRepository(BoardPermission)
-    private readonly permissionRepository: Repository<BoardPermission>,
+    private readonly permissionRepository: M04EntityRepository<BoardPermission>,
   ) {}
 
   async create(board: Partial<DealBoard>): Promise<DealBoard> {
     const newBoard = this.boardRepository.create(board);
-    return this.boardRepository.save(newBoard);
+    return this.boardRepository.save(newBoard) as Promise<DealBoard>;
   }
 
   async findById(id: string, relations: string[] = []): Promise<DealBoard | null> {
@@ -78,12 +80,10 @@ export class DealBoardRepository {
       .createQueryBuilder('board')
       .leftJoinAndSelect('board.permissions', 'permission');
 
-    // Implicit access for ADMIN and MANAGER roles - do not restrict by user permission
-    // For USER roles, allow access to boards they have explicit permission for OR published boards for the AE audience
     if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
       queryBuilder.where(
         '(permission.subjectId = :userId OR (board.status = :publishedStatus AND :aeAudience = ANY(board.audience)))',
-        { userId, publishedStatus: BoardStatus.PUBLISHED, aeAudience: BoardAudience.AE }
+        { userId, publishedStatus: BoardStatus.PUBLISHED, aeAudience: BoardAudience.AE },
       );
     }
 
@@ -146,7 +146,6 @@ export class DealBoardRepository {
     return count > 0;
   }
 
-  // Filter operations
   async createFilters(boardId: string, filters: Partial<BoardFilter>[]): Promise<BoardFilter[]> {
     const filterEntities = filters.map((filter) =>
       this.filterRepository.create({ ...filter, boardId }),
@@ -159,7 +158,6 @@ export class DealBoardRepository {
     return this.createFilters(boardId, filters);
   }
 
-  // Tab operations
   async createTabs(boardId: string, tabs: Partial<BoardTab>[]): Promise<BoardTab[]> {
     const tabEntities = tabs.map((tab) => this.tabRepository.create({ ...tab, boardId }));
     return this.tabRepository.save(tabEntities);
@@ -170,7 +168,6 @@ export class DealBoardRepository {
     return this.createTabs(boardId, tabs);
   }
 
-  // Column operations
   async createColumns(boardId: string, columns: Partial<BoardColumn>[]): Promise<BoardColumn[]> {
     const columnEntities = columns.map((column) =>
       this.columnRepository.create({ ...column, boardId }),
@@ -183,7 +180,6 @@ export class DealBoardRepository {
     return this.createColumns(boardId, columns);
   }
 
-  // Permission operations
   async createPermissions(
     boardId: string,
     permissions: Partial<BoardPermission>[],
@@ -221,7 +217,6 @@ export class DealBoardRepository {
       return permission.role;
     }
 
-    // Implicit VIEWER access for normal USERs to published AE boards in development/demo
     const board = await this.boardRepository.findOne({ where: { id: boardId } });
     if (board && board.status === BoardStatus.PUBLISHED && board.audience.includes(BoardAudience.AE)) {
       return PermissionRole.VIEWER;

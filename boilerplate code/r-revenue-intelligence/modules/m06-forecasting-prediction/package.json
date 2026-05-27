@@ -2,8 +2,8 @@
   "name": "@r-revenue/m06-forecasting-prediction",
   "version": "1.0.0",
   "scripts": {
-    "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate",
+    "db:migrate": "pnpm --filter @rri/database db:migrate",
+    "db:generate": "pnpm --filter @rri/database db:generate",
     "test": "jest --config jest.config.json",
     "test:integration": "jest --config jest-integration.json"
   },

@@ -4,9 +4,9 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { InjectRepository } from '@/database/inject-repository';
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
+import * as bcrypt from 'bcryptjs';
 import { User, Session } from '@/entities';
 import { LoginDto, RegisterDto, UserResponseDto } from '@/schemas';
 import { UserRole } from '@/interfaces/user-role.enum';

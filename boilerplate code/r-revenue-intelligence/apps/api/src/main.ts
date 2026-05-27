@@ -1,5 +1,10 @@
 import 'reflect-metadata';
+import { register } from 'tsconfig-paths';
 import * as path from 'path';
+register({
+  baseUrl: path.join(__dirname, '..'),
+  paths: require('../tsconfig.json').compilerOptions.paths,
+});
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 

@@ -11,6 +11,8 @@ import { DataCloudWorker } from './workers/data-cloud.worker';
 import { DataCloudRepository } from './repositories/data-cloud.repository';
 import { M10_DATA_CLOUD_QUEUES } from './events/data-cloud.events';
 import { PrismaService } from '../database/prisma.service';
+import { ExportStorageService } from './export/export-storage.service';
+import { WarehouseRegistry } from './warehouse/warehouse-registry';
 
 @Module({
   imports: [
@@ -27,7 +29,7 @@ import { PrismaService } from '../database/prisma.service';
     BullModule.registerQueue({ name: 'platform-events' }),
   ],
   controllers: [DataCloudController],
-  providers: [DataCloudService, DataCloudWorker, DataCloudRepository, PrismaService],
+  providers: [DataCloudService, DataCloudWorker, DataCloudRepository, PrismaService, ExportStorageService, WarehouseRegistry],
   exports: [DataCloudService],
 })
 export class DataCloudModule {}

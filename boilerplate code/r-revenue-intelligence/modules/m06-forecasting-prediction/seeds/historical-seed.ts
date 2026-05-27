@@ -49,18 +49,18 @@ async function main() {
   await prisma.aiForecastSnapshot.deleteMany({});
   await prisma.historicalConversionRate.deleteMany({});
   await prisma.crmDeal.deleteMany({});
-  await prisma.user.deleteMany({});
+  await prisma.forecastUser.deleteMany({});
   await prisma.forecastPeriod.deleteMany({});
 
   // 1. Seed Users (Manager + 5 Reps)
-  const manager = await prisma.user.upsert({
+  const manager = await prisma.forecastUser.upsert({
     where: { email: 'manager@demo.com' },
     update: {},
     create: { tenantId, name: 'Rajan Sharma', email: 'manager@demo.com', password: 'manager123', role: 'manager', region: 'Company' }
   });
   console.log('Manager seeded:', manager.name);
 
-  const cro = await prisma.user.upsert({
+  const cro = await prisma.forecastUser.upsert({
     where: { email: 'cro@demo.com' },
     update: {},
     create: { tenantId, name: 'Sarah Executive', email: 'cro@demo.com', password: 'cro123', role: 'executive', region: 'Company' }
@@ -68,7 +68,7 @@ async function main() {
   console.log('CRO seeded:', cro.name);
 
   for (const rep of TEAM) {
-    await prisma.user.upsert({
+    await prisma.forecastUser.upsert({
       where: { email: rep.email },
       update: {},
       create: { 
@@ -366,7 +366,7 @@ async function main() {
 
   // 9. Seed Quotas (Feature 3)
   for (const rep of TEAM) {
-    const userRecord = await prisma.user.findFirst({ where: { email: rep.email } });
+    const userRecord = await prisma.forecastUser.findFirst({ where: { email: rep.email } });
     if (userRecord) {
       await prisma.quota.create({
         data: {

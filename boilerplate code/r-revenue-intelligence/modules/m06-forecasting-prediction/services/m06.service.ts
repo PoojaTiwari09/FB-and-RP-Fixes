@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { M06PredictionQueueService } from './m06-prediction-queue.service';
 
 @Injectable()
 export class M06ForecastingPredictionService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventPublisher: EventPublisherService
+    private readonly eventPublisher: EventPublisherService,
+    private readonly predictionQueue: M06PredictionQueueService,
   ) { }
 
   private stageFallbackRates: Record<string, number> = {
@@ -261,12 +263,38 @@ export class M06ForecastingPredictionService {
     return { ...modelInputs, deals: filteredDeals, closedWonDetails: filteredClosedWonDetails, closedWonByRegion, pipelineByRegion, pipelineByStage, expectedDeals };
   }
 
+  async requestAiPrediction(tenantId: string, periodId: string) {
+    const period = await this.resolvePeriod(tenantId, periodId);
+    return this.predictionQueue.enqueuePrediction(tenantId, period.id, 'api.manual');
+  }
+
+  async getAiPredictionJobStatus(tenantId: string, periodId: string) {
+    const period = await this.resolvePeriod(tenantId, periodId);
+    const job = await this.predictionQueue.getLatestJob(tenantId, period.id);
+    const snapshot = await this.prisma.aiForecastSnapshot.findFirst({
+      where: { tenantId, periodId: period.id },
+      orderBy: { computedAt: 'desc' },
+    });
+    return {
+      job: job ?? null,
+      hasSnapshot: Boolean(snapshot),
+      latestSnapshotAt: snapshot?.computedAt ?? null,
+    };
+  }
+
   async getAiPrediction(tenantId: string, periodId: string, baseline?: string, region?: string, repUserId?: string) {
     const period = await this.resolvePeriod(tenantId, periodId);
     const normalizedBaseline = this.normalizeBaseline(baseline);
 
     const snapshot = await this.prisma.aiForecastSnapshot.findFirst({ where: { tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } });
-    if (!snapshot) throw new NotFoundException('Prediction pending');
+    if (!snapshot) {
+      const job = await this.predictionQueue.getLatestJob(tenantId, period.id);
+      throw new NotFoundException({
+        message: 'Prediction pending',
+        jobStatus: job?.status ?? 'none',
+        hint: 'POST /periods/:id/ai-prediction/run to enqueue',
+      });
+    }
 
     let baselineNote: string | undefined;
     let customRates: Record<string, number> | undefined;
@@ -422,7 +450,7 @@ export class M06ForecastingPredictionService {
       const quotaRecord = await this.prisma.quota.findFirst({ where: { tenantId, periodId: period.id, repUserId } });
       if (quotaRecord) quota = quotaRecord.amount;
       else {
-        const user = await this.prisma.user.findFirst({ where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] } });
+        const user = await this.prisma.forecastUser.findFirst({ where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] } });
         if (user) {
           const quotaByUser = await this.prisma.quota.findFirst({ where: { tenantId, periodId: period.id, repUserId: user.id } });
           if (quotaByUser) quota = quotaByUser.amount;
@@ -759,7 +787,7 @@ export class M06ForecastingPredictionService {
   // Feature 11: Rep Drill-Down
   async getRepDrillDown(tenantId: string, repId: string, periodId: string) {
     const period = await this.resolvePeriod(tenantId, periodId);
-    const user = await this.prisma.user.findFirst({ where: { tenantId, OR: [{ id: repId }, { repId: repId }] } });
+    const user = await this.prisma.forecastUser.findFirst({ where: { tenantId, OR: [{ id: repId }, { repId: repId }] } });
     if (!user) throw new NotFoundException('Rep not found');
 
     const board = await this.getBoard(tenantId, period.id, user.id);
@@ -797,9 +825,9 @@ export class M06ForecastingPredictionService {
   }
 
   async registerUser(data: any) {
-    const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
+    const existing = await this.prisma.forecastUser.findUnique({ where: { email: data.email } });
     if (existing) throw new Error('Email already registered');
-    const user = await this.prisma.user.create({
+    const user = await this.prisma.forecastUser.create({
       data: { tenantId: 'demo-tenant-01', name: data.name, email: data.email, password: data.password, role: data.role, repId: data.role === 'sales_rep' ? `rep-${Date.now()}` : null }
     });
     const { password: _, ...safeUser } = user;
@@ -807,7 +835,7 @@ export class M06ForecastingPredictionService {
   }
 
   async loginUser(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.forecastUser.findUnique({ where: { email } });
     if (!user || user.password !== password) throw new NotFoundException('Invalid credentials');
     const { password: _, ...safeUser } = user;
     return safeUser;
@@ -820,7 +848,7 @@ export class M06ForecastingPredictionService {
 
     const repWhere: any = { tenantId, role: 'sales_rep' };
     if (region && region !== 'Company') repWhere.region = region;
-    const reps = await this.prisma.user.findMany({ where: repWhere });
+    const reps = await this.prisma.forecastUser.findMany({ where: repWhere });
 
     const repIds = Array.from(new Set(reps.flatMap((r) => [r.id, r.repId]).filter(Boolean) as string[]));
 
@@ -982,10 +1010,26 @@ export class M06ForecastingPredictionService {
     };
   }
 
-  async getExecutiveDashboard(tenantId: string, baseline?: string, region?: string, periodId: string = 'current') {
+  async getExecutiveDashboard(
+    tenantId: string,
+    baseline?: string,
+    region?: string,
+    periodId: string = 'current',
+    opts?: { skipSnapshot?: boolean },
+  ) {
     const period = await this.resolvePeriod(tenantId, periodId);
     const normalizedBaseline = this.normalizeBaseline(baseline);
     if (!period) throw new NotFoundException('No open period');
+
+    if (!opts?.skipSnapshot) {
+      const materialized = await this.prisma.forecastExecutiveSnapshot.findFirst({
+        where: { tenantId, periodId: period.id },
+        orderBy: { computedAt: 'desc' },
+      });
+      if (materialized?.payload) {
+        return materialized.payload as Record<string, unknown>;
+      }
+    }
 
     const teamBoard = await this.getTeamBoard(tenantId, normalizedBaseline, region, periodId);
 
@@ -1062,34 +1106,9 @@ export class M06ForecastingPredictionService {
     const normalizedProbability = data.probability == null ? undefined : data.probability > 1 ? data.probability / 100 : data.probability;
     const deal = await this.prisma.crmDeal.create({ data: { tenantId, dealName: data.dealName, stage: data.stage, amount: data.amount, closeDate: new Date(data.closeDate), probability: normalizedProbability, isClosedWon: data.stage === 'Closed Won', isClosedLost: data.stage === 'Closed Lost', region: data.region, lob: data.lob, repUserId: data.repUserId, source: 'manual', createdBy: 'user' } });
 
-    // Auto-update AI snapshot immediately for the UI demo
     const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
     if (period) {
-      const lastSnapshot = await this.prisma.aiForecastSnapshot.findFirst({
-        where: { tenantId, periodId: period.id },
-        orderBy: { computedAt: 'desc' }
-      });
-      if (lastSnapshot) {
-        const explainability = await this.buildExplainability(tenantId, period, lastSnapshot.modelInputs);
-        const closedWon = explainability.closedWonDetails?.total || 0;
-        const weightedPipeline = explainability.deals.reduce((sum: number, d: any) => sum + (d.contribution || 0), 0);
-        let expectedDealsContrib = (lastSnapshot.modelInputs as any)?.expectedDeals?.contribution || 0;
-        const predictedAmount = closedWon + weightedPipeline + expectedDealsContrib;
-        const spreadRatio = lastSnapshot.predictedAmount > 0 ? (lastSnapshot.confidenceRangeHigh - lastSnapshot.confidenceRangeLow) / lastSnapshot.predictedAmount : 0.2;
-        const rangeSpread = predictedAmount * spreadRatio;
-
-        await this.prisma.aiForecastSnapshot.create({
-          data: {
-            tenantId,
-            periodId: period.id,
-            predictedAmount: predictedAmount,
-            confidenceRangeLow: Math.round(predictedAmount - rangeSpread / 2),
-            confidenceRangeHigh: Math.round(predictedAmount + rangeSpread / 2),
-            modelInputs: lastSnapshot.modelInputs as any,
-            idempotencyKey: deal.id
-          }
-        });
-      }
+      await this.predictionQueue.enqueuePrediction(tenantId, period.id, 'deal.created');
     }
     
     // Also check if we need to unlock the forecast entries
@@ -1157,7 +1176,7 @@ export class M06ForecastingPredictionService {
     const deals = await this.prisma.crmDeal.findMany({ where: whereClause });
 
     // Build repId → name map from User table (CrmDeal has no Prisma relation to User)
-    const allReps = await this.prisma.user.findMany({ where: { tenantId, role: 'sales_rep' } });
+    const allReps = await this.prisma.forecastUser.findMany({ where: { tenantId, role: 'sales_rep' } });
     const repNameMap = new Map<string, string>();
     allReps.forEach(r => {
       repNameMap.set(r.id, r.name);
