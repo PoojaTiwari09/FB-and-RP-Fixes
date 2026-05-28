@@ -8,15 +8,23 @@
 .searchInput:focus { border-color: #6366f1; }
 .select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 9px 14px; color: #e2e8f0; font-size: 14px; outline: none; cursor: pointer; }
 
-/* ── Upload Drop Zone ──────────────────────────────────────────────── */
+/* ── Upload area ───────────────────────────────────────────────────── */
+.uploadSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
 .dropZone {
+  width: 100%;
   border: 2px dashed rgba(99, 102, 241, 0.3);
   border-radius: 16px;
   padding: 36px 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 24px;
   background: rgba(99, 102, 241, 0.04);
 }
 .dropZone:hover {
@@ -40,6 +48,130 @@
 .uploadLabel { font-size: 16px; color: #cbd5e1; font-weight: 500; margin-bottom: 6px; }
 .browseLink { color: #818cf8; text-decoration: underline; cursor: pointer; }
 .uploadHint { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+.s3UploadBtn {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e7ff;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  align-self: center;
+}
+.s3UploadBtn:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #34d399;
+}
+.s3UploadBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.s3PickerBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.s3Picker {
+  width: 100%;
+  max-width: 420px;
+  background: #1e293b;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+.s3PickerTitle {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.s3PickerHint {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+.s3PickerList {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.s3PickerItem {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.s3PickerItem:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(129, 140, 248, 0.45);
+}
+.s3PickerEmpty {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.s3PickerNameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.s3PickerName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.s3PickerUrl {
+  font-size: 10px;
+  color: #64748b;
+  word-break: break-all;
+  line-height: 1.3;
+}
+.s3PickerAction {
+  font-size: 12px;
+  color: #818cf8;
+  white-space: nowrap;
+}
+.s3PickerCancel {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.s3PickerCancel:hover {
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.2);
+}
 
 /* Upload progress */
 .uploadProgress { display: flex; flex-direction: column; align-items: center; gap: 12px; }

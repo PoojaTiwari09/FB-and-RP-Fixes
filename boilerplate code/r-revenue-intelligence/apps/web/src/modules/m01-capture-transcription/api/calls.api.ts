@@ -1,4 +1,7 @@
 import { m01ApiV1, DEV_TENANT_ID } from '../lib/api-env';
+import { S3_RECORDINGS_FALLBACK, type S3RecordingOption } from '../lib/s3-recordings';
+
+export type { S3RecordingOption };
 
 const M01 = `${m01ApiV1('/capture-transcription')}`;
 
@@ -103,6 +106,22 @@ export const getCall = (id: string) =>
 /** CT-01/02 — register call */
 export const createCall = (data: Partial<CallRecord>) =>
   apiFetch<CallRecord>('/calls', { method: 'POST', body: JSON.stringify(data) });
+
+/** Curated S3 recordings for "Upload from S3" */
+export const listS3Recordings = async (): Promise<{ recordings: S3RecordingOption[] }> => {
+  try {
+    return await apiFetch<{ recordings: S3RecordingOption[] }>('/calls/s3-recordings');
+  } catch {
+    return { recordings: S3_RECORDINGS_FALLBACK };
+  }
+};
+
+/** Download from S3 → local disk → same transcription queue as file upload */
+export const uploadFromS3 = (recordingId: string) =>
+  apiFetch<CallRecord>('/calls/upload-from-s3', {
+    method: 'POST',
+    body: JSON.stringify({ recordingId }),
+  });
 
 /** CT-01/02 — direct audio file upload (no form fields needed) */
 export const uploadAudio = async (file: File): Promise<CallRecord> => {

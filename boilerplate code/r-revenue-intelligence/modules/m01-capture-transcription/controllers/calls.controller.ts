@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Put, Patch, Delete,
   Body, Param, Query, Req, UseGuards, HttpCode, HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { TenantGuard }   from '../../platform-core/guards/tenant.guard';
 import { CallService }   from '../services/call.service';
@@ -16,7 +17,9 @@ import {
   UpdateNextStepSchema,
   DeleteNextStepSchema,
   UpdateUtteranceSchema,
+  UploadFromS3Schema,
 } from '../schemas/m01.schema';
+import { S3_RECORDINGS_CATALOG } from '../lib/s3-recordings-catalog';
 
 @Controller('api/v1/capture-transcription')
 @UseGuards(TenantGuard)
@@ -47,6 +50,30 @@ export class CallsController {
   searchTranscripts(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
     const parsed = SearchQuerySchema.parse(query);
     return this.svc.searchTranscripts(req.tenantId, parsed);
+  }
+
+  // ── S3 import (static paths before /calls/:id) ─────────────────────────
+  @Get('calls/s3-recordings')
+  listS3Recordings() {
+    return {
+      recordings: S3_RECORDINGS_CATALOG.map(({ id, displayName, sourceUrl }) => ({
+        id,
+        displayName,
+        sourceUrl,
+      })),
+    };
+  }
+
+  @Post('calls/upload-from-s3')
+  uploadFromS3(@Body() body: unknown, @Req() req: Record<string, string>) {
+    const parsed = UploadFromS3Schema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(
+        parsed.error.issues.map((i) => i.message).join('; ') ||
+          'Invalid recordingId (use 2min_sales or 3mins_sales)',
+      );
+    }
+    return this.svc.createCallFromS3Recording(parsed.data, req.tenantId);
   }
 
   // ── GET /calls/:id — full call detail (CT-13 through CT-24) ──────────

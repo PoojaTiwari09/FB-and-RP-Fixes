@@ -1,7 +1,16 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { listCalls, uploadAudio, deleteCall, CallRecord } from '../../api/calls.api';
+import {
+  listCalls,
+  uploadAudio,
+  uploadFromS3,
+  listS3Recordings,
+  deleteCall,
+  CallRecord,
+  S3RecordingOption,
+} from '../../api/calls.api';
+import { S3_RECORDINGS_FALLBACK } from '../../lib/s3-recordings';
 import styles from './page.module.css';
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
@@ -40,6 +49,9 @@ export default function CallsListPage() {
   const [uploadPct,  setUploadPct]  = useState(0);
   const [uploadErr,  setUploadErr]  = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [showS3Picker, setShowS3Picker] = useState(false);
+  const [s3Options, setS3Options] = useState<S3RecordingOption[]>([]);
+  const [s3Loading, setS3Loading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchCalls = React.useCallback(() => {
@@ -82,22 +94,20 @@ export default function CallsListPage() {
       setDeletingId('');
     }
   };
-  const handleUpload = async (file: File) => {
+  const runUploadProgress = async (uploadFn: () => Promise<unknown>) => {
     setUploadErr('');
     setUploadPct(0);
     setUploading(true);
+    setShowS3Picker(false);
 
-    // Simulate progress (actual progress requires XMLHttpRequest, but this gives UX feedback)
     const progressInterval = setInterval(() => {
       setUploadPct((prev) => Math.min(prev + Math.random() * 15, 90));
     }, 300);
 
     try {
-      await uploadAudio(file);
+      await uploadFn();
       setUploadPct(100);
       clearInterval(progressInterval);
-
-      // Brief pause to show 100%, then refresh
       setTimeout(() => {
         setUploading(false);
         setUploadPct(0);
@@ -110,6 +120,30 @@ export default function CallsListPage() {
       const msg = err instanceof Error ? err.message : 'Upload failed';
       setUploadErr(msg);
     }
+  };
+
+  const handleUpload = (file: File) => runUploadProgress(() => uploadAudio(file));
+
+  const openS3Picker = async () => {
+    if (uploading) return;
+    setUploadErr('');
+    setS3Options(S3_RECORDINGS_FALLBACK);
+    setShowS3Picker(true);
+    setS3Loading(true);
+    try {
+      const { recordings } = await listS3Recordings();
+      if (recordings.length > 0) {
+        setS3Options(recordings);
+      }
+    } catch (err: unknown) {
+      console.warn('S3 catalog API failed, using built-in list:', err);
+    } finally {
+      setS3Loading(false);
+    }
+  };
+
+  const handleS3Select = (recordingId: string) => {
+    runUploadProgress(() => uploadFromS3(recordingId));
   };
 
   const onFileSelected = (files: FileList | null) => {
@@ -176,50 +210,115 @@ export default function CallsListPage() {
         </div>
       </div>
 
-      {/* ── Upload Drop Zone ─────────────────────────────────────────────── */}
-      <div
-        className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''} ${uploading ? styles.dropZoneUploading : ''}`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={() => !uploading && fileInputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && !uploading && fileInputRef.current?.click()}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED}
-          className={styles.hiddenInput}
-          onChange={(e) => onFileSelected(e.target.files)}
-        />
+      {/* ── Upload: device drop zone + separate S3 action ───────────────── */}
+      <div className={styles.uploadSection}>
+        <div
+          className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''} ${uploading ? styles.dropZoneUploading : ''}`}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={() => !uploading && fileInputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && !uploading && fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED}
+            className={styles.hiddenInput}
+            onChange={(e) => onFileSelected(e.target.files)}
+          />
 
-        {uploading ? (
-          <div className={styles.uploadProgress}>
-            <div className={styles.spinner} />
-            <span className={styles.uploadText}>
-              Uploading & queueing transcription… {Math.round(uploadPct)}%
-            </span>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: `${uploadPct}%` }} />
+          {uploading ? (
+            <div className={styles.uploadProgress}>
+              <div className={styles.spinner} />
+              <span className={styles.uploadText}>
+                Uploading & queueing transcription… {Math.round(uploadPct)}%
+              </span>
+              <div className={styles.progressBar}>
+                <div className={styles.progressFill} style={{ width: `${uploadPct}%` }} />
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <div className={styles.uploadIcon}>🎵</div>
-            <div className={styles.uploadLabel}>
-              Drop an audio file here or <span className={styles.browseLink}>browse</span>
-            </div>
-            <div className={styles.uploadHint}>
-              MP3, WAV, OGG, M4A, FLAC, AAC — up to 500 MB
-            </div>
-            <div className={styles.uploadHint}>
-              All fields (speakers, timestamps, duration) are automatically extracted
-            </div>
-          </>
-        )}
+          ) : (
+            <>
+              <div className={styles.uploadIcon}>🎵</div>
+              <div className={styles.uploadLabel}>
+                Drop an audio file here or <span className={styles.browseLink}>browse</span>
+              </div>
+              <div className={styles.uploadHint}>
+                MP3, WAV, OGG, M4A, FLAC, AAC — up to 500 MB
+              </div>
+              <div className={styles.uploadHint}>
+                All fields (speakers, timestamps, duration) are automatically extracted
+              </div>
+            </>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className={styles.s3UploadBtn}
+          onClick={openS3Picker}
+          disabled={uploading || s3Loading}
+        >
+          {s3Loading ? 'Loading S3 list…' : 'Upload from S3'}
+        </button>
       </div>
+
+      {showS3Picker && !uploading && (
+        <div
+          className={styles.s3PickerBackdrop}
+          role="presentation"
+          onClick={() => setShowS3Picker(false)}
+        >
+          <div
+            className={styles.s3Picker}
+            role="dialog"
+            aria-labelledby="s3-picker-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="s3-picker-title" className={styles.s3PickerTitle}>
+              Select a recording from S3
+            </h3>
+            <p className={styles.s3PickerHint}>
+              File is downloaded to the server, stored locally, then transcribed like a normal upload.
+            </p>
+            {s3Options.length === 0 ? (
+              <p className={styles.s3PickerEmpty}>No recordings available.</p>
+            ) : (
+              <ul className={styles.s3PickerList}>
+                {s3Options.map((opt) => (
+                  <li key={opt.id}>
+                    <button
+                      type="button"
+                      className={styles.s3PickerItem}
+                      onClick={() => handleS3Select(opt.id)}
+                    >
+                      <span className={styles.s3PickerNameBlock}>
+                        <span className={styles.s3PickerName}>{opt.displayName}</span>
+                        {opt.sourceUrl && (
+                          <span className={styles.s3PickerUrl} title={opt.sourceUrl}>
+                            {opt.sourceUrl}
+                          </span>
+                        )}
+                      </span>
+                      <span className={styles.s3PickerAction}>Import & transcribe →</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              className={styles.s3PickerCancel}
+              onClick={() => setShowS3Picker(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {uploadErr && (
         <div className={styles.uploadError}>⚠️ {uploadErr}</div>

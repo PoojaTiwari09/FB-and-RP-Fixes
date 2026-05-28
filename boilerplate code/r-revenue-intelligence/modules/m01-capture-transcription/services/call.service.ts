@@ -14,7 +14,11 @@ import {
   ShareCallDto,
   SearchQueryDto,
   ListCallsQueryDto,
+  UploadFromS3Dto,
 } from '../schemas/m01.schema';
+import { getS3RecordingById } from '../lib/s3-recordings-catalog';
+import { downloadRemoteAudioToLocal } from '../lib/fetch-remote-audio';
+import { getPublicAudioUrl } from '../lib/upload-paths';
 
 @Injectable()
 export class CallService {
@@ -79,6 +83,36 @@ export class CallService {
     await this.calls.updateStatus(call.id, tenantId, 'processing');
 
     return call;
+  }
+
+  /** Download from curated S3 URL → local disk → same transcribe queue as file upload. */
+  async createCallFromS3Recording(dto: UploadFromS3Dto, tenantId: string) {
+    const entry = getS3RecordingById(dto.recordingId);
+    if (!entry) {
+      throw new BadRequestException(`Unknown S3 recording: ${dto.recordingId}`);
+    }
+
+    const { filename, fileSizeBytes, mimeType } = await downloadRemoteAudioToLocal(
+      entry.sourceUrl,
+      entry.displayName,
+    );
+
+    const rawName = entry.displayName.replace(/\.[^.]+$/, '');
+    const title = rawName
+      .replace(/[-_]+/g, ' ')
+      .replace(/\b\w/g, (c: string) => c.toUpperCase())
+      .trim() || 'S3 Recording';
+
+    return this.createCallFromUpload(
+      {
+        title,
+        audioUrl: getPublicAudioUrl(filename),
+        originalFilename: entry.displayName,
+        fileSizeBytes,
+        mimeType,
+      },
+      tenantId,
+    );
   }
 
   // ── Sortable list (CT sortable list) ─────────────────────────────────

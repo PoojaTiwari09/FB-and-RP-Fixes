@@ -15,6 +15,12 @@ export const CreateCallSchema = z.object({
 });
 export type CreateCallDto = z.infer<typeof CreateCallSchema>;
 
+// ── S3 catalog upload ───────────────────────────────────────────────────────
+export const UploadFromS3Schema = z.object({
+  recordingId: z.enum(['2min_sales', '3mins_sales']),
+});
+export type UploadFromS3Dto = z.infer<typeof UploadFromS3Schema>;
+
 // ── CT-22: Create a note ───────────────────────────────────────────────────
 export const CreateNoteSchema = z.object({
   content: z.string().min(1).max(5000),
