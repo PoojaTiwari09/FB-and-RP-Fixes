@@ -1,5 +1,9 @@
 # Standalone module run commands
 
+**Cross-module data flow and integration plan:** [MODULE-DATA-FLOW.md](../MODULE-DATA-FLOW.md)
+
+**API documentation (frontend team):** [api-docs/README.md](../api-docs/README.md)
+
 Run each module **individually** (separate backend + frontend). All commands run from the monorepo root:
 
 ```text

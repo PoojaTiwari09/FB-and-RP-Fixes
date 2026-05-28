@@ -13,4 +13,4 @@ All product specs, audit reports, and runbooks live under **`doc/`**. Runnable c
 | [`fix/`](fix/) | Fix logs and remediation write-ups |
 | [`test_result/`](test_result/) | Smoke reports, validation outputs, `doc/test_result/test_case/` runners |
 
-**Start here:** [execution/README.md](execution/README.md) · **Run modules locally:** [execution/standalone/STANDALONE-MODULE-COMMANDS.md](execution/standalone/STANDALONE-MODULE-COMMANDS.md)
+**Start here:** [execution/README.md](execution/README.md) · **Run modules locally:** [execution/standalone/STANDALONE-MODULE-COMMANDS.md](execution/standalone/STANDALONE-MODULE-COMMANDS.md) · **Data flow & integration:** [execution/MODULE-DATA-FLOW.md](execution/MODULE-DATA-FLOW.md) · **API docs (frontend ↔ backend):** [execution/api-docs/README.md](execution/api-docs/README.md)

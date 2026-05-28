@@ -52,6 +52,8 @@ Start with [doc/execution/README.md](./doc/execution/README.md) (audit index), t
 
 **Standalone modules (M01–M10):** [doc/execution/standalone/STANDALONE-MODULE-COMMANDS.md](./doc/execution/standalone/STANDALONE-MODULE-COMMANDS.md)
 
+**Cross-module data flow & integration plan:** [doc/execution/MODULE-DATA-FLOW.md](./doc/execution/MODULE-DATA-FLOW.md)
+
 ### `doc/analysis/` · `doc/fix/` · `doc/test_result/`
 
 Audit deliverables: module analysis reports, fix logs, smoke/validation/performance results, and [doc/test_result/test_case/](./doc/test_result/test_case/) integration scripts.
