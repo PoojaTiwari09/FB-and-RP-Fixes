@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { resetSupabaseClient } from "../lib/supabase";
+import { resetSupabaseClient } from "../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/supabase";
 import styles from "./SupabaseModal.module.css";
 
 export default function SupabaseModal({ onClose, onSave, connected }) {
@@ -306,7 +306,7 @@ on conflict do nothing;`;
   }
 
   async function seedDatabase() {
-    const { getSupabaseClient } = await import('../lib/supabase');
+    const { getSupabaseClient } = await import('../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/supabase');
     const sb = getSupabaseClient();
     if (!sb) { setSeedMsg({ type: 'error', text: 'Not connected — save credentials first.' }); return; }
 

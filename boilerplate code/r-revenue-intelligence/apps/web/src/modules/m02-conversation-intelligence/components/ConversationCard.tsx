@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { m02ApiV1 } from '../lib/api-env';
+import { m02ApiV1 } from '../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/api-env';
 import { Phone, Mail, Clock, ShieldCheck, ChevronRight } from 'lucide-react';
 import { SearchResult } from './types';
 

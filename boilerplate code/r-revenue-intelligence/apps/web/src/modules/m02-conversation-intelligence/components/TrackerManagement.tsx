@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Search, Target, BarChart3 } from 'lucide-react';
-import { m02ApiV1, DEV_TENANT_ID } from '../lib/api-env';
+import { m02ApiV1, DEV_TENANT_ID } from '../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/api-env';
 
 interface Tracker {
   id: string;

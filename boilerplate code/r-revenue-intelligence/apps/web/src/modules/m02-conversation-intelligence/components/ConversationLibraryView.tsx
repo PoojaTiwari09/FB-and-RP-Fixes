@@ -12,7 +12,7 @@ import { TranslationSettingsModal } from './TranslationSettingsModal';
 import { TrackerManagement } from './TrackerManagement';
 // @ts-expect-error — Live Assist is implemented in JSX with full feature set
 import LiveAssistPanel from './LiveAssistPanel';
-import { m02ApiV1, DEV_TENANT_ID, DEV_USER_ID, getM01WebUrl, getM09WebUrl, getM03WebUrl } from '../lib/api-env';
+import { m02ApiV1, DEV_TENANT_ID, DEV_USER_ID, getM01WebUrl, getM09WebUrl, getM03WebUrl } from '../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/api-env';
 
 type NavItem = {
   name: string;

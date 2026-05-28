@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Globe, AlertCircle } from 'lucide-react';
-import { m02ApiV1 } from '../lib/api-env';
+import { m02ApiV1 } from '../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/api-env';
 
 interface TranslationSettingsModalProps {
   onClose: () => void;

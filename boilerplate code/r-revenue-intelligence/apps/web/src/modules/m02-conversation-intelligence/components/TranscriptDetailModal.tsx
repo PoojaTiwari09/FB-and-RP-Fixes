@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Calendar, User, Phone, Mail, Award, AlertCircle, Compass, Smile, Eye, Globe, Target } from 'lucide-react';
 import { SearchResult } from './types';
-import { m02ApiV1 } from '../lib/api-env';
+import { m02ApiV1 } from '../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/api-env';
 
 interface TranscriptDetailModalProps {
   conversation: any;
