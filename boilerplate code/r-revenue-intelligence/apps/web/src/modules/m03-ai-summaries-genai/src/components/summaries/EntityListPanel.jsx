@@ -165,10 +165,12 @@ export function EntityListPanel({ briefType, selectedId, onSelect }) {
             id: r.id,
             title: r.title,
             meeting_date: r.created_at,
-            duration: null,
-            source_platform: "CRM",
+            duration: r.duration_seconds
+              ? Math.max(1, Math.round(r.duration_seconds / 60))
+              : null,
+            source_platform: r.call_source || "CRM",
             account_id: r.account_id || r.accountId,
-            account_name: null,
+            account_name: r.account_name || null,
           })),
         );
       } else if (briefType === "deal") {
@@ -180,7 +182,7 @@ export function EntityListPanel({ briefType, selectedId, onSelect }) {
             value: null,
             status: "Open",
             account_id: r.account_id || r.accountId,
-            account_name: null,
+            account_name: r.account_name || null,
           })),
         );
       } else if (briefType === "account") {

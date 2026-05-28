@@ -1,9 +1,10 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger }               from '@nestjs/common';
 import { Job }                  from 'bullmq';
-import * as path                from 'path';
 import * as fs                  from 'fs';
 import { CallService }          from '../services/call.service';
+import { getLocalAudioPath }    from '../lib/upload-paths';
+import { uploadAudioToAssemblyAI } from '../lib/assemblyai-upload';
 
 interface TranscribeJobData {
   callId:   string;
@@ -56,17 +57,20 @@ export class M01CaptureTranscriptionWorker extends WorkerHost {
       let audioSource: string;
 
       if (audioUrl.includes('localhost') || audioUrl.includes('127.0.0.1')) {
-        const filename = audioUrl.split('/').pop()!;
-        const localPath = path.resolve(process.cwd(), 'uploads', 'audio', filename);
+        const filename = audioUrl.split('/').pop()!.split('?')[0];
+        const localPath = getLocalAudioPath(filename);
+        const stat = fs.existsSync(localPath) ? fs.statSync(localPath) : null;
         this.logger.log(`[M01 Worker] Local file path: ${localPath}`);
-        this.logger.log(`[M01 Worker] File exists: ${fs.existsSync(localPath)}`);
+        this.logger.log(`[M01 Worker] File exists: ${!!stat}, size: ${stat?.size ?? 0} bytes`);
 
-        if (!fs.existsSync(localPath)) {
-          throw new Error(`Audio file not found on disk: ${localPath}`);
+        if (!stat || stat.size === 0) {
+          throw new Error(
+            stat ? `Audio file is empty: ${localPath}` : `Audio file not found on disk: ${localPath}`,
+          );
         }
 
-        this.logger.log(`[M01 Worker] Uploading ${filename} to AssemblyAI CDN...`);
-        audioSource = await client.files.upload(localPath);
+        this.logger.log(`[M01 Worker] Uploading ${filename} (${stat.size} bytes) to AssemblyAI...`);
+        audioSource = await uploadAudioToAssemblyAI(apiKey, filename);
         this.logger.log(`[M01 Worker] File uploaded. CDN URL: ${audioSource}`);
       } else {
         audioSource = audioUrl;

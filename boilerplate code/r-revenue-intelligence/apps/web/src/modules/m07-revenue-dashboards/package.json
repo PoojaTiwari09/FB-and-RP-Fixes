@@ -1,0 +1,27 @@
+{
+  "name": "@rri/m07-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ../../../../../scripts/sync_m07_app_api.cjs && next dev -p 5180",
+    "build": "node ../../../../../scripts/sync_m07_app_api.cjs && next build",
+    "start": "next start -p 5180",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@rri/database": "workspace:*",
+    "next": "14.2.35",
+    "react": "^18",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "typescript": "^5"
+  }
+}

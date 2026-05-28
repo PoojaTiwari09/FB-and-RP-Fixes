@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Calendar, User, Phone, Mail, Award, AlertCircle, Compass, Smile, Eye, Globe, Target } from 'lucide-react';
 import { SearchResult } from './types';
+import { m02ApiV1 } from '../lib/api-env';
 
 interface TranscriptDetailModalProps {
   conversation: any;
@@ -102,7 +103,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
     setLoadingDetections(true);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/conversation-intelligence/trackers/detections/${conversation.id}?entityType=${conversation.channel}`,
+        `${m02ApiV1()}/conversation-intelligence/trackers/detections/${conversation.id}?entityType=${conversation.channel}`,
         { headers: { 'x-tenant-id': tenantId } }
       );
       if (res.ok) {
@@ -117,7 +118,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
 
   const fetchWorkspaceLanguage = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/translate/settings`, {
+      const res = await fetch(`${m02ApiV1()}/m02-conversation-intelligence/translate/settings`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -140,7 +141,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
     
     setIsTranslating(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}?targetLanguage=${preferredLanguage}`, {
+      const res = await fetch(`${m02ApiV1()}/conversation-intelligence/conversations/${conversation.id}?targetLanguage=${preferredLanguage}`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -156,7 +157,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const fetchTopics = async () => {
     setLoadingTopics(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/topics`, {
+      const res = await fetch(`${m02ApiV1()}/conversation-intelligence/conversations/${conversation.id}/topics`, {
         headers: { 'x-tenant-id': tenantId },
       });
       if (res.ok) {
@@ -175,7 +176,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
     try {
       // Get all available topics from the topic models
       console.log('Fetching available topics from topic-models endpoint');
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topic-models?tenantId=${tenantId}`);
+      const res = await fetch(`${m02ApiV1()}/m02-conversation-intelligence/topic-models?tenantId=${tenantId}`);
       if (res.ok) {
         const data = await res.json();
         console.log('Topic models response:', data);
@@ -193,7 +194,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
 
   const handleDeleteTopic = async (tagId: string) => {
     try {
-      await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics/tags/${tagId}`, { method: 'DELETE' });
+      await fetch(`${m02ApiV1()}/m02-conversation-intelligence/topics/tags/${tagId}`, { method: 'DELETE' });
       setTopics(topics.filter(t => t.id !== tagId));
     } catch (e) {}
   };
@@ -201,7 +202,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const handleAddTopic = async () => {
     if (!newTopic) return;
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/topics`, {
+      const res = await fetch(`${m02ApiV1()}/conversation-intelligence/conversations/${conversation.id}/topics`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
         body: JSON.stringify({
@@ -228,7 +229,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const handleSaveTranscript = async () => {
     setIsSavingTranscript(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/transcript`, {
+      const res = await fetch(`${m02ApiV1()}/conversation-intelligence/conversations/${conversation.id}/transcript`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
         body: JSON.stringify({ transcript: editedTranscriptText })
@@ -256,7 +257,7 @@ export const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
       const updatedTranscript = [...currentTranscript];
       updatedTranscript[idx] = { ...updatedTranscript[idx], text: editedTurnText };
       
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/transcript`, {
+      const res = await fetch(`${m02ApiV1()}/conversation-intelligence/conversations/${conversation.id}/transcript`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
         body: JSON.stringify({ diarizedTranscript: updatedTranscript })

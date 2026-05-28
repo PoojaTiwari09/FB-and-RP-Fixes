@@ -9,7 +9,7 @@ export class SyncController {
 
   /**
    * POST /sync/trigger
-   * Manually kick off a full HubSpot → Supabase sync.
+   * Manually kick off a full HubSpot → Postgres sync.
    * Body: { role: string }  (only admin allowed)
    */
   @Post('trigger')

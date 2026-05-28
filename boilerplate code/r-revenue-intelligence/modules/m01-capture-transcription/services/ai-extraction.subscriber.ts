@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent }             from '@nestjs/event-emitter';
 import { TranscriptRepository } from '../repositories/transcript.repository';
 import { CallRepository }        from '../repositories/call.repository';
+import { AiExtractorService }    from './ai-extractor.service';
 import {
   AiExtractionClient,
   UtterancePayload,
@@ -39,6 +40,7 @@ export class AiExtractionSubscriber {
     private readonly transcripts: TranscriptRepository,
     private readonly calls:       CallRepository,
     private readonly aiClient:    AiExtractionClient,
+    private readonly aiExtractor: AiExtractorService,
   ) {}
 
   @OnEvent('call.transcription.completed', { async: true })
@@ -77,6 +79,17 @@ export class AiExtractionSubscriber {
 
     // ── Stage 3: Talk Ratio (US-14) ───────────────────────────────────
     await this.runTalkRatio(tenantId, callId, utterances);
+
+    // ── Stage 4: Custom extraction fields (M18) ───────────────────────
+    try {
+      await this.aiExtractor.runExtraction(tenantId, callId);
+      this.logger.log(`[AiExtraction][CustomFields] ✅ Populated for callId=${callId}`);
+    } catch (err) {
+      this.logger.error(
+        `[AiExtraction][CustomFields] ❌ Failed for callId=${callId}:`,
+        err,
+      );
+    }
 
     this.logger.log(
       `[AiExtraction] ✅ All stages complete for callId=${callId}`,

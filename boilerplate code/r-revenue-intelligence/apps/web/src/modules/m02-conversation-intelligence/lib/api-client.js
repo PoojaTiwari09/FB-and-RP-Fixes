@@ -7,7 +7,9 @@
  * Falls back silently if both backends are down (Groq direct in component).
  */
 
-const NESTJS_BASE = import.meta.env.VITE_NESTJS_URL || "http://localhost:3001/api/v1";
+import { m02ApiV1 } from "./api-env.js";
+
+const NESTJS_BASE = m02ApiV1();
 const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || "http://localhost:8000";
 
 // Cache health check result for 30s

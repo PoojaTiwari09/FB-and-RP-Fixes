@@ -3,15 +3,13 @@ import {
   UseInterceptors, UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { extname, basename, resolve } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { extname, basename } from 'path';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { CallService } from '../services/call.service';
+import { getUploadAudioDir, getPublicAudioUrl } from '../lib/upload-paths';
 import * as multer from 'multer';
 
-// Ensure the uploads directory exists
-const UPLOAD_DIR = resolve(process.cwd(), 'uploads', 'audio');
-if (!existsSync(UPLOAD_DIR)) mkdirSync(UPLOAD_DIR, { recursive: true });
+const UPLOAD_DIR = getUploadAudioDir();
 
 const audioStorage = multer.diskStorage({
   destination: (_req: any, _file: any, cb: any) => cb(null, UPLOAD_DIR),
@@ -53,8 +51,7 @@ export class UploadController {
       .replace(/\b\w/g, (c: string) => c.toUpperCase())
       .trim() || 'Uploaded Call';
 
-    // Build a URL the worker can access (local static serve path)
-    const audioUrl = `http://localhost:3001/uploads/audio/${file.filename}`;
+    const audioUrl = getPublicAudioUrl(file.filename);
 
     return this.svc.createCallFromUpload(
       {

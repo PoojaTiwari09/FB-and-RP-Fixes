@@ -7,8 +7,9 @@ import type {
   PaginatedResponse,
 } from '../types/revenue-graph.types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const PREFIX = `${BASE}/api/v1/m10-data-compliance`;
+import { m10ApiPrefix, m10DefaultHeaders } from '../lib/api-env';
+
+const PREFIX = m10ApiPrefix();
 
 // ─── Mock Data (used when backend is not reachable) ───────────────────────────
 const MOCK_ACCOUNTS: Account[] = [
@@ -42,7 +43,7 @@ async function apiFetch<T>(path: string, opts?: RequestInit, mockFallback?: T): 
     const res = await fetch(`${PREFIX}${path}`, {
       ...opts,
       headers: {
-        'Content-Type': 'application/json',
+        ...m10DefaultHeaders(),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...opts?.headers,
       },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { m02ApiV1 } from '../lib/api-env';
 import { Phone, Mail, Clock, ShieldCheck, ChevronRight } from 'lucide-react';
 import { SearchResult } from './types';
 
@@ -22,7 +23,7 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ result, onOp
   const fetchTopicsForConversation = async (conversationId: string) => {
     setLoadingTopics(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/conversations/${conversationId}/topics`);
+      const res = await fetch(`${m02ApiV1('/m02-conversation-intelligence')}/conversations/${conversationId}/topics`);
       if (res.ok) {
         const data = await res.json();
         // Extract topic names from the API response

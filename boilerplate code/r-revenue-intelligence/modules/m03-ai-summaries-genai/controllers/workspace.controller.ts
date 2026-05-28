@@ -8,7 +8,7 @@ export class WorkspaceController {
   constructor(private readonly workspace: WorkspaceService) {}
 
   @Get()
-  getWorkspace(@Req() req: any) {
+  async getWorkspace(@Req() req: any) {
     return this.workspace.getWorkspace(req.user.orgId);
   }
 

@@ -1,7 +1,5 @@
+import { prisma } from "@/modules/m07-revenue-dashboards/lib/prisma";
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@rri/database/node_modules/@prisma/client';
-
-const prisma = new PrismaClient();
 const DEFAULT_TENANT = '11111111-1111-1111-1111-111111111111';
 const DEFAULT_USER   = '22222222-2222-2222-2222-222222222222';
 

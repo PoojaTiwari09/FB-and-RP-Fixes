@@ -47,8 +47,12 @@ export default function DeepResearchPage() {
         },
       });
 
+      const jobId = result.jobId || result.job_id;
+      if (!jobId) {
+        throw new Error('Research job created but no job id returned');
+      }
       // Hand off to global context — polling continues even if user leaves this page
-      startPolling(result.job_id);
+      startPolling(jobId);
 
     } catch (err) {
       console.error('Run analysis error:', err);

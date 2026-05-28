@@ -5,19 +5,44 @@ import {
   Search, Phone, Mail, Clock, ShieldCheck, ChevronRight, X, Calendar, 
   User, Award, Compass, Smile, Bookmark, Plus, Settings, Home, 
   BarChart2, TrendingUp, Download, Share2, Layers, Filter, HelpCircle, Globe,
-  Sparkles, Target, Tag
+  Sparkles, Target, Tag, Headphones
 } from 'lucide-react';
 import { SearchResult } from './types';
 import { TranslationSettingsModal } from './TranslationSettingsModal';
 import { TrackerManagement } from './TrackerManagement';
+// @ts-expect-error — Live Assist is implemented in JSX with full feature set
+import LiveAssistPanel from './LiveAssistPanel';
+import { m02ApiV1, DEV_TENANT_ID, DEV_USER_ID, getM01WebUrl, getM09WebUrl, getM03WebUrl } from '../lib/api-env';
+
+type NavItem = {
+  name: string;
+  icon: React.ComponentType<{ style?: React.CSSProperties }>;
+  sub?: string[];
+  badge?: string;
+};
+
+function getHeaderLabels(activeTab: string): { section: string; page: string } {
+  switch (activeTab) {
+    case 'Insights':
+      return { section: 'Insights', page: 'Team' };
+    case 'Smart Trackers':
+      return { section: 'Smart Trackers', page: 'Manage Trackers' };
+    case 'Live Assist':
+      return { section: 'Engage', page: 'Live Assist' };
+    case 'AI Transcriber':
+      return { section: 'Conversations', page: 'AI Transcriber' };
+    default:
+      return { section: 'Conversations', page: 'Search Portal' };
+  }
+}
 
 // Helper function to escape special characters for regex matches
 const escapeRegExp = (str: string) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
-const API_BASE_URL = 'http://localhost:3001/api/v1';
-const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const API_BASE_URL = m02ApiV1();
+const TENANT_ID = DEV_TENANT_ID;
 
 const AddTermModal: React.FC<{ onClose: () => void; onSuccess: () => void }> = ({ onClose, onSuccess }) => {
   const [term, setTerm] = useState('');
@@ -151,7 +176,7 @@ const ManageTopicsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const fetchTopics = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics?tenantId=${tenantId}`);
+      const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/topics?tenantId=${tenantId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.length > 0 && data[0].topics) {
@@ -167,7 +192,7 @@ const ManageTopicsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleAdd = async () => {
     if (!newTopicName) return;
     try {
-      const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/topics/add', {
+      const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/topics/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId, topicName: newTopicName, description: newTopicDesc })
@@ -187,7 +212,7 @@ const ManageTopicsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleRemove = async (topicName: string) => {
     if (!confirm(`Are you sure you want to delete the AI topic "${topicName}"?`)) return;
     try {
-      const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/topics/remove', {
+      const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/topics/remove`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId, topicName })
@@ -531,7 +556,7 @@ export const ConversationLibraryView: React.FC = () => {
     const fetchGlobalTopics = async () => {
       try {
         const tenantId = '00000000-0000-0000-0000-000000000001';
-        const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics?tenantId=${tenantId}`);
+        const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/topics?tenantId=${tenantId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.length > 0 && data[0].topics) {
@@ -646,8 +671,8 @@ export const ConversationLibraryView: React.FC = () => {
 
       // Call search endpoint if query exists, otherwise standard list
       const endpoint = query 
-        ? `http://localhost:3001/api/v1/conversation-intelligence/conversations/search?${queryParams.toString()}`
-        : `http://localhost:3001/api/v1/conversation-intelligence/conversations?${queryParams.toString()}`;
+        ? `${API_BASE_URL}/conversation-intelligence/conversations/search?${queryParams.toString()}`
+        : `${API_BASE_URL}/conversation-intelligence/conversations?${queryParams.toString()}`;
 
       const response = await fetch(endpoint, {
         headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
@@ -927,7 +952,7 @@ export const ConversationLibraryView: React.FC = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/conversation-intelligence/saved-searches', {
+      const response = await fetch(`${API_BASE_URL}/conversation-intelligence/saved-searches`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -982,7 +1007,7 @@ export const ConversationLibraryView: React.FC = () => {
         durationSeconds: uploadType === 'call' ? parseInt(uploadDuration) : undefined,
       };
 
-      const response = await fetch('http://localhost:3001/api/v1/conversation-intelligence/upload-transcript', {
+      const response = await fetch(`${API_BASE_URL}/conversation-intelligence/upload-transcript`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1098,9 +1123,10 @@ export const ConversationLibraryView: React.FC = () => {
 
         {/* Navigation Items */}
         <nav className="rev-sidebar-nav">
-          {[
+          {([
             { name: 'Home', icon: Home },
             { name: 'Engage', icon: Smile },
+            { name: 'Live Assist', icon: Headphones, badge: 'LIVE' },
             { name: 'Search', icon: Search, sub: ['Conversations', 'Your library', 'AI Transcriber'] },
             { name: 'Smart Trackers', icon: Target },
             { name: 'Company library', icon: Bookmark },
@@ -1108,7 +1134,7 @@ export const ConversationLibraryView: React.FC = () => {
             { name: 'Coaching', icon: Award },
             { name: 'Insights', icon: BarChart2 },
             { name: 'Activity', icon: TrendingUp },
-          ].map((item) => {
+          ] as NavItem[]).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.name;
             return (
@@ -1117,8 +1143,9 @@ export const ConversationLibraryView: React.FC = () => {
                   onClick={() => setActiveTab(item.name)}
                   className={`rev-nav-link ${isActive ? 'active' : ''}`}
                 >
-                  <Icon style={{ width: '16px', height: '16px', color: isActive ? 'var(--accent-purple)' : '#64748b' }} />
-                  {item.name}
+                  <Icon style={{ width: '16px', height: '16px', color: isActive ? 'var(--accent-purple)' : '#64748b', flexShrink: 0 }} />
+                  <span style={{ flex: 1, textAlign: 'left' }}>{item.name}</span>
+                  {item.badge ? <span className="rev-nav-badge">{item.badge}</span> : null}
                 </button>
                 {isActive && item.sub && (
                   <div style={{ paddingLeft: '40px', paddingRight: '8px', paddingTop: '4px', paddingBottom: '4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1168,21 +1195,86 @@ export const ConversationLibraryView: React.FC = () => {
         <header className="rev-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ color: 'var(--text-slate-500)', fontSize: '12px', fontWeight: '600' }}>
-              {activeTab === 'Insights' ? 'Insights' : activeTab === 'Smart Trackers' ? 'Smart Trackers' : 'Conversations'}
+              {getHeaderLabels(activeTab).section}
             </span>
             <span style={{ color: '#cbd5e1', fontSize: '12px' }}>/</span>
             <span style={{ color: 'var(--text-white)', fontSize: '12px', fontWeight: '800' }}>
-              {activeTab === 'Insights' ? 'Team' : activeTab === 'Smart Trackers' ? 'Manage Trackers' : 'Search Portal'}
+              {getHeaderLabels(activeTab).page}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <select style={{
-              background: '#f8fafc', border: '1px solid #e2e8f0',
-              fontSize: '11px', fontWeight: '700', padding: '6px 12px',
-              borderRadius: '6px', color: 'var(--text-slate-300)', outline: 'none',
-              cursor: 'pointer'
-            }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <nav
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '4px' }}
+              aria-label="Module navigation"
+            >
+              <button
+                type="button"
+                onClick={() => { window.location.href = getM01WebUrl(); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: '#6366f1',
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Go back to capture and transcript UI
+              </button>
+              <span style={{ color: '#e2e8f0', fontSize: '11px' }}>|</span>
+              <button
+                type="button"
+                onClick={() => { window.location.href = `${getM09WebUrl()}/login`; }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: '#6366f1',
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Revenue Intelligence
+              </button>
+              <span style={{ color: '#e2e8f0', fontSize: '11px' }}>|</span>
+              <button
+                type="button"
+                onClick={() => { window.location.href = getM03WebUrl(); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: '#6366f1',
+                  cursor: 'pointer',
+                  padding: '6px 0',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                AI assist
+              </button>
+            </nav>
+
+            <select
+              defaultValue="Go-to-market"
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                fontSize: '11px',
+                fontWeight: '700',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                color: 'var(--text-slate-300)',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+              aria-label="Go-to-market filter"
+            >
               <option>Go-to-market</option>
               <option>Sales Direct</option>
               <option>Customer Support</option>
@@ -1200,7 +1292,9 @@ export const ConversationLibraryView: React.FC = () => {
         </header>
 
         {/* Main Body Grid */}
-        {activeTab === 'Smart Trackers' ? (
+        {activeTab === 'Live Assist' ? (
+          <LiveAssistPanel />
+        ) : activeTab === 'Smart Trackers' ? (
           <div style={{ flex: 1, padding: '32px', overflowY: 'auto', background: 'var(--bg-dark)' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
               <TrackerManagement />
@@ -3028,7 +3122,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
     setLoadingDetections(true);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/conversation-intelligence/trackers/detections/${conversation.id}?entityType=${conversation.channel}`,
+        `${API_BASE_URL}/conversation-intelligence/trackers/detections/${conversation.id}?entityType=${conversation.channel}`,
         { headers: { 'x-tenant-id': tenantId } }
       );
       if (res.ok) {
@@ -3044,7 +3138,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const fetchTopics = async () => {
     setLoadingTopics(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/topics`, {
+      const res = await fetch(`${API_BASE_URL}/conversation-intelligence/conversations/${conversation.id}/topics`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -3060,7 +3154,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const fetchAvailableTopics = async () => {
     try {
       // Get available topics from the conversation's topics
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/topics`, {
+      const res = await fetch(`${API_BASE_URL}/conversation-intelligence/conversations/${conversation.id}/topics`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -3074,7 +3168,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
 
   const handleDeleteTopic = async (tagId: string) => {
     try {
-      await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/topics/tags/${tagId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/m02-conversation-intelligence/topics/tags/${tagId}`, { method: 'DELETE' });
       setTopics(topics.filter(t => t.id !== tagId));
     } catch (e) {}
   };
@@ -3085,7 +3179,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
       const updatedTranscript = [...translatedTranscript];
       updatedTranscript[idx] = { ...updatedTranscript[idx], text: editedTurnText };
       
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/transcript`, {
+      const res = await fetch(`${API_BASE_URL}/conversation-intelligence/conversations/${conversation.id}/transcript`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
         body: JSON.stringify({ diarizedTranscript: updatedTranscript })
@@ -3109,7 +3203,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const handleAddTopic = async () => {
     if (!newTopic) return;
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/conversations/${conversation.id}/topics`, {
+      const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/conversations/${conversation.id}/topics`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3130,7 +3224,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/conversations/${conversation.id}/analyze`, {
+      const res = await fetch(`${API_BASE_URL}/conversation-intelligence/conversations/${conversation.id}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId }
       });
@@ -3211,7 +3305,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
                   
                   setIsTranslating(true);
                   try {
-                    const sumRes = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/translate', {
+                    const sumRes = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/translate`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
                       body: JSON.stringify({
@@ -3230,7 +3324,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
                     const newDiarized = [...(conversation.diarizedTranscript || [])];
                     for (let i = 0; i < newDiarized.length; i++) {
                       const text = newDiarized[i].text;
-                      const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/translate', {
+                      const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/translate`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
                         body: JSON.stringify({
@@ -3251,7 +3345,7 @@ const TranscriptDetailModal: React.FC<TranscriptDetailModalProps> = ({
                     const newTopics = [...topics];
                     for (let i = 0; i < newTopics.length; i++) {
                       if (newTopics[i].explanation) {
-                        const res = await fetch('http://localhost:3001/api/v1/m02-conversation-intelligence/translate', {
+                        const res = await fetch(`${API_BASE_URL}/m02-conversation-intelligence/translate`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json', 'x-tenant-id': tenantId },
                           body: JSON.stringify({

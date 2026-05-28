@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Globe, AlertCircle } from 'lucide-react';
+import { m02ApiV1 } from '../lib/api-env';
 
 interface TranslationSettingsModalProps {
   onClose: () => void;
@@ -22,7 +23,7 @@ export const TranslationSettingsModal: React.FC<TranslationSettingsModalProps> =
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/translate/settings`, {
+      const res = await fetch(`${m02ApiV1()}/m02-conversation-intelligence/translate/settings`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -41,7 +42,7 @@ export const TranslationSettingsModal: React.FC<TranslationSettingsModalProps> =
     setError('');
     setSuccess(false);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/m02-conversation-intelligence/translate/settings`, {
+      const res = await fetch(`${m02ApiV1()}/m02-conversation-intelligence/translate/settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

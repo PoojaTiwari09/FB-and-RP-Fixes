@@ -1,10 +1,10 @@
 {
-  "name": "deep-research-frontend",
+  "name": "@rri/m03-web",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -12,7 +12,6 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@supabase/supabase-js": "^2.104.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "react": "^18.2.0",

@@ -1,12 +1,33 @@
 /**
  * M03 API client — all AI/workspace calls go through NestJS (no browser Supabase/Gemini).
  */
-const API_BASE = '/api/v1/ai-summaries-genai';
+const viteStandalone =
+  typeof import.meta !== 'undefined' && import.meta.env?.VITE_M03_STANDALONE === 'true';
+
+function getM03ApiBase() {
+  if (viteStandalone) {
+    const u = import.meta.env?.VITE_M03_API_URL;
+    if (u === '' || u === undefined) {
+      return '/api/v1/ai-summaries-genai';
+    }
+    const root = String(u).replace(/\/$/, '');
+    return `${root}/api/v1/ai-summaries-genai`;
+  }
+  return '/api/v1/ai-summaries-genai';
+}
+
+const API_BASE = getM03ApiBase();
+
+const demoTenant =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TENANT_ID) ||
+  '00000000-0000-0000-0000-000000000001';
 
 const defaultHeaders = {
   'Content-Type': 'application/json',
-  'X-User-Id': 'c0000000-0000-0000-0000-000000000001',
-  'X-Org-Id': 'a0000000-0000-0000-0000-000000000001',
+  'X-User-Id':
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_USER_ID) ||
+    '00000000-0000-0000-0000-000000000002',
+  'X-Org-Id': demoTenant,
   'X-Role': 'SALES_MANAGER',
   'X-Team-Id': 'b0000000-0000-0000-0000-000000000001',
 };

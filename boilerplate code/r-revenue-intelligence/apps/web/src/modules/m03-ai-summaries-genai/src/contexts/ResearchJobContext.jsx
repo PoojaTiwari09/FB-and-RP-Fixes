@@ -18,11 +18,26 @@ export function ResearchJobProvider({ children }) {
   const [jobProgress, setJobProgress] = useState(null);
   const pollRef = useRef(null);
 
+  const isValidJobId = (jobId) =>
+    typeof jobId === 'string' &&
+    jobId.length > 0 &&
+    jobId !== 'undefined' &&
+    jobId !== 'null';
+
+  const clearPolling = useCallback(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = null;
+    sessionStorage.removeItem('activeDeepResearchJobId');
+    setIsLoading(false);
+  }, []);
+
   // On first mount, check if there's a job that was running before
   useEffect(() => {
     const savedJobId = sessionStorage.getItem('activeDeepResearchJobId');
-    if (savedJobId) {
+    if (isValidJobId(savedJobId)) {
       resumePolling(savedJobId);
+    } else if (savedJobId) {
+      sessionStorage.removeItem('activeDeepResearchJobId');
     }
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
@@ -31,12 +46,20 @@ export function ResearchJobProvider({ children }) {
   }, []);
 
   const resumePolling = (jobId) => {
+    if (!isValidJobId(jobId)) {
+      clearPolling();
+      return;
+    }
     setIsLoading(true);
     setJobProgress({ pct: 0, stage: 'Resuming…', jobId });
     startInterval(jobId);
   };
 
   const startInterval = (jobId) => {
+    if (!isValidJobId(jobId)) {
+      clearPolling();
+      return;
+    }
     if (pollRef.current) clearInterval(pollRef.current);
 
     pollRef.current = setInterval(async () => {
@@ -76,12 +99,9 @@ export function ResearchJobProvider({ children }) {
 
   /** Cancel current polling */
   const cancelJob = useCallback(() => {
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = null;
-    sessionStorage.removeItem('activeDeepResearchJobId');
-    setIsLoading(false);
+    clearPolling();
     setJobProgress(null);
-  }, []);
+  }, [clearPolling]);
 
   /** Dismiss the completed/failed banner */
   const dismissProgress = useCallback(() => {

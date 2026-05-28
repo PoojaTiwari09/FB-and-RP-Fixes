@@ -1,9 +1,6 @@
-// Base API URL for all M01 calls
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const M01  = `${BASE}/api/v1/capture-transcription`;
+import { m01ApiV1, DEV_TENANT_ID } from '../lib/api-env';
 
-// Default tenant for local development (TenantGuard requires this header)
-const DEV_TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? 'dev-tenant-001';
+const M01 = `${m01ApiV1('/capture-transcription')}`;
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${M01}${path}`, {

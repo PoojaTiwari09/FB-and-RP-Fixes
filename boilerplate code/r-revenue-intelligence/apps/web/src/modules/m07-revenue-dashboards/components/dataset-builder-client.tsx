@@ -10,6 +10,7 @@ import {
   validateDatasetDefinition,
 } from "../lib/sample-data";
 import { useSearchParams, useRouter } from "next/navigation";
+import { ModuleNavLinks } from "./ModuleNavLinks";
 
 // Priority fields to auto-select per object when HubSpot connects
 const PRIORITY_FIELDS: Record<string, string[]> = {
@@ -386,6 +387,7 @@ export function DatasetBuilderClient() {
         <h1>Model CRM, calls, transcription, or combined datasets</h1>
         <p>Build the dataset first, validate mappings, preview the joined result, then save it before creating a dashboard.</p>
         <div className="actions">
+          <ModuleNavLinks />
           <Link href="/dashboards" className="secondary">Go To Dashboard Builder</Link>
         </div>
       </section>

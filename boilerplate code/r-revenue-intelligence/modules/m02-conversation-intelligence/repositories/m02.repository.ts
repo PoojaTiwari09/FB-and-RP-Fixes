@@ -84,6 +84,15 @@ export class M02ConversationIntelligenceRepository {
     const remSeconds = durationSec % 60;
     const duration = `${durationMinutes}m ${remSeconds}s`;
     const transcriptText = c.transcript?.fullText ?? c.transcript ?? c.transcriptText ?? '';
+    const utterances = c.transcript?.utterances ?? [];
+    const diarizedFromDb = Array.isArray(utterances) && utterances.length > 0
+      ? utterances.map((u: any) => ({
+          speaker: u.speaker ?? 'Speaker',
+          text: u.text ?? '',
+          start: Math.floor((u.startMs ?? 0) / 1000),
+          end: Math.ceil((u.endMs ?? 0) / 1000),
+        }))
+      : null;
 
     return {
       id: c.id,
@@ -100,7 +109,7 @@ export class M02ConversationIntelligenceRepository {
       topics: ['Pricing Strategy', 'Feature Discovery'],
       summary: `Call regarding ${c.title}. ${transcriptText.substring(0, 100)}...`,
       transcript: transcriptText,
-      diarizedTranscript: [
+      diarizedTranscript: diarizedFromDb ?? [
         { speaker: 'Speaker 1 (Agent)', text: `Hi there, great to connect with you.`, start: 0, end: 5 },
         { speaker: 'Speaker 2 (Customer)', text: transcriptText, start: 6, end: 80 },
       ],
@@ -180,7 +189,10 @@ export class M02ConversationIntelligenceRepository {
       if (callDelegate?.findFirst) {
         const c = await callDelegate.findFirst({
           where: { id, tenantId },
-          include: callDelegate === (this.prisma as any).callRecord ? { transcript: true } : undefined,
+          include:
+            callDelegate === (this.prisma as any).callRecord
+              ? { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } }
+              : undefined,
         });
         if (c) return this.mapCallToConversation(c);
       }
@@ -376,7 +388,9 @@ export class M02ConversationIntelligenceRepository {
       const isUnified = delegate === (this.prisma as any).callRecord;
       return await delegate.findMany({
         where: { tenantId },
-        ...(isUnified ? { include: { transcript: true } } : {}),
+        ...(isUnified
+          ? { include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } } }
+          : {}),
         orderBy: isUnified ? { callDate: 'desc' } : { createdAt: 'desc' },
       });
     } catch (err: any) {

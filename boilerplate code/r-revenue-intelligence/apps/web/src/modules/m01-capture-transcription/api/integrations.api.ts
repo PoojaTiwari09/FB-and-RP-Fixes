@@ -1,10 +1,9 @@
 // ── Integrations API (shared platform connectors) ─────────────────────────────
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const DEV_TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? 'dev-tenant-001';
+import { m01ApiV1, DEV_TENANT_ID } from '../lib/api-env';
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(`${m01ApiV1()}${path.replace(/^\/api\/v1/, '')}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -45,12 +44,12 @@ export interface ConnectResponse {
 
 /** List all integration statuses */
 export const listIntegrations = () =>
-  apiFetch<IntegrationStatus[]>('/api/v1/integrations');
+  apiFetch<IntegrationStatus[]>('/integrations');
 
 /** Connect a provider (returns authorizationUrl for OAuth or simulates connection) */
 export const connectProvider = (provider: string) =>
-  apiFetch<ConnectResponse>(`/api/v1/integrations/${provider}/connect`, { method: 'POST' });
+  apiFetch<ConnectResponse>(`/integrations/${provider}/connect`, { method: 'POST' });
 
 /** Disconnect a provider */
 export const disconnectProvider = (provider: string) =>
-  apiFetch<{ status: string; message: string }>(`/api/v1/integrations/${provider}/disconnect`, { method: 'POST' });
+  apiFetch<{ status: string; message: string }>(`/integrations/${provider}/disconnect`, { method: 'POST' });

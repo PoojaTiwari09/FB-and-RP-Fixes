@@ -3,8 +3,9 @@
 // All calls go to /api/v1/m10-data-compliance (canonical prefix per TDD §7)
 // Falls back to rich mock data if backend is unreachable (local dev).
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const PREFIX = `${BASE}/api/v1/m10-data-compliance`;
+import { m10ApiPrefix, m10DefaultHeaders } from '../lib/api-env';
+
+const PREFIX = m10ApiPrefix();
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ async function apiFetch<T>(path: string, opts?: RequestInit, mockFallback?: T): 
     const res = await fetch(`${PREFIX}${path}`, {
       ...opts,
       headers: {
-        'Content-Type': 'application/json',
+        ...m10DefaultHeaders(),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...opts?.headers,
       },

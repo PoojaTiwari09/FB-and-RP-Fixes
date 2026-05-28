@@ -69,14 +69,14 @@ export class BoardsService {
       columns: (columns || [])
         .filter((c) => c.board_id === board.board_id)
         .map((c) => ({
-          id: c.col_id,
+          id: c.col_id ?? c.column_id,
           field_key: c.field_key,
           label: c.label,
           order: c.order,
           width: c.width,
-          sortable: c.sortable,
-          editable: c.editable,
-          visible_to_roles: c.visible_to_roles,
+          sortable: c.sortable ?? true,
+          editable: c.editable ?? false,
+          visible_to_roles: c.visible_to_roles ?? ['rep', 'manager', 'admin'],
           column_type: c.column_type || this.COLUMN_TYPES[c.field_key] || 'crm',
         })),
     }));

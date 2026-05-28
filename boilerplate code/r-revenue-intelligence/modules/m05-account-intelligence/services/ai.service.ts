@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { M05DbClient } from '../database/m05-db.client';
+import { getSupabase } from '../config/supabase';
 
 export interface SummaryRequest {
   company_hubspot_id: string;
@@ -52,7 +53,7 @@ If you don't have enough data to answer confidently, say so clearly.`;
 
 @Injectable()
 export class AiService {
-  private supabase: SupabaseClient;
+  private db: M05DbClient;
   private groqApiKey: string;
   private groqModel = 'llama-3.3-70b-versatile';
   private groqBaseUrl = 'https://api.groq.com/openai/v1/chat/completions';
@@ -60,21 +61,12 @@ export class AiService {
   constructor(private configService?: ConfigService) {
     const read = (k: string) =>
       this.configService?.get<string>(k) ?? process.env[k] ?? '';
-    const supabaseUrl = read('SUPABASE_URL');
-    const supabaseKey = read('SUPABASE_SERVICE_ROLE_KEY');
     this.groqApiKey = read('GROQ_API_KEY');
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn(
-        '[M05/AiService] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — AI endpoints will return stub data.',
-      );
-      this.supabase = createClient('http://localhost:54321', 'stub-key');
-    } else {
-      this.supabase = createClient(supabaseUrl, supabaseKey);
-    }
+    this.db = getSupabase();
   }
 
   async buildContext(companyHubspotId: string, scope: string, periodDays: number) {
-    const { data: company } = await this.supabase
+    const { data: company } = await this.db
       .from('crm_companies')
       .select('*')
       .eq('hubspot_id', companyHubspotId)
@@ -84,12 +76,12 @@ export class AiService {
       throw new HttpException('Company not found', HttpStatus.NOT_FOUND);
     }
 
-    const { data: contacts } = await this.supabase
+    const { data: contacts } = await this.db
       .from('crm_contacts')
       .select('first_name, last_name, job_title, is_primary')
       .eq('company_hubspot_id', companyHubspotId);
 
-    const { data: allDeals } = await this.supabase
+    const { data: allDeals } = await this.db
       .from('crm_deals')
       .select('name, stage, amount, adjusted_amount, deal_type, close_date')
       .eq('company_hubspot_id', companyHubspotId);
@@ -98,7 +90,7 @@ export class AiService {
     const openDeals = safeAllDeals.filter(d => !['Closed Won', 'Closed Lost'].includes(d.stage));
     const closedDeals = safeAllDeals.filter(d => ['Closed Won', 'Closed Lost'].includes(d.stage));
 
-    let activitiesQuery = this.supabase
+    let activitiesQuery = this.db
       .from('crm_activities')
       .select('type, direction, timestamp, body, rep_talk_pct, client_talk_pct, call_outcome, subject, title, duration_seconds')
       .eq('company_hubspot_id', companyHubspotId)
@@ -111,7 +103,7 @@ export class AiService {
 
     const { data: activities } = await activitiesQuery.limit(50);
 
-    const { data: supp } = await this.supabase
+    const { data: supp } = await this.db
       .from('supplementary_accounts')
       .select('manager_note, ai_risk_score, risk_label, next_qbr_date, strategic_priority')
       .eq('company_hubspot_id', companyHubspotId)
@@ -239,7 +231,7 @@ export class AiService {
 
   async getCachedBrief(companyHubspotId: string, scope: string, periodDays: number): Promise<any | null> {
     try {
-      const { data } = await this.supabase
+      const { data } = await this.db
         .from('ai_briefs_cache')
         .select('brief_json, generated_at')
         .eq('company_hubspot_id', companyHubspotId)
@@ -261,7 +253,7 @@ export class AiService {
 
   async saveBriefCache(companyHubspotId: string, scope: string, periodDays: number, brief: any) {
     try {
-      await this.supabase
+      await this.db
         .from('ai_briefs_cache')
         .upsert({
           company_hubspot_id: companyHubspotId,

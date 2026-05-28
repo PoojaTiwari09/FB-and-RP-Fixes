@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Search, Target, BarChart3 } from 'lucide-react';
+import { m02ApiV1, DEV_TENANT_ID } from '../lib/api-env';
 
 interface Tracker {
   id: string;
@@ -28,7 +29,8 @@ export const TrackerManagement: React.FC = () => {
   const [newKeywords, setNewKeywords] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const tenantId = '00000000-0000-0000-0000-000000000001';
+  const tenantId = DEV_TENANT_ID;
+  const api = m02ApiV1();
 
   useEffect(() => {
     fetchTrackers();
@@ -37,7 +39,7 @@ export const TrackerManagement: React.FC = () => {
 
   const fetchTrackers = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/trackers`, {
+      const res = await fetch(`${api}/conversation-intelligence/trackers`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -53,7 +55,7 @@ export const TrackerManagement: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/trackers/stats`, {
+      const res = await fetch(`${api}/conversation-intelligence/trackers/stats`, {
         headers: { 'x-tenant-id': tenantId }
       });
       if (res.ok) {
@@ -69,7 +71,7 @@ export const TrackerManagement: React.FC = () => {
     if (!newTrackerName || !newKeywords) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/conversation-intelligence/trackers`, {
+      const res = await fetch(`${api}/conversation-intelligence/trackers`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -96,7 +98,7 @@ export const TrackerManagement: React.FC = () => {
 
   const handleDeleteTracker = async (id: string) => {
     try {
-      await fetch(`http://localhost:3001/api/v1/conversation-intelligence/trackers/${id}`, {
+      await fetch(`${api}/conversation-intelligence/trackers/${id}`, {
         method: 'DELETE',
         headers: { 'x-tenant-id': tenantId }
       });
@@ -109,7 +111,7 @@ export const TrackerManagement: React.FC = () => {
 
   const handleToggleActive = async (tracker: Tracker) => {
     try {
-      await fetch(`http://localhost:3001/api/v1/conversation-intelligence/trackers/${tracker.id}`, {
+      await fetch(`${api}/conversation-intelligence/trackers/${tracker.id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

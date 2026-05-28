@@ -5,6 +5,8 @@ import { TopicManagementController } from './controllers/topic-management.contro
 import { TopicTagController } from './controllers/topic-tag.controller';
 import { TranslationController } from './controllers/translation.controller';
 import { VocabularyCorrectionController } from './controllers/vocabulary-correction.controller';
+import { ConversationIngestController } from './controllers/ingest.controller';
+import { ConversationIngestService } from './services/ingest.service';
 import { M02ConversationIntelligenceService } from './services/m02.service';
 import { HybridSearchService } from './services/hybrid-search.service';
 import { TrackerService } from './services/tracker.service';
@@ -28,8 +30,10 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     TopicTagController,
     TranslationController,
     VocabularyCorrectionController,
+    ConversationIngestController,
   ],
   providers: [
+    ConversationIngestService,
     // Application services
     M02ConversationIntelligenceService,
     HybridSearchService,

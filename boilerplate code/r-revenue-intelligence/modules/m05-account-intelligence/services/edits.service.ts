@@ -66,7 +66,7 @@ export class EditsService {
     // Audit log
     console.log(`[AUDIT] Company ${hubspotId}: ${field} "${oldValue}" → "${value}" by ${role} at ${new Date().toISOString()}`);
 
-    return { success: true, hubspot_updated: hubspotUpdated, supabase_updated: true };
+    return { success: true, hubspot_updated: hubspotUpdated, postgres_updated: true };
   }
 
   async editDeal(dealHubspotId: string, field: string, value: string, role: string) {
@@ -133,7 +133,7 @@ export class EditsService {
 
     console.log(`[AUDIT] Deal ${dealHubspotId}: ${field} "${oldValue}" → "${value}" by ${role} at ${new Date().toISOString()}`);
 
-    return { success: true, hubspot_updated: hubspotUpdated, supabase_updated: true };
+    return { success: true, hubspot_updated: hubspotUpdated, postgres_updated: true };
   }
 
   async editSupplementary(companyHubspotId: string, field: string, value: string, role: string) {
@@ -177,6 +177,6 @@ export class EditsService {
 
     console.log(`[AUDIT] Supplementary ${companyHubspotId}: ${field} "${oldValue}" → "${value}" by ${role} at ${new Date().toISOString()}`);
 
-    return { success: true, hubspot_updated: false, supabase_updated: true };
+    return { success: true, hubspot_updated: false, postgres_updated: true };
   }
 }

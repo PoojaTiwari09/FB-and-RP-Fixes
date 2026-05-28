@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { getSupabaseClient } from "../lib/supabase";
+/** @deprecated Use `useM03Workspace` + `m03Api.js`; Supabase removed. */
+function getSupabaseClient() {
+  return null;
+}
 import { generateEmbedding, chunkTranscript } from "../services/embeddings";
 import {
   DEALS as MOCK_DEALS,

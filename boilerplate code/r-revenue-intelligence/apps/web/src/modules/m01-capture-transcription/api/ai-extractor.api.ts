@@ -1,9 +1,9 @@
 // ── AI Data Extractor API Client ──────────────────────────────────────────────
 // Covers: Field Library CRUD, Test Extraction, Per-Call Results, Run Extraction
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const M18  = `${BASE}/api/v1/ai-extractor`;
-const DEV_TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? 'dev-tenant-001';
+import { m01ApiV1, DEV_TENANT_ID } from '../lib/api-env';
+
+const M18 = m01ApiV1('/ai-extractor');
 
 async function m18Fetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${M18}${path}`, {

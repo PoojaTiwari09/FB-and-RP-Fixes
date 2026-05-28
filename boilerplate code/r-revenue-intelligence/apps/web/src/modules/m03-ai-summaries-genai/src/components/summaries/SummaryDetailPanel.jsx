@@ -214,15 +214,14 @@ function GeneratePrompt({ briefType, entityId, onGenerated }) {
   const generate = async () => {
     setGenerating(true);
     setError(null);
-    setProgress("Fetching records from Supabase…");
+    setProgress("Loading CRM & call records from Postgres…");
 
     try {
-      setTimeout(() => setProgress("Assembling source evidence…"), 1500);
-      setTimeout(() => setProgress("Generating AI brief with citations…"), 3000);
+      setTimeout(() => setProgress("Assembling source evidence…"), 800);
+      setTimeout(() => setProgress("Generating AI brief with citations…"), 1600);
 
-      const res  = await fetch(`/api/ai-summaries/${briefType}-brief/${entityId}`, { method: "POST" });
-      const body = await res.json();
-      if (!res.ok || !body.success) throw new Error(body.error || `HTTP ${res.status}`);
+      const body = await generateBrief(briefType, entityId);
+      if (!body?.success) throw new Error(body.error || "Generation failed");
       onGenerated();
     } catch (err) {
       setError(err.message);
@@ -269,7 +268,7 @@ function GeneratePrompt({ briefType, entityId, onGenerated }) {
         ) : (
           <>
             <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>
-              Generate an AI-powered intelligence brief. Every insight will include clickable evidence citations linked to real Supabase records.
+              Generate an AI-powered intelligence brief. Every insight will include clickable evidence citations linked to Postgres call and CRM records.
             </p>
 
             {error && (

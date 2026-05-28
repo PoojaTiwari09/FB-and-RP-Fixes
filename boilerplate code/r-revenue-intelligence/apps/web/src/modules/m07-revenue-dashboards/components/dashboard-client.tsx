@@ -26,6 +26,7 @@ import {
   getMetricsByCategory,
   formatMetricValue,
 } from "../lib/metrics-registry";
+import { ModuleNavLinks } from "./ModuleNavLinks";
 
 // ── Deals Widget Table ────────────────────────────────────────────────────────
 function DealsTable({ rows, cap = 6 }: { rows: any[]; cap?: number }) {
@@ -2374,6 +2375,7 @@ export function DashboardClient() {
           Drag components from the library and arrange widgets dynamically on a 12-column workspace canvas, then export that dashboard offline or share it.
         </p>
         <div className="actions" style={{ flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+          <ModuleNavLinks />
           <Link href="/datasets" className="secondary">Create Dataset First</Link>
           {/* Data Studio toggle — feature #21 */}
           <button

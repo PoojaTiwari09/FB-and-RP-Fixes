@@ -12,6 +12,10 @@ import { Request } from 'express';
 import { RevenueGraphService } from '../services/revenue-graph.service';
 import { JwtAuthGuard } from '../../../platform-core/guards/jwt.guard';
 import { TenantGuard } from '../../../platform-core/guards/tenant.guard';
+import { M10DevAuthGuard } from '../../guards/m10-dev-auth.guard';
+
+const M10AuthGuard =
+  process.env.M10_STANDALONE_AUTH === 'true' ? M10DevAuthGuard : JwtAuthGuard;
 import { TriggerCrmSyncSchema } from '../schemas/revenue-graph.schema';
 
 interface AuthenticatedRequest extends Request {
@@ -20,7 +24,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('api/v1/m10-data-compliance')
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(M10AuthGuard, TenantGuard)
 export class RevenueGraphController {
   private readonly logger = new Logger(RevenueGraphController.name);
 

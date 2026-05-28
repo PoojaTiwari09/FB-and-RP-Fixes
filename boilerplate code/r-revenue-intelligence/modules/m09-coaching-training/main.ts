@@ -38,8 +38,7 @@ async function bootstrap() {
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
-  // 1. Global API Prefix
-  app.setGlobalPrefix('api');
+  // Routes are declared on controllers as api/v1/coaching-training/* (no extra global prefix).
 
   // 2. Global Validation Pipe
   app.useGlobalPipes(
@@ -72,10 +71,10 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   // 6. Start Server
-  const port = configService.get<number>('PORT') || 4001;
+  const port = configService.get<number>('M09_API_PORT') || configService.get<number>('PORT') || 4009;
   await app.listen(port);
   
-  console.log(`\x1b[32m[NestJS]\x1b[0m M09 Coaching & Training is running on: \x1b[34mhttp://localhost:${port}/api\x1b[0m`);
+  console.log(`\x1b[32m[NestJS]\x1b[0m M09 Coaching & Training is running on: \x1b[34mhttp://localhost:${port}/api/v1/coaching-training\x1b[0m`);
   console.log(`\x1b[32m[NestJS]\x1b[0m Submit to manager: POST /api/training/submit-session or POST /api/sessions/submit-to-manager`);
 }
 bootstrap();

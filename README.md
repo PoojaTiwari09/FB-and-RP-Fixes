@@ -1,22 +1,19 @@
 # 🚀 R-Revenue Intelligence Platform
 
-Welcome to the **R-Revenue Intelligence Platform** repository. The codebase and documentation have been streamlined to maintain a clean, standardized architectural layout consisting of two primary pillars: **Boilerplate Code** and **Reference Documents**.
+Welcome to the **R-Revenue Intelligence Platform** repository. The codebase and documentation are organized into **Boilerplate Code** (runnable monorepo) and **`doc/`** (all specifications, audits, and runbooks).
 
 ---
 
 ## 📂 Repository Structure
 
-The repository is organized into two main root directories and this primary `README.md`:
-
 ```text
-├── 📦 boilerplate code/         # Complete runnable monorepo boilerplate & utility scripts
-└── 📚 Reference documents/       # Technical specifications, standards, and module designs
-    ├── M1 Capture & Transcription/
-    ├── M2 Conversation Intelligence/
-    ├── M3 AI Summaries & GenAI/
-    ├── ...
-    ├── docs/                     # Core system-wide specifications & architectures
-    └── archives/                 # Historic documentation versions
+├── 📦 boilerplate code/         # Runnable monorepo (unchanged — app source only)
+└── 📚 doc/
+    ├── reference/               # Product specs, TDDs, architecture (M1–M10)
+    ├── execution/               # Runbooks, smoke plans, audit index, scripts
+    ├── analysis/                # Module & platform analysis reports
+    ├── fix/                     # Fix logs and remediation reports
+    └── test_result/             # Smoke, validation, performance outputs + test_case/
 ```
 
 ---
@@ -32,28 +29,30 @@ This directory contains the production-ready modular monolith skeleton and all s
 
 ---
 
-## 📚 2. Reference Documents (`/Reference documents`)
+## 📚 2. Documentation (`/doc`)
 
-The system design, product specifications, and standards are partitioned across individual module domains and general core standards:
+### `doc/reference/` — Product & platform specifications (M1–M10)
 
-### 🧩 Lifecycle Module Documents
-*   **[M1 Capture & Transcription](./Reference%20documents/M1%20Capture%20&%20Transcription/)**: Ingests audio, video, and text interactions across Zoom, Meet, Slack, and Email.
-*   **[M2 Conversation Intelligence](./Reference%20documents/M2%20Conversation%20Intelligence/)**: Performs NLP, theme detection, and sentiment analysis on captured interactions.
-*   **[M3 AI Summaries & GenAI](./Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/)**: Generates deal briefs, meeting summaries, and executive reports using LLMs.
-*   **[M4 Deal Intelligence](./Reference%20documents/M4%20Deal%20Intelligence/)**: Tracks opportunity health, blockers, and progression through the sales pipeline.
-*   **[M5 Account Intelligence](./Reference%20documents/M5%20Account%20Intelligence/)**: Provides a 360-degree view of account health and relationship depth.
-*   **[M6 Forecasting & Prediction](./Reference%20documents/M6%20Forecasting%20&%20Prediction/)**: Predictive engine for revenue forecasting and quota attainment.
-*   **[M7 Revenue Dashboards](./Reference%20documents/M7%20Revenue%20Dashboards/)**: High-performance visualization layer built on ClickHouse and PostgreSQL.
-*   **[M8 Sales Engagement](./Reference%20documents/M8%20Sales%20Engagement/)**: Workflow automation, email composition, and sales play orchestration.
-*   **[M9 Coaching & Training](./Reference%20documents/M9%20Coaching%20&%20Training/)**: AI-simulated training scenarios and performance coaching insights.
-*   **[M10 Data & Compliance](./Reference%20documents/M10%20Data%20&%20Compliance/)**: Revenue Graph, regional compliance (GDPR/CCPA), and customer data exports.
+*   **[M1 Capture & Transcription](./doc/reference/M1%20Capture%20&%20Transcription/)**
+*   **[M2 Conversation Intelligence](./doc/reference/M2%20Conversation%20Intelligence/)**
+*   **[M3 AI Summaries & GenAI](./doc/reference/M3%20AI%20Summaries%20&%20GenAI/)**
+*   **[M4 Deal Intelligence](./doc/reference/M4%20Deal%20Intelligence/)**
+*   **[M5 Account Intelligence](./doc/reference/M5%20Account%20Intelligence/)**
+*   **[M6 Forecasting & Prediction](./doc/reference/M6%20Forecasting%20&%20Prediction/)**
+*   **[M7 Revenue Dashboards](./doc/reference/M7%20Revenue%20Dashboards/)**
+*   **[M8 Sales Engagement](./doc/reference/M8%20Sales%20Engagement/)**
+*   **[M9 Coaching & Training](./doc/reference/M9%20Coaching%20&%20Training/)**
+*   **[M10 Data & Compliance](./doc/reference/M10%20Data%20&%20Compliance/)**
 
-### 📐 Core Platform Architecture & Standards
-*   **[docs/](./Reference%20documents/docs/)**: Contains system-wide standards and architecture guides.
-    *   `System_architecture.md`: The "Single Source of Truth" for the platform's microservices and event flow.
-    *   `Coding standards.md`: Machine-enforceable rules and engineering guidance.
-    *   `Event Schema registry.md`: Definitions for all cross-module asynchronous events.
-    *   `API Design Standards.md`: REST and Internal API naming and behavior conventions.
+**Core platform standards:** [doc/reference/docs/markdown documents/](./doc/reference/docs/markdown%20documents/) — `System_architecture.md`, `Coding standards.md`, `Local-Dev-Setup-Guide.md`, etc.
+
+### `doc/execution/` — How to run & audit
+
+Start with [doc/execution/README.md](./doc/execution/README.md) (audit index), then `version_knowledge.md`, `smoke_test_plan.md`, `implementation_changes.md`.
+
+### `doc/analysis/` · `doc/fix/` · `doc/test_result/`
+
+Audit deliverables: module analysis reports, fix logs, smoke/validation/performance results, and [doc/test_result/test_case/](./doc/test_result/test_case/) integration scripts.
 
 ---
 
@@ -72,13 +71,13 @@ The platform adheres to several strict architectural boundaries enforced during 
 ## 🛠️ Getting Started
 
 For engineers and Tech Leads new to the repository:
-1.  Review the **[System Architecture](./Reference%20documents/docs/markdown%20documents/System_architecture.md)** to understand platform-wide module boundaries.
-2.  Consult the **[Local Development Setup Guide](./Reference%20documents/docs/markdown%20documents/Local-Dev-Setup-Guide.md)** to initialize your local dockerized environment.
-3.  Follow the **[Git Branching Strategy](./Reference%20documents/docs/markdown%20documents/git-branching-strategy.md)** for contributing changes.
+1.  Review the **[System Architecture](./doc/reference/docs/markdown%20documents/System_architecture.md)** to understand platform-wide module boundaries.
+2.  Consult the **[Local Development Setup Guide](./doc/reference/docs/markdown%20documents/Local-Dev-Setup-Guide.md)** to initialize your local dockerized environment.
+3.  Follow the **[Git Branching Strategy](./doc/reference/docs/markdown%20documents/git-branching-strategy.md)** for contributing changes.
 4.  Launch local validations by executing the custom validation suite:
     ```bash
     python "boilerplate code/syntax_validator.py"
     ```
 
 ---
-*Last Updated: 2026-05-18*
+*Last Updated: 2026-05-28*

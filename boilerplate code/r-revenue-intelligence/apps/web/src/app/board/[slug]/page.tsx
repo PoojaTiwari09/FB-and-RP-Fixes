@@ -14,6 +14,7 @@ import InlineEdit from '@/modules/m05-account-intelligence/components/ui/InlineE
 import ActivityTimeline from '@/modules/m05-account-intelligence/components/board/ActivityTimeline';
 import BoardSettingsPanel from '@/modules/m05-account-intelligence/components/board/BoardSettingsPanel';
 import CreateBoardWizard from '@/modules/m05-account-intelligence/components/board/CreateBoardWizard';
+import ModuleNavLinks from '@/modules/m05-account-intelligence/components/board/ModuleNavLinks';
 
 export default function BoardPage() {
   const params = useParams();
@@ -189,7 +190,7 @@ export default function BoardPage() {
   const totalPages = response ? Math.ceil(response.total / pageSize) : 1;
   // Columns allowed by role
   const roleColumns = currentBoard?.columns.filter(
-    (col) => col.visible_to_roles.includes(role),
+    (col) => (col.visible_to_roles ?? ['rep', 'manager', 'admin']).includes(role),
   ) || [];
   // Columns actually displayed (respecting user's column picker)
   const visibleColumns = roleColumns.filter(
@@ -322,6 +323,7 @@ export default function BoardPage() {
             )}
           </div>
           <div className="header-right">
+            <ModuleNavLinks />
             <SyncStatusBar role={role} onSyncComplete={loadAccounts} />
             <div className="header-board-selector">
               {boards.map((board) => (

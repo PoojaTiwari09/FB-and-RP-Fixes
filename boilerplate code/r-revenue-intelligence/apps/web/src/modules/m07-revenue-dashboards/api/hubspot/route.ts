@@ -1,8 +1,5 @@
+import { prisma } from "@/modules/m07-revenue-dashboards/lib/prisma";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@rri/database/node_modules/@prisma/client";
-
-const prisma = new PrismaClient();
-
 function metadataDelegates(db: any) {
   return {
     object: db.dataSourceObject ?? db.crmObject,

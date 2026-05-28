@@ -1,7 +1,5 @@
+import { prisma } from "@/modules/m07-revenue-dashboards/lib/prisma";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@rri/database/node_modules/@prisma/client";
-
-const prisma = new PrismaClient();
 const TENANT_ID = '11111111-1111-1111-1111-111111111111';
 const MOCK_TOKEN = 'mock_postgres_access_token';
 const DEMO_TOKEN = 'hubspot_demo_connected_token';

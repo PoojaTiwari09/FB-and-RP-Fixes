@@ -1,29 +1,38 @@
-import { createClient } from "@supabase/supabase-js";
+/**
+ * Optional Supabase client for Live Assist session persistence.
+ * When URL/anon key are not in localStorage, returns null — Live Assist still works in-memory.
+ */
+import { createClient } from '@supabase/supabase-js';
 
-let _client = null;
-
-export function getSupabaseClient() {
-  const url = localStorage.getItem("supabase_url");
-  const key = localStorage.getItem("supabase_anon_key");
-  if (!url || !key) {
-    _client = null;
-    return null;
-  }
-  
-  // If keys changed in localStorage, force a re-init
-  const currentUrl = _client?.supabaseUrl;
-  const currentKey = _client?.supabaseKey;
-  
-  if (!_client || currentUrl !== url || currentKey !== key) {
-    _client = createClient(url, key);
-  }
-  return _client;
-}
+/** @type {import('@supabase/supabase-js').SupabaseClient | null | undefined} */
+let cached = undefined;
 
 export function resetSupabaseClient() {
-  _client = null;
+  cached = undefined;
 }
 
-export function isSupabaseConfigured() {
-  return !!(localStorage.getItem("supabase_url") && localStorage.getItem("supabase_anon_key"));
+/**
+ * @returns {import('@supabase/supabase-js').SupabaseClient | null}
+ */
+export function getSupabaseClient() {
+  if (cached !== undefined) return cached;
+
+  const url =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('supabase_url') : '';
+  const key =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('supabase_anon_key') : '';
+
+  if (!url?.trim() || !key?.trim()) {
+    cached = null;
+    return null;
+  }
+
+  try {
+    cached = createClient(url.trim(), key.trim());
+    return cached;
+  } catch (e) {
+    console.warn('[supabase] Failed to create client:', e);
+    cached = null;
+    return null;
+  }
 }

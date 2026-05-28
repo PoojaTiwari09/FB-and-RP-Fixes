@@ -4,7 +4,6 @@ cd /d "%~dp0"
 set DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public
 set DIRECT_URL=%DATABASE_URL%
 set M10_DATABASE_URL=%DATABASE_URL%
-REM Redis now runs in the docker-compose stack so workers can boot.
 set DISABLE_REDIS=true
 set REDIS_HOST=127.0.0.1
 set REDIS_PORT=6379
@@ -12,9 +11,7 @@ set REDIS_URL=redis://127.0.0.1:6379
 set DISABLE_MEILI=true
 set NODE_ENV=development
 set JWT_SECRET=local-dev-secret
-set PORT=3001
-set SUPABASE_URL=http://localhost:54321
-set SUPABASE_SERVICE_ROLE_KEY=stub-key
+set PORT=3002
 set GROQ_API_KEY=test-groq-key
 set GEMINI_API_KEY=test-gemini-key
 set OPENAI_API_KEY=test-openai-key

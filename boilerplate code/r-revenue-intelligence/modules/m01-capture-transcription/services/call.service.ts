@@ -6,6 +6,7 @@ import { TranscriptRepository } from '../repositories/transcript.repository';
 import { NotesRepository }      from '../repositories/notes.repository';
 import { SearchRepository, ShareRepository, ExtendedSearchQueryDto } from '../repositories/search.repository';
 import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { M02IngestClient } from './m02-ingest.client';
 import {
   CreateCallDto,
   CreateNoteDto,
@@ -24,6 +25,7 @@ export class CallService {
     private readonly search:      SearchRepository,
     private readonly shares:      ShareRepository,
     private readonly events:      EventPublisherService,
+    private readonly m02Ingest:   M02IngestClient,
     @InjectQueue('m01-queue') private readonly queue: Queue,
   ) {}
 
@@ -160,6 +162,14 @@ export class CallService {
     };
     await this.events.publish('call.transcription.completed', envelope);
     await this.events.publish('transcription.completed',     envelope);
+
+    await this.m02Ingest.notifyTranscriptionCompleted({
+      tenantId,
+      callId,
+      transcriptId: tx?.id,
+      sourcePlatform: 'm01-capture-transcription',
+      occurredAt: envelope.occurredAt,
+    });
   }
 
   // ── Internal: called by worker on failure ─────────────────────────────
@@ -215,6 +225,14 @@ export class CallService {
     };
     await this.events.publish('call.transcription.completed', envelope);
     await this.events.publish('transcription.completed',     envelope);
+
+    await this.m02Ingest.notifyTranscriptionCompleted({
+      tenantId,
+      callId,
+      transcriptId: transcript.id,
+      sourcePlatform: 'm01-capture-transcription',
+      occurredAt: envelope.occurredAt,
+    });
 
     return {
       accepted: true,

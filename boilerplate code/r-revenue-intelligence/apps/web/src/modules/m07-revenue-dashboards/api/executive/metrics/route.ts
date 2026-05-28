@@ -1,9 +1,7 @@
+import { prisma } from "@/modules/m07-revenue-dashboards/lib/prisma";
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@rri/database/node_modules/@prisma/client';
-
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
 const DEFAULT_TENANT = '11111111-1111-1111-1111-111111111111';
 
 // GET /api/executive/metrics?tenantId=xxx

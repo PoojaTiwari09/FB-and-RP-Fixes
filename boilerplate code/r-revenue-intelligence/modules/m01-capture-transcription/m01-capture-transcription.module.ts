@@ -5,6 +5,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { CallsController }   from './controllers/calls.controller';
 import { UploadController }  from './controllers/upload.controller';
 import { WebhookController } from './controllers/webhook.controller';
+import { IntegrationsController } from './controllers/integrations.controller';
+import { AiExtractorController } from './controllers/ai-extractor.controller';
 
 // Services
 import { CallService }              from './services/call.service';
@@ -12,6 +14,8 @@ import { PiiRedactionService }      from './services/pii-redaction.service';
 import { AuditLogService }          from './services/audit-log.service';
 import { AiExtractionClient }       from './services/ai-extraction.client';
 import { AiExtractionSubscriber }   from './services/ai-extraction.subscriber';
+import { M02IngestClient }          from './services/m02-ingest.client';
+import { AiExtractorService }       from './services/ai-extractor.service';
 
 // Repositories
 import { CallRepository }       from './repositories/call.repository';
@@ -60,6 +64,8 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     CallsController,
     UploadController,
     WebhookController,
+    IntegrationsController,
+    AiExtractorController,
   ],
   providers: [
     // Services
@@ -68,6 +74,8 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     AuditLogService,
     AiExtractionClient,
     AiExtractionSubscriber,
+    M02IngestClient,
+    AiExtractorService,
     // Repositories
     CallRepository,
     TranscriptRepository,

@@ -542,6 +542,15 @@ export class AccountsService {
         if (op === 'gte') return daysAgo >= value;
         return true;
       }
+      case 'exit_arr': {
+        const arr = parseFloat(company.exit_arr) || 0;
+        if (op === 'gt') return arr > value;
+        if (op === 'gte') return arr >= value;
+        if (op === 'lt') return arr < value;
+        if (op === 'lte') return arr <= value;
+        if (op === 'eq') return arr === value;
+        return true;
+      }
       default:
         return true;
     }

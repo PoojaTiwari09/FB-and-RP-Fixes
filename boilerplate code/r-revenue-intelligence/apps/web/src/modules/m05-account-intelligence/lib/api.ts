@@ -12,9 +12,10 @@ import type {
   AIBrief,
 } from '@/modules/m05-account-intelligence/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const M05_API = `${API_URL}/api/v1/account-intelligence`;
-const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000';
+import { m05ApiPrefix, getM05AiUrl } from './api-env';
+
+const M05_API = m05ApiPrefix();
+const AI_URL = getM05AiUrl();
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -106,7 +107,7 @@ export async function editCompany(
   field: string,
   value: string,
   role: string,
-): Promise<{ success: boolean; hubspot_updated: boolean; supabase_updated: boolean }> {
+): Promise<{ success: boolean; hubspot_updated: boolean; postgres_updated: boolean }> {
   return fetchJson(`${M05_API}/edits/company/${hubspotId}`, {
     method: 'PATCH',
     body: JSON.stringify({ field, value, role }),
@@ -118,7 +119,7 @@ export async function editDeal(
   field: string,
   value: string,
   role: string,
-): Promise<{ success: boolean; hubspot_updated: boolean; supabase_updated: boolean }> {
+): Promise<{ success: boolean; hubspot_updated: boolean; postgres_updated: boolean }> {
   return fetchJson(`${M05_API}/edits/deal/${dealId}`, {
     method: 'PATCH',
     body: JSON.stringify({ field, value, role }),
@@ -130,7 +131,7 @@ export async function editSupplementary(
   field: string,
   value: string,
   role: string,
-): Promise<{ success: boolean; supabase_updated: boolean }> {
+): Promise<{ success: boolean; postgres_updated: boolean }> {
   return fetchJson(`${M05_API}/edits/supplementary/${companyHubspotId}`, {
     method: 'PATCH',
     body: JSON.stringify({ field, value, role }),

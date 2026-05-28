@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { m03DataStore, M03_DEV_ORG } from '../services/m03-data.store';
+import { resolveM03TenantId, M03_DEMO_TENANT } from '../services/m03-tenant.util';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -77,12 +78,13 @@ export class M03AiSummariesGenaiRepository {
   }
 
   async getBrief(tenantId: string, briefType: string, entityId: string) {
+    const tid = resolveM03TenantId(tenantId);
     const delegate = this.aiBriefDelegate();
     if (delegate?.findUnique) {
       try {
         const row = await delegate.findUnique({
           where: {
-            tenantId_briefType_entityId: { tenantId, briefType, entityId },
+            tenantId_briefType_entityId: { tenantId: tid, briefType, entityId },
           },
         });
         if (row) return this.mapBrief(row);
@@ -91,7 +93,7 @@ export class M03AiSummariesGenaiRepository {
       }
     }
 
-    const mem = m03DataStore.listBriefs(tenantId, entityId).find(
+    const mem = m03DataStore.listBriefs(tid, entityId).find(
       (b) => b.brief_type === briefType && b.entity_id === entityId,
     );
     return mem ? this.mapBrief(mem) : null;
@@ -176,11 +178,170 @@ export class M03AiSummariesGenaiRepository {
     return row;
   }
 
-  getWorkspace(tenantId: string) {
-    if (tenantId !== M03_DEV_ORG && tenantId !== '00000000-0000-0000-0000-000000000001') {
-      return { deals: [], accounts: [], contacts: [], calls: [] };
+  async getWorkspace(tenantId: string) {
+    const tid = resolveM03TenantId(tenantId);
+    try {
+      const fromDb = await this.loadWorkspaceFromPostgres(tid);
+      if (
+        fromDb.calls.length > 0 ||
+        fromDb.accounts.length > 0 ||
+        fromDb.deals.length > 0
+      ) {
+        return fromDb;
+      }
+    } catch (err: any) {
+      console.warn('[M03] Postgres workspace load failed:', err?.message || err);
     }
-    return m03DataStore.workspace;
+
+    if (tid === M03_DEMO_TENANT || tid === M03_DEV_ORG) {
+      return m03DataStore.workspace;
+    }
+    return { deals: [], accounts: [], contacts: [], calls: [] };
+  }
+
+  async loadEntityContext(tenantId: string, briefType: string, entityId: string) {
+    const ws = await this.getWorkspace(tenantId);
+    if (briefType === 'call') {
+      return ws.calls.find((c: any) => c.id === entityId) ?? null;
+    }
+    if (briefType === 'deal') {
+      return ws.deals.find((d: any) => d.id === entityId) ?? null;
+    }
+    if (briefType === 'account') {
+      return ws.accounts.find((a: any) => a.id === entityId) ?? null;
+    }
+    if (briefType === 'contact') {
+      return ws.contacts.find((c: any) => c.id === entityId) ?? null;
+    }
+    return null;
+  }
+
+  private async loadWorkspaceFromPostgres(tenantId: string) {
+    const prisma = this.prisma as any;
+
+    const [callRecords, accounts, deals, m10Contacts] = await Promise.all([
+      prisma.callRecord?.findMany
+        ? prisma.callRecord.findMany({
+            where: { tenantId },
+            orderBy: { callDate: 'desc' },
+            take: 50,
+            include: { transcript: true },
+          })
+        : [],
+      prisma.account?.findMany
+        ? prisma.account.findMany({
+            where: { tenantId },
+            orderBy: { updatedAt: 'desc' },
+            take: 50,
+          })
+        : [],
+      prisma.deal?.findMany
+        ? prisma.deal.findMany({
+            where: { tenantId },
+            orderBy: { updatedAt: 'desc' },
+            take: 50,
+            include: { account: true },
+          })
+        : [],
+      prisma.m10Contact?.findMany
+        ? prisma.m10Contact.findMany({
+            where: { tenantId },
+            orderBy: { updatedAt: 'desc' },
+            take: 50,
+          })
+        : [],
+    ]);
+
+    const accountNameById = new Map<string, string>(
+      (accounts as any[]).map((a) => [a.id, a.name]),
+    );
+
+    const calls = (callRecords as any[]).map((c) => {
+      const transcriptText =
+        c.transcript?.fullText ||
+        c.transcript?.summary ||
+        '';
+      const accountName = c.accountId
+        ? accountNameById.get(c.accountId) || null
+        : null;
+      return {
+        id: c.id,
+        title: c.title || 'Call',
+        transcript: transcriptText,
+        account_id: c.accountId || '',
+        accountId: c.accountId || '',
+        account_name: accountName,
+        deal_id: c.opportunityId || '',
+        dealId: c.opportunityId || '',
+        call_owner: c.callOwner,
+        duration_seconds: c.durationSeconds,
+        created_at: c.callDate?.toISOString?.() || c.createdAt?.toISOString?.() || '',
+        transcript_status: c.transcriptStatus,
+        call_source: c.callSource,
+        participants: c.participants || [],
+      };
+    });
+
+    const dealsNorm = (deals as any[]).map((d) => ({
+      id: d.id,
+      name: d.name,
+      stage: d.stage,
+      amount: d.amount != null ? String(d.amount) : null,
+      account_id: d.accountId || d.account?.id || '',
+      accountId: d.accountId || d.account?.id || '',
+      account_name: d.account?.name || accountNameById.get(d.accountId) || null,
+      created_at: d.createdAt?.toISOString?.() || '',
+    }));
+
+    const accountsNorm = (accounts as any[]).map((a) => ({
+      id: a.id,
+      name: a.name,
+      industry: a.industry || 'Technology',
+      owner_name: a.ownerName,
+      health_score: a.healthScore,
+      created_at: a.createdAt?.toISOString?.() || '',
+    }));
+
+    let contactsNorm = (m10Contacts as any[]).map((c) => ({
+      id: c.id,
+      name: c.name || c.email,
+      email: c.email,
+      role: c.title || 'Stakeholder',
+      account_id: c.accountId || '',
+      accountId: c.accountId || '',
+    }));
+
+    if (contactsNorm.length === 0) {
+      contactsNorm = this.contactsFromCallParticipants(calls);
+    }
+
+    return {
+      deals: dealsNorm,
+      accounts: accountsNorm,
+      contacts: contactsNorm,
+      calls,
+    };
+  }
+
+  private contactsFromCallParticipants(calls: any[]) {
+    const seen = new Set<string>();
+    const out: any[] = [];
+    for (const call of calls) {
+      for (const p of call.participants || []) {
+        const name = typeof p === 'string' ? p : p?.name || p?.email;
+        if (!name || seen.has(name)) continue;
+        seen.add(name);
+        out.push({
+          id: `participant-${seen.size}`,
+          name,
+          email: name.includes('@') ? name : '',
+          role: 'Participant',
+          account_id: call.account_id || '',
+          accountId: call.account_id || '',
+        });
+      }
+    }
+    return out.slice(0, 30);
   }
 
   private mapBrief(row: any) {

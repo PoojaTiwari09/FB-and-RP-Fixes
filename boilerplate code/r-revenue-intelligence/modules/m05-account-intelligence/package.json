@@ -12,7 +12,6 @@
     "bullmq": "^5.0.0",
     "zod": "^3.0.0",
     "@prisma/client": "^5.0.0",
-    "@supabase/supabase-js": "^2.106.0",
     "@hubspot/api-client": "^13.5.0",
     "@nestjs/config": "^3.2.0",
     "@nestjs/schedule": "^4.0.0",

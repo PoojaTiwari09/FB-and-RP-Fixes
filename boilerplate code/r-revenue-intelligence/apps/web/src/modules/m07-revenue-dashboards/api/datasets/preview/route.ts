@@ -1,9 +1,7 @@
+import { prisma } from "@/modules/m07-revenue-dashboards/lib/prisma";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@rri/database/node_modules/@prisma/client";
-
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
 const TENANT_ID = '11111111-1111-1111-1111-111111111111';
 
 // ── Fix #7: In-memory cache (30 s TTL) ───────────────────────────────────────

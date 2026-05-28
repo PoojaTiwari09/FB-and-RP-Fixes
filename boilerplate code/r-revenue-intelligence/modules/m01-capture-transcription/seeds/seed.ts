@@ -12,7 +12,7 @@ import { PrismaClient } from '@rri/database';
 
 const prisma = new PrismaClient();
 
-const TENANT_ID = 'dev-tenant-001';
+const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
 // Stable IDs so smoke tests can reference them deterministically.
 const CALL_1 = '11111111-1111-1111-1111-000000000001';

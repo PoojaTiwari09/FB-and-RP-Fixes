@@ -7,8 +7,8 @@ import { randomUUID } from 'crypto';
 export class WorkspaceService {
   constructor(private readonly repo: M03AiSummariesGenaiRepository) {}
 
-  getWorkspace(tenantId: string) {
-    const ws = this.repo.getWorkspace(tenantId);
+  async getWorkspace(tenantId: string) {
+    const ws = await this.repo.getWorkspace(tenantId);
     return {
       deals: ws.deals.map(this.normalizeDeal),
       accounts: ws.accounts.map(this.normalizeAccount),
@@ -81,9 +81,13 @@ export class WorkspaceService {
       transcript: c.transcript ?? '',
       accountId: c.account_id ?? c.accountId ?? '',
       account_id: c.account_id ?? c.accountId ?? '',
+      account_name: c.account_name ?? null,
       dealId: c.deal_id ?? c.dealId ?? '',
       deal_id: c.deal_id ?? c.dealId ?? '',
       created_at: c.created_at ?? '',
+      duration_seconds: c.duration_seconds,
+      call_source: c.call_source,
+      participants: c.participants ?? [],
     };
   }
 }

@@ -1,23 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
-
-let _client = null;
-
+/** @deprecated Browser Supabase removed — use `src/api/m03Api.js` (NestJS). */
 export function getSupabaseClient() {
-  if (typeof window === "undefined") return null;
-  const url = localStorage.getItem("supabase_url");
-  const key = localStorage.getItem("supabase_anon_key");
-  if (!url || !key) return null;
-  if (!_client) {
-    _client = createClient(url, key);
-  }
-  return _client;
+  return null;
 }
 
-export function resetSupabaseClient() {
-  _client = null;
-}
+export function resetSupabaseClient() {}
 
 export function isSupabaseConfigured() {
-  if (typeof window === "undefined") return false;
-  return !!(localStorage.getItem("supabase_url") && localStorage.getItem("supabase_anon_key"));
+  return false;
 }

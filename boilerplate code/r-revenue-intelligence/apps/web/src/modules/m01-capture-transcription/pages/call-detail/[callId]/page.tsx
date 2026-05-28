@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getCall, shareCall, extractAI, deleteCall, CallRecord } from '../../../api/calls.api';
+import { getM02WebUrl, getM10WebUrl } from '../../../lib/api-env';
 import AudioPlayer         from '../../../components/AudioPlayer';
 import TranscriptViewer   from '../../../components/TranscriptViewer';
 import TalkRatioChart     from '../../../components/TalkRatioChart';
@@ -67,6 +68,14 @@ export default function CallDetailPage() {
     } finally { setSharing(false); }
   };
 
+  const openConversationIntelligence = () => {
+    window.location.href = getM02WebUrl();
+  };
+
+  const openDataAndCompliance = () => {
+    window.location.href = getM10WebUrl();
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -87,8 +96,31 @@ export default function CallDetailPage() {
 
   return (
     <div className={styles.page}>
-      {/* Back */}
-      <button className={styles.back} onClick={() => router.back()}>← Back to Calls</button>
+      <div className={styles.topNav}>
+        <button type="button" className={styles.back} onClick={() => router.back()}>
+          ← Back to Calls
+        </button>
+        <div className={styles.moduleLinks}>
+          <button
+            id="conversational_intelligence"
+            type="button"
+            className={styles.conversationIntelLink}
+            onClick={openConversationIntelligence}
+            title="Open M02 Conversation Intelligence (port 5175)"
+          >
+            💬 conversational_intelligence →
+          </button>
+          <button
+            id="data_and_compliance"
+            type="button"
+            className={styles.dataComplianceLink}
+            onClick={openDataAndCompliance}
+            title="Open M10 Data & Compliance (port 5178)"
+          >
+            🛡️ data and compliance →
+          </button>
+        </div>
+      </div>
 
       {/* ── CT-13: Call metadata header ─────────────────────────────────── */}
       <div className={styles.metaHeader}>

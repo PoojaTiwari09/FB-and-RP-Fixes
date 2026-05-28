@@ -1,7 +1,5 @@
+import { prisma } from "@/modules/m07-revenue-dashboards/lib/prisma";
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@rri/database/node_modules/@prisma/client';
-
-const prisma = new PrismaClient();
 const DEFAULT_TENANT = '11111111-1111-1111-1111-111111111111';
 
 function computeScore(deal: any): { score: number; label: string; flags: string[] } {
