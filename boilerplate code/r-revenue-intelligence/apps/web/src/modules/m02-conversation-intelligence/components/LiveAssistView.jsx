@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { generateLiveAssistInsights, transcribeAudioBlob, analyzeCompetitorThreat } from "../services/gemini";
-import { getSupabaseClient } from "../lib/supabase";
+import { generateLiveAssistInsights, transcribeAudioBlob, analyzeCompetitorThreat } from "../../../../../../modules/m02-conversation-intelligence/live-assist-core/services/gemini";
+import { getSupabaseClient } from "../../../../../../modules/m02-conversation-intelligence/live-assist-core/lib/supabase";
 import { useLiveAssistPiP } from "../hooks/useLiveAssistPiP";
-import { detectLocalSignals, computeSignalDelta, shouldTriggerLLM, deduplicateSuggestions, processAlerts, estimateCallStage, detectTurnTransition, ConversationMemory, SpeakerIdentityRegistry, StrategicTipStabilizer, generateProactiveAlerts, shouldTriggerProactiveCompetitor, resetAlertCooldowns, extractNamesFromTranscript } from "../services/localEventEngine";
+import { detectLocalSignals, computeSignalDelta, shouldTriggerLLM, deduplicateSuggestions, processAlerts, estimateCallStage, detectTurnTransition, ConversationMemory, SpeakerIdentityRegistry, StrategicTipStabilizer, generateProactiveAlerts, shouldTriggerProactiveCompetitor, resetAlertCooldowns, extractNamesFromTranscript } from "../../../../../../modules/m02-conversation-intelligence/live-assist-core/services/localEventEngine";
 import LiveAssistOverlay from "./LiveAssistOverlay";
 import styles from "./LiveAssistView.module.css";
 
@@ -374,7 +374,7 @@ export default function LiveAssistView({ apiKey, openRouterKey, deals, isWideMod
     // Use the centralized strategic summary engine with conversation memory
     if (apiKey || openRouterKey) {
       try {
-        const { generateStrategicSummary } = await import("../services/gemini");
+        const { generateStrategicSummary } = await import("../../../../../../modules/m02-conversation-intelligence/live-assist-core/services/gemini");
         const result = await generateStrategicSummary(
           { groq: apiKey, openrouter: openRouterKey },
           {

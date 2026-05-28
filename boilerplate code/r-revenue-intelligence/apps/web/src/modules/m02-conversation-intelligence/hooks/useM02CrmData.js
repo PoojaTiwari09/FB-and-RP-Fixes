@@ -11,7 +11,7 @@ import {
   ACTIVITIES as MOCK_ACTIVITIES,
   REPS as MOCK_REPS,
   METRICS as MOCK_METRICS,
-} from "../data/crm";
+} from "../../../../../../modules/m02-conversation-intelligence/live-assist-core/data/crm";
 
 export default function useM02CrmData(_enabled = true) {
   const [deals, setDeals] = useState(MOCK_DEALS);
