@@ -9,7 +9,6 @@ packages:
   - apps/web/src/modules/m10-data-compliance
   - apps/web/src/modules/m05-account-intelligence
   - apps/web/src/modules/m07-revenue-dashboards
-  - apps/web/src/modules/m06-forecasting-prediction
 
 # pnpm 10+ reads catalog/overrides from this file (the "pnpm.overrides" field
 # in package.json is no longer honoured). All Nest packages MUST resolve to a

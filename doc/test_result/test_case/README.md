@@ -1,6 +1,6 @@
-# Module deep smoke tests (`test_case/`)
+﻿# Module deep smoke tests (`doc/test_result/test_case/`)
 
-Runnable copies of the M01/M02 (and future module) deep smoke suites from `_audit/`.
+Runnable copies of the M01/M02 (and future module) deep smoke suites from `doc/test_result/`.
 
 | Module | Test runner | How to run |
 |--------|-------------|------------|
@@ -13,7 +13,7 @@ Runnable copies of the M01/M02 (and future module) deep smoke suites from `_audi
 
 1. Copy `test_template.py` → `testm3.py` (replace constants and `TEST_CASES`).
 2. Copy `test_template.md` → `test3.md`.
-3. Mirror cases from `_audit/m0N_deep_smoke.*` when that audit script exists.
+3. Mirror cases from `doc/test_result/m0N_deep_smoke.*` when that audit script exists.
 4. List every case in the markdown table so runs are reproducible.
 
 ## Prerequisites (all modules)
@@ -23,7 +23,7 @@ Runnable copies of the M01/M02 (and future module) deep smoke suites from `_audi
 - Python **3.9+** on PATH.
 
 ```bash
-cd r-revenue-intelligence-monorepo/test_case
+cd r-revenue-intelligence-monorepo/doc/test_result/test_case
 python testm1.py   # or testm2.py
 ```
 

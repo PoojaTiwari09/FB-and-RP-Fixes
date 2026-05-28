@@ -1,7 +1,7 @@
 # Module README: M4 Deal Intelligence
 
 **Workspace Directory:** `modules/m04-deal-intelligence/`  
-**Reference Doc Path:** `/Reference documents/M4 Deal Intelligence/Module README-M4 Deal Intelligence.md`
+**Reference Doc Path:** `/doc/reference/M4 Deal Intelligence/Module README-M4 Deal Intelligence.md`
 
 ## 1. Document Control
 

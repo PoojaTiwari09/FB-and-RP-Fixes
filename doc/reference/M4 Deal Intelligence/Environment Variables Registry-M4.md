@@ -1,7 +1,7 @@
 # Doc #18 — M4 Environment Variables Registry
 
 **Workspace Registry Path:** `modules/m04-deal-intelligence/env-registry.md`  
-**Reference Doc Path:** `/Reference documents/M4 Deal Intelligence/Environment Variables Registry-M4.md`
+**Reference Doc Path:** `/doc/reference/M4 Deal Intelligence/Environment Variables Registry-M4.md`
 
 ## 1. Document Control
 

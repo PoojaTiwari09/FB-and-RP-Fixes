@@ -288,12 +288,12 @@ Use this checklist during PR review, release review, and incident review.
 
 ## 9. Related Files
 
-- `Reference documents/M1 Capture & Transcription/m1-readme.md`
-- `Reference documents/M1 Capture & Transcription/TDD/TDD-Call-Transcription.md`
-- `Reference documents/M1 Capture & Transcription/TDD/Native Connectors.md`
-- `Reference documents/M1 Capture & Transcription/TDD/AI Data Extractor.md`
-- `Reference documents/M1 Capture & Transcription/m1-sequence diagram.md`
-- `Reference documents/M1 Capture & Transcription/M-01 Environment Variables Registry.md`
+- `doc/reference/M1 Capture & Transcription/m1-readme.md`
+- `doc/reference/M1 Capture & Transcription/TDD/TDD-Call-Transcription.md`
+- `doc/reference/M1 Capture & Transcription/TDD/Native Connectors.md`
+- `doc/reference/M1 Capture & Transcription/TDD/AI Data Extractor.md`
+- `doc/reference/M1 Capture & Transcription/m1-sequence diagram.md`
+- `doc/reference/M1 Capture & Transcription/M-01 Environment Variables Registry.md`
 
 ## 10. Notes for Maintainers
 

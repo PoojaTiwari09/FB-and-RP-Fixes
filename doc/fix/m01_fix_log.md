@@ -45,7 +45,7 @@
 | - | ---- | ------ | --- |
 | F-40 | `controllers/calls.controller.ts` | Added `DELETE /calls/:id` and `POST /calls/:id/extract-ai`. | Match the frontend contract (`deleteCall`, `extractAI`). |
 | F-41 | `schemas/m01.schema.ts` | Added `'skipped'` to status filter; added `'createdAt'` to sortable columns. | Frontend list page already exposes a "Skipped" status filter. |
-| F-42 | `_audit/m01_create_fts_indexes.sql` | Created GIN indexes `idx_utterances_text_fts` and `idx_transcripts_fulltext` over `to_tsvector('english', text/"fullText")`. | The schema documents these as required; Prisma can’t emit expression-based GIN. |
+| F-42 | `doc/execution/m01_create_fts_indexes.sql` | Created GIN indexes `idx_utterances_text_fts` and `idx_transcripts_fulltext` over `to_tsvector('english', text/"fullText")`. | The schema documents these as required; Prisma can’t emit expression-based GIN. |
 
 ## API surface improvements
 

@@ -1,4 +1,4 @@
-# M07 Dashboard Model Reconciliation Report
+﻿# M07 Dashboard Model Reconciliation Report
 
 **Date:** 2026-05-27  
 **Scope:** `packages/database/prisma/schema.prisma` + M07 web API routes
@@ -60,7 +60,7 @@ model DashboardConfig {
 
 ## Residual risk
 
-- Root `final_product/schema.prisma` still contains legacy `DashboardConfigs` — out of monorepo package scope; do not mix clients.
+- Root `doc/execution/database-tools/schema.prisma` still contains legacy `DashboardConfigs` — out of monorepo package scope; do not mix clients.
 - Empty `dashboard_configs` table may exist in some DBs from earlier drafts; safe to drop manually after backup if unused.
 
 ## Status

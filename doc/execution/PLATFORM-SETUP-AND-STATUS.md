@@ -1,4 +1,4 @@
-# Revenue Intelligence Platform — Setup, Seeds, Smoke Tests, and Honest Status
+﻿# Revenue Intelligence Platform — Setup, Seeds, Smoke Tests, and Honest Status
 
 > **Written for:** anyone running this project locally (developers, QA, or an AI agent picking up the work).  
 > **Language:** plain English — what we use, what we ran, what worked, and what is still missing.  
@@ -45,7 +45,7 @@ These are **old boilerplate** paths. They were **not** used to seed or smoke-tes
 | ------ | ---------------------- | ------ |
 | **Supabase** | M03 and M05 backend services, M03 web, `supabase_seed.sql` | M05 account/activity APIs can return **500** because they call Supabase, not Prisma |
 | **TypeORM** | M04 deal intelligence (~177 files) | **M04 is turned off** in `apps/api/src/app.module.ts` — it does not load at API boot |
-| **Second Prisma schema** | `final_product/schema.prisma` (~170 models) | Validates and documents the “unified” design, but **this DB was not fully created from that file** |
+| **Second Prisma schema** | `doc/execution/database-tools/schema.prisma` (~170 models) | Validates and documents the “unified” design, but **this DB was not fully created from that file** |
 
 **Important:** `dev-api.bat` sets fake `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` so old modules do not crash on startup. That is **not** a real Supabase server — only a stub.
 
@@ -78,7 +78,7 @@ It does **not** mean every feature in every PDF/TDD document was tested end-to-e
 
 ### Script and result
 
-- **Script:** `../smoke-backend.ps1` (parent `_audit` folder) or copies under `_audit/seeds/`
+- **Script:** `doc/test_result/smoke-backend.ps1`
 - **Last known result:** **22 checks passed, 0 failed** (when API was running on port 3001)
 
 ### Per module — what was tested
@@ -120,7 +120,7 @@ After `prisma db push` on `packages/database` plus M06 SQL migrations:
 | `public` | ~35 tables |
 | `dashboards` | ~7 tables |
 
-This is **not** the full ~170 tables from `final_product/schema.prisma`. That large schema is a **design document** for future unification; it was **not** fully applied to this running database.
+This is **not** the full ~170 tables from `doc/execution/database-tools/schema.prisma`. That large schema is a **design document** for future unification; it was **not** fully applied to this running database.
 
 ### Seeds that were actually executed
 
@@ -237,7 +237,7 @@ Use `api-routes.txt` in this folder (if present) or Nest boot logs for the live 
 | M09 | **Partial** — root/health; coaching DB not aligned |
 | M10 | **Partial** — stub + JWT submodules; not full Revenue Graph / Data Cloud |
 
-For deep gap lists, see `_audit/analysis_m*.md` and `_audit/implementation_changes.md`.
+For deep gap lists, see `doc/analysis/analysis_m*.md` and `doc/execution/implementation_changes.md`.
 
 ---
 
@@ -294,7 +294,7 @@ Expect: `API listening on http://localhost:3001`
 ### Step 6 — Run smoke tests
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "C:\Users\Relanto\Downloads\final_product\_audit\smoke-backend.ps1"
+powershell -ExecutionPolicy Bypass -File "doc\test_result\smoke-backend.ps1"
 ```
 
 ---
@@ -318,8 +318,8 @@ powershell -ExecutionPolicy Bypass -File "C:\Users\Relanto\Downloads\final_produ
 2. **Merge M06 (and M08) models** into `packages/database/prisma/schema.prisma`, one `prisma generate`.  
 3. **Re-enable M04** after TypeORM → Prisma migration.  
 4. **Add Prisma seeds** for M02, M05, M07, M08, M09, M10 (or one `scripts/seed-all.ts`).  
-5. **Push or migrate** `final_product/schema.prisma` only when ready to replace/merge with packages schema — not done yet.  
-6. **Expand smoke** beyond 22 checks — follow `_audit/smoke_test_plan.md`.
+5. **Push or migrate** `doc/execution/database-tools/schema.prisma` only when ready to replace/merge with packages schema — not done yet.  
+6. **Expand smoke** beyond 22 checks — follow `doc/test_result/smoke_test_plan.md`.
 
 ---
 
@@ -345,4 +345,4 @@ A: Check with: `curl http://localhost:3001/api/v1/capture-transcription/calls -H
 
 ---
 
-*This file lives in `_audit/seeds/` next to seed scripts and logs. Update it when you change seeds, schema, or smoke results.*
+*This file lives in `doc/execution/seeds/` next to seed scripts and logs. Update it when you change seeds, schema, or smoke results.*

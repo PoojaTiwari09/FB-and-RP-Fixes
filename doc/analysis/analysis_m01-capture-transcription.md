@@ -1,4 +1,4 @@
-# Module Analysis — `m01-capture-transcription`
+﻿# Module Analysis — `m01-capture-transcription`
 
 > Order #1 in the lifecycle (per your chart): "Captures calls, meetings, emails. Transcribes audio using Whisper ASR." Starting point — no inbound dependencies.
 
@@ -10,9 +10,9 @@ Owns the **capture → transcription → AI extraction** path for every customer
 
 Maps to TDDs:
 
-* `Reference documents/M1 Capture & Transcription/TDD/TDD-Call-Transcription.md`
-* `Reference documents/M1 Capture & Transcription/TDD/AI Data Extractor.md`
-* `Reference documents/M1 Capture & Transcription/TDD/Native Connectors.md`
+* `doc/reference/M1 Capture & Transcription/TDD/TDD-Call-Transcription.md`
+* `doc/reference/M1 Capture & Transcription/TDD/AI Data Extractor.md`
+* `doc/reference/M1 Capture & Transcription/TDD/Native Connectors.md`
 
 ---
 
@@ -128,7 +128,7 @@ Failures → `CallService.onTranscriptionFailed(...)` updates `transcriptStatus=
 
 ## 7. Database (unified schema mapping)
 
-Maps to these models in `final_product/schema.prisma`:
+Maps to these models in `doc/execution/database-tools/schema.prisma`:
 
 | App concept | Unified model | Notes |
 | ----------- | ------------- | ----- |
@@ -158,7 +158,7 @@ Maps to these models in `final_product/schema.prisma`:
 | ~~HIGH~~ | Transcript `create` not idempotent — worker retry hit `Unique constraint failed`. | ✅ **Upserted** inside a `$transaction`. |
 | ~~MEDIUM~~ | Frontend `deleteCall` and `extractAI` calls had no backend routes. | ✅ Added `DELETE /calls/:id` and `POST /calls/:id/extract-ai`. |
 | ~~MEDIUM~~ | M10 expected canonical event name `call.transcription.completed`; M01 published `transcription.completed`. | ✅ M01 now emits both. |
-| ~~MEDIUM~~ | GIN fulltext index missing. | ✅ Created (`_audit/m01_create_fts_indexes.sql`). |
+| ~~MEDIUM~~ | GIN fulltext index missing. | ✅ Created (`doc/execution/m01_create_fts_indexes.sql`). |
 | ~~MEDIUM~~ | Zod errors surfaced as 500. | ✅ Global `ZodExceptionFilter` returns RFC-7807 400 responses. |
 | HIGH | Worker depends on `assemblyai` SDK at runtime; require pattern can break under pnpm hoisting. | Mitigated (assertion + fallback) — full fix tracked. |
 | MEDIUM | `AiExtractionResult.evidenceTimestampMs` typed `String?` in unified schema (should be `Int?`). | Not in M01 — tracked for M18 / AI Extractor. |

@@ -80,6 +80,6 @@ Previously these surfaced as `500 Internal Server Error` with no body, which bro
 
 ## 7. Smoke artefacts
 
-* `_audit/m01_deep_smoke.mjs` — 45-case runner
-* `_audit/m01_deep_smoke.log` — full request/response trace
-* `_audit/m01_deep_smoke_results.json` — machine-readable per-test record
+* `doc/test_result/m01_deep_smoke.mjs` — 45-case runner
+* `doc/test_result/m01_deep_smoke.log` — full request/response trace
+* `doc/test_result/m01_deep_smoke_results.json` — machine-readable per-test record

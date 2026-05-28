@@ -14,7 +14,7 @@ import { SearchResult, ConversationRecord } from '../interfaces/search.interface
  *      AI service has produced embeddings) → otherwise the synonym/concept
  *      scorer (`simulateSemanticSearch`). The "postgres-fts" backend is also
  *      supported, falling back to PG full-text search over `transcripts.fullText`
- *      (uses the GIN index created in `_audit/m01_create_fts_indexes.sql`).
+ *      (uses the GIN index created in `doc/execution/m01_create_fts_indexes.sql`).
  *   3. **Blend** — score-weighted union, dropping baseline noise (`< 0.05`).
  *
  * The selected semantic backend is reported in the logs so operators always

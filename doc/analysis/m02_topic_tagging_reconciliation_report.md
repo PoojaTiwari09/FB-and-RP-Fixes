@@ -136,7 +136,7 @@ exports: [
 | AI failure / Groq down → keyword fallback still tags        | ✅ (unit fallback path) |
 | Tenant isolation on every endpoint                          | ✅ |
 
-End‑to‑end smoke covers Phase F in `_audit/m02_deep_smoke.mjs`.
+End‑to‑end smoke covers Phase F in `doc/test_result/m02_deep_smoke.mjs`.
 
 ## 6. Files changed
 

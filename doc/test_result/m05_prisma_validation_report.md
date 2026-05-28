@@ -1,4 +1,4 @@
-# M05 Prisma Validation Report
+﻿# M05 Prisma Validation Report
 
 **Date:** 2026-05-27
 
@@ -6,7 +6,7 @@
 
 | Schema | Path | validate |
 |--------|------|----------|
-| Unified | `final_product/schema.prisma` | PASS |
+| Unified | `doc/execution/database-tools/schema.prisma` | PASS |
 | Boilerplate DB | `packages/database/prisma/schema.prisma` | PASS |
 | M05 local stub | `modules/m05-account-intelligence/prisma/schema.prisma` | PASS (minimal) |
 

@@ -5,8 +5,8 @@
  * Exercises the full M01 surface area: happy paths, error paths, edge cases,
  * tenant isolation, idempotency, validation, and concurrency.
  *
- * Usage:  node _audit/m01_deep_smoke.mjs
- * Output: _audit/m01_deep_smoke.log + _audit/m01_deep_smoke_results.json
+ * Usage:  node doc/test_result/m01_deep_smoke.mjs
+ * Output: doc/test_result/m01_deep_smoke.log + doc/test_result/m01_deep_smoke_results.json
  */
 import fs from 'node:fs';
 import path from 'node:path';

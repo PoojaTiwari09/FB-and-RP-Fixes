@@ -1,4 +1,4 @@
-# M03 Backend Cutover Report
+﻿# M03 Backend Cutover Report
 
 **Date:** 2026-05-27  
 **Status:** Complete
@@ -34,7 +34,7 @@ Vite UI → /api/v1/ai-summaries-genai/* (NestJS :3001)
 
 ## Validation
 
-`test_case/testm3.py` — **9/9 PASS**
+`doc/test_result/doc/test_result/doc/test_result/test_case/testm3.py` — **9/9 PASS**
 
 ## Remaining (non-blocking)
 

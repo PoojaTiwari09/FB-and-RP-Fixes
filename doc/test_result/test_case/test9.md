@@ -17,7 +17,7 @@ pnpm --filter api run start
 ## Run
 
 ```powershell
-cd r-revenue-intelligence-monorepo\test_case
+cd r-revenue-intelligence-monorepo\doc\test_result\test_case
 python testm9.py
 ```
 

@@ -105,7 +105,7 @@ Base path: `/api/v1/account-intelligence`.
 | -------- | ----- |
 | HIGH | `Accounts` model carries duplicate-purpose columns (`assignedRepId`, `hubspotOwnerId`, `ownerUserId`). Pick one. |
 | MEDIUM | `Accounts.healthscore` (lowercase, no `@map`) vs the more "correct" mapped names — see §B2 of `implementation_changes.md`. |
-| MEDIUM | `webhook.controller.ts` HMAC secret env name is undocumented; align with `Reference documents/M5 Account Intelligence/Environment Variables Registry-M5*.md`. |
+| MEDIUM | `webhook.controller.ts` HMAC secret env name is undocumented; align with `doc/reference/M5 Account Intelligence/Environment Variables Registry-M5*.md`. |
 | LOW | `m05.controller.ts` overlaps with `accounts.controller.ts` (mock list/create). |
 
 ---

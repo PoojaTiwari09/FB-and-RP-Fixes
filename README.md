@@ -50,6 +50,8 @@ This directory contains the production-ready modular monolith skeleton and all s
 
 Start with [doc/execution/README.md](./doc/execution/README.md) (audit index), then `version_knowledge.md`, `smoke_test_plan.md`, `implementation_changes.md`.
 
+**Standalone modules (M01–M10):** [doc/execution/standalone/STANDALONE-MODULE-COMMANDS.md](./doc/execution/standalone/STANDALONE-MODULE-COMMANDS.md)
+
 ### `doc/analysis/` · `doc/fix/` · `doc/test_result/`
 
 Audit deliverables: module analysis reports, fix logs, smoke/validation/performance results, and [doc/test_result/test_case/](./doc/test_result/test_case/) integration scripts.

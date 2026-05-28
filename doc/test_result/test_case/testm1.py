@@ -2,7 +2,7 @@
 """
 M01 — Capture & Transcription deep smoke tests.
 
-Mirrors: _audit/m01_deep_smoke.ps1
+Mirrors: doc/test_result/m01_deep_smoke.ps1
 Each entry in TEST_CASES is one individual case you can grep or extend.
 """
 

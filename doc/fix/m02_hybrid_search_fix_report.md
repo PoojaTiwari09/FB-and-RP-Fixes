@@ -52,7 +52,7 @@ Concretely, the audit found:
 |-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `simulated` (default) | In‑process concept/synonym scorer over the demo corpus. No external service needed. **Production‑safe** because it never crashes when AI is offline. |
 | `pgvector`        | Reads cosine similarity from a unified `semantic_embeddings` table (only used if the AI worker has produced embeddings).                                  |
-| `postgres-fts`    | Real PostgreSQL FTS over `transcripts.fullText` using the GIN index from M01 (`_audit/m01_create_fts_indexes.sql`). Verified — ~5 ms on the seed corpus. |
+| `postgres-fts`    | Real PostgreSQL FTS over `transcripts.fullText` using the GIN index from M01 (`doc/execution/m01_create_fts_indexes.sql`). Verified — ~5 ms on the seed corpus. |
 
 Unknown values log a warning and fall back to `simulated`.
 
@@ -116,7 +116,7 @@ Filter is now `score >= 0.1`:
 
 ## 3. Validation matrix
 
-All assertions executed by `_audit/m02_deep_smoke.mjs` against the live API:
+All assertions executed by `doc/test_result/m02_deep_smoke.mjs` against the live API:
 
 | Behaviour                                  | Result |
 |--------------------------------------------|--------|

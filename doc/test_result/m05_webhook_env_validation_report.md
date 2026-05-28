@@ -21,7 +21,7 @@
 
 ## Documentation updated
 
-- `Reference documents/M5 Account Intelligence/Environment Variables Registry-M5 Account Intelligence.md` — new rows for webhook, HubSpot, Supabase
+- `doc/reference/M5 Account Intelligence/Environment Variables Registry-M5 Account Intelligence.md` — new rows for webhook, HubSpot, Supabase
 - `boilerplate code/r-revenue-intelligence/.env` — M05 vars template
 
 ## Smoke

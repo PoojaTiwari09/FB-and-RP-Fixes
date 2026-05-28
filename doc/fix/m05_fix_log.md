@@ -1,4 +1,4 @@
-# M05 Fix Log
+﻿# M05 Fix Log
 
 **Date:** 2026-05-27
 
@@ -16,6 +16,6 @@
 
 ## Validation
 
-- `prisma validate` — packages/database + final_product/schema.prisma: **PASS**
+- `prisma validate` — packages/database + doc/execution/database-tools/schema.prisma: **PASS**
 - `testm5.py` — **7/7 PASS**
 - Accounts/boards 500 without Supabase — expected in local smoke (Supabase unset)

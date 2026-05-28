@@ -5,7 +5,7 @@
  * - Primary: Prisma/PostgreSQL aggregations + DashboardSnapshot cache
  * - Future: optional ClickHouse when M07_WIDGET_OLAP_ENABLED=true and client exists
  *
- * See _audit/m07_clickhouse_architecture_decision.md
+ * See doc/analysis/m07_clickhouse_architecture_decision.md
  */
 
 export type AnalyticsEngine = 'snapshot_cache' | 'postgresql';

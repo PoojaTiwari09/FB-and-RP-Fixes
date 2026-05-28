@@ -1,7 +1,7 @@
 # M02 — Deep Smoke Report
 
 **Module:** `modules/m02-conversation-intelligence`
-**Smoke harness:** `_audit/m02_deep_smoke.mjs`
+**Smoke harness:** `doc/test_result/m02_deep_smoke.mjs`
 **Last run:** 2026‑05‑27 12:57 IST against `http://localhost:3001`
 **Result:** **37 / 37 PASS — 0 FAIL**
 
@@ -106,7 +106,7 @@ DISABLE_REDIS=true \
   pnpm --filter api run start
 
 # In another shell
-node _audit/m02_deep_smoke.mjs
+node doc/test_result/m02_deep_smoke.mjs
 ```
 
 The script returns a non‑zero exit code on any failure so CI can hook it directly.

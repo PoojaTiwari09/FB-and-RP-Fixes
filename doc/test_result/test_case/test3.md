@@ -8,7 +8,7 @@
 ## Run
 
 ```bash
-cd test_case
+cd doc\test_result\test_case
 python testm3.py
 ```
 

@@ -56,7 +56,7 @@ Each row links a defect to the file(s) that resolved it.
 
 | #  | Defect                                                                                  | Fix                                                                                                                                                |
 |----|-----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| 20 | Original M02 smoke script (one of the legacy boilerplate ones) ran only happy‑path GETs. | Wrote a new 37‑case deep smoke `_audit/m02_deep_smoke.mjs` covering auth/tenant guard, list filters, hybrid search, saved searches, trackers, topic taxonomy, translation, vocab corrections, and 5‑way concurrency stress. |
+| 20 | Original M02 smoke script (one of the legacy boilerplate ones) ran only happy‑path GETs. | Wrote a new 37‑case deep smoke `doc/test_result/m02_deep_smoke.mjs` covering auth/tenant guard, list filters, hybrid search, saved searches, trackers, topic taxonomy, translation, vocab corrections, and 5‑way concurrency stress. |
 
 ## 7. Files touched (consolidated)
 
@@ -83,8 +83,8 @@ modules/m03-ai-summaries-genai/services/research.service.ts       # @Optional Co
 modules/m03-ai-summaries-genai/services/query.service.ts          # @Optional ConfigService + env fallback
 modules/m03-ai-summaries-genai/config/supabase.service.ts         # @Optional ConfigService + env fallback
 modules/m09-coaching-training/services/m09.service.ts             # @Optional ConfigService + env fallback
-_audit/m02_deep_smoke.mjs                                         # NEW (37-case smoke)
-_audit/m02_create_fts_indexes.sql (no change — uses M01's index)
+doc/test_result/m02_deep_smoke.mjs                                         # NEW (37-case smoke)
+doc/test_result/m02_create_fts_indexes.sql (no change — uses M01's index)
 ```
 
 ## 8. Regressions introduced

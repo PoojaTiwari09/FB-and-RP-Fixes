@@ -1,7 +1,7 @@
 # Doc #18 — M3 Environment Variables Registry
 
 **Workspace Registry Path:** `modules/m03-ai-summaries-genai/env-registry.md` 
-**Reference Doc Path:** `/Reference documents/M3 AI Summaries & GenAI/M3 Environment Variables Registry.md`
+**Reference Doc Path:** `/doc/reference/M3 AI Summaries & GenAI/M3 Environment Variables Registry.md`
 
 ## 1. Document Control
 

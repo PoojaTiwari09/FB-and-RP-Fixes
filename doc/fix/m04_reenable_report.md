@@ -1,4 +1,4 @@
-# M04 Re-enable Report
+﻿# M04 Re-enable Report
 
 **Date:** 2026-05-27  
 **Status:** **RE-ENABLED**
@@ -33,7 +33,7 @@ M04DealIntelligenceModule,
 ## Smoke after re-enable
 
 ```
-test_case/testm4.py → 4/4 PASS
+doc/test_result/doc/test_result/test_case/testm4.py → 4/4 PASS
 - GET  /m04-test/health
 - POST /m04-test/smoke
 - GET  /boards  (with demo headers)

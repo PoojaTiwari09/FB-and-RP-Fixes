@@ -5,7 +5,7 @@ Copy to `testN.md` when adding module **M0N**.
 | Item | Value |
 |------|-------|
 | Runner | `testmN.py` |
-| Audit source | `_audit/m0N_deep_smoke.*` |
+| Audit source | `doc/test_result/m0N_deep_smoke.*` |
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ Copy to `testN.md` when adding module **M0N**.
 ## Run
 
 ```powershell
-cd r-revenue-intelligence-monorepo\test_case
+cd r-revenue-intelligence-monorepo\doc\test_result\test_case
 python testmN.py
 ```
 

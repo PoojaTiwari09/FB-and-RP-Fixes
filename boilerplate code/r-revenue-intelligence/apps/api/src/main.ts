@@ -59,7 +59,7 @@ async function bootstrap() {
 bootstrap().catch((err) => {
   // Surface a real stack trace instead of an unhandled rejection silent-fail.
   // The pre-fix version of this file contained a literal GitHub conflict URL
-  // pasted into the source — see _audit/implementation_changes.md §A1.
+  // pasted into the source — see doc/execution/implementation_changes.md §A1.
   // eslint-disable-next-line no-console
   console.error('[BOOT FAILED]', err);
   process.exit(1);

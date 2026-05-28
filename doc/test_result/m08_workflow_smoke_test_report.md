@@ -1,7 +1,7 @@
-# M08 Workflow Smoke Test Report
+﻿# M08 Workflow Smoke Test Report
 
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm8.py`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm8.py`  
 **API prefix:** `/api/v1/sales-engagement`
 
 ## Results: 12/12 PASS (workflow-related subset)

@@ -1,7 +1,7 @@
-# M07 Deep Smoke Report
+﻿# M07 Deep Smoke Report
 
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm7.py`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm7.py`  
 **API:** `http://localhost:3001`
 
 ## Results: 5/5 PASS

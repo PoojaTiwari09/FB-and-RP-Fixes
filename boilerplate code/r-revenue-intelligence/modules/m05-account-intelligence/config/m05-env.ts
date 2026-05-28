@@ -1,6 +1,6 @@
 /**
  * M05 environment variable accessors — names aligned with
- * Reference documents/M5 Account Intelligence/Environment Variables Registry-M5*.md
+ * doc/reference/M5 Account Intelligence/Environment Variables Registry-M5*.md
  */
 
 const PRODUCTION_ENVS = new Set(['production', 'staging']);

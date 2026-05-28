@@ -1,4 +1,4 @@
-# M10 Fix Log
+﻿# M10 Fix Log
 
 **Date:** 2026-05-27
 
@@ -23,7 +23,7 @@
 ## Smoke
 
 - Added `M10TestController` (unguarded `/test/*`)
-- Added `test_case/testm10.py`
+- Added `doc/test_result/doc/test_result/doc/test_result/test_case/testm10.py`
 
 ## Schema
 

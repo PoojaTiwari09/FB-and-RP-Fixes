@@ -1,7 +1,7 @@
-# M03 Deep Smoke Report
+﻿# M03 Deep Smoke Report
 
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm3.py`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm3.py`  
 **API:** `http://localhost:3001/api/v1/ai-summaries-genai`
 
 ## Results: 9/9 PASS

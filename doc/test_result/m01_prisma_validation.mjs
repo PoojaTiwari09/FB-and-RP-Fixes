@@ -10,7 +10,7 @@
  *  - Counts match the M01 seed (3 calls, 1 transcript, 12 utterances, 1 note)
  *  - Tenant-isolation: rows from other tenants never leak into a SELECT WHERE tenantId
  *
- * Output: _audit/m01_prisma_validation.json
+ * Output: doc/test_result/m01_prisma_validation.json
  */
 import fs from 'node:fs';
 import path from 'node:path';

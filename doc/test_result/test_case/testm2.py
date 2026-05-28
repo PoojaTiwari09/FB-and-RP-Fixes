@@ -2,7 +2,7 @@
 """
 M02 — Conversation Intelligence deep smoke tests.
 
-Mirrors: _audit/m02_deep_smoke.mjs
+Mirrors: doc/test_result/m02_deep_smoke.mjs
 """
 
 from __future__ import annotations

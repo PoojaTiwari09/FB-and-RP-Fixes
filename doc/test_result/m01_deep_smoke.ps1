@@ -4,8 +4,8 @@
 # Exercises the full M01 surface area: happy paths, error paths, edge cases,
 # tenant isolation, idempotency, validation, and concurrency.
 #
-# Usage:  pwsh -File _audit/m01_deep_smoke.ps1
-# Output: _audit/m01_deep_smoke.log + summary table on stdout.
+# Usage:  pwsh -File doc/test_result/m01_deep_smoke.ps1
+# Output: doc/test_result/m01_deep_smoke.log + summary table on stdout.
 # ─────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = 'Continue'

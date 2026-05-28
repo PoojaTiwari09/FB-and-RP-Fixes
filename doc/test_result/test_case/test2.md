@@ -1,7 +1,7 @@
 # M02 — Test execution guide
 
 **Runner:** `testm2.py`  
-**Source audit script:** `_audit/m02_deep_smoke.mjs`  
+**Source audit script:** `doc/test_result/m02_deep_smoke.mjs`  
 **Module:** Conversation Intelligence
 
 ---
@@ -27,7 +27,7 @@ pnpm --filter api run start
 ## Run commands
 
 ```powershell
-cd r-revenue-intelligence-monorepo\test_case
+cd r-revenue-intelligence-monorepo\doc\test_result\test_case
 
 python testm2.py
 
@@ -43,7 +43,7 @@ python testm2.py --base-url http://localhost:3001/api/v1
 Node original (equivalent):
 
 ```powershell
-node ..\_audit\m02_deep_smoke.mjs
+node ..\doc\test_result\m02_deep_smoke.mjs
 ```
 
 ---

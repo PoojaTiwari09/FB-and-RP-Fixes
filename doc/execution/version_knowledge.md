@@ -1,4 +1,4 @@
-# R-Revenue Intelligence — Repository Knowledge Base (`version_knowledge.md`)
+﻿# R-Revenue Intelligence — Repository Knowledge Base (`version_knowledge.md`)
 
 > **Status:** Draft v1 produced by automated end-to-end repository audit.
 > **Generated:** 2026-05-26 by Claude (Cursor) — Principal Software Architect mode.
@@ -52,7 +52,7 @@ final_product/
     │       ├── turbo.json
     │       └── package.json
     ├── docs/markdown documents/                       ← git-branching-strategy.md
-    └── Reference documents/
+    └── doc/reference/
         ├── docs/markdown documents/                   ← System_architecture.md, Coding standards, Event Schema registry, NFRs, Security…
         ├── archives/
         └── M{1..10} *.docx + TDD/                     ← Per-module TDDs, sequence diagrams, env-var registries
@@ -125,7 +125,7 @@ Optional / referenced but **not wired by default**: `Meilisearch:7700`, `ClickHo
 | M08 | `m08-sales-engagement`                    | `m08-sales-engagement` (1 file only)        | `M8 Sales Engagement/TDD/*` (Email Composer, Orchestrate, Workflow Automation, Engage To-Do) + 2 ADRs | Workflows + tasks. Frontend is bare. |
 | M09 | `m09-coaching-training`                   | `m09-coaching-training`                     | `M9 Coaching & Training/TDD/*` (AI Trainer, Sales Coaching Insights) | Coaching snapshots, AI trainer scenarios — secondary Prisma `dashboards` schema covers these. |
 | M10 | `m10-data-compliance`                     | `m10-data-compliance`                       | `M10 Data & Compliance/TDD/*` (Revenue Graph, Data Cloud/Export, Compliance Settings) | Has `revenue-graph.controller.ts`, `data-cloud.controller.ts`. |
-| —   | `platform-core`                           | (none)                                       | `Reference documents/docs/markdown documents/*` | `TenantGuard`, `JwtGuard`, `HmacWebhookGuard`, `EventPublisherService` (currently **mock-only**: just `console.log`). |
+| —   | `platform-core`                           | (none)                                       | `doc/reference/docs/markdown documents/*` | `TenantGuard`, `JwtGuard`, `HmacWebhookGuard`, `EventPublisherService` (currently **mock-only**: just `console.log`). |
 
 ### 2.3 Naming convention inconsistencies (MISMATCH)
 
@@ -146,13 +146,13 @@ Optional / referenced but **not wired by default**: `Meilisearch:7700`, `ClickHo
 
 | Schema file                                                                                  | Lines | Models | Status |
 | -------------------------------------------------------------------------------------------- | ----: | -----: | ------ |
-| `final_product/schema.prisma`                                                                | 3140  |   170  | ✅ Normalized & `prisma validate`-passing as of this audit. Treat as **the unified source of truth** for all M01–M10 tables. |
+| `doc/execution/database-tools/schema.prisma`                                                                | 3140  |   170  | ✅ Normalized & `prisma validate`-passing as of this audit. Treat as **the unified source of truth** for all M01–M10 tables. |
 | `r-revenue-intelligence-monorepo/boilerplate code/r-revenue-intelligence/packages/database/prisma/schema.prisma` | 717   |  ~40  | ⚠ Uses `previewFeatures = ["multiSchema"]` + `schemas = ["dashboards","public"]`. Some models added after M-01 are **missing `@@schema("public")`** → `prisma validate` fails. |
 | Per-module schemas (`modules/m0X/prisma/schema.prisma`)                                      | 10–600|  1–60 | Bootstrap-only or duplicating subset of the package schema. Each repeats `datasource db` and `generator client` and would clobber a shared client if all ran `prisma generate`. |
 
-> **Decision recommended:** treat `final_product/schema.prisma` as canonical. Move it to `packages/database/prisma/schema.prisma`, delete or freeze per-module schemas, keep them only for documentation. See `implementation_changes.md` for the migration path.
+> **Decision recommended:** treat `doc/execution/database-tools/schema.prisma` as canonical. Move it to `packages/database/prisma/schema.prisma`, delete or freeze per-module schemas, keep them only for documentation. See `implementation_changes.md` for the migration path.
 
-### 3.2 The unified `final_product/schema.prisma`
+### 3.2 The unified `doc/execution/database-tools/schema.prisma`
 
 * Generator: `prisma-client-js`
 * Datasource: `postgresql`, `url = env("DATABASE_URL")`
@@ -413,7 +413,7 @@ OPENAI_API_KEY=...
 
 > **MISMATCH:** the unified Postgres uses `revenue_user/revenue_pass/revenue_intelligence` whereas the boilerplate `.env.example` uses `postgres/postgres/revenue_intel`. The boilerplate compose also defaults `POSTGRES_DB` to `${DB_NAME:-m6}` (legacy from M06 isolation). For consistent local dev we recommend deleting the boilerplate compose and only using the unified one. Mappings in `implementation_changes.md` §C.
 
-### 9.3 Per-module env registries (under `Reference documents/`)
+### 9.3 Per-module env registries (under `doc/reference/`)
 
 * `M-01 Environment Variables Registry.md`
 * `Environment Variables Registry-M2.md` (M2)
@@ -452,7 +452,7 @@ Each registry lists the per-module env-vars (API keys, signing secrets, queue na
 
 ## 11. Documentation cross-reference
 
-### 11.1 Platform-wide docs (`Reference documents/docs/markdown documents/`)
+### 11.1 Platform-wide docs (`doc/reference/docs/markdown documents/`)
 
 | Doc | Purpose | Sync state |
 | --- | ------- | ---------- |
@@ -460,7 +460,7 @@ Each registry lists the per-module env-vars (API keys, signing secrets, queue na
 | `Coding standards.md` | Machine-enforceable rules | Mostly respected; naming inconsistencies in §2.3 violate it. |
 | `Event Schema registry.md` | All cross-module event names + payloads | Producers exist but only logged. Consumers are coupled via DI. |
 | `API Design Standards.md` | REST + internal API conventions | Partially followed (see §4.4 MISMATCH). |
-| `Database Schema.md` | Pre-unification ER notes | Superseded by `final_product/schema.prisma`. |
+| `Database Schema.md` | Pre-unification ER notes | Superseded by `doc/execution/database-tools/schema.prisma`. |
 | `Module boundary document.md` | Defines product-vs-architecture module boundary (esp. M8 ADR-001) | Partially respected. |
 | `Non-Functional Requirements (NFR) Specification.md` | Perf, scale, availability targets | No code-level instrumentation yet. |
 | `Security architecture.md` | RBAC, RLS, secrets | RLS not implemented; secrets via Doppler. |
@@ -543,7 +543,7 @@ The order above maps 1:1 to the `smoke_test_plan.md` Section 2 happy-path.
 ## 15. How to use this knowledge base
 
 * **Onboarding:** read this file end-to-end, then `analysis_platform-core.md`, then your module's `analysis_*.md`.
-* **Adding a feature:** ground yourself in (a) the module's TDD under `Reference documents/`, (b) the module's `analysis_*.md` (gap list), (c) `implementation_changes.md` (pending work).
+* **Adding a feature:** ground yourself in (a) the module's TDD under `doc/reference/`, (b) the module's `analysis_*.md` (gap list), (c) `implementation_changes.md` (pending work).
 * **Smoke testing:** follow `smoke_test_plan.md`.
-* **AI agents (Cursor / Codex):** treat `final_product/schema.prisma` and the per-module `analysis_*.md` files as the authoritative implementation context. Treat the Reference SAD as **aspirational**.
+* **AI agents (Cursor / Codex):** treat `doc/execution/database-tools/schema.prisma` and the per-module `analysis_*.md` files as the authoritative implementation context. Treat the Reference SAD as **aspirational**.
 

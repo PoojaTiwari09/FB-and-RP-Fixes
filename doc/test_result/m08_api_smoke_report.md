@@ -1,7 +1,7 @@
-# M08 API Smoke Report
+﻿# M08 API Smoke Report
 
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm8.py`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm8.py`  
 **Base URL:** `http://localhost:3001`
 
 ## Results: 12/12 PASS

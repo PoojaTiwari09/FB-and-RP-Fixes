@@ -112,7 +112,7 @@ private static syncLogsByTenant: Map<string, SearchSyncLog[]> = new Map();
 
 ## 6. Smoke‑test evidence
 
-`_audit/m02_deep_smoke.mjs` runs the explicit security cases on every CI/local validation:
+`doc/test_result/m02_deep_smoke.mjs` runs the explicit security cases on every CI/local validation:
 
 | Test                                                               | Result |
 |--------------------------------------------------------------------|--------|

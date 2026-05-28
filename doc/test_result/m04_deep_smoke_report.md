@@ -1,7 +1,7 @@
-# M04 Deep Smoke Report
+﻿# M04 Deep Smoke Report
 
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm4.py`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm4.py`  
 **API:** `http://localhost:3001`
 
 ## Results: 4/4 PASS
@@ -45,4 +45,4 @@ python testm4.py
 
 ## Comparison to M03
 
-M03 harness is 9-phase (health, workspace, query, research, brief, tenant negative). M04 harness is intentionally smaller for first re-enable; expand per `test_case/test4.md` when added.
+M03 harness is 9-phase (health, workspace, query, research, brief, tenant negative). M04 harness is intentionally smaller for first re-enable; expand per `doc/test_result/doc/test_result/test_case/test4.md` when added.

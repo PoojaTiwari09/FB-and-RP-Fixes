@@ -54,8 +54,8 @@ if (-not $ready) {
 }
 
 Write-Host "API ready on http://localhost:3002" -ForegroundColor Green
-Set-Location (Join-Path $apiRoot "..\..\test_case")
-if (-not (Test-Path .)) { Set-Location "c:\Users\Relanto\Downloads\final_product\r-revenue-intelligence-monorepo\test_case" }
+Set-Location (Join-Path $apiRoot ".")
+if (-not (Test-Path .)) { Set-Location "c:\Users\Relanto\Downloads\final_product\r-revenue-intelligence-monorepo\doc\test_result\test_case" }
 
 Write-Host "`n=== M02 smoke test ===" -ForegroundColor Cyan
 python testm2.py

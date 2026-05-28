@@ -1,10 +1,10 @@
-# M06 Schema Repair Report
+﻿# M06 Schema Repair Report
 
 **Date:** 2026-05-27
 
 ## AiForecastSnapshots duplicate columns (unified doc schema)
 
-**File:** `final_product/schema.prisma`  
+**File:** `doc/execution/database-tools/schema.prisma`  
 **Issue (§B2):** Duplicate lowercase fields (`predictedamount`, `confidencerangelow`, etc.) alongside mapped camelCase fields.
 
 **Fix:** Removed duplicate-purpose columns; kept single canonical set with `@map` for DB columns. `computedAt` typed as `DateTime?`. `idempotencyKey` marked `@unique`.

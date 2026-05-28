@@ -1,4 +1,4 @@
-# M04 TypeORM → Prisma Migration Report
+﻿# M04 TypeORM → Prisma Migration Report
 
 **Date:** 2026-05-27  
 **Module:** `@r-revenue/m04-deal-intelligence`  
@@ -78,4 +78,4 @@ Unified merge into `packages/database/prisma/schema.prisma` is **not** completed
 - API boot with `M04DealIntelligenceModule` in `apps/api/src/app.module.ts`
 - Routes: `/boards`, `/deals`, `/m04-test/*`, auth, settings, etc.
 - `pnpm --filter "@r-revenue/m04-deal-intelligence" test` → **6/6 suites, 138 tests PASS**
-- `test_case/testm4.py` → **4/4 PASS**
+- `doc/test_result/doc/test_result/doc/test_result/test_case/testm4.py` → **4/4 PASS**

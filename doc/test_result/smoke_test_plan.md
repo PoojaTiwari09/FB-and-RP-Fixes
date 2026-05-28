@@ -1,4 +1,4 @@
-# Smoke Test Plan (`smoke_test_plan.md`)
+﻿# Smoke Test Plan (`smoke_test_plan.md`)
 
 > Companion to `version_knowledge.md` and `implementation_changes.md`.
 >
@@ -300,7 +300,7 @@ PASS criteria: the `[MOCK EventPublisher]` line appears. This proves the queue �
 
 ## 8. Final go/no-go checklist (for a release smoke)
 
-* [ ] `final_product/schema.prisma` validates (`prisma validate` green).
+* [ ] `doc/execution/database-tools/schema.prisma` validates (`prisma validate` green).
 * [ ] `prisma db push` synchronises the unified DB.
 * [ ] `pnpm install` finishes without `ERR_PNPM_*` warnings.
 * [ ] `pnpm --filter api build` succeeds (must succeed after §A1–A4).

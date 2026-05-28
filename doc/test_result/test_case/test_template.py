@@ -3,7 +3,7 @@
 M0N — <Module name> deep smoke tests (template).
 
 Copy to testmN.py when stabilizing module M0N.
-Mirror cases from _audit/m0N_deep_smoke.* when available.
+Mirror cases from doc/test_result/m0N_deep_smoke.* when available.
 """
 
 from __future__ import annotations

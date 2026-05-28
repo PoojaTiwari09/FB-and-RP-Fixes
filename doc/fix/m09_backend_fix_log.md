@@ -1,4 +1,4 @@
-# M09 — Backend Fix Log
+﻿# M09 — Backend Fix Log
 
 **Date:** 2026-05-27
 
@@ -13,7 +13,7 @@
 | 7 | No provider abstraction | Added `providers/*` + `resolveLlmProviderKind()` |
 | 8 | No RLS SQL | Added migration `20260527120000_m09_dashboards_rls` |
 | 9 | Local prisma confusion | `prisma/DEPRECATED.md` |
-| 10 | No repeatable smoke harness | `test_case/testm9.py` + `test9.md` |
+| 10 | No repeatable smoke harness | `doc/test_result/doc/test_result/doc/test_result/test_case/testm9.py` + `test9.md` |
 
 ## Files changed
 
@@ -28,7 +28,7 @@ modules/m09-coaching-training/services/m09.service.ts
 modules/m09-coaching-training/providers/*
 modules/m09-coaching-training/prisma/DEPRECATED.md
 packages/database/prisma/migrations/20260527120000_m09_dashboards_rls/migration.sql
-test_case/testm9.py
-test_case/test9.md
-_audit/m09_*.md (10 reports)
+doc/test_result/doc/test_result/test_case/testm9.py
+doc/test_result/test_case/test9.md
+doc/test_result/m09_*.md (10 reports)
 ```

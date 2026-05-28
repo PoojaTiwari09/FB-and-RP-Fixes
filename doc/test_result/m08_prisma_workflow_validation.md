@@ -1,4 +1,4 @@
-# M08 Prisma Workflow Validation
+﻿# M08 Prisma Workflow Validation
 
 **Date:** 2026-05-27  
 **Schema:** `packages/database/prisma/schema.prisma`
@@ -36,7 +36,7 @@ All M08 workflow models use camelCase Prisma fields with snake_case `@map` align
 
 ## Residual
 
-- Root `final_product/schema.prisma` still has legacy `Workflows`/`WorkflowRuns` with `triggerevent*` — do not use for M08 runtime client.
+- Root `doc/execution/database-tools/schema.prisma` still has legacy `Workflows`/`WorkflowRuns` with `triggerevent*` — do not use for M08 runtime client.
 
 ## Status
 

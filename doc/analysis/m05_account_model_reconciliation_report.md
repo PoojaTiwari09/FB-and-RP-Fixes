@@ -1,4 +1,4 @@
-# M05 Account Model Reconciliation Report
+﻿# M05 Account Model Reconciliation Report
 
 **Date:** 2026-05-27  
 **Status:** Resolved (semantic model + schema alignment)
@@ -20,13 +20,13 @@
 
 ## Prisma schema updates
 
-**Unified** `final_product/schema.prisma` — `Accounts.healthScore` with `@map("healthscore")`.
+**Unified** `doc/execution/database-tools/schema.prisma` — `Accounts.healthScore` with `@map("healthscore")`.
 
 **Boilerplate** `packages/database/prisma/schema.prisma` — `Account` model extended with `assignedRepId`, `hubspotOwnerId`, `ownerUserId`, `healthScore`, `crmRecordId`.
 
 ## Seeds
 
-- `_audit/seeds/unified-seed.js` — `healthScore` (was `healthscore`)
+- `doc/execution/seeds/unified-seed.js` — `healthScore` (was `healthscore`)
 
 ## API response
 

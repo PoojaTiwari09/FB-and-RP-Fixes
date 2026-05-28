@@ -1,7 +1,7 @@
 # M01 Prisma + Database Validation Report
 
 > Scope: every model M01 touches inside the unified `@rri/database` schema.
-> Method: `_audit/m01_prisma_validation.mjs` against the live Docker Postgres (`revenue_intel_db`, port 5433). 24/24 checks pass.
+> Method: `doc/test_result/m01_prisma_validation.mjs` against the live Docker Postgres (`revenue_intel_db`, port 5433). 24/24 checks pass.
 
 ## 1. Models in scope
 
@@ -43,7 +43,7 @@
 [PASS] list query uses tenant index
 ```
 
-Machine-readable: `_audit/m01_prisma_validation.json`.
+Machine-readable: `doc/test_result/m01_prisma_validation.json`.
 
 ## 3. Indexes — what exists, what we added
 
@@ -55,13 +55,13 @@ Machine-readable: `_audit/m01_prisma_validation.json`.
 | `transcripts`  | `transcripts_callId_key` | 1-1 with call | Prisma `@unique` |
 | `transcripts`  | `transcripts_tenantId_callId_idx` | join + tenant | Prisma `@@index` |
 | `utterances`   | `utterances_transcriptId_sequenceIndex_idx` | ordered playback | Prisma `@@index` |
-| **`utterances`** | **`idx_utterances_text_fts`** (GIN on `to_tsvector('english', text)`) | full-text search | **added by `_audit/m01_create_fts_indexes.sql` in this pass** |
+| **`utterances`** | **`idx_utterances_text_fts`** (GIN on `to_tsvector('english', text)`) | full-text search | **added by `doc/execution/m01_create_fts_indexes.sql` in this pass** |
 | **`transcripts`** | **`idx_transcripts_fulltext`** (GIN on `to_tsvector('english', "fullText")`) | full-text search | **added in this pass** |
 | `call_notes`   | `call_notes_tenantId_idx`, `call_notes_callId_idx` | list per call/tenant | Prisma `@@index` |
 | `call_shares`  | `call_shares_callId_sharedWithId_sharedWithType_key` | idempotent share upsert | Prisma `@@unique` |
 | `audit_logs`   | `audit_logs_tenantId_createdAt_idx (DESC)`, `audit_logs_tenantId_entityId_idx`, `audit_logs_tenantId_action_idx` | dashboard filters | Prisma `@@index` |
 
-Prisma 5 cannot emit expression-based GIN indexes through `@@index`, so the two FTS indexes are managed as raw SQL (`_audit/m01_create_fts_indexes.sql`). The file uses `CREATE INDEX IF NOT EXISTS` so it’s safe to re-run during deploy.
+Prisma 5 cannot emit expression-based GIN indexes through `@@index`, so the two FTS indexes are managed as raw SQL (`doc/execution/m01_create_fts_indexes.sql`). The file uses `CREATE INDEX IF NOT EXISTS` so it’s safe to re-run during deploy.
 
 ## 4. Foreign-key + cascade semantics
 

@@ -102,4 +102,12 @@ r-revenue-intelligence/
 ```
 
 ---
+
+## Standalone module runbooks
+
+Integration and per-module dev commands (ports, `pnpm run dev:m0N-*`) live in the monorepo docs, not in this folder:
+
+**[../../doc/execution/standalone/STANDALONE-MODULE-COMMANDS.md](../../doc/execution/standalone/STANDALONE-MODULE-COMMANDS.md)**
+
+---
 *Built by the Technical Architecture & Relanto Engineering Team.*

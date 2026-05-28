@@ -22,7 +22,7 @@ All controllers carry `@UseGuards(TenantGuard)` at the class level.
 
 ## 2. Per‑endpoint validation matrix
 
-The matrix below records what each endpoint validates, the validator it uses, the Prisma access pattern, and the smoke status. "Smoke" refers to one of the 37 cases in `_audit/m02_deep_smoke.mjs`.
+The matrix below records what each endpoint validates, the validator it uses, the Prisma access pattern, and the smoke status. "Smoke" refers to one of the 37 cases in `doc/test_result/m02_deep_smoke.mjs`.
 
 ### 2.1 `M02ConversationIntelligenceController`
 

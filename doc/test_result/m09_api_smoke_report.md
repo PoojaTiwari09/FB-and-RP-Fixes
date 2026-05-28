@@ -1,7 +1,7 @@
-# M09 — API Smoke Report
+﻿# M09 — API Smoke Report
 
 **Base:** `/api/v1/coaching-training`  
-**Harness:** `test_case/testm9.py`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm9.py`  
 **Result:** 15 / 15 PASS
 
 ## Routes exercised

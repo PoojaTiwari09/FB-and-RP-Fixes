@@ -1,7 +1,7 @@
-# M06 Deep Smoke Report
+﻿# M06 Deep Smoke Report
 
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm6.py`
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm6.py`
 
 ## Tests
 

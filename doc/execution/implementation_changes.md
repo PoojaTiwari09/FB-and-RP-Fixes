@@ -1,4 +1,4 @@
-# Implementation Changes (`implementation_changes.md`)
+﻿# Implementation Changes (`implementation_changes.md`)
 
 > Companion to `version_knowledge.md`. Everything in this file is an actionable change — either **already applied by this audit** (marked ✅ APPLIED) or **recommended for follow-up** (marked ⏭ PROPOSED).
 >
@@ -75,7 +75,7 @@
 
 ## B. Root Prisma schema — fixed
 
-### B1 ✅ APPLIED — Normalize `final_product/schema.prisma`
+### B1 ✅ APPLIED — Normalize `doc/execution/database-tools/schema.prisma`
 
 The provided schema had **systematic formatting damage** consistent with a faulty DOCX → text conversion:
 
@@ -93,7 +93,7 @@ After the fix `prisma format` and `prisma validate` both succeed on the schema:
 The schema at schema.prisma is valid 🚀
 ```
 
-The original file is preserved at `final_product/schema.prisma.bak`.
+The original file is preserved at `doc/execution/database-tools/schema.prisma.bak`.
 
 ### B2 ⏭ PROPOSED — Drop duplicate columns (manual review required)
 
@@ -131,11 +131,11 @@ For each row, decide which column the application code currently writes to — t
 
 ### B4 ⏭ PROPOSED — Add enums
 
-Inline string fields like `transcriptStatus`, `callType`, `callSource`, `forecastCategory`, `status` should be Prisma enums to keep the codebase honest. See `Reference documents/docs/markdown documents/Coding standards.md` — "every string with a fixed value set must be an enum".
+Inline string fields like `transcriptStatus`, `callType`, `callSource`, `forecastCategory`, `status` should be Prisma enums to keep the codebase honest. See `doc/reference/docs/markdown documents/Coding standards.md` — "every string with a fixed value set must be an enum".
 
 ### B5 ⏭ PROPOSED — RLS migration
 
-Per `Reference documents/docs/markdown documents/Security architecture.md`, every tenant-scoped table needs Postgres RLS:
+Per `doc/reference/docs/markdown documents/Security architecture.md`, every tenant-scoped table needs Postgres RLS:
 
 ```sql
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
@@ -151,13 +151,13 @@ This must be done in a follow-up migration after `prisma db push` because Prisma
 
 ### C1 ✅ APPLIED — Pick a single source of truth
 
-* The canonical schema for the platform is now `final_product/schema.prisma`.
+* The canonical schema for the platform is now `doc/execution/database-tools/schema.prisma`.
 * All other schemas (`packages/database/prisma/schema.prisma` and every `modules/m0X/prisma/schema.prisma`) are **legacy** and should be removed after the unified schema is wired up.
 
-### C2 ⏭ PROPOSED — Move `final_product/schema.prisma` into the monorepo
+### C2 ⏭ PROPOSED — Move `doc/execution/database-tools/schema.prisma` into the monorepo
 
 ```
-git mv final_product/schema.prisma \
+git mv doc/execution/database-tools/schema.prisma \
        r-revenue-intelligence-monorepo/boilerplate code/r-revenue-intelligence/packages/database/prisma/schema.prisma
 ```
 
@@ -220,11 +220,11 @@ Today `modules/platform-core/events/event-publisher.service.ts` just `console.lo
 * **BullMQ topics** — re-use the existing Redis. Each event becomes a queue named after the event (`call.transcription.completed`). Subscribers are workers. Lowest infra cost.
 * **Redis Streams** — use `ioredis` directly. Better for fan-out semantics.
 
-Sample implementation in `_audit/snippets/event-publisher.redis-streams.ts.example` (NOT shipped — outline only).
+Sample implementation in `doc/test_result/snippets/event-publisher.redis-streams.ts.example` (NOT shipped — outline only).
 
 ### D2 ⏭ PROPOSED — Add an `@EventConsumer()` decorator
 
-Per `Reference documents/.../Event Schema registry.md`, consumer modules should declaratively bind to event names. A small decorator over BullMQ workers gets us 80% there without adopting Kafka.
+Per `doc/reference/.../Event Schema registry.md`, consumer modules should declaratively bind to event names. A small decorator over BullMQ workers gets us 80% there without adopting Kafka.
 
 ---
 
@@ -352,7 +352,7 @@ The table below lets a future agent decide what to fix first when running the sm
 | 1 | CRITICAL | yes — TS compile error | ✅ | `apps/api/src/main.ts` |
 | 2 | CRITICAL | yes — TS compile error | ✅ | `apps/api/src/app.module.ts` |
 | 3 | CRITICAL | yes — invalid JSON | ✅ | `apps/api/tsconfig.json` |
-| 4 | CRITICAL | yes — invalid Prisma | ✅ | `final_product/schema.prisma` |
+| 4 | CRITICAL | yes — invalid Prisma | ✅ | `doc/execution/database-tools/schema.prisma` |
 | 5 | HIGH | partial — m04 disabled | ⏭ | M04 Prisma reconciliation |
 | 6 | HIGH | yes — produces silent events | ⏭ | `platform-core/events/event-publisher.service.ts` |
 | 7 | MEDIUM | no | ⏭ | duplicate columns in unified schema |

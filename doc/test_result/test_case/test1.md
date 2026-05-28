@@ -1,7 +1,7 @@
 # M01 — Test execution guide
 
 **Runner:** `testm1.py`  
-**Source audit script:** `_audit/m01_deep_smoke.ps1`  
+**Source audit script:** `doc/test_result/m01_deep_smoke.ps1`  
 **Module:** Capture & Transcription (`/api/v1/capture-transcription`)
 
 ---
@@ -27,7 +27,7 @@ pnpm --filter api run start
 ## Run commands
 
 ```powershell
-cd r-revenue-intelligence-monorepo\test_case
+cd r-revenue-intelligence-monorepo\doc\test_result\test_case
 
 # Default (localhost:3001)
 python testm1.py
@@ -45,7 +45,7 @@ python testm1.py --base-url http://localhost:3001/api/v1/capture-transcription -
 Optional PowerShell original:
 
 ```powershell
-pwsh -File ..\_audit\m01_deep_smoke.ps1
+pwsh -File ..\doc\test_result\m01_deep_smoke.ps1
 ```
 
 ---

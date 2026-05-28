@@ -24,7 +24,7 @@ $ rg -n 'm02_emails|m02Email|M02Email|@@map\("m02_emails"\)' --glob '!**/_audit/
 
 # Hits found only in:
 modules/m02-conversation-intelligence/prisma/schema.prisma   (model definition — module‑local schema)
-_audit/db_tables.txt                                          (db snapshot — informational)
+doc/test_result/db_tables.txt                                          (db snapshot — informational)
 ```
 
 No service, repository, controller, worker, or test imports `M02Email`. The unified Prisma client (`@rri/database`) does *not* expose an `m02Email` delegate — so any future call like `prisma.m02Email.findMany()` would throw at runtime instead of silently using a stale schema.

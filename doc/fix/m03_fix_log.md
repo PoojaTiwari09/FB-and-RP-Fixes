@@ -1,4 +1,4 @@
-# M03 Fix Log
+﻿# M03 Fix Log
 
 **Date:** 2026-05-27
 
@@ -20,4 +20,4 @@
 - `modules/m03-ai-summaries-genai/**` — services, controllers, repository, module
 - `packages/database/prisma/schema.prisma` + migration
 - `apps/web/.../m03-ai-summaries-genai/src/**` — API client, hooks, components
-- `test_case/testm3.py`, `test3.md`
+- `doc/test_result/doc/test_result/doc/test_result/test_case/testm3.py`, `test3.md`

@@ -1,4 +1,4 @@
-# M07 Fix Log
+﻿# M07 Fix Log
 
 **Date:** 2026-05-27
 
@@ -28,11 +28,11 @@
 
 | Fix | Files |
 |-----|-------|
-| Added M07 smoke harness | `test_case/testm7.py` |
+| Added M07 smoke harness | `doc/test_result/doc/test_result/doc/test_result/test_case/testm7.py` |
 
 ## Audit artifacts
 
-Nine reports under `_audit/m07_*.md`.
+Nine reports under `doc/test_result/m07_*.md`.
 
 ## Not changed (intentional)
 

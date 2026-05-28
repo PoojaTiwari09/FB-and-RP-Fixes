@@ -1,8 +1,8 @@
-# M09 — Advanced Backend Smoke Report
+﻿# M09 — Advanced Backend Smoke Report
 
 **Module:** `modules/m09-coaching-training`  
 **Date:** 2026-05-27  
-**Harness:** `test_case/testm9.py` + built-in `POST /test/smoke`  
+**Harness:** `doc/test_result/doc/test_result/doc/test_result/test_case/testm9.py` + built-in `POST /test/smoke`  
 **Result:** **15 / 15 PASS** (Python harness), **E2E smoke PASS** (orchestrated)
 
 ---

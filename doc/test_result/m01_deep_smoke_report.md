@@ -1,8 +1,8 @@
 # M01 Deep Smoke Report — Capture & Transcription
 
 > Executed: 2026-05-27 · API @ `http://localhost:3001` · DB @ `127.0.0.1:5433/revenue_intelligence` · seed tenant `dev-tenant-001`.
-> Test runner: `_audit/m01_deep_smoke.mjs` (Node 18 native `fetch`).
-> Raw log: `_audit/m01_deep_smoke.log` · Machine-readable results: `_audit/m01_deep_smoke_results.json`.
+> Test runner: `doc/test_result/m01_deep_smoke.mjs` (Node 18 native `fetch`).
+> Raw log: `doc/test_result/m01_deep_smoke.log` · Machine-readable results: `doc/test_result/m01_deep_smoke_results.json`.
 
 ## 1. Result summary
 
@@ -25,7 +25,7 @@
 
 ## 2. What “deep” means here
 
-This is not a 200-OK ping. Every endpoint was probed against the user-story contracts in `Reference documents/M1 Capture & Transcription/TDD/`, plus the negative paths the previous baseline never exercised:
+This is not a 200-OK ping. Every endpoint was probed against the user-story contracts in `doc/reference/M1 Capture & Transcription/TDD/`, plus the negative paths the previous baseline never exercised:
 
 * **Auth:** missing `x-tenant-id` returns `401 Unauthorized` (previously returned the misleading default Nest 403).
 * **Tenant isolation:** the same `GET /calls/{id}` returns `404` when called with a different tenant id — proves the repository’s `tenantId` filter is wired in every query.
@@ -52,7 +52,7 @@ All of them are guarded (`TenantGuard` for module routes; `HmacWebhookGuard` for
 
 These are not blockers for M02–M10 consumption but should be addressed in a follow-up sprint:
 
-* **Real AssemblyAI run** — the worker (`m01-queue`) is registered but `DISABLE_REDIS=true` for the smoke run. The full path is exercised by the unit-equivalent in `_audit/m01_runtime_risk_report.md` §3.
+* **Real AssemblyAI run** — the worker (`m01-queue`) is registered but `DISABLE_REDIS=true` for the smoke run. The full path is exercised by the unit-equivalent in `doc/test_result/m01_runtime_risk_report.md` §3.
 * **Frontend Cypress / Playwright tests** — out of scope for this deep smoke (covered by static contract audit in `m01_downstream_dependency_report.md` §3).
 * **Rate-limit / DOS** — no rate limiter is in front of `/calls/upload`; the controller still enforces a 500 MB max body size. Recommend `@nestjs/throttler` in production deploy.
 
@@ -69,7 +69,7 @@ pnpm exec tsx modules/m01-capture-transcription/seeds/seed.ts
 apps/api/dev-api.bat       # or `npx ts-node -r tsconfig-paths/register apps/api/src/main.ts`
 
 # Smoke (Node)
-node _audit/m01_deep_smoke.mjs
+node doc/test_result/m01_deep_smoke.mjs
 ```
 
 Exit code is `0` only when 45/45 pass.

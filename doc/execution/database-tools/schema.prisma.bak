@@ -1,0 +1,3312 @@
+// Consolidated Global Database Schema
+// Auto-generated from Final_Clean_Global_Database_Schema_M01_M10.docx
+// Targets all modules: Platform Core, Shared Revenue Graph, M01 - M10, Smart Tracking, and Deal Management
+
+datasource db {
+    provider = "postgresql"
+    url = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — ACCOUNT_BRIEFS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model AccountBriefs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  accountId String ? @map("account_id")
+  summarytext String ?
+        healthsignals String ?
+            renewalindicators String ?
+                confidenceScore Float ? @map("confidence_score")
+  version Int ?
+        generatedat DateTime ?
+            @@map("account_briefs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — ACCOUNT_CONTACTS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model AccountContacts {
+  tenantId String @map("tenant_id")
+  accountId String @map("account_id")
+  contactId String @map("contact_id")
+  isPrimary Boolean ? @map("is_primary")
+    @@id([tenantId, accountId, contactId])
+    @@map("account_contacts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — ACCOUNTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Accounts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  industry String ?
+        segment String ?
+            region String ?
+                ownerUserId String ? @map("owner_user_id")
+  crmAccountId String ? @map("crm_account_id")
+  createdAt DateTime @map("created_at")
+  crmRecordId String ? @map("crm_record_id")
+  localId String ? @map("local_id")
+  domain String ?
+        type String ?
+            city String ?
+                country String ?
+                    employeeCount Int ? @map("employee_count")
+  exitArr Float ? @map("exit_arr")
+  board String ?
+        assignedRepId String ? @map("assigned_rep_id")
+  hubspotOwnerId String ? @map("hubspot_owner_id")
+  updatedAt DateTime ? @map("updated_at")
+  crmSource String ? @map("crm_source")
+  crmSyncedAt String ? @map("crm_synced_at")
+  accountId String ? @map("account_id")
+  annualRecurringRevenue Float ? @map("annual_recurring_revenue")
+  healthscore Float ?
+        syncedAt DateTime ? @map("synced_at")
+        @@map("accounts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — ACTIVITIES
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Activities {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  accountId String ? @map("account_id")
+  dealId String ? @map("deal_id")
+  contactId String ? @map("contact_id")
+  activityType String ? @map("activity_type")
+  description String ?
+        dueDate DateTime ? @map("due_date")
+  status String ?
+        createdAt DateTime @map("created_at")
+  crmRecordId String ? @map("crm_record_id")
+  localId String ? @map("local_id")
+  companyHubspotId String ? @map("company_hubspot_id")
+  contactHubspotId String ? @map("contact_hubspot_id")
+  dealHubspotId String ? @map("deal_hubspot_id")
+  assignedRepId String ? @map("assigned_rep_id")
+  type String?
+        direction String ?
+            timestamp DateTime ?
+                body String ?
+                    durationSeconds Float ? @map("duration_seconds")
+  repTalkPct Float ? @map("rep_talk_pct")
+  clientTalkPct Float ? @map("client_talk_pct")
+  callOutcome String ? @map("call_outcome")
+  subject String ?
+        snippet String ?
+            title String ?
+                attendeeContactIds Json ? @map("attendee_contact_ids")
+  syncedAt DateTime ? @map("synced_at")
+  idempotencyKey String ? @map("idempotency_key")
+  sourceType String ? @map("source_type")
+  sourcePlatform String ? @map("source_platform")
+  sourceRecordId String ? @map("source_record_id")
+  occurredAt DateTime ? @map("occurred_at")
+  ownerId String ? @map("owner_id")
+  transcriptId String ? @map("transcript_id")
+  calendarEventId String ? @map("calendar_event_id")
+  emailThreadId String ? @map("email_thread_id")
+  updatedAt DateTime ? @map("updated_at")
+  activityId String ? @map("activity_id")
+  sourceId String ? @map("source_id")
+  sourcetype String ?
+        userId String ? @map("user_id")
+  occurredat DateTime ?
+        @@map("activities")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — AI_BRIEFS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiBriefs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  briefType String ? @map("brief_type")
+  entityId String ? @map("entity_id")
+  generatedSummary Float ? @map("generated_summary")
+  sourceReferences String ? @map("source_references")
+  llmModel String ? @map("llm_model")
+  generationStatus Float ? @map("generation_status")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("ai_briefs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M05 - ACCOUNT INTELLIGENCE — AI_BRIEFS_CACHE
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiBriefsCache {
+  id String @id @default (uuid())
+  companyHubspotId String ? @map("company_hubspot_id")
+  scope String ?
+        periodDays Int ? @map("period_days")
+  briefJson Json ? @map("brief_json")
+  generatedAt DateTime ? @map("generated_at")
+    @@map("ai_briefs_cache")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — AI_CHAT_HISTORY
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiChatHistory {
+  id String @id @default (uuid())
+  question String ?
+        answer String ?
+            citations Json ?
+                createdAt DateTime @map("created_at")
+    @@map("ai_chat_history")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — AI_EXTRACTION_FIELDS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiExtractionFields {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  question String ?
+        fieldLabel String ? @map("field_label")
+  fieldName String ? @map("field_name")
+  dataType String ? @map("data_type")
+  enumOptions Json ? @map("enum_options")
+  extractionHint String ? @map("extraction_hint")
+  crmObject String ? @map("crm_object")
+  crmField String ? @map("crm_field")
+  isActive Boolean ? @map("is_active")
+  displayOrder String ? @map("display_order")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  createdByUserId String ? @map("created_by_user_id")
+    @@map("ai_extraction_fields")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — AI_EXTRACTION_RESULTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiExtractionResults {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  fieldId String ? @map("field_id")
+  callId String ? @map("call_id")
+  extractedValue String ? @map("extracted_value")
+  rawEvidence String ? @map("raw_evidence")
+  evidenceTimestampMs String ? @map("evidence_timestamp_ms")
+  confidenceScore Float ? @map("confidence_score")
+  isManualOverride Boolean ? @map("is_manual_override")
+  overriddenByUserId String ? @map("overridden_by_user_id")
+  extractedAt String ? @map("extracted_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("ai_extraction_results")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — AI_FORECAST_SNAPSHOTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model AiForecastSnapshots {
+  tenantId String @map("tenant_id")
+  snapshotId String @id @default (uuid()) @map("snapshot_id")
+  periodId String ? @map("period_id")
+  predictedAmount Float ? @map("predicted_amount")
+  confidenceRangeLow Float ? @map("confidence_range_low")
+  confidenceRangeHigh Float ? @map("confidence_range_high")
+  modelInputs Json ? @map("model_inputs")
+  inputPipelineValue String ? @map("input_pipeline_value")
+  regionBreakdown Json ? @map("region_breakdown")
+  computedAt String ? @map("computed_at")
+  idempotencyKey String ? @map("idempotency_key")
+  predictedamount Float ?
+        confidencerangelow Float ?
+            confidencerangehigh Float ?
+                modelinputs Json ?
+                    computedat DateTime ?
+                        idempotencykey String ?
+                            @@map("ai_forecast_snapshots")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — AI_REWRITE_SUGGESTIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiRewriteSuggestions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  draftId String ? @map("draft_id")
+  userId String ? @map("user_id")
+  selectedText String ? @map("selected_text")
+  tone String ?
+        suggestionText String ? @map("suggestion_text")
+  accepted String ?
+        createdAt DateTime @map("created_at")
+    @@map("ai_rewrite_suggestions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — AI_VOICES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AiVoices {
+  id String @id @default (uuid())
+  name String
+  isActive Boolean ? @map("is_active")
+    @@map("ai_voices")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — ANALYTICS_SNAPSHOTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model AnalyticsSnapshots {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  snapshotDate DateTime ? @map("snapshot_date")
+  data Json ?
+        createdAt DateTime @map("created_at")
+    @@map("analytics_snapshots")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — APPROVALS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Approvals {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  runId String ? @map("run_id")
+  workflowId String ? @map("workflow_id")
+  approverId String ? @map("approver_id")
+  type String?
+        title String ?
+            description String ?
+                status String ?
+                    thresholdDetails String ? @map("threshold_details")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("approvals")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — AUDIO_FILES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model AudioFiles {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  storagebucket String ?
+        storagepath String ?
+            filesizebytes Int ?
+                format String ?
+                    uploadedat DateTime ?
+                        createdAt DateTime @map("created_at")
+    @@map("audio_files")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — AUDIT_LOGS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model AuditLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  actorId String ? @map("actor_id")
+  actorType String ? @map("actor_type")
+  action String ?
+        entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  meta Json ?
+        createdAt DateTime @map("created_at")
+  userId String ? @map("user_id")
+  eventType String ? @map("event_type")
+  targetEntity String ? @map("target_entity")
+  targetId String ? @map("target_id")
+  details String ?
+        ipAddress String ? @map("ip_address")
+  changes String ?
+        logid String ?
+            entityid String ?
+                @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — BOARD_COLUMNS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BoardColumns {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  boardId String ? @map("board_id")
+  field String ?
+        label String ?
+            width Int ?
+                order Int ?
+                    isVisible Boolean ? @map("is_visible")
+  isSortable Boolean ? @map("is_sortable")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  colId Int ? @map("col_id")
+  fieldKey String ? @map("field_key")
+  sortable String ?
+        editable String ?
+            visibleToRoles String ? @map("visible_to_roles")
+  columnType String ? @map("column_type")
+    @@map("board_columns")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M05 - ACCOUNT INTELLIGENCE — BOARD_CONFIGS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model BoardConfigs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  boardId String ? @map("board_id")
+  name String
+  slug String ?
+        description String ?
+            defaultSortField String ? @map("default_sort_field")
+  defaultSortDir String ? @map("default_sort_dir")
+  dateFilterEnabled Boolean ? @map("date_filter_enabled")
+  aiBriefsEnabled Boolean ? @map("ai_briefs_enabled")
+  createdBy String ? @map("created_by")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  parentBoardSlug String ? @map("parent_board_slug")
+  briefType String ? @map("brief_type")
+  briefPeriodDays String ? @map("brief_period_days")
+  aggregationMethod String ? @map("aggregation_method")
+  createdByUserId String ? @map("created_by_user_id")
+  dateFilterField String ? @map("date_filter_field")
+  configId Int ? @map("config_id")
+  userId String ? @map("user_id")
+  columnorder Json ?
+        visiblefields Json ?
+            defaultfilters Json ?
+                @@map("board_configs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — BOARD_FILTERS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BoardFilters {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  boardId String ? @map("board_id")
+  field String ?
+        operator String ?
+            amount Float ?
+                createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  parentId Int ? @map("parent_id")
+  type String?
+        logicalOperator String ? @map("logical_operator")
+  order Int ?
+        @@map("board_filters")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — BOARD_PERMISSIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BoardPermissions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  boardId String ? @map("board_id")
+  userId String ? @map("user_id")
+  role String ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("board_permissions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M05 - ACCOUNT INTELLIGENCE — BOARD_TAB_FILTERS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BoardTabFilters {
+  id String @id @default (uuid())
+  tabId Int ? @map("tab_id")
+  parentId Int ? @map("parent_id")
+  type String?
+        logicalOperator String ? @map("logical_operator")
+  fieldKey String ? @map("field_key")
+  operator String ?
+        amount Float ?
+            @@map("board_tab_filters")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — BOARD_TABS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BoardTabs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  boardId String ? @map("board_id")
+  name String
+  order Int ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  tabId Int ? @map("tab_id")
+  label String ?
+        filterLogic String ? @map("filter_logic")
+  isDefault Boolean ? @map("is_default")
+    @@map("board_tabs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — BRIEF_FEEDBACK
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BriefFeedback {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  briefType String ? @map("brief_type")
+  sectionName String ? @map("section_name")
+  bulletId Int ? @map("bullet_id")
+  bulletText String ? @map("bullet_text")
+  feedbackType String ? @map("feedback_type")
+  feedbackReason Json ? @map("feedback_reason")
+  feedbackComment String ? @map("feedback_comment")
+  userId String ? @map("user_id")
+  createdAt DateTime @map("created_at")
+  metadata Json ?
+        @@map("brief_feedback")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — BRIEF_HISTORY
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BriefHistory {
+  id String @id @default (uuid())
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  briefType String ? @map("brief_type")
+  versionNumber Int ? @map("version_number")
+  generatedSummary Float ? @map("generated_summary")
+  sourceIds String ? @map("source_ids")
+  modelUsed String ? @map("model_used")
+  promptVersion String ? @map("prompt_version")
+  generatedBy Float ? @map("generated_by")
+  sessionId String ? @map("session_id")
+  metadata Json ?
+        createdAt DateTime @map("created_at")
+    @@map("brief_history")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — BRIEF_TEMPLATE_SECTIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BriefTemplateSections {
+  id String @id @default (uuid())
+  templateId String ? @map("template_id")
+  sectionName String ? @map("section_name")
+  aiQuestion String ? @map("ai_question")
+  instructions String ?
+        sectionOrder Int ? @map("section_order")
+  enabled Boolean ?
+        required Boolean ?
+            dataSources String ? @map("data_sources")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  allowedRoles Json ? @map("allowed_roles")
+  visibilityRule Json ? @map("visibility_rule")
+    @@map("brief_template_sections")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — BRIEF_TEMPLATES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model BriefTemplates {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  templateName String ? @map("template_name")
+  entityType String ? @map("entity_type")
+  description String ?
+        isActive Boolean ? @map("is_active")
+  versionNumber Int ? @map("version_number")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  createdBy String ? @map("created_by")
+  metadata Json ?
+        @@map("brief_templates")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — CALL_SHARES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CallShares {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  sharedByUserId String ? @map("shared_by_user_id")
+  sharedWithId String ? @map("shared_with_id")
+  sharedWithType String ? @map("shared_with_type")
+  sharedAt String ? @map("shared_at")
+    @@map("call_shares")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — CALL_SUMMARIES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model CallSummaries {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  onelinesummary String ?
+        keypoints String ?
+            nextsteps String ?
+                risks String ?
+                    confidenceScore Float ? @map("confidence_score")
+  flaggedreview String ?
+        version Int ?
+            generatedat DateTime ?
+                @@map("call_summaries")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — CALLS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Calls {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  title String ?
+        callDate String ? @map("call_date")
+  durationSeconds Float ? @map("duration_seconds")
+  callType String ? @map("call_type")
+  callSource String ? @map("call_source")
+  participants String ?
+        callOwner String ? @map("call_owner")
+  accountId String ? @map("account_id")
+  opportunityId String ? @map("opportunity_id")
+  audioUrl String ? @map("audio_url")
+  transcriptStatus String ? @map("transcript_status")
+  failureReason String ? @map("failure_reason")
+  skipReason String ? @map("skip_reason")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  agentId String ? @map("agent_id")
+  agentName String ? @map("agent_name")
+  sentiment String ?
+        language String ?
+            transcript String ?
+                dealId String ? @map("deal_id")
+  ownerUserId String ? @map("owner_user_id")
+  startedAt DateTime ? @map("started_at")
+  sentimentScore Float ? @map("sentiment_score")
+  callId String ? @map("call_id")
+  sourcePlatform String ? @map("source_platform")
+  recordingUrl String ? @map("recording_url")
+  storageUrl String ? @map("storage_url")
+  calendareventid String ?
+        status String ?
+            @@map("calls")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — CITATIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Citations {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  reportId String ? @map("report_id")
+  sectionId String ? @map("section_id")
+  bulletId Int ? @map("bullet_id")
+  sourceType String ? @map("source_type")
+  sourceId String ? @map("source_id")
+  sourceRef String ? @map("source_ref")
+  displayLabel String ? @map("display_label")
+  sourceUrl String ? @map("source_url")
+  contextSnippet String ? @map("context_snippet")
+  createdAt DateTime @map("created_at")
+    @@map("citations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — COACHING_BENCHMARKS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CoachingBenchmarks {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  teamId String ? @map("team_id")
+  metricName String ? @map("metric_name")
+  benchmarkValue String ? @map("benchmark_value")
+  role String ?
+        periodStart DateTime ? @map("period_start")
+  periodEnd DateTime ? @map("period_end")
+  createdAt DateTime @map("created_at")
+    @@map("coaching_benchmarks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — COACHING_CALL_INSIGHTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CoachingCallInsights {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  repId String ? @map("rep_id")
+  callId String ? @map("call_id")
+  transcriptId String ? @map("transcript_id")
+  dealId String ? @map("deal_id")
+  accountId String ? @map("account_id")
+  talkRatio Float ? @map("talk_ratio")
+  questionRate Float ? @map("question_rate")
+  responsivenessScore Float ? @map("responsiveness_score")
+  engagementScore Float ? @map("engagement_score")
+  topicsJson Json ? @map("topics_json")
+  trackerHitsJson Json ? @map("tracker_hits_json")
+  createdAt DateTime @map("created_at")
+    @@map("coaching_call_insights")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — COACHING_EXPORT_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CoachingExportLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  exportType String ? @map("export_type")
+  filtersJson Json ? @map("filters_json")
+  fileUrl String ? @map("file_url")
+  status String ?
+        createdAt DateTime @map("created_at")
+    @@map("coaching_export_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — COACHING_METRIC_SNAPSHOTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model CoachingMetricSnapshots {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  teamId String ? @map("team_id")
+  repId String ? @map("rep_id")
+  periodStart DateTime ? @map("period_start")
+  periodEnd DateTime ? @map("period_end")
+  callCount Int ? @map("call_count")
+  avgTalkRatio Float ? @map("avg_talk_ratio")
+  avgQuestionRate Float ? @map("avg_question_rate")
+  avgResponsivenessScore Float ? @map("avg_responsiveness_score")
+  avgEngagementScore Float ? @map("avg_engagement_score")
+  avgScore Float ? @map("avg_score")
+  createdAt DateTime @map("created_at")
+  snapshotId String ? @map("snapshot_id")
+  userId String ? @map("user_id")
+  period String ?
+        talkratio Float ?
+            longestmonologue Float ?
+                questionrate Float ?
+                    interactivity Float ?
+                        toptopics String ?
+                            callcount Int ?
+                                computedat DateTime ?
+                                    @@map("coaching_metric_snapshots")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — COACHING_NOTES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CoachingNotes {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  repId String ? @map("rep_id")
+  content String ?
+        managerId String ? @map("manager_id")
+  priority String ?
+        isAgentGenerated Float ? @map("is_agent_generated")
+  weakestSkill String ? @map("weakest_skill")
+  createdAt DateTime @map("created_at")
+    @@map("coaching_notes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — COACHING_RECOMMENDATIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model CoachingRecommendations {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  repId String ? @map("rep_id")
+  focusArea String ? @map("focus_area")
+  weakestSkill String ? @map("weakest_skill")
+  recommendationText String ? @map("recommendation_text")
+  suggestedAction String ? @map("suggested_action")
+  priority String ?
+        status String ?
+            generatedAt DateTime ? @map("generated_at")
+  recid String ?
+        snapshotId String ? @map("snapshot_id")
+  userId String ? @map("user_id")
+  recommendationtext String ?
+        category String ?
+            confidenceScore Float ? @map("confidence_score")
+  generatedat DateTime ?
+        @@map("coaching_recommendations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — COACHING_REFRESH_JOBS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CoachingRefreshJobs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  jobType String ? @map("job_type")
+  status String ?
+        startedAt DateTime ? @map("started_at")
+  completedAt DateTime ? @map("completed_at")
+  errorMessage String ? @map("error_message")
+  metadata Json ?
+        @@map("coaching_refresh_jobs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — COMPETITOR_ALERT_CONFIGS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model CompetitorAlertConfigs {
+  tenantId String @map("tenant_id")
+  configId Int @id @map("config_id")
+  competitornames Json ?
+        alertchannels Json ?
+            minconfidence Float ?
+                createdby String ?
+                    @@map("competitor_alert_configs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — COMPETITOR_ALERTS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model CompetitorAlerts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  competitorname String ?
+        callId String ? @map("call_id")
+  dealId String ? @map("deal_id")
+  alertedat String ?
+        channelsnotified String ?
+            @@map("competitor_alerts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — COMPLIANCE_DECISION_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ComplianceDecisionLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  contactId String ? @map("contact_id")
+  policyId String ? @map("policy_id")
+  actionType String ? @map("action_type")
+  decision String ?
+        reasonCode String ? @map("reason_code")
+  correlationId String ? @map("correlation_id")
+  policySignature String ? @map("policy_signature")
+  evaluatedAt DateTime ? @map("evaluated_at")
+    @@map("compliance_decision_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — COMPLIANCE_POLICIES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CompliancePolicies {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  channel String ?
+        region String ?
+            isActive Boolean ? @map("is_active")
+  rules Json ?
+        createdBy String ? @map("created_by")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("compliance_policies")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — COMPOSER_SESSIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ComposerSessions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  draftId String ? @map("draft_id")
+  sourceType String ? @map("source_type")
+  sourceId String ? @map("source_id")
+  contextJson Json ? @map("context_json")
+  state String ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("composer_sessions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — CONTACT_COMPLIANCE_STATES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ContactComplianceStates {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  contactId String ? @map("contact_id")
+  email String
+  doNotContact Boolean ? @map("do_not_contact")
+  consentStatus String ? @map("consent_status")
+  optOutSource String ? @map("opt_out_source")
+  crmSyncedAt String ? @map("crm_synced_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("contact_compliance_states")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — CONTACTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Contacts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  accountId String ? @map("account_id")
+  name String
+  email String
+  roleTitle String ? @map("role_title")
+  crmContactId String ? @map("crm_contact_id")
+  createdAt DateTime @map("created_at")
+  crmRecordId String ? @map("crm_record_id")
+  localId String ? @map("local_id")
+  companyHubspotId String ? @map("company_hubspot_id")
+  firstName String ? @map("first_name")
+  lastName String ? @map("last_name")
+  phone String ?
+        jobTitle String ? @map("job_title")
+  isPrimary Boolean ? @map("is_primary")
+  updatedAt DateTime ? @map("updated_at")
+  title String ?
+        crmSource String ? @map("crm_source")
+  crmSyncedAt String ? @map("crm_synced_at")
+  contactId String ? @map("contact_id")
+  linkedinurl String ?
+        syncedAt DateTime ? @map("synced_at")
+        @@map("contacts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — CRM_EXTRACTED_FIELDS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model CrmExtractedFields {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  fieldName String ? @map("field_name")
+  fieldValue String ? @map("field_value")
+  confidenceScore Float ? @map("confidence_score")
+  pushedtocrm Boolean ?
+        pushedat DateTime ?
+            @@map("crm_extracted_fields")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — CRM_SYNC_JOBS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model CrmSyncJobs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  provider String ?
+        entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  operation Float ?
+        status String ?
+            retryCount Int ? @map("retry_count")
+  errorMessage String ? @map("error_message")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("crm_sync_jobs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — CRM_SYNC_LOGS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model CrmSyncLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  source String ?
+        status String ?
+            recordsProcessed Int ? @map("records_processed")
+  recordsFailed Int ? @map("records_failed")
+  error String ?
+        startedAt DateTime ? @map("started_at")
+  completedAt DateTime ? @map("completed_at")
+  createdAt DateTime @map("created_at")
+  crmSource String ? @map("crm_source")
+  entityType String ? @map("entity_type")
+  lastSyncedAt DateTime ? @map("last_synced_at")
+  lastCursor String ? @map("last_cursor")
+  errorMessage String ? @map("error_message")
+  recordsSynced Int ? @map("records_synced")
+  updatedAt DateTime ? @map("updated_at")
+  crmplatform String ?
+        entitytype String ?
+            recordssynced Int ?
+                errormessage String ?
+                    syncedAt DateTime ? @map("synced_at")
+                    @@map("crm_sync_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — DASHBOARD_CONFIGS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DashboardConfigs {
+  tenantId String @map("tenant_id")
+  configId Int @id @map("config_id")
+  userId String ? @map("user_id")
+  layout String ?
+        visiblewidgets Json ?
+            daterangedefault String ?
+                createdAt DateTime @map("created_at")
+    @@map("dashboard_configs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — DASHBOARD_FILTERS
+// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DashboardFilters {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dashboardId String ? @map("dashboard_id")
+  name String
+  fieldKey String ? @map("field_key")
+  operator String ?
+        defaultValue String ? @map("default_value")
+  availableOptions Json ? @map("available_options")
+  order Int ?
+        createdAt DateTime @map("created_at")
+  filterName String ? @map("filter_name")
+  fieldName String ? @map("field_name")
+  filterType String ? @map("filter_type")
+  allowedValues Json ? @map("allowed_values")
+    @@map("dashboard_filters")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — DASHBOARD_SHARING
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DashboardSharing {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dashboardId String ? @map("dashboard_id")
+  sharedWithId String ? @map("shared_with_id")
+  shareType String ? @map("share_type")
+  accessLevel String ? @map("access_level")
+  createdAt DateTime @map("created_at")
+    @@map("dashboard_sharing")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — DASHBOARD_VERSIONS
+// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DashboardVersions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dashboardId String ? @map("dashboard_id")
+  version Int ?
+        layoutSnapshot Json ? @map("layout_snapshot")
+  updatedBy String ? @map("updated_by")
+  changeNotes String ? @map("change_notes")
+  createdAt DateTime @map("created_at")
+  versionNumber Int ? @map("version_number")
+  snapshotJson Json ? @map("snapshot_json")
+  changeNote String ? @map("change_note")
+  createdById String ? @map("created_by_id")
+    @@map("dashboard_versions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — DASHBOARD_WIDGETS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DashboardWidgets {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dashboardId String ? @map("dashboard_id")
+  metricId String ? @map("metric_id")
+  title String ?
+        chartType String ? @map("chart_type")
+  gridX Int ? @map("grid_x")
+  gridY Int ? @map("grid_y")
+  width Int ?
+        height Int ?
+            configJson Json ? @map("config_json")
+  createdAt DateTime @map("created_at")
+    @@map("dashboard_widgets")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — DASHBOARDS
+// Kept implemented-only table unchanged except naming cleanup. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Dashboards {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  description String ?
+        ownerId String ? @map("owner_id")
+  isPublished Boolean ? @map("is_published")
+  version Int ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("dashboards")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — DATA_CLOUD_CHECKPOINTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DataCloudCheckpoints {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  domain String ?
+        lastCursor String ? @map("last_cursor")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("data_cloud_checkpoints")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — DATA_CLOUD_CONNECTIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DataCloudConnections {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  destination String ?
+        config Json ?
+            isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("data_cloud_connections")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — DATA_CLOUD_EXPORTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model DataCloudExports {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  connectionId String ? @map("connection_id")
+  status String ?
+        startedAt DateTime ? @map("started_at")
+  completedAt DateTime ? @map("completed_at")
+  errorMessage String ? @map("error_message")
+  rowsExported Int ? @map("rows_exported")
+  idempotencyKey String ? @map("idempotency_key")
+  triggeredBy String ? @map("triggered_by")
+  runType String ? @map("run_type")
+  fromCursor String ? @map("from_cursor")
+  toCursor String ? @map("to_cursor")
+  warehousetype String ?
+        warehouseconfigencrypted String ?
+            lastexportedat DateTime ?
+                recordsexported String ?
+                    idempotencykey String ?
+                        @@map("data_cloud_exports")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — DATA_SYNC_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DataSyncLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dataSourceId String ? @map("data_source_id")
+  syncType String ? @map("sync_type")
+  status String ?
+        startedAt DateTime ? @map("started_at")
+  completedAt DateTime ? @map("completed_at")
+  recordsSynced Int ? @map("records_synced")
+  errorMessage String ? @map("error_message")
+  createdAt DateTime @map("created_at")
+    @@map("data_sync_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_ACTIVITIES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealActivities {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  type String?
+        title String ?
+            description String ?
+                activityDate String ? @map("activity_date")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("deal_activities")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_BOARDS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealBoards {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  description String ?
+        audience String ?
+            status String ?
+                ownerId String ? @map("owner_id")
+  isLocked Boolean ? @map("is_locked")
+  allowRepColumnReorder String ? @map("allow_rep_column_reorder")
+  preventManualDealOverride String ? @map("prevent_manual_deal_override")
+  metadata Json ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  publishedAt String ? @map("published_at")
+    @@map("deal_boards")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — DEAL_BRIEFS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DealBriefs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  summarytext String ?
+        keyrisks String ?
+            recentsignals String ?
+                sources String ?
+                    confidenceScore Float ? @map("confidence_score")
+  version Int ?
+        generatedat DateTime ?
+            @@map("deal_briefs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — DEAL_CHANGE_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealChangeLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  fieldName String ? @map("field_name")
+  oldValue String ? @map("old_value")
+  newValue String ? @map("new_value")
+  changedAt String ? @map("changed_at")
+  source String ?
+        changedById String ? @map("changed_by_id")
+        @@map("deal_change_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_COMMENTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealComments {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  userId String ? @map("user_id")
+  content String ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("deal_comments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — DEAL_CONTACTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model DealContacts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  contactId String ? @map("contact_id")
+  role String ?
+        createdAt DateTime @map("created_at")
+  addedat DateTime ?
+        @@map("deal_contacts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M-05 SMART TRACKING (SMARTTRACKING) — DEAL_DRIVER_SNAPSHOTS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DealDriverSnapshots {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  snapshotId String ? @map("snapshot_id")
+  userId String ? @map("user_id")
+  detectioncount Int ?
+        affecteddealcount Int ?
+            computedat DateTime ?
+                @@map("deal_driver_snapshots")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M-07 DEAL & ACCOUNT MANAGEMENT (DEALMANAGEMENT) — DEAL_DRIVERS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DealDrivers {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  detectioncount Int ?
+        affecteddealcount Int ?
+            computedat DateTime ?
+                @@map("deal_drivers")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M-07 DEAL & ACCOUNT MANAGEMENT (DEALMANAGEMENT) — DEAL_HEALTH_SCORES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DealHealthScores {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  score Float ?
+        category String ?
+            activityscore Float ?
+                riskflagcount Int ?
+                    pastduenextsteps Int ?
+                        dayssincelastcontact Int ?
+                            computedat DateTime ?
+                                @@map("deal_health_scores")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_PLAYBOOKS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealPlaybooks {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  type String?
+        criterion String ?
+            status String ?
+                question String ?
+                    notes String ?
+                        aiSuggestion String ? @map("ai_suggestion")
+  order Int ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("deal_playbooks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M-07 DEAL & ACCOUNT MANAGEMENT (DEALMANAGEMENT) — DEAL_RISK_FLAGS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DealRiskFlags {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  risktype String ?
+        severity String ?
+            source String ?
+                sourceId String ? @map("source_id")
+  detectedat DateTime ?
+        resolvedat DateTime ?
+            @@map("deal_risk_flags")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — DEAL_RISK_SIGNALS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealRiskSignals {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  riskType String ? @map("risk_type")
+  riskScore Float ? @map("risk_score")
+  reason String ?
+        signalSource String ? @map("signal_source")
+  detectedAt String ? @map("detected_at")
+  resolvedAt String ? @map("resolved_at")
+    @@map("deal_risk_signals")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M-07 DEAL & ACCOUNT MANAGEMENT (DEALMANAGEMENT) — DEAL_STAGES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model DealStages {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  crmplatform String ?
+        stagename String ?
+            stageorder Int ?
+                isClosedWon Boolean ? @map("is_closed_won")
+  isClosedLost Boolean ? @map("is_closed_lost")
+    @@map("deal_stages")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_SUMMARIES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealSummaries {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  summary String ?
+        generatedAt DateTime ? @map("generated_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("deal_summaries")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_TASKS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealTasks {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  title String ?
+        description String ?
+            status String ?
+                dueDate DateTime ? @map("due_date")
+  completedAt DateTime ? @map("completed_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("deal_tasks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — DEAL_WARNINGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model DealWarnings {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  title String ?
+        severity String ?
+            message String ?
+                action String ?
+                    isResolved Boolean ? @map("is_resolved")
+  resolvedAt String ? @map("resolved_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("deal_warnings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHARED REVENUE GRAPH — DEALS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Deals {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  accountId String ? @map("account_id")
+  ownerUserId String ? @map("owner_user_id")
+  name String
+  stage String ?
+        status String ?
+            amount Float ?
+                closeDate String ? @map("close_date")
+  crmDealId String ? @map("crm_deal_id")
+  createdAt DateTime @map("created_at")
+  forecastCategory String ? @map("forecast_category")
+  ownerId String ? @map("owner_id")
+  ownerName String ? @map("owner_name")
+  accountName String ? @map("account_name")
+  probability Float ?
+        aiScore Float ? @map("ai_score")
+  warningCount Int ? @map("warning_count")
+  contactCount Int ? @map("contact_count")
+  activityStrength Int ? @map("activity_strength")
+  isHighRisk Boolean ? @map("is_high_risk")
+  riskReason String ? @map("risk_reason")
+  nextStep String ? @map("next_step")
+  crmData Json ? @map("crm_data")
+  lastActivityAt DateTime ? @map("last_activity_at")
+  lastSyncedAt DateTime ? @map("last_synced_at")
+  updatedAt DateTime ? @map("updated_at")
+  crmRecordId String ? @map("crm_record_id")
+  localId String ? @map("local_id")
+  companyHubspotId String ? @map("company_hubspot_id")
+  adjustedAmount Float ? @map("adjusted_amount")
+  dealType String ? @map("deal_type")
+  createdAtCrm DateTime ? @map("created_at_crm")
+  assignedRepId String ? @map("assigned_rep_id")
+  primaryContactHubspotId String ? @map("primary_contact_hubspot_id")
+  syncedAt DateTime ? @map("synced_at")
+  dealName String ? @map("deal_name")
+  lastActivityDate DateTime ? @map("last_activity_date")
+  isClosedWon Boolean ? @map("is_closed_won")
+  isClosedLost Boolean ? @map("is_closed_lost")
+  region String ?
+        lob String ?
+            repUserId String ? @map("rep_user_id")
+  source String ?
+        createdBy String ? @map("created_by")
+  crmSource String ? @map("crm_source")
+  currency String ?
+        crmSyncedAt String ? @map("crm_synced_at")
+  isActive Boolean ? @map("is_active")
+  dealId String ? @map("deal_id")
+  healthscore Float ?
+        healthcategory String ?
+            lastsignalat DateTime ?
+                @@map("deals")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_ATTACHMENTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model EmailAttachments {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  draftId String ? @map("draft_id")
+  fileName String ? @map("file_name")
+  fileUrl String ? @map("file_url")
+  mimeType String ? @map("mime_type")
+  sizeBytes String ? @map("size_bytes")
+  createdAt DateTime @map("created_at")
+    @@map("email_attachments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_DRAFTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model EmailDrafts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  recipientContactId String ? @map("recipient_contact_id")
+  subject String ?
+        body String ?
+            status String ?
+                generatedFromCallId Float ? @map("generated_from_call_id")
+  aiConfidenceScore Float ? @map("ai_confidence_score")
+  flaggedForReview String ? @map("flagged_for_review")
+  createdAt DateTime @map("created_at")
+  draftId String ? @map("draft_id")
+  recipientcontactid String ?
+        dealId String ? @map("deal_id")
+  generatedfromcallid Float ?
+        @@map("email_drafts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_ENGAGEMENT_EVENTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model EmailEngagementEvents {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  emailSendId String ? @map("email_send_id")
+  eventType String ? @map("event_type")
+  occurredAt DateTime ? @map("occurred_at")
+  metadata Json ?
+        @@map("email_engagement_events")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_FLOWS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model EmailFlows {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  createdBy String ? @map("created_by")
+  name String
+  triggerCondition String ? @map("trigger_condition")
+  steps Json ?
+        createdAt DateTime @map("created_at")
+  triggercondition String ?
+        isActive Boolean ? @map("is_active")
+  createdby String ?
+        @@map("email_flows")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_SCHEDULE_QUEUE
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model EmailScheduleQueue {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  draftId String ? @map("draft_id")
+  recipientContactId String ? @map("recipient_contact_id")
+  scheduledAt DateTime ? @map("scheduled_at")
+  recipientTimezone String ? @map("recipient_timezone")
+  status String ?
+        retryCount Int ? @map("retry_count")
+  sentAt DateTime ? @map("sent_at")
+  cancelledAt DateTime ? @map("cancelled_at")
+  createdAt DateTime @map("created_at")
+    @@map("email_schedule_queue")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_SENDS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model EmailSends {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  draftId String ? @map("draft_id")
+  sentAt DateTime ? @map("sent_at")
+  openTracked Boolean ? @map("open_tracked")
+  clickTracked Boolean ? @map("click_tracked")
+  replyReceived Boolean ? @map("reply_received")
+  providerUsed String ? @map("provider_used")
+  isFlow Boolean ? @map("is_flow")
+  flowStepIndex Int ? @map("flow_step_index")
+  flowId String ? @map("flow_id")
+  sentat String ?
+        providerused String ?
+            @@map("email_sends")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_SIGNATURES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model EmailSignatures {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  provider String ?
+        signatureHtml String ? @map("signature_html")
+  isDefault Boolean ? @map("is_default")
+  lastSyncedAt DateTime ? @map("last_synced_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("email_signatures")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAIL_TEMPLATES
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model EmailTemplates {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  createdBy String ? @map("created_by")
+  name String
+  subjectTemplate String ? @map("subject_template")
+  bodyTemplate String ? @map("body_template")
+  language String ?
+        isPromoted Boolean ? @map("is_promoted")
+  promotedBy String ? @map("promoted_by")
+  promotedAt String ? @map("promoted_at")
+  createdAt DateTime @map("created_at")
+  subjecttemplate String ?
+        bodytemplate String ?
+            createdby String ?
+                @@map("email_templates")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EMAILS
+// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Emails {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  subject String ?
+        body String ?
+            sender String ?
+                recipient String ?
+                    createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  dealId String ? @map("deal_id")
+  accountId String ? @map("account_id")
+  senderUserId String ? @map("sender_user_id")
+  sentAt DateTime ? @map("sent_at")
+  threadId String ? @map("thread_id")
+    @@map("emails")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EVALUATION_DETAILS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model EvaluationDetails {
+  id String @id @default (uuid())
+  evaluationId String ? @map("evaluation_id")
+  criteriaId String ? @map("criteria_id")
+  score Float ?
+        verdict String ?
+            evidence String ?
+                reasoning String ?
+                    confidenceScore Float ? @map("confidence_score")
+  createdAt DateTime @map("created_at")
+    @@map("evaluation_details")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — EVALUATIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Evaluations {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  scorecardId Float ? @map("scorecard_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  overallScore Float ? @map("overall_score")
+  summary String ?
+        coachingNotes String ? @map("coaching_notes")
+  evaluatorType String ? @map("evaluator_type")
+  evaluatorId String ? @map("evaluator_id")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  callId String ? @map("call_id")
+  aianswers Json ?
+        totalscore Float ?
+            confidenceScore Float ? @map("confidence_score")
+  flaggedreview String ?
+        reviewtype String ?
+            scoredat DateTime ?
+                @@map("evaluations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — EVENT_OUTBOX
+// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model EventOutbox {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  eventType String ? @map("event_type")
+  aggregateType String ? @map("aggregate_type")
+  aggregateId String ? @map("aggregate_id")
+  payload Json ?
+        idempotencyKey String ? @map("idempotency_key")
+  status String ?
+        publishedAt String ? @map("published_at")
+  createdAt DateTime @map("created_at")
+  retryCount Int ? @map("retry_count")
+    @@map("event_outbox")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — FEATURE_FLAGS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model FeatureFlags {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  flagname String ?
+        isenabled Boolean ?
+            config Json ?
+                @@map("feature_flags")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — FEEDBACK
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Feedback {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  reportId String ? @map("report_id")
+  bulletId Int ? @map("bullet_id")
+  sectionId String ? @map("section_id")
+  feedbackType String ? @map("feedback_type")
+  note String ?
+        createdAt DateTime @map("created_at")
+    @@map("feedback")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — FLOW_ENROLLMENTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model FlowEnrollments {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  flowId String ? @map("flow_id")
+  contactId String ? @map("contact_id")
+  currentStep Int ? @map("current_step")
+  status String ?
+        enrolledAt DateTime ? @map("enrolled_at")
+  dealId String ? @map("deal_id")
+  currentstep Int ?
+        enrolledat DateTime ?
+            @@map("flow_enrollments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — FOLDER_ACCESS_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model FolderAccessLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  folderId String ? @map("folder_id")
+  userId String ? @map("user_id")
+  entityId String ? @map("entity_id")
+  accessedAt String ? @map("accessed_at")
+    @@map("folder_access_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — FOLDER_ITEMS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model FolderItems {
+  id String @id @default (uuid())
+  folderId String ? @map("folder_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  createdAt DateTime @map("created_at")
+    @@map("folder_items")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — FOLDERS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Folders {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  libraryType String ? @map("library_type")
+  createdBy String ? @map("created_by")
+  createdAt DateTime @map("created_at")
+    @@map("folders")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — FORECAST_AUDIT_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ForecastAuditLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  forecastSubmissionId String ? @map("forecast_submission_id")
+  action String ?
+        actorId String ? @map("actor_id")
+  actorRole String ? @map("actor_role")
+  actorName String ? @map("actor_name")
+  metadata Json ?
+        createdAt DateTime @map("created_at")
+    @@map("forecast_audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — FORECAST_KPI_SNAPSHOTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ForecastKpiSnapshots {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  periodId String ? @map("period_id")
+  userId String ? @map("user_id")
+  managerId String ? @map("manager_id")
+  region String ?
+        lob String ?
+            bookings String ?
+                winRate Float ? @map("win_rate")
+  targetAttainment Float ? @map("target_attainment")
+  pipelineCoverage Float ? @map("pipeline_coverage")
+  forecastAccuracy Float ? @map("forecast_accuracy")
+  createdAt DateTime @map("created_at")
+    @@map("forecast_kpi_snapshots")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — FORECAST_NOTIFICATIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ForecastNotifications {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  forecastSubmissionId String ? @map("forecast_submission_id")
+  type String?
+        title String ?
+            message String ?
+                status String ?
+                    readAt String ? @map("read_at")
+  createdAt DateTime @map("created_at")
+    @@map("forecast_notifications")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — FORECAST_PERIODS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model ForecastPeriods {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  startDate DateTime ? @map("start_date")
+  endDate DateTime ? @map("end_date")
+  revenueTarget String ? @map("revenue_target")
+  status String ?
+        isLocked Boolean ? @map("is_locked")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  periodId String ? @map("period_id")
+  startdate DateTime ?
+        enddate DateTime ?
+            revenuetarget String ?
+                islocked Boolean ?
+                    @@map("forecast_periods")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — FORECAST_PROJECTION_BREAKDOWNS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ForecastProjectionBreakdowns {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  snapshotId String ? @map("snapshot_id")
+  periodId String ? @map("period_id")
+  stage String ?
+        region String ?
+            lob String ?
+                dealCount String ? @map("deal_count")
+  pipelineValue String ? @map("pipeline_value")
+  weightedValue String ? @map("weighted_value")
+  conversionRate Float ? @map("conversion_rate")
+  contributionAmount String ? @map("contribution_amount")
+  formula String ?
+        createdAt DateTime @map("created_at")
+    @@map("forecast_projection_breakdowns")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — FORECAST_SUBMISSIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model ForecastSubmissions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  periodId String ? @map("period_id")
+  repUserId String ? @map("rep_user_id")
+  lob String ?
+        version Int ?
+            commitForecast String ? @map("commit_forecast")
+  bestCaseForecast String ? @map("best_case_forecast")
+  notes String ?
+        status String ?
+            submittedAt DateTime ? @map("submitted_at")
+  approvedAt DateTime ? @map("approved_at")
+  reopenedAt DateTime ? @map("reopened_at")
+  overriddenAt DateTime ? @map("overridden_at")
+  managerOverride String ? @map("manager_override")
+  managerComment String ? @map("manager_comment")
+  managerId String ? @map("manager_id")
+  managerName String ? @map("manager_name")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  userId String ? @map("user_id")
+  submittedamount String ?
+        dealids String ?
+            @@map("forecast_submissions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — HISTORICAL_CONVERSION_RATES
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model HistoricalConversionRates {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  fromStage String ? @map("from_stage")
+  toStage String ? @map("to_stage")
+  conversionRate Float ? @map("conversion_rate")
+  sampleSize Int ? @map("sample_size")
+  computedFromPeriod String ? @map("computed_from_period")
+  periodName String ? @map("period_name")
+  computedAt String ? @map("computed_at")
+  rateid Float ?
+        fromstage String ?
+            tostage String ?
+                conversionrate Float ?
+                    samplesize Int ?
+                        computedfromperiod String ?
+                            lastcomputedat String ?
+                                @@map("historical_conversion_rates")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — INGESTION_SOURCES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model IngestionSources {
+  tenantId String @map("tenant_id")
+  sourceId String @id @default (uuid()) @map("source_id")
+  platform String ?
+        webhooksecret String ?
+            status String ?
+                lastwebhookat DateTime ?
+                    @@map("ingestion_sources")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — INTEGRATIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Integrations {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  provider String ?
+        status String ?
+            accountEmail String ? @map("account_email")
+  accountName String ? @map("account_name")
+  accessToken String ? @map("access_token")
+  refreshToken String ? @map("refresh_token")
+  tokenExpiry DateTime ? @map("token_expiry")
+  scopes Json ?
+        metadata Json ?
+            connectedAt DateTime ? @map("connected_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  config Json ?
+        integrationid Float ?
+            platform String ?
+                credentialsencrypted String ?
+                    lastconnectedat DateTime ?
+                        @@map("integrations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — INTERACTION_LINKS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model InteractionLinks {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  activityId String ? @map("activity_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  linkedAccountId String ? @map("linked_account_id")
+  linkedContactId String ? @map("linked_contact_id")
+  linkedDealId String ? @map("linked_deal_id")
+  confidence String ?
+        signals Json ?
+            explanation Json ?
+                aiAssisted Boolean ? @map("ai_assisted")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("interaction_links")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — LINK_DECISION_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model LinkDecisionLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  activityId String ? @map("activity_id")
+  idempotencyKey String ? @map("idempotency_key")
+  candidatesJson Json ? @map("candidates_json")
+  selectedLinks Json ? @map("selected_links")
+  rejectedLinks Json ? @map("rejected_links")
+  aiRequestSent Boolean ? @map("ai_request_sent")
+  aiResponseJson Json ? @map("ai_response_json")
+  processingMs Int ? @map("processing_ms")
+  outcome String ?
+        failureReason String ? @map("failure_reason")
+  createdAt DateTime @map("created_at")
+    @@map("link_decision_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — M01_PROMPT_TEMPLATES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model M01PromptTemplates {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  key String ?
+        name String
+  description String ?
+        templateText String ? @map("template_text")
+  version Int ?
+        isActive Boolean ? @map("is_active")
+  modelConfig String ? @map("model_config")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  createdByUserId String ? @map("created_by_user_id")
+    @@map("m01_prompt_templates")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — MAILBOX_CONNECTIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model MailboxConnections {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  email String
+  provider String ?
+        status String ?
+            disconnectedAt String ? @map("disconnected_at")
+  disconnectedBy String ? @map("disconnected_by")
+  lastSyncedAt DateTime ? @map("last_synced_at")
+  createdAt DateTime @map("created_at")
+    @@map("mailbox_connections")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 - DATA COMPLIANCE — MAPPING_RULE_SETS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model MappingRuleSets {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  createdBy String ? @map("created_by")
+  isActive Boolean ? @map("is_active")
+  config Json ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("mapping_rule_sets")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — METRIC_ALERTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model MetricAlerts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  metricId String ? @map("metric_id")
+  userId String ? @map("user_id")
+  thresholdValue String ? @map("threshold_value")
+  operator String ?
+        notificationChannel String ? @map("notification_channel")
+  isTriggered Boolean ? @map("is_triggered")
+  lastTriggeredAt DateTime ? @map("last_triggered_at")
+  createdAt DateTime @map("created_at")
+    @@map("metric_alerts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — METRIC_SNAPSHOTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model MetricSnapshots {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  metricId String ? @map("metric_id")
+  dashboardId String ? @map("dashboard_id")
+  periodKey String ? @map("period_key")
+  dimensionType String ? @map("dimension_type")
+  dimensionValue String ? @map("dimension_value")
+  amount Float ?
+        computedAt String ? @map("computed_at")
+        @@map("metric_snapshots")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — METRICS
+// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged except naming cleanup. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Metrics {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  category String ?
+        formula String ?
+            variableMappings Json ? @map("variable_mappings")
+  refreshFrequencySeconds String ? @map("refresh_frequency_seconds")
+  allowedPlans String ? @map("allowed_plans")
+  isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  key String ?
+        variables Json ?
+            aggregationType String ? @map("aggregation_type")
+  description String ?
+        createdById String ? @map("created_by_id")
+        @@map("metrics")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — NOTES
+// Merged duplicate/similar tables by semantic meaning. Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Notes {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  authorId String ? @map("author_id")
+  content String ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  accountId String ? @map("account_id")
+  dealId String ? @map("deal_id")
+  contactId String ? @map("contact_id")
+  noteText String ? @map("note_text")
+  createdBy String ? @map("created_by")
+  companyHubspotId String ? @map("company_hubspot_id")
+  createdByRole String ? @map("created_by_role")
+  type String?
+        completed String ?
+            completedAt DateTime ? @map("completed_at")
+            @@map("notes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — NOTIFICATIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Notifications {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  type String?
+        channel String ?
+            payload Json ?
+                status String ?
+                    createdAt DateTime @map("created_at")
+  readAt String ? @map("read_at")
+    @@map("notifications")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — ORG_USAGE_LEDGERS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model OrgUsageLedgers {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  billingPeriod String ? @map("billing_period")
+  currentSpendCents String ? @map("current_spend_cents")
+  totalTokensUsed String ? @map("total_tokens_used")
+  dailyQueryCount Int ? @map("daily_query_count")
+  lastResetDate DateTime ? @map("last_reset_date")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("org_usage_ledgers")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — PERMISSION_POLICIES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model PermissionPolicies {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  teamId String ? @map("team_id")
+  feature String ?
+        isEnabled Boolean ? @map("is_enabled")
+  config Json ?
+        updatedAt DateTime ? @map("updated_at")
+        @@map("permission_policies")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M05 - ACCOUNT INTELLIGENCE — PERMISSION_PROFILES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model PermissionProfiles {
+  id String @id @default (uuid())
+  role String ?
+        canViewAllReps Boolean ? @map("can_view_all_reps")
+  canEditBoardConfig Boolean ? @map("can_edit_board_config")
+  canEditColumns Boolean ? @map("can_edit_columns")
+  canInlineEdit Boolean ? @map("can_inline_edit")
+  canViewAiBriefs Boolean ? @map("can_view_ai_briefs")
+  canTriggerSync Boolean ? @map("can_trigger_sync")
+    @@map("permission_profiles")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — PIPELINE_COVERAGE_METRICS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model PipelineCoverageMetrics {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  periodId String ? @map("period_id")
+  openPipelineValue String ? @map("open_pipeline_value")
+  weightedPipelineValue String ? @map("weighted_pipeline_value")
+  closedWonAmount String ? @map("closed_won_amount")
+  coverageRatio Float ? @map("coverage_ratio")
+  computedAt String ? @map("computed_at")
+  metricId String ? @map("metric_id")
+  pipelinevalue String ?
+        coverageratio Float ?
+            opendealcount String ?
+                computedat DateTime ?
+                    idempotencykey String ?
+                        @@map("pipeline_coverage_metrics")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — PLAY_ADHERENCE_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model PlayAdherenceLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  enrollmentId String ? @map("enrollment_id")
+  userId String ? @map("user_id")
+  playId String ? @map("play_id")
+  adherenceScore Float ? @map("adherence_score")
+  calculatedAt String ? @map("calculated_at")
+    @@map("play_adherence_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — PLAY_ENROLLMENTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model PlayEnrollments {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  playId String ? @map("play_id")
+  dealId String ? @map("deal_id")
+  userId String ? @map("user_id")
+  currentStep Int ? @map("current_step")
+  status String ?
+        triggerEventId String ? @map("trigger_event_id")
+  enrolledAt DateTime ? @map("enrolled_at")
+  updatedAt DateTime ? @map("updated_at")
+  currentstep Int ?
+        enrolledat DateTime ?
+            @@map("play_enrollments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — PLAY_NOTES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model PlayNotes {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  enrollmentId String ? @map("enrollment_id")
+  userId String ? @map("user_id")
+  noteText String ? @map("note_text")
+  createdAt DateTime @map("created_at")
+    @@map("play_notes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — PLAY_STEP_COMPLETIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model PlayStepCompletions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  enrollmentId String ? @map("enrollment_id")
+  stepId String ? @map("step_id")
+  completedBy String ? @map("completed_by")
+  completedAt DateTime ? @map("completed_at")
+  notes String ?
+        stepid String ?
+            completedby String ?
+                @@map("play_step_completions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — QUERY_ANALYTICS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model QueryAnalytics {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  queryType String ? @map("query_type")
+  contextType String ? @map("context_type")
+  contextId String ? @map("context_id")
+  promptHash String ? @map("prompt_hash")
+  modelUsed String ? @map("model_used")
+  tokensPrompt Int ? @map("tokens_prompt")
+  tokensCompletion Int ? @map("tokens_completion")
+  latencyMs Int ? @map("latency_ms")
+  retrievedChunkCount Int ? @map("retrieved_chunk_count")
+  groundingPassRate Float ? @map("grounding_pass_rate")
+  cacheHit Boolean ? @map("cache_hit")
+  status String ?
+        createdAt DateTime @map("created_at")
+    @@map("query_analytics")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — QUERY_MESSAGES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model QueryMessages {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  sessionid String ?
+        role String ?
+            content String ?
+                citedsources Json ?
+                    createdAt DateTime @map("created_at")
+    @@map("query_messages")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — QUERY_SESSIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model QuerySessions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  contextType String ? @map("context_type")
+  contextId String ? @map("context_id")
+  messages Json ?
+        createdAt DateTime @map("created_at")
+  lastActiveAt DateTime ? @map("last_active_at")
+  expiresAt DateTime ? @map("expires_at")
+  sessionid String ?
+        contextdealid String ?
+            contextaccountid String ?
+                @@map("query_sessions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 - FORECASTING PREDICTION — QUOTAS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Quotas {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  periodId String ? @map("period_id")
+  repUserId String ? @map("rep_user_id")
+  amount Float ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("quotas")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — QUOTE_DOCUMENTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model QuoteDocuments {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dealId String ? @map("deal_id")
+  createdBy String ? @map("created_by")
+  status String ?
+        totalAmount Float ? @map("total_amount")
+  discountPercent Float ? @map("discount_percent")
+  fileUrl String ? @map("file_url")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("quote_documents")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — RESEARCH_JOBS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ResearchJobs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  query String ?
+        contextType String ? @map("context_type")
+  contextId String ? @map("context_id")
+  scope String ?
+        periodDays Int ? @map("period_days")
+  filters Json ?
+        status String ?
+            progressPct Float ? @map("progress_pct")
+  progressStage String ? @map("progress_stage")
+  errorMessage String ? @map("error_message")
+  subQueries Json ? @map("sub_queries")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  completedAt DateTime ? @map("completed_at")
+    @@map("research_jobs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — RESEARCH_REPORTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model ResearchReports {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  jobId String ? @map("job_id")
+  generatedByUserId Float ? @map("generated_by_user_id")
+  title String ?
+        query String ?
+            scope String ?
+                periodDays Int ? @map("period_days")
+  filters Json ?
+        status String ?
+            sections Json ?
+                metadata Json ?
+                    version Int ?
+                        isCurrent Boolean ? @map("is_current")
+  parentReportId String ? @map("parent_report_id")
+  shareToken String ? @map("share_token")
+  shareExpiresAt String ? @map("share_expires_at")
+  modelUsed String ? @map("model_used")
+  tokensUsed String ? @map("tokens_used")
+  createdAt DateTime @map("created_at")
+  question String ?
+        resulttext String ?
+            sourcecallids String ?
+                createdby String ?
+                    @@map("research_reports")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — ROLES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Roles {
+  tenantId String @map("tenant_id")
+  roleid String @id @default (uuid())
+  name String
+  permissions Json ?
+        @@map("roles")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SALES_ENGAGEMENT_ORG_SETTINGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model SalesEngagementOrgSettings {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  dailyLimitPerRep String ? @map("daily_limit_per_rep")
+  notificationThreshold String ? @map("notification_threshold")
+  trackingEnabled Boolean ? @map("tracking_enabled")
+  salesforceSyncEnabled Boolean ? @map("salesforce_sync_enabled")
+  salesforceFieldMapping String ? @map("salesforce_field_mapping")
+  slackWebhookUrl String ? @map("slack_webhook_url")
+  gmailEnabled Boolean ? @map("gmail_enabled")
+  outlookEnabled Boolean ? @map("outlook_enabled")
+  complianceAcknowledgedAt String ? @map("compliance_acknowledged_at")
+  complianceAcknowledgedBy String ? @map("compliance_acknowledged_by")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("sales_engagement_org_settings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SALES_PLAYS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model SalesPlays {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  createdBy String ? @map("created_by")
+  name String
+  steps Json ?
+        triggerConditions Json ? @map("trigger_conditions")
+  isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  triggerconditions Json ?
+        createdby String ?
+            @@map("sales_plays")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SAVED_SEARCHES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model SavedSearches {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  name String
+  queryString String ? @map("query_string")
+  filters Json ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("saved_searches")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SCORECARD_CRITERIA
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model ScorecardCriteria {
+  id String @id @default (uuid())
+  scorecardId Float ? @map("scorecard_id")
+  title String ?
+        description String ?
+            scoringType String ? @map("scoring_type")
+  weight Float ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("scorecard_criteria")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SCORECARDS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Scorecards {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  description String ?
+        isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  scorecardId Float ? @map("scorecard_id")
+  questions String ?
+        scoringconditions String ?
+            createdby String ?
+                @@map("scorecards")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SEARCH_INDEX_SYNC_LOGS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model SearchIndexSyncLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  syncStatus String ? @map("sync_status")
+  syncError String ? @map("sync_error")
+  idempotencyKey String ? @map("idempotency_key")
+  indexedAt String ? @map("indexed_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  entitytype String ?
+        entityid String ?
+            status String ?
+                errormessage String ?
+                    syncedAt DateTime ? @map("synced_at")
+                    @@map("search_index_sync_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — SEMANTIC_EMBEDDINGS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model SemanticEmbeddings {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  vector String ?
+        contentChunk String ? @map("content_chunk")
+  createdAt DateTime @map("created_at")
+  sourceType String ? @map("source_type")
+  sourceId String ? @map("source_id")
+  chunkIndex String ? @map("chunk_index")
+  chunkText String ? @map("chunk_text")
+  embedding String ?
+        metadata Json ?
+            embeddingStatus String ? @map("embedding_status")
+  isDeleted Boolean ? @map("is_deleted")
+  entitytype String ?
+        entityid String ?
+            chunkindex String ?
+                chunktext String ?
+                    modelversion String ?
+                        @@map("semantic_embeddings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — SESSIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Sessions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  expiresAt DateTime ? @map("expires_at")
+  data Json ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("sessions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — SHARED_BRIEFS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model SharedBriefs {
+  id String @id @default (uuid())
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  briefType String ? @map("brief_type")
+  shareToken String ? @map("share_token")
+  accessType String ? @map("access_type")
+  createdBy String ? @map("created_by")
+  expiresAt DateTime ? @map("expires_at")
+  isActive Boolean ? @map("is_active")
+  snapshotSummary String ? @map("snapshot_summary")
+  createdAt DateTime @map("created_at")
+  metadata Json ?
+        @@map("shared_briefs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — SPEAKER_SEGMENTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model SpeakerSegments {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  transcriptId String ? @map("transcript_id")
+  speaker String ?
+        text String ?
+            originalText String ? @map("original_text")
+  startMs Int ? @map("start_ms")
+  endMs Int ? @map("end_ms")
+  confidence String ?
+        isLowConfidence Boolean ? @map("is_low_confidence")
+  sequenceIndex Int ? @map("sequence_index")
+  callId String ? @map("call_id")
+  speakerlabel String ?
+        starttime String ?
+            endtime String ?
+                @@map("speaker_segments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M05 - ACCOUNT INTELLIGENCE — SUPPLEMENTARY_ACCOUNTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model SupplementaryAccounts {
+  id String @id @default (uuid())
+  companyHubspotId String ? @map("company_hubspot_id")
+  managerNote String ? @map("manager_note")
+  nextQbrDate String ? @map("next_qbr_date")
+  aiRiskScore Float ? @map("ai_risk_score")
+  riskLabel String ? @map("risk_label")
+  strategicPriority Float ? @map("strategic_priority")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("supplementary_accounts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — TASKS
+// Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Tasks {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  type String?
+        description String ?
+            source String ?
+                status String ?
+                    dueDate DateTime ? @map("due_date")
+  priority String ?
+        sourceId String ? @map("source_id")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  duedate String ?
+        @@map("tasks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — TEAM_MEMBERS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TeamMembers {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  teamId String ? @map("team_id")
+  userId String ? @map("user_id")
+  roleInTeam String ? @map("role_in_team")
+  createdAt DateTime @map("created_at")
+    @@map("team_members")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — TEAMS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model Teams {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  featureFlags String ? @map("feature_flags")
+  createdAt DateTime @map("created_at")
+    @@map("teams")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — TENANTS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Tenants {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  createdAt DateTime @map("created_at")
+  plan String ?
+        features Json ?
+            isDeleted Boolean ? @map("is_deleted")
+  monthlySpendCapCents Int ? @map("monthly_spend_cap_cents")
+  dailyQueryLimit Int ? @map("daily_query_limit")
+  status String ?
+        complianceconfig Json ?
+            @@map("tenants")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M02 - CONVERSATION INTELLIGENCE — THEMEANALYSES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Themeanalyses {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  businessquestion String ?
+        filters Json ?
+            status String ?
+                callcountanalyzed Int ?
+                    createdby String ?
+                        createdAt DateTime @map("created_at")
+    @@map("themeanalyses")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M02 - CONVERSATION INTELLIGENCE — THEMES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Themes {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  summary String ?
+        callcount Int ?
+            accountcount Int ?
+                associatedrevenue Int ?
+                    @@map("themes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M02 - CONVERSATION INTELLIGENCE — TOPICS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Topics {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  phrases Json ?
+        type String ?
+            isvisible String ?
+                createdAt DateTime @map("created_at")
+    @@map("topics")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M02 - CONVERSATION INTELLIGENCE — TOPICTAGS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Topictags {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  topicname String ?
+        confidenceScore Float ? @map("confidence_score")
+  taggedat String ?
+        @@map("topictags")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — TRACKER_DETECTIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model TrackerDetections {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  trackerId String ? @map("tracker_id")
+  entityType String ? @map("entity_type")
+  entityId String ? @map("entity_id")
+  matchedKeyword Int ? @map("matched_keyword")
+  snippet String ?
+        timestampSeconds Int ? @map("timestamp_seconds")
+  createdAt DateTime @map("created_at")
+  callId String ? @map("call_id")
+  accountId String ? @map("account_id")
+  dealId String ? @map("deal_id")
+  contactId String ? @map("contact_id")
+  confidenceScore Float ? @map("confidence_score")
+  severity String ?
+        detectedat DateTime ?
+            @@map("tracker_detections")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — TRACKERS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Trackers {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  keywords String ?
+        createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  description String ?
+        intentdefinition String ?
+            severitydefault String ?
+                isActive Boolean ? @map("is_active")
+  createdby String ?
+        @@map("trackers")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — TRAINING_ASSIGNMENTS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TrainingAssignments {
+  id String @id @default (uuid())
+  repId String ? @map("rep_id")
+  scenarioId String ? @map("scenario_id")
+  managerId String ? @map("manager_id")
+  sessionId String ? @map("session_id")
+  status String ?
+        priority String ?
+            deadline String ?
+                assignedAt String ? @map("assigned_at")
+  completedAt DateTime ? @map("completed_at")
+  attemptCount Int ? @map("attempt_count")
+  maxAttempts Int ? @map("max_attempts")
+  maxHints Int ? @map("max_hints")
+  bestScore Float ? @map("best_score")
+  bestSessionId String ? @map("best_session_id")
+  managerScore Float ? @map("manager_score")
+  managerNote String ? @map("manager_note")
+    @@map("training_assignments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — TRAINING_SCENARIOS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model TrainingScenarios {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  personaName String ? @map("persona_name")
+  personaType String ? @map("persona_type")
+  contextText String ? @map("context_text")
+  difficulty String ?
+        customPrompt String ? @map("custom_prompt")
+  voiceId String ? @map("voice_id")
+  managerId String ? @map("manager_id")
+  createdAt DateTime @map("created_at")
+  name String
+  personadescription String ?
+        context String ?
+            scorecardId Float ? @map("scorecard_id")
+  createdby String ?
+        @@map("training_scenarios")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — TRAINING_SCORECARD_CRITERIA
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TrainingScorecardCriteria {
+  id String @id @default (uuid())
+  scorecardId Float ? @map("scorecard_id")
+  criterionName String ? @map("criterion_name")
+  description String ?
+        maxScore Float ? @map("max_score")
+  weight Float ?
+        createdAt DateTime @map("created_at")
+    @@map("training_scorecard_criteria")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — TRAINING_SCORECARDS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TrainingScorecards {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  scenarioId String ? @map("scenario_id")
+  createdBy String ? @map("created_by")
+  createdAt DateTime @map("created_at")
+    @@map("training_scorecards")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — TRAINING_SESSION_MESSAGES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TrainingSessionMessages {
+  id String @id @default (uuid())
+  sessionId String ? @map("session_id")
+  senderType String ? @map("sender_type")
+  messageText String ? @map("message_text")
+  turnIndex Int ? @map("turn_index")
+  metadata Json ?
+        createdAt DateTime @map("created_at")
+    @@map("training_session_messages")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M09 - COACHING TRAINING — TRAINING_SESSION_SCORES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TrainingSessionScores {
+  id String @id @default (uuid())
+  sessionId String ? @map("session_id")
+  criterionId String ? @map("criterion_id")
+  score Float ?
+        feedback String ?
+            evaluatorType String ? @map("evaluator_type")
+  evaluatorId String ? @map("evaluator_id")
+  createdAt DateTime @map("created_at")
+    @@map("training_session_scores")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — TRAINING_SESSIONS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model TrainingSessions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  repId String ? @map("rep_id")
+  scenarioId String ? @map("scenario_id")
+  managerId String ? @map("manager_id")
+  messagesJson Json ? @map("messages_json")
+  feedbackJson Json ? @map("feedback_json")
+  selectedVoiceId String ? @map("selected_voice_id")
+  completedAt DateTime ? @map("completed_at")
+  createdAt DateTime @map("created_at")
+  isPractice Boolean ? @map("is_practice")
+  hintsUsed String ? @map("hints_used")
+  sessionid String ?
+        userId String ? @map("user_id")
+  conversation String ?
+        scorecardresult Float ?
+            status String ?
+                @@map("training_sessions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M03 - AI SUMMARIES GENAI — TRANSCRIPT_CHUNKS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model TranscriptChunks {
+  id String @id @default (uuid())
+  callId String ? @map("call_id")
+  chunkText String ? @map("chunk_text")
+  embedding String ?
+        createdAt DateTime @map("created_at")
+    @@map("transcript_chunks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — TRANSCRIPT_CORRECTIONS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model TranscriptCorrections {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  transcriptId String ? @map("transcript_id")
+  originalterm String ?
+        correctedterm String ?
+            appliedat DateTime ?
+                @@map("transcript_corrections")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M01 - CAPTURE & TRANSCRIPTION — TRANSCRIPTS
+// Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Transcripts {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  callId String ? @map("call_id")
+  fullText String ? @map("full_text")
+  summary String ?
+        keyHighlights String ? @map("key_highlights")
+  nextSteps String ? @map("next_steps")
+  talkRatio Float ? @map("talk_ratio")
+  assemblyAiJobId String ? @map("assembly_ai_job_id")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  transcriptText String ? @map("transcript_text")
+  speaker String ?
+        timestampMs String ? @map("timestamp_ms")
+  sentiment String ?
+        transcriptId String ? @map("transcript_id")
+  rawtext String ?
+        languagedetected String ?
+            wordcount Int ?
+                confidenceScore Float ? @map("confidence_score")
+                @@map("transcripts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M02 - CONVERSATION INTELLIGENCE — TRANSLATIONPREFERENCES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Translationpreferences {
+  tenantId String @map("tenant_id")
+  prefid String @id @default (uuid())
+  teamid String ?
+        userId String ? @map("user_id")
+  targetlanguage String ?
+        @@map("translationpreferences")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M05 - ACCOUNT INTELLIGENCE — USER_BOARD_PREFERENCES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model UserBoardPreferences {
+  id String @id @default (uuid())
+  sessionRole String ? @map("session_role")
+  boardId String ? @map("board_id")
+  activeTabId String ? @map("active_tab_id")
+  filters Json ?
+        sortField String ? @map("sort_field")
+  sortDir String ? @map("sort_dir")
+  pageSize String ? @map("page_size")
+  additionalColumns Json ? @map("additional_columns")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("user_board_preferences")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — USER_DASHBOARD_PREFERENCES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model UserDashboardPreferences {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  dashboardId String ? @map("dashboard_id")
+  isStarred Boolean ? @map("is_starred")
+  isPinned Boolean ? @map("is_pinned")
+  lastViewedAt String ? @map("last_viewed_at")
+  createdAt DateTime @map("created_at")
+    @@map("user_dashboard_preferences")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M04 - DEAL INTELLIGENCE — USER_PREFERENCES
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model UserPreferences {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  userId String ? @map("user_id")
+  key String ?
+        amount Float ?
+            createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+    @@map("user_preferences")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — USER_ROLES
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model UserRoles {
+  tenantId String @map("tenant_id")
+  userId String @map("user_id")
+  roleid String
+  assignedat DateTime ?
+        @@id([tenantId, userId, roleid])
+        @@map("user_roles")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM / SHARED CORE — USERS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns. Global shared entity; use as common source of truth to avoid per-module duplication.
+// ─────────────────────────────────────────────────────────────
+model Users {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  teamId String ? @map("team_id")
+  email String
+  name String
+  role String ?
+        crmUserId String ? @map("crm_user_id")
+  isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+  dailyQueryLimit Int ? @map("daily_query_limit")
+  password String ?
+        firstName String ? @map("first_name")
+  lastName String ? @map("last_name")
+  lastLoginAt DateTime ? @map("last_login_at")
+  updatedAt DateTime ? @map("updated_at")
+  repId String ? @map("rep_id")
+  managerId String ? @map("manager_id")
+  region String ?
+        teamName String ? @map("team_name")
+  status String ?
+        userId String ? @map("user_id")
+  supabaseuserid String ?
+        avatarurl String ?
+            @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M02 - CONVERSATION INTELLIGENCE — VOCABULARYCORRECTIONS
+// Added reference-required table not present in implementation doc.
+// ─────────────────────────────────────────────────────────────
+model Vocabularycorrections {
+  tenantId String @map("tenant_id")
+  vocabid String @id @default (uuid())
+  incorrectterm String ?
+        correctterm String ?
+            language String ?
+                createdAt DateTime @map("created_at")
+    @@map("vocabularycorrections")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M07 - REVENUE DASHBOARDS — WIDGET_CATALOG
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model WidgetCatalog {
+  id String @id @default (uuid())
+  widgetType String ? @map("widget_type")
+  name String
+  description String ?
+        supportedMetrics String ? @map("supported_metrics")
+  defaultConfig String ? @map("default_config")
+  requiredDataFields String ? @map("required_data_fields")
+  category String ?
+        isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+    @@map("widget_catalog")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — WORKFLOW_AUDIT_LOGS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model WorkflowAuditLogs {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  workflowId String ? @map("workflow_id")
+  userId String ? @map("user_id")
+  action String ?
+        metadata Json ?
+            createdAt DateTime @map("created_at")
+    @@map("workflow_audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — WORKFLOW_EXCEPTIONS
+// Kept implemented-only table unchanged except naming cleanup.
+// ─────────────────────────────────────────────────────────────
+model WorkflowExceptions {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  runId String ? @map("run_id")
+  workflowId String ? @map("workflow_id")
+  errorCode Int ? @map("error_code")
+  errorMessage String ? @map("error_message")
+  stackTrace String ? @map("stack_trace")
+  resolved Boolean ?
+        resolvedAt String ? @map("resolved_at")
+  createdAt DateTime @map("created_at")
+    @@map("workflow_exceptions")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — WORKFLOW_RUNS
+// Merged duplicate/similar tables by semantic meaning. Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model WorkflowRuns {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  workflowId String ? @map("workflow_id")
+  dealId String ? @map("deal_id")
+  contactId String ? @map("contact_id")
+  status String ?
+        currentStepIndex Int ? @map("current_step_index")
+  variables Json ?
+        logs Json ?
+            createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  triggereventpayload Json ?
+        startedAt DateTime ? @map("started_at")
+  completedAt DateTime ? @map("completed_at")
+  idempotencykey String ?
+        @@map("workflow_runs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M08 - SALES ENGAGEMENT — WORKFLOWS
+// Unioned implemented and required reference columns.
+// ─────────────────────────────────────────────────────────────
+model Workflows {
+  id String @id @default (uuid())
+  tenantId String @map("tenant_id")
+  name String
+  triggerType String ? @map("trigger_type")
+  description String ?
+        triggerConditions Json ? @map("trigger_conditions")
+  definition String ?
+        version Int ?
+            isActive Boolean ? @map("is_active")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime ? @map("updated_at")
+  triggerevent String ?
+        branches Json ?
+            actions Json ?
+                createdby String ?
+                    @@map("workflows")
+}

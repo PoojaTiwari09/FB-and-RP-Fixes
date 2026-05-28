@@ -25,7 +25,7 @@
 
 ## Smoke matrix (latest run — **22/22 PASS**)
 
-Run: `powershell -ExecutionPolicy Bypass -File _audit/smoke-backend.ps1`
+Run: `powershell -ExecutionPolicy Bypass -File doc/test_result/smoke-backend.ps1`
 
 ```
 Summary: 22 of 22 passed
@@ -64,5 +64,5 @@ pnpm exec tsx ..\..\modules\m01-capture-transcription\seeds\seed.ts
 pnpm exec tsx ..\..\modules\m06-forecasting-prediction\seeds\historical-seed.ts
 
 # Smoke
-powershell -ExecutionPolicy Bypass -File ..\..\..\..\_audit\smoke-backend.ps1
+powershell -ExecutionPolicy Bypass -File ..\..\..\..\doc\test_result\smoke-backend.ps1
 ```

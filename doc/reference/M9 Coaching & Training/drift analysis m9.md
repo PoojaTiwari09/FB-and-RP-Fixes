@@ -1,7 +1,7 @@
 # Drift Analysis: M9 Coaching & Training
 
 **Date:** 2026-05-18  
-**Scope:** All files in `/Reference documents/M9 Coaching & Training/` vs. `complete_codebase_knowledge_base.md` (SSOT v3.0)  
+**Scope:** All files in `/doc/reference/M9 Coaching & Training/` vs. `complete_codebase_knowledge_base.md` (SSOT v3.0)  
 **Status:** 100% Compliant (Resolved & Fixed)  
 
 ---
@@ -36,4 +36,4 @@ A total of **8 deviations** were found in the legacy files. The main areas of dr
 
 ## 3. Verified Clean Slate
 
-As of **2026-05-18**, all files inside `/Reference documents/M9 Coaching & Training/` have been successfully aligned to the v3.0 SSOT, bringing this module to **100% architectural compliance**.
+As of **2026-05-18**, all files inside `/doc/reference/M9 Coaching & Training/` have been successfully aligned to the v3.0 SSOT, bringing this module to **100% architectural compliance**.
