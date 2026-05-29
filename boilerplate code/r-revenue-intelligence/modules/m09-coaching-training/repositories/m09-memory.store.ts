@@ -53,6 +53,8 @@ type SessionRow = {
   created_at: Date;
   is_practice: boolean;
   hints_used: number;
+  lifecycle_status?: 'active' | 'paused' | 'completed';
+  elapsed_seconds?: number;
   scenario?: ScenarioRow;
   rep?: UserRow;
 };

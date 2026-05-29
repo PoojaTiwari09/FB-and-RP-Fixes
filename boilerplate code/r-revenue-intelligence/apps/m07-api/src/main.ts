@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 
 process.env.M07_STANDALONE_AUTH = process.env.M07_STANDALONE_AUTH ?? 'true';
 

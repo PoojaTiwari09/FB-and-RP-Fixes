@@ -17,6 +17,9 @@ import {
   RolesGuard,
 } from './controllers/m09.controller';
 import { AuthController } from './controllers/auth.controller';
+import { M09FrontendTrainingsController } from './frontend-api/m09-frontend-trainings.controller';
+import { M09FrontendTrainingsService } from './frontend-api/m09-frontend-trainings.service';
+import { M09FrontendAuthGuard } from './frontend-api/m09-frontend-auth.guard';
 
 // Services
 import {
@@ -58,9 +61,12 @@ import { M09Worker } from './workers/m09.worker';
     TrainingController,
     AnalyticsController,
     TestController,
+    M09FrontendTrainingsController,
   ],
   providers: [
     Reflector,
+    M09FrontendAuthGuard,
+    M09FrontendTrainingsService,
     JwtAuthGuard,
     RolesGuard,
     // Services

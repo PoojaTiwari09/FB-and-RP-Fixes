@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -13,6 +14,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 import * as bcrypt from 'bcrypt';
 import { M09AppModule } from './app.module';
+import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
 import { M09Repository } from '../../../modules/m09-coaching-training/repositories/m09.repository';
 
 async function bootstrap() {
@@ -27,7 +29,7 @@ async function bootstrap() {
     origin: M09AppModule.corsOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, x-tenant-id, x-user-id, x-org-id',
   });
 
   app.useGlobalPipes(
@@ -37,6 +39,7 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
+  app.useGlobalFilters(new FrontendApiExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('M09 Sales AI Coaching API')

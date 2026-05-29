@@ -3,6 +3,17 @@ import { BullModule } from '@nestjs/bullmq';
 
 // Controllers (real, production)
 import { CallsController }   from './controllers/calls.controller';
+import { M01FrontendCallsController } from './frontend-api/m01-frontend-calls.controller';
+import { M01FrontendCallsService } from './frontend-api/m01-frontend-calls.service';
+import {
+  M01FrontendBriefPeriodsController,
+  M01FrontendBriefTemplatesController,
+  M01FrontendCallDetailController,
+} from './frontend-api/m01-frontend-call-detail.controller';
+import { M01FrontendTranscriptService } from './frontend-api/m01-frontend-transcript.service';
+import { M01FrontendUploadController } from './frontend-api/m01-frontend-upload.controller';
+import { M01FrontendSmartCallController } from './frontend-api/m01-frontend-smart-call.controller';
+import { M01FrontendSmartCallService } from './frontend-api/m01-frontend-smart-call.service';
 import { UploadController }  from './controllers/upload.controller';
 import { WebhookController } from './controllers/webhook.controller';
 import { IntegrationsController } from './controllers/integrations.controller';
@@ -61,6 +72,12 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     BullModule.registerQueue({ name: 'm01-queue' }),
   ],
   controllers: [
+    M01FrontendCallsController,
+    M01FrontendCallDetailController,
+    M01FrontendBriefTemplatesController,
+    M01FrontendBriefPeriodsController,
+    M01FrontendUploadController,
+    M01FrontendSmartCallController,
     CallsController,
     UploadController,
     WebhookController,
@@ -70,6 +87,9 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
   providers: [
     // Services
     CallService,
+    M01FrontendCallsService,
+    M01FrontendTranscriptService,
+    M01FrontendSmartCallService,
     PiiRedactionService,
     AuditLogService,
     AiExtractionClient,

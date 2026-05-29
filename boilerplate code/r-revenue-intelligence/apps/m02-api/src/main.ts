@@ -5,12 +5,14 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { M02AppModule } from './app.module';
 import { ZodExceptionFilter } from './zod-exception.filter';
+import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger('M02-API');
@@ -27,7 +29,7 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
-  app.useGlobalFilters(new ZodExceptionFilter());
+  app.useGlobalFilters(new ZodExceptionFilter(), new FrontendApiExceptionFilter());
 
   const port = parseInt(process.env.M02_API_PORT ?? '3002', 10);
   const webUrl = process.env.M02_WEB_URL || 'http://localhost:5175';

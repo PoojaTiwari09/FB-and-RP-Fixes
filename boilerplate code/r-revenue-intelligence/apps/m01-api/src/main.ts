@@ -7,12 +7,14 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { M01AppModule } from './app.module';
 import { ZodExceptionFilter } from './zod-exception.filter';
+import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'audio');
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -34,7 +36,7 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
-  app.useGlobalFilters(new ZodExceptionFilter());
+  app.useGlobalFilters(new ZodExceptionFilter(), new FrontendApiExceptionFilter());
 
   const port = parseInt(process.env.M01_API_PORT ?? '3001', 10);
   const webUrl = process.env.M01_WEB_URL || 'http://localhost:5174';

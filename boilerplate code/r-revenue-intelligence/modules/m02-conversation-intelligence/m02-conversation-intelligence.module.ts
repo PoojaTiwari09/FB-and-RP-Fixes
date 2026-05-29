@@ -6,6 +6,13 @@ import { TopicTagController } from './controllers/topic-tag.controller';
 import { TranslationController } from './controllers/translation.controller';
 import { VocabularyCorrectionController } from './controllers/vocabulary-correction.controller';
 import { ConversationIngestController } from './controllers/ingest.controller';
+import {
+  M02FrontendCallsActionsController,
+  M02FrontendFiltersController,
+  M02FrontendSearchController,
+  M02FrontendStreamsController,
+} from './frontend-api/m02-frontend-search.controller';
+import { M02FrontendSearchService } from './frontend-api/m02-frontend-search.service';
 import { ConversationIngestService } from './services/ingest.service';
 import { M02ConversationIntelligenceService } from './services/m02.service';
 import { HybridSearchService } from './services/hybrid-search.service';
@@ -31,8 +38,13 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     TranslationController,
     VocabularyCorrectionController,
     ConversationIngestController,
+    M02FrontendSearchController,
+    M02FrontendFiltersController,
+    M02FrontendCallsActionsController,
+    M02FrontendStreamsController,
   ],
   providers: [
+    M02FrontendSearchService,
     ConversationIngestService,
     // Application services
     M02ConversationIntelligenceService,

@@ -365,6 +365,8 @@ export class M09Repository {
       selected_voice_id: data.selected_voice_id || 'Xb7hH8MSUJpSbSDYk0k2',
       is_practice: data.is_practice ?? false,
       hints_used: 0,
+      lifecycle_status: 'active',
+      elapsed_seconds: 0,
       created_at: new Date(),
       completed_at: null,
     };
@@ -403,6 +405,17 @@ export class M09Repository {
       return this.parseSession(session);
     }
     return this.parseSession(row);
+  }
+
+  async updateSessionLifecycle(
+    id: string,
+    patch: { lifecycle_status?: 'active' | 'paused' | 'completed'; elapsed_seconds?: number },
+  ) {
+    const s = this.store.sessions.get(id);
+    if (!s) throw new NotFoundException('Session not found');
+    if (patch.lifecycle_status) s.lifecycle_status = patch.lifecycle_status;
+    if (patch.elapsed_seconds != null) s.elapsed_seconds = patch.elapsed_seconds;
+    return this.parseSession(s);
   }
 
   async updateSessionMessages(id: string, messages: any[]) {

@@ -13,13 +13,18 @@ export class CallRepository {
   }
 
   // ── Sortable list with transcript status (CT sortable list) ──────────
-  async findAll(tenantId: string, query: ListCallsQueryDto) {
+  async findAll(
+    tenantId: string,
+    query: ListCallsQueryDto,
+    extra?: Record<string, unknown>,
+  ) {
     const { status, source, sortBy, order, limit, offset } = query;
 
-    const where: Prisma.CallRecordWhereInput = {
+    const where: Record<string, unknown> = {
       tenantId,
       ...(status ? { transcriptStatus: status } : {}),
       ...(source ? { callSource: source } : {}),
+      ...extra,
     };
 
     const [records, total] = await this.prisma.$transaction([

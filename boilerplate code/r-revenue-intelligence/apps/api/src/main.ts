@@ -8,9 +8,9 @@ register({
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 
-// Load .env from the monorepo root relative to this file.
-// final_product/.env or r-revenue-intelligence/.env both work — Node picks the first match.
+// Load .env: app folder, then repo root (see README.md).
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
