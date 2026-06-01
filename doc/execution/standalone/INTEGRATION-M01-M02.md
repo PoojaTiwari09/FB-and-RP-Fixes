@@ -57,7 +57,7 @@ If `EADDRINUSE` on 3002, stop the old `apps/api` process:
 ## Start stack
 
 ```powershell
-cd "c:\Users\Relanto\Downloads\final_product"
+cd "<repo-root>"
 docker compose up -d postgres redis
 
 cd "r-revenue-intelligence-monorepo\boilerplate code\r-revenue-intelligence"

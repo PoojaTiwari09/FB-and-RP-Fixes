@@ -28,14 +28,33 @@ function resolveAccount(record: any): string {
   return '—';
 }
 
-/** Locked contract: owner is always `{ id, name, avatarInitials }`. */
+/** Figma `Call_List Sales_Rep.txt`: ownerId, ownerName, avatarInitials */
 export function resolveOwner(record: any) {
-  const name = record.callOwner || record.ownerName || 'Unknown';
-  const id = record.ownerId || record.callOwner || 'owner-unknown';
+  const ownerName = record.callOwner || record.ownerName || 'Unknown';
+  const ownerId = record.ownerId || record.callOwner || 'owner-unknown';
   return {
-    id,
-    name,
-    avatarInitials: initials(name),
+    ownerId,
+    ownerName,
+    avatarInitials: initials(ownerName),
+  };
+}
+
+/** AI Call Reviewer (Sales Rep) list row — `Ai_Call_Reviewer_SalesRep.pdf` */
+export function mapAiReviewerCallRow(record: any) {
+  const score = Math.round(record.overallScore ?? record.aiScore ?? 78);
+  return {
+    id: record.id,
+    callName: record.title,
+    account: resolveAccount(record),
+    dateTime: record.callDate instanceof Date
+      ? record.callDate.toISOString()
+      : new Date(record.callDate).toISOString(),
+    duration: formatDuration(record.durationSeconds ?? 0),
+    type: record.dealType || record.callType || 'Discovery',
+    stage: record.stage || 'Qualification',
+    score,
+    status: record.reviewStatus || 'Not Reviewed',
+    tags: record.tags || ['Enterprise'],
   };
 }
 

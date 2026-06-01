@@ -5,7 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
 
-const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5175,http://localhost:3005')
+const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5175,http://localhost:3005,http://localhost:3012,http://localhost:3013')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);

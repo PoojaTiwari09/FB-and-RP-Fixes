@@ -1,19 +1,19 @@
 # Standalone module run commands
 
-**Cross-module data flow and integration plan:** [MODULE-DATA-FLOW.md](../MODULE-DATA-FLOW.md)
+> **Canonical copy:** [`boilerplate code/r-revenue-intelligence/RUNBOOK.md`](../../../boilerplate%20code/r-revenue-intelligence/RUNBOOK.md)
+
+**Cross-module data flow:** see app ARCHITECTURE.md
 
 **API documentation (frontend team):** [api-docs/README.md](../api-docs/README.md)
 
-Run each module **individually** (separate backend + frontend). All commands run from the monorepo root:
+Run each module **individually** (separate backend + frontend).
 
-```text
-c:\Users\Relanto\Downloads\final_product\r-revenue-intelligence-monorepo\boilerplate code\r-revenue-intelligence
-```
+**Repo root:** `docker compose up -d`
 
-## Prerequisites (shared)
+**App folder** (all `pnpm` commands): `boilerplate code/r-revenue-intelligence`
 
 ```powershell
-cd "c:\Users\Relanto\Downloads\final_product\r-revenue-intelligence-monorepo\boilerplate code\r-revenue-intelligence"
+cd "<repo-root>\boilerplate code\r-revenue-intelligence"
 pnpm install
 ```
 

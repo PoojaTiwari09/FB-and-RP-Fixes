@@ -1,6 +1,6 @@
 # Database tools (unified schema)
 
-Utilities moved from `final_product/` root. The canonical **design** schema for M01–M10 is here; runtime Prisma for the monorepo remains under `boilerplate code/r-revenue-intelligence/packages/database/`.
+Schema tooling for M01–M10. Runtime Prisma lives under `boilerplate code/r-revenue-intelligence/packages/database/`.
 
 | File | Purpose |
 |------|---------|

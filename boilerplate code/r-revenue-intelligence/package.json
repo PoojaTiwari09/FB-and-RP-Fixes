@@ -10,6 +10,8 @@
     "dev:m02-web": "pnpm --filter @rri/m02-web run dev",
     "dev:m09": "pnpm run dev:m09-api & pnpm run dev:m09-web",
     "dev:m09-api": "pnpm --filter m09-api run dev",
+    "dev:unified-api": "pnpm --filter unified-api run dev",
+    "seed:m01": "pnpm exec tsx modules/m01-capture-transcription/seeds/seed.ts",
     "dev:m09-web": "pnpm --filter @rri/m09-web run dev",
     "dev:m03": "pnpm run dev:m03-api & pnpm run dev:m03-web",
     "dev:m03-api": "pnpm --filter m03-api run dev",

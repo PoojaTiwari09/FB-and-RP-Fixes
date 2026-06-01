@@ -14,6 +14,12 @@ import { M01FrontendTranscriptService } from './frontend-api/m01-frontend-transc
 import { M01FrontendUploadController } from './frontend-api/m01-frontend-upload.controller';
 import { M01FrontendSmartCallController } from './frontend-api/m01-frontend-smart-call.controller';
 import { M01FrontendSmartCallService } from './frontend-api/m01-frontend-smart-call.service';
+import { M01FrontendSmartCallPersistenceService } from './frontend-api/m01-frontend-smart-call-persistence.service';
+import {
+  M01FrontendAiReviewerDetailController,
+  M01FrontendCoachingInsightsController,
+} from './frontend-api/m01-frontend-ai-reviewer.controller';
+import { M01FrontendAiReviewerService } from './frontend-api/m01-frontend-ai-reviewer.service';
 import { UploadController }  from './controllers/upload.controller';
 import { WebhookController } from './controllers/webhook.controller';
 import { IntegrationsController } from './controllers/integrations.controller';
@@ -78,6 +84,8 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     M01FrontendBriefPeriodsController,
     M01FrontendUploadController,
     M01FrontendSmartCallController,
+    M01FrontendAiReviewerDetailController,
+    M01FrontendCoachingInsightsController,
     CallsController,
     UploadController,
     WebhookController,
@@ -90,6 +98,8 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     M01FrontendCallsService,
     M01FrontendTranscriptService,
     M01FrontendSmartCallService,
+    M01FrontendSmartCallPersistenceService,
+    M01FrontendAiReviewerService,
     PiiRedactionService,
     AuditLogService,
     AiExtractionClient,

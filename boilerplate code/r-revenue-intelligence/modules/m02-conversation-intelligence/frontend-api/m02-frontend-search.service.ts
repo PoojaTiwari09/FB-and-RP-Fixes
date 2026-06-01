@@ -100,6 +100,17 @@ export class M02FrontendSearchService {
 
     const emailsCount = 0;
     const callsCount = results.length;
+    const count = results.length || 10;
+    const gran = q.chartGranularity || 'weeks';
+
+    const chartBlock = {
+      granularity: gran,
+      data: buildChartData(gran, count),
+      days: buildChartData('days', count),
+      weeks: buildChartData('weeks', count),
+      months: buildChartData('months', count),
+      quarters: buildChartData('quarters', count),
+    };
 
     return {
       meta: {
@@ -110,10 +121,9 @@ export class M02FrontendSearchService {
         callsCount: q.tab === 'emails' ? 0 : callsCount,
         emailsCount: q.tab === 'calls' ? emailsCount : emailsCount,
       },
-      chart: {
-        granularity: q.chartGranularity,
-        data: buildChartData(q.chartGranularity, results.length || 10),
-      },
+      chart: chartBlock,
+      emailChart: chartBlock,
+      emailResults: [],
       results,
     };
   }

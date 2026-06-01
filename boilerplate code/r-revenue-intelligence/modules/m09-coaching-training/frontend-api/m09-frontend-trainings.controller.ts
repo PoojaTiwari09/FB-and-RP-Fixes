@@ -22,8 +22,13 @@ export class M09FrontendTrainingsController {
     return this.svc.listTrainings(req.user.id, req.orgId, status);
   }
 
-  @Get(':trainingId')
+  @Get(':trainingId/setup')
   getSetup(@Param('trainingId') trainingId: string, @Req() req: any) {
+    return this.svc.getTraining(trainingId, req.orgId);
+  }
+
+  @Get(':trainingId')
+  getTraining(@Param('trainingId') trainingId: string, @Req() req: any) {
     return this.svc.getTraining(trainingId, req.orgId);
   }
 

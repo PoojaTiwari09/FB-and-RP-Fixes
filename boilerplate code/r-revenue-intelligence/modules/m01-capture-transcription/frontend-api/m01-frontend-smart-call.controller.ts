@@ -23,8 +23,8 @@ export class M01FrontendSmartCallController {
   }
 
   @Post('sessions/:sessionId/end')
-  end(@Param('sessionId') sessionId: string) {
-    return this.svc.endSession(sessionId);
+  end(@Param('sessionId') sessionId: string, @Body() body: { endedAt?: string; generateSummary?: boolean }) {
+    return this.svc.endSession(sessionId, body);
   }
 
   @Get('sessions/:sessionId/summary')
@@ -36,4 +36,18 @@ export class M01FrontendSmartCallController {
   transcript(@Param('sessionId') sessionId: string) {
     return this.svc.getTranscript(sessionId);
   }
-}
+
+  @Post('sessions/:sessionId/persist')
+  persist(@Param('sessionId') sessionId: string, @Body() body: Record<string, unknown>) {
+    return this.svc.persistSession(sessionId, body);
+  }
+
+  @Post('sessions/:sessionId/chunks')
+  chunk(@Param('sessionId') sessionId: string, @Body() body: Record<string, unknown>) {
+    return this.svc.persistChunk(sessionId, body);
+  }
+
+  @Get('sessions/:sessionId/summaries')
+  summaries(@Param('sessionId') sessionId: string) {
+    return this.svc.listSummaries(sessionId);
+  }

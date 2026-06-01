@@ -4,6 +4,8 @@ import { SessionsService, ScenariosService } from '../services/m09.service';
 import { M09Repository } from '../repositories/m09.repository';
 import {
   mapMessages,
+  mapResults,
+  mapSessionState,
   mapTrainingListItem,
   mapTrainingSetup,
 } from './m09-frontend-trainings.mapper';
@@ -36,7 +38,7 @@ export class M09FrontendTrainingsService {
     if (status && status !== 'all') {
       items = items.filter((i) => i.status === status);
     }
-    return items;
+    return { trainings: items };
   }
 
   async getTraining(trainingId: string, orgId: string) {
@@ -71,15 +73,8 @@ export class M09FrontendTrainingsService {
     const messages = typeof session.messages_json === 'string'
       ? JSON.parse(session.messages_json)
       : session.messages_json || [];
-    return {
-      sessionId,
-      trainingId,
-      status: session.lifecycle_status || (session.completed_at ? 'completed' : 'active'),
-      elapsedSeconds: session.elapsed_seconds ?? 0,
-      messageCount: messages.length,
-      selectedVoiceId: session.selected_voice_id,
-      messages: mapMessages(messages),
-    };
+    const scenario = await this.scenarios.findOne(trainingId, orgId);
+    return mapSessionState(session, scenario, messages);
   }
 
   async sendMessage(
@@ -103,15 +98,21 @@ export class M09FrontendTrainingsService {
     );
 
     const ts = Math.floor((Date.now() - new Date(session.created_at).getTime()) / 1000);
-    // TTS optional: audioUrl null until vendor wired — text-only works for AI trainer
     return {
-      userMessage: { id: `u_${ts}`, text: dto.text, timestamp: ts },
+      userMessage: {
+        id: `u_${ts}`,
+        sender: 'user',
+        text: dto.text,
+        timestampSeconds: ts,
+      },
       aiResponse: {
         id: `ai_${ts}`,
+        sender: 'ai',
         text: result.reply,
-        timestamp: ts + 1,
+        timestampSeconds: ts + 1,
         audioUrl: result.audio ? `data:audio/mp3;base64,${result.audio}` : null,
       },
+      scorecardUpdate: { pb_01: 'in-progress' },
     };
   }
 
@@ -126,20 +127,14 @@ export class M09FrontendTrainingsService {
       lifecycle_status: 'paused',
       elapsed_seconds: elapsed,
     });
-    return {
-      message: 'Session paused',
-      sessionId,
-      status: 'paused',
-      elapsedSeconds: elapsed,
-      messageCount: messages.length,
-    };
+    return { success: true, status: 'paused' };
   }
 
   async resumeSession(trainingId: string, sessionId: string, orgId: string) {
     const session = await this.repo.findSessionById(sessionId, orgId);
     if (session.scenario_id !== trainingId) throw new NotFoundException('Session not found');
     await this.repo.updateSessionLifecycle(sessionId, { lifecycle_status: 'active' });
-    return { message: 'Session resumed', sessionId, status: 'active' };
+    return { success: true, status: 'active' };
   }
 
   async endSession(trainingId: string, sessionId: string, orgId: string) {
@@ -149,12 +144,7 @@ export class M09FrontendTrainingsService {
     setImmediate(() => {
       this.sessions.endSession(sessionId, orgId).catch(() => undefined);
     });
-    return {
-      message: 'Session ended. Evaluation started.',
-      sessionId,
-      status: 'completed',
-      resultsReady: false,
-    };
+    return { success: true, status: 'completed' };
   }
 
   async getResults(trainingId: string, sessionId: string, orgId: string) {
@@ -166,33 +156,62 @@ export class M09FrontendTrainingsService {
       try { feedback = JSON.parse(feedback); } catch { feedback = null; }
     }
 
-    if (!feedback) {
-      return {
-        sessionId,
-        trainingTitle: session.scenario?.persona_name || 'Training',
-        resultsReady: false,
-        status: 'processing',
-      };
-    }
+    return mapResults(session, feedback);
+  }
 
+  async getManagerDashboard(orgId: string) {
+    const scenarios = await this.scenarios.findAll(orgId);
     return {
-      sessionId,
-      trainingTitle: session.scenario?.persona_name || 'Training',
-      resultsReady: true,
-      overallScore: feedback.overall_score ?? 0,
-      overallRating: (feedback.overall_score ?? 0) >= 80 ? 'Good' : 'Needs Practice',
-      overallDescription: feedback.evaluation_summary || '',
-      highlightBadges: (feedback.strengths || []).slice(0, 3).map((s: string) => ({
-        label: s,
-        type: 'positive',
+      activeTrainings: scenarios.slice(0, 3).map((s: any, i: number) => ({
+        id: s.id,
+        repId: 'rep_01',
+        repName: 'Sarah Chen',
+        trainingTitle: s.persona_name || 'Training',
+        assignedDate: new Date().toISOString(),
+        dueDateIso: new Date(Date.now() + 14 * 86400000).toISOString(),
       })),
-      coachingPlaybook: [],
-      performanceBreakdown: [],
-      transcript: mapMessages(
-        typeof session.messages_json === 'string'
-          ? JSON.parse(session.messages_json)
-          : session.messages_json,
-      ),
+      trainings: scenarios.slice(0, 5).map((s: any) => ({
+        id: s.id,
+        repId: 'rep_01',
+        repName: 'Sarah Chen',
+        trainingTitle: s.persona_name || 'Training',
+        completedDate: new Date().toISOString(),
+        overallScore: 82,
+        overallRating: 'Good',
+        lastSessionId: null,
+        isReassigned: false,
+      })),
     };
+  }
+
+  async createManagerTraining(body: unknown, orgId: string) {
+    const dto = body as Record<string, any>;
+    const created = await this.scenarios.create(
+      {
+        persona_name: dto.trainingTitle || 'Custom Training',
+        persona_type: dto.persona?.jobTitle || 'Decision Maker',
+        difficulty: 'medium',
+        context_text: JSON.stringify(dto),
+        scenario_name: dto.trainingTitle || 'Custom Training',
+      } as any,
+      orgId,
+      'manager',
+    );
+    return { success: true, trainingId: created.id };
+  }
+
+  async reassignTraining(trainingId: string, body: unknown, orgId: string) {
+    const scenario = await this.scenarios.findOne(trainingId, orgId);
+    const newId = `${trainingId}_reassign_${Date.now()}`;
+    await this.scenarios.create(
+      {
+        persona_name: `${scenario.persona_name} (Reassigned)`,
+        persona_type: scenario.persona_type,
+        difficulty: scenario.difficulty,
+        context_text: scenario.context_text,
+      },
+      orgId,
+    );
+    return { success: true, newTrainingId: newId };
   }
 }

@@ -56,7 +56,7 @@ $schema = "./doc/execution/database-tools/schema.prisma"
 npx --yes prisma@5 validate --schema=$schema
 # Expected: "The schema at ... is valid"
 
-# (After docker compose up -d from final_product/ and .env) push the schema
+# (After docker compose up -d from repo root and .env) push the schema
 npx --yes prisma@5 db push --schema=$schema
 ```
 

@@ -7,8 +7,10 @@ import { join } from 'path';
 
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
+import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
+import { M09CoachingTrainingModule } from '../../../modules/m09-coaching-training/m09-coaching-training.module';
 
-const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5174,http://localhost:3005,http://localhost:3010,http://localhost:3011,http://localhost:3014')
+const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -41,8 +43,10 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5174,http://l
       serveStaticOptions: { fallthrough: true },
     }),
     M01CaptureTranscriptionModule,
+    M02ConversationIntelligenceModule,
+    M09CoachingTrainingModule,
   ],
 })
-export class M01AppModule {
+export class UnifiedAppModule {
   static corsOrigins = corsOrigins;
 }

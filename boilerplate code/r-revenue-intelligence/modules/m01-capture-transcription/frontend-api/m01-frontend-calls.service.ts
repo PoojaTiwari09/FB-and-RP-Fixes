@@ -10,6 +10,7 @@ import {
 } from './m01-frontend-calls.schema';
 import {
   mapCallDetail,
+  mapAiReviewerCallRow,
   mapCallListItem,
   mapCallMetadata,
   mapCallSearchHit,
@@ -25,6 +26,34 @@ export class M01FrontendCallsService {
 
   async listCalls(tenantId: string, rawQuery: Record<string, string>) {
     const q = FrontendListCallsQuerySchema.parse(rawQuery);
+
+    if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
+      const offset = (q.page - 1) * q.size;
+      const { records, total } = await this.callRepo.findAll(
+        tenantId,
+        { sortBy: 'callDate', order: 'desc', limit: q.size, offset },
+        {},
+      );
+      const calls = records.map((r: any) =>
+        mapAiReviewerCallRow({ ...r, reviewStatus: 'Not Reviewed' }),
+      );
+      return {
+        data: {
+          calls,
+          pagination: {
+            page: q.page,
+            size: q.size,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / q.size)),
+          },
+        },
+        totalCount: total,
+        page: q.page,
+        size: q.size,
+        calls,
+      };
+    }
+
     const offset = (q.page - 1) * q.size;
 
     const extra: Record<string, unknown> = {};
@@ -93,8 +122,21 @@ export class M01FrontendCallsService {
     };
   }
 
-  async getCall(callId: string, tenantId: string) {
+  async getCall(callId: string, tenantId: string, rawQuery: Record<string, string> = {}) {
     const record = await this.calls.getCallDetail(callId, tenantId);
+    if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
+      const row = mapAiReviewerCallRow(record);
+      const participants = Array.isArray(record.participants)
+        ? record.participants.map((p: string, i: number) => ({
+            name: p,
+            role: i === 0 ? 'Rep' : 'Buyer',
+          }))
+        : [
+            { name: record.callOwner || 'Rep', role: 'Rep' },
+            { name: 'Buyer', role: 'Buyer' },
+          ];
+      return { data: { ...row, participants } };
+    }
     return mapCallDetail(record);
   }
 

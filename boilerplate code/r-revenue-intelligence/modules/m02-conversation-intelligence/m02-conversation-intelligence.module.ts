@@ -12,6 +12,15 @@ import {
   M02FrontendSearchController,
   M02FrontendStreamsController,
 } from './frontend-api/m02-frontend-search.controller';
+import {
+  M02FrontendAnalyticsController,
+  M02FrontendCallReviewsController,
+  M02FrontendMetaController,
+  M02FrontendManagerCallsController,
+  M02FrontendScorecardsController,
+  M02FrontendUsersController,
+} from './frontend-api/m02-frontend-call-reviews.controller';
+import { M02FrontendCallReviewsService } from './frontend-api/m02-frontend-call-reviews.service';
 import { M02FrontendSearchService } from './frontend-api/m02-frontend-search.service';
 import { ConversationIngestService } from './services/ingest.service';
 import { M02ConversationIntelligenceService } from './services/m02.service';
@@ -42,9 +51,16 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     M02FrontendFiltersController,
     M02FrontendCallsActionsController,
     M02FrontendStreamsController,
+    M02FrontendCallReviewsController,
+    M02FrontendManagerCallsController,
+    M02FrontendScorecardsController,
+    M02FrontendUsersController,
+    M02FrontendMetaController,
+    M02FrontendAnalyticsController,
   ],
   providers: [
     M02FrontendSearchService,
+    M02FrontendCallReviewsService,
     ConversationIngestService,
     // Application services
     M02ConversationIntelligenceService,

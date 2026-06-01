@@ -1,0 +1,1034 @@
+================================================================================
+SCREEN BREAKDOWN — CALL SEARCH  [v2 — updated from call_search_final.mp4]
+Revenue Intelligence UI · Sales Manager
+================================================================================
+
+Screen Name:
+  Call Search
+
+Route:
+  /search
+  /search?tab=all             → All tab
+  /search?tab=calls           → Calls tab (default active)
+  /search?tab=emails          → Emails tab
+
+Purpose of Screen:
+  Central search & discovery screen for sales calls and emails across the
+  organization. Enables managers and reps to filter, find, and analyze recorded
+  calls/emails using a combination of team, rep, stage, participants, keywords,
+  topics, trackers, scorecards, and call-type filters. Applied filters are shown
+  as removable chips with a "Clear" link. Results can be exported to CSV (with
+  field selection via modal) or saved as a persistent stream (with notifications
+  and sharing). Clicking a result opens a call detail drawer with recording,
+  next steps, key highlights, conversation highlights (clickable moments),
+  full transcript, and AI Q&A.
+
+--------------------------------------------------------------------------------
+LAYOUT OVERVIEW
+--------------------------------------------------------------------------------
+
+  LEFT PANEL  — Filters sidebar (fixed, scrollable, ~280px wide)
+    ├── "Filters" header
+    ├── Applied filter chips row  [NEW] → e.g. "Tracker: Competition ×"
+    │                                     "Stage: Negotiation ×"
+    │                                     "Team: West ×"
+    │                                     + "Clear" link (clears all)
+    ├── Team dropdown
+    ├── Rep dropdown
+    ├── Stage dropdown
+    ├── Participants search input
+    ├── Words or phrases input  (+X clear chip + match-type sub-options)
+    ├── Topics dropdown
+    ├── Trackers dropdown       [EXPANDED: Competition, Budget Concerns,
+    │                                       Next Steps, Decision Maker,
+    │                                       Timeline, All Trackers]
+    ├── Scorecard Results dropdown  [Excellent/Good/Average/Needs Improvement]
+    ├── Call title or email subject input
+    ├── Internal calls / Calls with customers dropdown
+    └── "+ Add filters" dashed button
+
+  RIGHT PANEL — Main content area
+    ├── Header: "Search" title + "Find and analyze calls across your organization"
+    ├── Action buttons: Export CSV (secondary) | Create stream (primary)  [BOTH NOW OPEN MODALS]
+    ├── Tab bar: All | Calls (5) | Emails (0)
+    ├── Calls section label + total count ("4,800 calls over time")
+    ├── Chart time-range toggle: Days | Weeks | Months | Quarters
+    ├── Bar chart (calls over time, dates on X-axis)
+    └── Results table
+          ├── Sort bar: Date ↓ | Call duration | Deal
+          └── Call rows (checkbox + title + rep + date + duration + score badge)
+
+  MODAL 1 — Export CSV  [NEW — opens from "Export CSV" button]
+    ├── Title: (implied: Export CSV)
+    ├── Four column-selection groups (checkboxes):
+    │     CALL METADATA         CRM FIELDS
+    │     TRACKER DATA          INTERACTION METRICS
+    ├── Footer note: "Export will be processed async. You'll receive an
+    │   in-app notification when ready to download."
+    └── Actions: Cancel | Start export
+
+  MODAL 2 — Save as Stream  [NEW — opens from "Create stream" button]
+    ├── Title: "Save as stream"
+    ├── Subtitle: "Auto-collect new calls matching these filters"
+    ├── Stream Name text input  (placeholder: e.g. "Q4 Competitor Objections")
+    ├── "Active filters in this stream" (read-only summary, grey box)
+    ├── NOTIFICATIONS section (checkboxes):
+    │     ☑ In-app notifications
+    │     ☑ Slack alerts
+    │     ☐ Email digest
+    └── SHARING section (checkbox):
+          ☐ Share with team members
+          [+ Save / Create button — scrolled out of view]
+
+  CALL DETAIL DRAWER (overlays right panel on row click)
+    ├── Header: title, date/time, duration, participants
+    ├── Meta badges: Type | Status | Accounts | Score
+    ├── RECORDING section
+    │     ├── Waveform player (play/pause, skip-back, timestamp, progress bar,
+    │     │   total duration, playback speed, volume)
+    │     └── Download + Share icons
+    ├── NEXT STEPS section (collapsible ▲▼)
+    │     └── Bulleted action items
+    ├── KEY HIGHLIGHTS section  [NEW]
+    │     └── Bulleted AI-generated highlights with bold category labels:
+    │           • Strong buyer signal: ...
+    │           • Competitor mentioned: ...
+    │           • Main objection: ...
+    │           • Next action: ...
+    ├── CONVERSATION HIGHLIGHTS — CLICK TO LISTEN TO MOMENT  [NEW]
+    │     └── Clickable moment cards (timestamp + tag badge + quote snippet)
+    │           Tags seen: Competitor | Objection | Next step
+    ├── TIMELINE section  [NEW — labeled "3 months"]
+    │     └── Timestamped transcript turns (speaker + role + text)
+    │           Speaker roles: Rep (blue dot) | Customer (green dot)
+    └── AI ASK ANYTHING section (collapsible ▲▼)
+          ├── Displayed Q&A pair (question in blue box + answer text)
+          └── Text input "Ask about this call..." + Ask button
+
+--------------------------------------------------------------------------------
+COMPONENTS
+--------------------------------------------------------------------------------
+
+  Sidebar:
+  - FilterPanel                  (scrollable container with "Filters" heading)
+  - AppliedFilterChips           [NEW] (horizontal row of removable chips + "Clear" link)
+  - FilterChip                   [NEW] (label: "Key: Value" + × dismiss button)
+  - FilterDropdown               (label + select chevron — used 7 times)
+  - ParticipantsSearchInput      (search icon + placeholder text)
+  - WordsOrPhrasesInput          (text input + × clear icon)
+  - PhraseMatchTypeToggle        (3-option radio row: contain / any party / anytime)
+  - AddFiltersButton             (dashed border "+ Add filters")
+
+  Main Area:
+  - TabBar                       (All | Calls | Emails with count badges)
+  - ExportCSVButton              (secondary — triggers ExportCSVModal)
+  - CreateStreamButton           (primary — triggers CreateStreamModal)
+  - SectionLabel                 ("Calls" heading + "4,800 calls over time")
+  - ChartGranularityToggle       (Days / Weeks / Months / Quarters pill group)
+  - CallsOverTimeChart           (bar chart, hover tooltip)
+  - BulkSelectCheckbox           (table header)
+  - SortByBar                    (Date ↓ | Call duration | Deal — sortable columns)
+  - CallResultRow                (checkbox + title + rep name + date + duration + score badge)
+  - ScoreBadge                   (color-coded % pill)
+
+  Modals:
+  - ExportCSVModal               [NEW]
+    └── FieldCheckboxGroup       (4 groups × N checkboxes each)
+  - CreateStreamModal            [NEW]
+    ├── StreamNameInput
+    ├── ActiveFiltersSummary     (read-only grey box)
+    ├── NotificationCheckboxes
+    └── SharingCheckboxes
+
+  Call Detail Drawer:
+  - CallDetailDrawer             (slide-in right panel with X close)
+  - CallMetaHeader               (title, date, duration, participants line)
+  - CallMetaBadges               (Type, Status, Accounts, Score)
+  - AudioWaveformPlayer          (waveform + all controls)
+  - DownloadButton + ShareButton
+  - CollapsibleSection           (wrapper used for: Next Steps, Key Highlights,
+                                   Conversation Highlights, Timeline, AI Ask)
+  - NextStepsList                (bulleted list of action items)
+  - KeyHighlightsList            [NEW] (bulleted AI highlights with bold labels)
+  - ConversationHighlightCard    [NEW] (timestamp + tag badge + truncated quote,
+                                        clickable → seeks audio to that moment)
+  - ConversationTagBadge         [NEW] (Competitor / Objection / Next step — color coded)
+  - TimelineSection              [NEW] (labeled with relative duration e.g. "3 months")
+  - TranscriptTurn               (dot indicator + timestamp + speaker + role tag + text)
+  - SpeakerRoleTag               (Rep — blue | Customer — green)
+  - AIAskPanel                   (collapsible)
+    ├── AIQAPair                 (blue question box + answer paragraph)
+    └── AskInput                 (text input + Ask button)
+
+--------------------------------------------------------------------------------
+USER ACTIONS
+--------------------------------------------------------------------------------
+
+  Filter Panel:
+  - Select / change Team dropdown       (West, East, Central, All Teams)
+  - Select / change Rep dropdown        (All, Sarah Chen, Michael Rodriguez,
+                                          Jennifer Kim, David Park, Emily Thompson)
+  - Select / change Stage dropdown      (Discovery, Proposal, Negotiation,
+                                          Closed Won, Closed Lost)
+  - Type in Participants search box
+  - Type in Words or Phrases box
+  - Clear Words or Phrases (× icon)
+  - Toggle phrase match type            (Results contain the term /
+                                          Mentioned by any party /
+                                          Said anytime in call)
+  - Select Topics dropdown              (All, Pricing, Product Features,
+                                          Integration, Technical Support,
+                                          Renewal Discussion)
+  - Select Trackers dropdown            (Competition, Budget Concerns,
+                                          Next Steps, Decision Maker,
+                                          Timeline, All Trackers)
+  - Select Scorecard Results dropdown   (All, Excellent 90-100, Good 80-89,
+                                          Average 70-79, Needs Improvement <70)
+  - Type in Call title / email subject
+  - Select Internal calls / Calls with customers
+  - Click "+ Add filters" (expands hidden filters)
+  - Remove individual applied filter chip (× on chip)   [NEW]
+  - Click "Clear" to remove all applied filters          [NEW]
+
+  Main Area:
+  - Switch tabs: All / Calls / Emails
+  - Toggle chart granularity: Days / Weeks / Months / Quarters
+  - Sort table by: Date | Call duration | Deal (click column header)
+  - Select individual call row (checkbox)
+  - Bulk-select all rows (header checkbox)
+  - Click call row → opens Call Detail Drawer
+  - Click "Export CSV" → opens Export CSV Modal             [NOW A MODAL]
+  - Click "Create stream" → opens Save as Stream Modal      [NOW A MODAL]
+
+  Export CSV Modal:                                          [NEW]
+  - Toggle any field checkbox ON/OFF (Call Metadata, CRM Fields,
+    Tracker Data, Interaction Metrics columns)
+  - Click "Cancel" → closes modal, no action
+  - Click "Start export" → triggers async export job
+    (user gets in-app notification when CSV ready)
+
+  Save as Stream Modal:                                      [NEW]
+  - Type stream name
+  - Toggle In-app notifications ON/OFF
+  - Toggle Slack alerts ON/OFF
+  - Toggle Email digest ON/OFF
+  - Toggle Share with team members ON/OFF
+  - Click Save/Create (scrolled) → saves stream
+  - Click Cancel (if present) → closes modal
+
+  Call Detail Drawer:
+  - Close drawer (X)
+  - Play / Pause recording
+  - Seek audio via progress bar
+  - Click skip-back button
+  - Adjust playback speed
+  - Adjust volume
+  - Download recording
+  - Share recording
+  - Collapse / expand Next Steps
+  - Collapse / expand Key Highlights                         [NEW]
+  - Click Conversation Highlight card → seek audio to moment [NEW]
+  - Collapse / expand Conversation Highlights                [NEW]
+  - Scroll Timeline transcript                               [NEW]
+  - Collapse / expand AI Ask Anything
+  - Type question → click Ask
+  - Click a previous AI Q&A answer (already shown inline)
+
+--------------------------------------------------------------------------------
+STATES
+--------------------------------------------------------------------------------
+
+  Filter Panel:
+  - Default state            all filters at defaults / empty, no chips
+  - Partially filtered       1–N chips shown above filters + "Clear" link
+  - All-filters-cleared      chips row disappears, filters reset to defaults
+  - Dropdown open            one select expanded (chevron flipped)
+  - Rep dropdown open        shows full list: All / Sarah Chen / Michael Rodriguez /
+                             Jennifer Kim / David Park / Emily Thompson
+  - Trackers dropdown open   shows: Competition / Budget Concerns / Next Steps /
+                             Decision Maker / Timeline / All Trackers
+  - Topics dropdown open     shows: All / Pricing / Product Features / Integration /
+                             Technical Support / Renewal Discussion
+  - Scorecard dropdown open  shows: All / Excellent (90-100) / Good (80-89) /
+                             Average (70-79) / Needs Improvement (<70)
+  - Participants typing      search results appear (if autocomplete)
+  - Words/Phrases filled     × clear icon visible
+  - Add filters expanded     Trackers, Scorecard Results, Call title,
+                             Internal/Customer dropdown visible
+
+  Results Table:
+  - Loading state            skeleton shimmer rows
+  - Populated state          rows with score badges
+  - Empty state              "No calls match your filters" + empty state illustration
+  - Error state              "Something went wrong. Try refreshing." + retry button
+  - Row hover                row highlight background
+  - Row selected             checkbox checked + blue-tinted row
+  - Bulk selected            header checkbox checked
+
+  Chart:
+  - Loading state            skeleton bars
+  - Populated state          bars with date labels; hover shows tooltip with count
+  - Empty state              axes with no bars rendered
+  - Granularity switched     chart re-renders with new date groupings
+
+  Export CSV Modal:                                          [NEW]
+  - Opening state            modal appears, all default checkboxes pre-checked
+  - Field toggled off        checkbox unchecked, column excluded from export
+  - Start export clicked     modal closes, in-app notification queued
+  - Loading / processing     "Start export" button shows spinner
+  - Error state              error toast: "Export failed. Please try again."
+
+  Save as Stream Modal:                                      [NEW]
+  - Opening state            modal appears, name field empty, notifications pre-checked
+  - Name field empty         Save button disabled
+  - Name field filled        Save button enabled
+  - Saving state             button shows spinner
+  - Success state            modal closes, success toast shown
+  - Error state              inline error message below name field
+
+  Call Detail Drawer:
+  - Closed                   (default, no drawer)
+  - Opening / loading        skeleton placeholder for all sections
+  - Loaded — recording tab   waveform visible, next steps visible
+  - Audio playing            waveform animates, timestamp ticks
+  - Audio paused             waveform frozen, play icon shown
+  - Audio seeked to moment   playhead jumps to conversation highlight timestamp
+  - Next Steps expanded      bulleted list visible
+  - Next Steps collapsed     section header only
+  - Key Highlights expanded  bulleted AI insights visible                [NEW]
+  - Key Highlights collapsed section header only                         [NEW]
+  - Conversation Highlights  cards visible, clickable                    [NEW]
+    expanded
+  - Conversation Highlight   audio seeks + card highlighted              [NEW]
+    clicked
+  - Timeline expanded        full timestamped transcript visible          [NEW]
+  - Timeline collapsed       section header only
+  - AI panel collapsed       section header only, chevron points down
+  - AI panel expanded        Q&A pair + input + Ask button visible
+  - AI loading               spinner/skeleton in answer area
+  - AI answer loaded         answer text rendered below question box
+
+  Score Badge Color States:
+  - Green   ≥ 90   → Excellent
+  - Blue    80–89  → Good
+  - Yellow  70–79  → Average
+  - Red     < 70   → Needs Improvement
+
+  Conversation Highlight Tag Badge Colors:                   [NEW]
+  - Orange  → Competitor
+  - Red     → Objection
+  - Blue    → Next step
+
+================================================================================
+APIs
+================================================================================
+
+--------------------------------------------------------------------------------
+1. GET /api/filters/options
+--------------------------------------------------------------------------------
+
+Purpose:
+  Fetch all dynamic dropdown values for the filter sidebar on mount.
+
+Request:
+  No params required.
+
+Mock Response:
+  {
+    "teams": [
+      { "value": "west",    "label": "West"      },
+      { "value": "east",    "label": "East"      },
+      { "value": "central", "label": "Central"   },
+      { "value": "all",     "label": "All Teams" }
+    ],
+    "reps": [
+      { "value": "rep_01", "label": "All"               },
+      { "value": "rep_02", "label": "Sarah Chen"        },
+      { "value": "rep_03", "label": "Michael Rodriguez" },
+      { "value": "rep_04", "label": "Jennifer Kim"      },
+      { "value": "rep_05", "label": "David Park"        },
+      { "value": "rep_06", "label": "Emily Thompson"    }
+    ],
+    "stages": [
+      { "value": "all",          "label": "All"          },
+      { "value": "discovery",    "label": "Discovery"    },
+      { "value": "proposal",     "label": "Proposal"     },
+      { "value": "negotiation",  "label": "Negotiation"  },
+      { "value": "closed_won",   "label": "Closed Won"   },
+      { "value": "closed_lost",  "label": "Closed Lost"  }
+    ],
+    "topics": [
+      { "value": "all",                "label": "All"                },
+      { "value": "pricing",            "label": "Pricing"            },
+      { "value": "product_features",   "label": "Product Features"   },
+      { "value": "integration",        "label": "Integration"        },
+      { "value": "technical_support",  "label": "Technical Support"  },
+      { "value": "renewal_discussion", "label": "Renewal Discussion" }
+    ],
+    "trackers": [
+      { "value": "competition",     "label": "Competition"     },
+      { "value": "budget_concerns", "label": "Budget Concerns" },
+      { "value": "next_steps",      "label": "Next Steps"      },
+      { "value": "decision_maker",  "label": "Decision Maker"  },
+      { "value": "timeline",        "label": "Timeline"        },
+      { "value": "all",             "label": "All Trackers"    }
+    ],
+    "scorecardResults": [
+      { "value": "all",               "label": "All"                     },
+      { "value": "excellent",         "label": "Excellent (90-100)"      },
+      { "value": "good",              "label": "Good (80-89)"            },
+      { "value": "average",           "label": "Average (70-79)"         },
+      { "value": "needs_improvement", "label": "Needs Improvement (<70)" }
+    ],
+    "callTypes": [
+      { "value": "all",      "label": "All"                    },
+      { "value": "internal", "label": "Internal calls"         },
+      { "value": "customer", "label": "Calls with customers"   }
+    ],
+    "phraseMatchTypes": [
+      { "value": "contains",         "label": "Results contain the term" },
+      { "value": "mentioned_by_any", "label": "Mentioned by any party"   },
+      { "value": "said_anytime",     "label": "Said anytime in call"     }
+    ]
+  }
+
+Fallback: Return above hardcoded object on API failure.
+Error Response:
+  { "error": true, "code": "FILTER_OPTIONS_FAILED",
+    "message": "Could not load filter options." }
+
+--------------------------------------------------------------------------------
+2. GET /api/calls/search
+--------------------------------------------------------------------------------
+
+Purpose:
+  Fetch filtered + paginated call/email list for the results table,
+  the chart data, and the tab counts. Called on mount and on every
+  filter / sort / tab / pagination change.
+
+Request Query Params:
+  - page              (number, default: 1)
+  - size              (number, default: 20)
+  - tab               (string: "all" | "calls" | "emails")
+  - team              (string: "west" | "east" | "central" | "all")
+  - rep               (string: repId or "all")
+  - stage             (string: stage value or "all")
+  - participants      (string: free-text)
+  - wordsOrPhrases    (string: keyword/phrase)
+  - phraseMatchType   (string: "contains" | "mentioned_by_any" | "said_anytime")
+  - topics            (string: topic value or "all")
+  - trackers          (string: tracker value or "all")
+  - scorecardResult   (string: "all" | "excellent" | "good" | "average" |
+                                "needs_improvement")
+  - callTitle         (string: free-text)
+  - callType          (string: "all" | "internal" | "customer")
+  - sortBy            (string: "date" | "call_duration" | "deal")
+  - sortOrder         (string: "asc" | "desc", default: "desc")
+  - dateFrom          (string: ISO date, optional)
+  - dateTo            (string: ISO date, optional)
+  - chartGranularity  (string: "days" | "weeks" | "months" | "quarters",
+                        default: "weeks")
+
+Mock Response:
+  {
+    "meta": {
+      "total": 4800,
+      "page": 1,
+      "size": 20,
+      "totalPages": 240,
+      "callsCount": 5,
+      "emailsCount": 0
+    },
+    "chart": {
+      "granularity": "weeks",
+      "data": [
+        { "label": "10/17", "count": 180 },
+        { "label": "10/19", "count": 310 },
+        { "label": "10/21", "count": 240 },
+        { "label": "10/23", "count": 160 },
+        { "label": "10/25", "count": 90  },
+        { "label": "10/27", "count": 270 },
+        { "label": "10/29", "count": 190 },
+        { "label": "10/31", "count": 340 },
+        { "label": "11/02", "count": 410 },
+        { "label": "11/04", "count": 280 },
+        { "label": "11/06", "count": 130 }
+      ]
+    },
+    "results": [
+      {
+        "id": "call_001",
+        "title": "Quick sync with Acme Corp",
+        "rep": { "id": "rep_02", "name": "Sarah Chen" },
+        "date": "2026-11-17",
+        "durationMinutes": 42,
+        "score": 89,
+        "scoreLabel": "Good",
+        "deal": "Acme Corp",
+        "type": "call",
+        "status": "Zoom"
+      },
+      {
+        "id": "call_002",
+        "title": "Discovery call - Enterprise features",
+        "rep": { "id": "rep_03", "name": "Michael Rodriguez" },
+        "date": "2026-11-18",
+        "durationMinutes": 58,
+        "score": 92,
+        "scoreLabel": "Excellent",
+        "deal": "BetaCo",
+        "type": "call",
+        "status": "Zoom"
+      },
+      {
+        "id": "call_003",
+        "title": "Pricing discussion",
+        "rep": { "id": "rep_04", "name": "Jennifer Kim" },
+        "date": "2026-11-19",
+        "durationMinutes": 35,
+        "score": 78,
+        "scoreLabel": "Average",
+        "deal": "GammaCorp",
+        "type": "call",
+        "status": "Zoom"
+      },
+      {
+        "id": "call_004",
+        "title": "Technical review session",
+        "rep": { "id": "rep_05", "name": "David Park" },
+        "date": "2026-11-20",
+        "durationMinutes": 67,
+        "score": 95,
+        "scoreLabel": "Excellent",
+        "deal": "DeltaInc",
+        "type": "call",
+        "status": "Zoom"
+      },
+      {
+        "id": "call_005",
+        "title": "Follow-up call",
+        "rep": { "id": "rep_06", "name": "Emily Thompson" },
+        "date": "2026-11-21",
+        "durationMinutes": 28,
+        "score": 84,
+        "scoreLabel": "Good",
+        "deal": "EpsilonLLC",
+        "type": "call",
+        "status": "Zoom"
+      }
+    ]
+  }
+
+Fallback: Return above hardcoded object on API failure.
+Error Response:
+  { "error": true, "code": "SEARCH_FAILED",
+    "message": "Unable to fetch calls. Please try again." }
+
+--------------------------------------------------------------------------------
+3. GET /api/calls/:callId
+--------------------------------------------------------------------------------
+
+Purpose:
+  Fetch full detail for a single call to populate the Call Detail Drawer.
+  Includes recording URL, next steps, key highlights, conversation highlights,
+  and full timeline transcript.
+
+Path Param:
+  - callId  (string, required)
+
+Mock Response:
+  {
+    "id": "call_001",
+    "title": "Q2 Discovery — Acme Corp",
+    "date": "2026-04-04T14:30:00Z",
+    "durationSeconds": 2528,
+    "durationLabel": "42m 08s",
+    "participants": [
+      { "name": "Sarah Chen", "role": "Rep"      },
+      { "name": "Michael",    "role": "Customer" }
+    ],
+    "account": "Acme Corp",
+    "type": "Dashboard",
+    "status": "Zoom",
+    "score": 85,
+    "scoreLabel": "Good",
+    "recordingUrl": "https://cdn.example.com/recordings/call_001.mp3",
+    "nextSteps": [
+      "Send number pricing proposal by 27 Apr",
+      "Schedule technical deep dive with Acme IT team",
+      "Share ROI calculator"
+    ],
+    "keyHighlights": [
+      {
+        "label": "Strong buyer signal",
+        "text": "Customer expressed urgency around Q3 budget deadline"
+      },
+      {
+        "label": "Competitor mentioned",
+        "text": "Currently evaluating Vend as alternative solution"
+      },
+      {
+        "label": "Main objection",
+        "text": "Stakeholder concerns about migration complexity from spreadsheets"
+      },
+      {
+        "label": "Next action",
+        "text": "Send tailored proposal with ROI calculator by April 27"
+      }
+    ],
+    "conversationHighlights": [
+      {
+        "timestampSeconds": 502,
+        "timestampLabel": "08:22",
+        "tag": "Competitor",
+        "tagColor": "orange",
+        "quote": "We're also looking at Vend — their analytics dashboard..."
+      },
+      {
+        "timestampSeconds": 944,
+        "timestampLabel": "15:44",
+        "tag": "Objection",
+        "tagColor": "red",
+        "quote": "Our stakeholders aren't ready to migrate from spreadsheets yet..."
+      },
+      {
+        "timestampSeconds": 1192,
+        "timestampLabel": "19:52",
+        "tag": "Next step",
+        "tagColor": "blue",
+        "quote": "Can you send a proposal tailored to our team size?"
+      }
+    ],
+    "timelineLabel": "3 months",
+    "transcript": [
+      {
+        "timestampSeconds": 270,
+        "timestampLabel": "04:30",
+        "speaker": "Sarah",
+        "role": "Rep",
+        "text": "Thanks for the callback today, I wanted to walk you through the platform and understand your current workflow."
+      },
+      {
+        "timestampSeconds": 524,
+        "timestampLabel": "08:44",
+        "speaker": "Michael",
+        "role": "Customer",
+        "text": "Sure. We're currently managing everything in spreadsheets. Right now we're using spreadsheets and our shared on a shared drive."
+      },
+      {
+        "timestampSeconds": 750,
+        "timestampLabel": "12:30",
+        "speaker": "Sarah",
+        "role": "Rep",
+        "text": "Got it. That's a common setup, lots of excel issues like version control looking at the big picture here — if you imagine a custom pre-priced..."
+      },
+      {
+        "timestampSeconds": 1102,
+        "timestampLabel": "18:22",
+        "speaker": "Michael",
+        "role": "Customer",
+        "text": "Yeah the version control is our biggest issue today, and like looking at the big picture here — if you imagine a custom pre-priced..."
+      }
+    ]
+  }
+
+Fallback: Return above hardcoded object for any callId.
+Error Response:
+  { "error": true, "code": "CALL_NOT_FOUND",
+    "message": "Call details could not be loaded." }
+
+--------------------------------------------------------------------------------
+4. POST /api/calls/ai-ask
+--------------------------------------------------------------------------------
+
+Purpose:
+  Submit a natural language question about a specific call.
+  Powers the "AI ASK ANYTHING" panel in the drawer.
+
+Request Body:
+  {
+    "callId": "call_001",
+    "question": "What objections came up most?"
+  }
+
+Mock Response:
+  {
+    "callId": "call_001",
+    "question": "What objections came up most?",
+    "answer": "Based on the call transcript, the main objection was around migration complexity. The customer mentioned their team isn't ready to move from spreadsheets yet and expressed concerns about the learning curve.",
+    "suggestedQuestions": [
+      "What objections came up most?",
+      "Where did the rep struggle?",
+      "What were the key customer concerns?"
+    ]
+  }
+
+Fallback: Return above hardcoded object for any callId + question.
+Error Response:
+  { "error": true, "code": "AI_FAILED",
+    "message": "AI response could not be generated. Please try again." }
+
+--------------------------------------------------------------------------------
+5. POST /api/calls/export
+--------------------------------------------------------------------------------
+
+Purpose:
+  Trigger an async CSV export job with user-selected fields.
+  Export is processed server-side; user is notified via in-app notification
+  when the download is ready. NOT a direct file download.
+
+Request Body:
+  {
+    "filters": {
+      "team": "west",
+      "rep": "all",
+      "stage": "negotiation",
+      "participants": "",
+      "wordsOrPhrases": "",
+      "phraseMatchType": "contains",
+      "topics": "all",
+      "trackers": "competition",
+      "scorecardResult": "good",
+      "callTitle": "",
+      "callType": "all",
+      "dateFrom": null,
+      "dateTo": null
+    },
+    "fields": {
+      "callMetadata": {
+        "callName": true,
+        "dateAndDuration": true,
+        "participants": true,
+        "account": true,
+        "recordingUrl": false
+      },
+      "crmFields": {
+        "dealStage": true,
+        "outcome": true,
+        "dealAmount": true,
+        "opportunityOwner": false
+      },
+      "trackerData": {
+        "trackerNames": true,
+        "trackerCounts": true,
+        "trackerMoments": false
+      },
+      "interactionMetrics": {
+        "talkRatio": true,
+        "topicDurations": true,
+        "questionsAsked": false,
+        "patienceDuringCall": false
+      }
+    }
+  }
+
+Mock Response:
+  {
+    "success": true,
+    "jobId": "export_job_abc123",
+    "message": "Export will be processed async. You'll receive an in-app notification when ready to download.",
+    "estimatedTimeSeconds": 30
+  }
+
+Fallback: Return above hardcoded object on API failure.
+Error Response:
+  { "error": true, "code": "EXPORT_FAILED",
+    "message": "Could not start export. Please try again." }
+
+--------------------------------------------------------------------------------
+6. POST /api/streams
+--------------------------------------------------------------------------------
+
+Purpose:
+  Save the current filter set as a persistent named stream.
+  The stream auto-collects future calls matching these filters.
+  Supports notification channels and optional team sharing.
+
+Request Body:
+  {
+    "name": "Q4 Competitor Objections",
+    "filters": {
+      "team": "west",
+      "rep": "all",
+      "stage": "negotiation",
+      "participants": "",
+      "wordsOrPhrases": "",
+      "phraseMatchType": "contains",
+      "topics": "all",
+      "trackers": "competition",
+      "scorecardResult": "all",
+      "callTitle": "",
+      "callType": "all",
+      "dateFrom": null,
+      "dateTo": null
+    },
+    "notifications": {
+      "inApp": true,
+      "slack": true,
+      "emailDigest": false
+    },
+    "sharing": {
+      "shareWithTeam": false
+    }
+  }
+
+Mock Response:
+  {
+    "success": true,
+    "streamId": "stream_xyz789",
+    "name": "Q4 Competitor Objections",
+    "createdAt": "2026-11-21T10:00:00Z",
+    "message": "Stream created successfully."
+  }
+
+Fallback: Return above hardcoded object on API failure.
+Error Response:
+  { "error": true, "code": "STREAM_CREATE_FAILED",
+    "message": "Could not create stream. Please try again." }
+
+================================================================================
+EXPORT CSV MODAL — FIELD GROUPS & OPTIONS
+================================================================================
+
+  CALL METADATA:
+  ☑ Call name
+  ☑ Date & duration
+  ☑ Participants
+  ☑ Account
+  ☐ Recording URL
+
+  CRM FIELDS:
+  ☑ Deal stage
+  ☑ Outcome
+  ☑ Deal amount
+  ☐ Opportunity owner
+
+  TRACKER DATA:
+  ☑ Tracker names
+  ☑ Tracker counts
+  ☐ Tracker moments (time)
+
+  INTERACTION METRICS:
+  ☑ Talk ratio
+  ☑ Topic durations
+  ☐ Questions asked
+  ☐ Patience during call
+
+  Footer note: "Export will be processed async. You'll receive an
+  in-app notification when ready to download."
+
+================================================================================
+SAVE AS STREAM MODAL — FIELDS & OPTIONS
+================================================================================
+
+  STREAM NAME:
+  - Text input (required, max ~100 chars)
+  - Placeholder: e.g. "Q4 Competitor Objections"
+  - Validation: required, non-empty
+
+  ACTIVE FILTERS SUMMARY:
+  - Read-only grey box listing the currently applied filters
+  - These filters will auto-apply to the stream going forward
+
+  NOTIFICATIONS:
+  ☑ In-app notifications   (default: ON)
+  ☑ Slack alerts           (default: ON)
+  ☐ Email digest           (default: OFF)
+
+  SHARING:
+  ☐ Share with team members  (default: OFF)
+
+================================================================================
+VALIDATIONS
+================================================================================
+
+  Filter Panel:
+  - Participants field        free-text, max 100 chars
+  - Words or Phrases field    free-text, max 200 chars
+  - Call title field          free-text, max 200 chars
+
+  Save as Stream Modal:
+  - Stream name              required, non-empty, max 100 chars
+  - Save button              disabled until stream name has content
+
+  AI Ask Panel:
+  - Question input           required, non-empty before Ask button activates
+
+  Score badge thresholds:
+  - ≥ 90  → Green   (Excellent)
+  - 80-89 → Blue    (Good)
+  - 70-79 → Yellow  (Average)
+  - < 70  → Red     (Needs Improvement)
+
+  Conversation Highlight tag colors:
+  - Competitor → orange badge
+  - Objection  → red badge
+  - Next step  → blue badge
+
+================================================================================
+DYNAMIC DATA
+================================================================================
+
+  Filter Panel (from GET /api/filters/options):
+  - Team dropdown options
+  - Rep dropdown options
+  - Stage dropdown options
+  - Topics dropdown options
+  - Trackers dropdown options      [includes: Budget Concerns, Next Steps,
+                                    Decision Maker, Timeline — new vs v1]
+  - Scorecard Results options
+  - Call type options
+  - Phrase match type options
+
+  Main Area (from GET /api/calls/search):
+  - Calls count badge on tab       → meta.callsCount
+  - Emails count badge on tab      → meta.emailsCount
+  - Total calls label              → meta.total (e.g. "4,800 calls over time")
+  - Bar chart bars + labels        → chart.data[]
+  - Results table rows             → results[]
+  - Score badge color + value      → computed from results[].score
+
+  Applied Filter Chips (client-derived):
+  - Rendered from current active filter state
+  - Each chip shows "FilterKey: Value" + × dismiss button
+  - "Clear" link clears all active filters
+
+  Call Detail Drawer (from GET /api/calls/:callId):
+  - Title, date, duration, participants
+  - Type, status, account, score badges
+  - Recording URL → waveform player source
+  - Next steps list                → nextSteps[]
+  - Key highlights                 → keyHighlights[]  [NEW]
+  - Conversation highlight cards   → conversationHighlights[]  [NEW]
+  - Timeline label                 → timelineLabel  [NEW]
+  - Transcript turns               → transcript[]
+  - Timeline/transcript section header shows relative age ("3 months")
+
+  AI Panel (from POST /api/calls/ai-ask):
+  - AI answer text                 → answer
+  - Suggested question chips       → suggestedQuestions[]
+
+================================================================================
+REUSABLE COMPONENTS (suggest extracting)
+================================================================================
+
+  - <FilterDropdown label value onChange />
+  - <FilterChip label onRemove />                     [NEW]
+  - <AppliedFiltersRow chips onClearAll />             [NEW]
+  - <SearchInput placeholder value onChange />
+  - <TagInput value onClear onChange />
+  - <PhraseMatchToggle value onChange />
+  - <ScoreBadge score />
+  - <CallResultRow call onSelect onOpen />
+  - <TabBar tabs activeTab onTabChange />
+  - <BarChart data granularity onGranularityChange />
+  - <AudioWaveformPlayer src onSeek />
+  - <CollapsibleSection title defaultOpen children />
+  - <NextStepsList items />
+  - <KeyHighlightsList highlights />                   [NEW]
+  - <ConversationHighlightCard moment onSeek />        [NEW]
+  - <ConversationTagBadge tag />                       [NEW]
+  - <TranscriptTurn turn />
+  - <SpeakerRoleTag role />
+  - <AIAskPanel callId />
+  - <ExportCSVModal filters isOpen onClose />          [NEW]
+  - <FieldCheckboxGroup title fields onChange />       [NEW]
+  - <CreateStreamModal filters isOpen onClose />       [NEW]
+
+================================================================================
+NOTES / OPEN QUESTIONS FOR TECH LEAD / BACKEND
+================================================================================
+
+  1. Applied filter chips: Are chips derived 100% client-side from the
+     active filter state, or does the backend return an "activeFilters"
+     array in the search response? Clarify to avoid duplication.
+
+  2. Export CSV (async): Confirm the notification delivery mechanism.
+     Is the in-app notification polled (REST) or pushed (WebSocket/SSE)?
+     What is the download endpoint once the job is complete?
+
+  3. Create Stream: Where does the stream live after creation?
+     Is there a /streams listing page? Does it appear in the left nav?
+     Clarify navigation post-creation.
+
+  4. Conversation Highlights: Are these AI-generated server-side and
+     stored with the call record, or computed on the fly per request?
+     Confirm if they are included in GET /api/calls/:callId or a
+     separate endpoint.
+
+  5. Key Highlights: Same question as #4 — stored or computed?
+     Confirm field names match (keyHighlights vs highlights vs aiInsights).
+
+  6. Timeline label ("3 months"): What does this represent — the age of
+     the call, the deal duration, or the relationship timeline with the
+     account? Clarify with product/designer.
+
+  7. Audio streaming: Is recordingUrl a direct MP3 link or a signed/
+     pre-signed URL? Does it require an Authorization header?
+
+  8. AI Ask endpoint: Is the response streaming (SSE / chunked transfer)
+     or a single JSON payload? Streaming preferred for UX.
+
+  9. Participants field: Does autocomplete suggest names? If yes, what
+     endpoint powers it? (e.g. GET /api/participants/suggest?q=jennifer)
+
+  10. Trackers "All Trackers" option value: Confirm backend accepts
+      value "all" for trackers the same way as other dropdowns, or if
+      it expects an empty/null param to mean "all".
+
+  11. Emails tab: Currently shows 0 results in all video frames.
+      Does the Emails tab use GET /api/calls/search?tab=emails or a
+      completely separate endpoint (e.g. GET /api/emails/search)?
+
+  12. Bulk select: No bulk action UI was visible after selecting rows.
+      What actions are available after multi-select?
+      (Delete, bulk export, add to stream?) Needs designer clarification.
+
+  13. Pagination: 4,800 total results with size=20 = 240 pages.
+      Confirm if the table uses infinite scroll or numbered pagination.
+      Neither was visible in the video.
+
+  14. marrishivani23@gmail.com visible in frame 8 during participant
+      autocomplete — confirm this is a real user or test data to be
+      replaced with mock data before demo.
+
+================================================================================
+
+================================================================================
+API ENDPOINTS IMPLEMENTED
+================================================================================
+
+The following endpoints were utilized to integrate the frontend components 
+with the backend services:
+
+1. GET /api/filters/options
+   - Purpose: Fetches the available filter options to populate the sidebar dropdowns 
+     (Teams, Reps, Stages, Topics, Trackers, Scorecards).
+
+2. GET /api/calls/search
+   - Purpose: Performs the main search for calls and emails.
+   - Query Params: tab (all|calls|emails), sortBy, sortOrder, and all applied filters.
+   - Returns: Paginatable list of call/email results, chart data, and total metadata.
+
+3. GET /api/calls/:callId
+   - Purpose: Fetches comprehensive detail for a specific call (transcript, 
+     timeline, next steps, highlights) used to populate the Call Detail Drawer.
+
+4. POST /api/calls/ai-ask
+   - Purpose: Submits a custom question about a specific call to the AI engine 
+     within the Call Detail Drawer.
+   - Body: { callId, question }
+   - Returns: AI-generated answer based on the call context.
+
+5. POST /api/calls/export
+   - Purpose: Triggers an asynchronous CSV export of the currently filtered search results.
+   - Body: { filters, fields }
+   - Returns: A jobId to track the async export task.
+
+6. POST /api/streams
+   - Purpose: Saves the currently applied search filters as a persistent "Stream" 
+     with specific notification and sharing preferences.
+   - Body: { name, filters, notifications, sharing }
+   - Returns: The created streamId.
+
+================================================================================

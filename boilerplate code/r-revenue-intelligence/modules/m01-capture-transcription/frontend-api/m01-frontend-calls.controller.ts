@@ -43,7 +43,11 @@ export class M01FrontendCallsController {
 
   /** 2. Single call row / detail */
   @Get(':callId')
-  getCall(@Param('callId') callId: string, @Req() req: Record<string, string>) {
-    return this.svc.getCall(callId, req.tenantId);
+  getCall(
+    @Param('callId') callId: string,
+    @Query() query: Record<string, string>,
+    @Req() req: Record<string, string>,
+  ) {
+    return this.svc.getCall(callId, req.tenantId, query);
   }
 }

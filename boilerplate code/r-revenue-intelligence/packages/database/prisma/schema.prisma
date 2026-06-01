@@ -1416,3 +1416,46 @@ model M10DataCloudCheckpoint {
   @@map("m10_data_cloud_checkpoints")
   @@schema("public")
 }
+
+// ── Live Call Assist (Smart Call) — Postgres persistence (replaces Supabase) ──
+model LiveCallSession {
+  id            String            @id @default(uuid()) @db.Uuid
+  tenantId      String            @default("00000000-0000-0000-0000-000000000001") @db.Uuid
+  sessionName   String?           @map("session_name")
+  salesRepName  String?           @default("Sales Rep") @map("sales_rep_name")
+  clientName    String?           @default("Client") @map("client_name")
+  contactId     String?           @map("contact_id")
+  dealId        String?           @map("deal_id")
+  dealCompany   String?           @map("deal_company")
+  status        String            @default("active")
+  startedAt     DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt       DateTime?         @map("ended_at") @db.Timestamptz(6)
+  finalSummary  String?           @map("final_summary") @db.Text
+  totalSegments Int               @default(0) @map("total_segments")
+  transcript    Json              @default("[]")
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  summaries     LiveCallSummary[]
+
+  @@index([tenantId, status])
+  @@map("live_call_sessions")
+  @@schema("public")
+}
+
+model LiveCallSummary {
+  id                   String          @id @default(uuid()) @db.Uuid
+  sessionId            String          @map("session_id") @db.Uuid
+  chunkIndex           Int             @map("chunk_index")
+  timeStart            String          @map("time_start")
+  timeEnd              String          @map("time_end")
+  summaryText          String          @map("summary_text") @db.Text
+  keyTopics            String[]        @default([]) @map("key_topics")
+  sentiment            String          @default("neutral")
+  competitorsMentioned String[]        @default([]) @map("competitors_mentioned")
+  rawTranscript        String?         @map("raw_transcript") @db.Text
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  session              LiveCallSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, chunkIndex])
+  @@map("live_call_summaries")
+  @@schema("public")
+}

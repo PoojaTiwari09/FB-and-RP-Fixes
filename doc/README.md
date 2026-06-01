@@ -1,16 +1,9 @@
-﻿# Documentation layout
+﻿# Documentation (minimal)
 
-All product specs, audit reports, and runbooks live under **`doc/`**. Runnable code stays in **`boilerplate code/`** only.
+| Path | Use |
+|------|-----|
+| [execution/api-docs/](./execution/api-docs/) | Per-module API route reference (`API-M01.md`, …) |
+| [execution/integration/](./execution/integration/) | New Figma frontend bridge contracts |
+| [execution/standalone/STANDALONE-MODULE-COMMANDS.md](./execution/standalone/STANDALONE-MODULE-COMMANDS.md) | Copy of runbook (canonical: app `RUNBOOK.md`) |
 
-| Folder | Contents |
-|--------|----------|
-| [`reference/`](reference/) | M1–M10 specs, TDDs, architecture (`docs/markdown documents/`) |
-| [`execution/`](execution/) | Runbooks, seeds, SQL scripts, platform setup, **standalone module commands** |
-| [`execution/standalone/`](execution/standalone/) | `STANDALONE-MODULE-COMMANDS.md`, `INTEGRATION-M*.md`, `M05-VERIFICATION.md` |
-| [`execution/seeds/`](execution/seeds/) | `unified-seed.js` and related seed scripts |
-| [`execution/database-tools/`](execution/database-tools/) | Unified schema utilities — see [README](execution/database-tools/README.md) |
-| [`analysis/`](analysis/) | Module and platform analysis reports |
-| [`fix/`](fix/) | Fix logs and remediation write-ups |
-| [`test_result/`](test_result/) | Smoke reports, validation outputs, `doc/test_result/test_case/` runners |
-
-**Start here:** [execution/README.md](execution/README.md) · **Run modules locally:** [execution/standalone/STANDALONE-MODULE-COMMANDS.md](execution/standalone/STANDALONE-MODULE-COMMANDS.md) · **Data flow & integration:** [execution/MODULE-DATA-FLOW.md](execution/MODULE-DATA-FLOW.md) · **API docs (frontend ↔ backend):** [execution/api-docs/README.md](execution/api-docs/README.md)
+**Run modules:** [README.md](../README.md) (repo root) → app [RUNBOOK.md](../boilerplate%20code/r-revenue-intelligence/RUNBOOK.md).
