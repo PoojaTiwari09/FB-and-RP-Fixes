@@ -1,5 +1,10 @@
 /** Maps internal CallRecord shapes → new frontend API contract. */
 
+import {
+  resolveDurationSeconds,
+  uniqueSpeakersFromUtterances,
+} from '../lib/call-duration.util';
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
@@ -148,7 +153,7 @@ export function mapAiReviewerCallRow(record: any) {
     dateTime: record.callDate instanceof Date
       ? record.callDate.toISOString()
       : new Date(record.callDate).toISOString(),
-    duration: formatDurationClock(record.durationSeconds ?? 0),
+    duration: formatDurationClock(resolveDurationSeconds(record)),
     type: mapCallTypeLabel(record),
     stage: mapDealStage(record),
     score,
@@ -172,7 +177,7 @@ export function mapCallListItem(record: any) {
     dateTime: record.callDate instanceof Date
       ? record.callDate.toISOString()
       : new Date(record.callDate).toISOString(),
-    duration: formatDuration(record.durationSeconds ?? 0),
+    duration: formatDurationClock(resolveDurationSeconds(record)),
     keyInsight: summary || '—',
     status: mapTranscriptStatus(record.transcriptStatus ?? 'pending'),
   };
@@ -183,9 +188,13 @@ export function mapCallDetail(record: any) {
     ? record.callDate
     : new Date(record.callDate);
 
-  const participants = Array.isArray(record.participants)
+  const fromDb = Array.isArray(record.participants)
     ? record.participants.map((p: string) => ({ name: p }))
     : [];
+  const fromTranscript = uniqueSpeakersFromUtterances(record.transcript?.utterances).map(
+    (name) => ({ name }),
+  );
+  const participants = fromDb.length > 0 ? fromDb : fromTranscript;
 
   const dateTime = d.toISOString();
 
@@ -198,7 +207,7 @@ export function mapCallDetail(record: any) {
     dateTime,
     date: dateTime.slice(0, 10),
     time: dateTime.slice(11, 19) + 'Z',
-    duration: formatDuration(record.durationSeconds ?? 0),
+    duration: formatDurationClock(resolveDurationSeconds(record)),
     source: record.callSource || 'manual',
     participants,
     owner: resolveOwner(record),
@@ -210,7 +219,11 @@ export function mapCallDetail(record: any) {
 export function mapCallMetadata(record: any) {
   const detail = mapCallDetail(record);
   const { status: _s, ...meta } = detail;
-  return meta;
+  const raw = record.recordingUrl || record.audioUrl || '';
+  return {
+    ...meta,
+    audioUrl: raw ? String(raw) : '',
+  };
 }
 
 export function mapCallSearchHit(hit: any) {

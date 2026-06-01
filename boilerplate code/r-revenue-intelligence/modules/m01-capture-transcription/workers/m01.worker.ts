@@ -122,17 +122,21 @@ export class M01CaptureTranscriptionWorker extends WorkerHost {
       );
 
       const fullText = transcript.text ?? '';
+      const audioDurationSec =
+        typeof transcript.audio_duration === 'number' && transcript.audio_duration > 0
+          ? Math.ceil(transcript.audio_duration)
+          : 0;
 
       this.logger.log(
-        `[M01 Worker] ✅ Done! ${utterances.length} utterances, ${fullText.length} chars`,
+        `[M01 Worker] ✅ Done! ${utterances.length} utterances, ${fullText.length} chars, audio ${audioDurationSec}s`,
       );
-
 
       // ── Step 6: Persist ───────────────────────────────────────────────
       await this.callService.onTranscriptionCompleted(callId, tenantId, {
         fullText,
         utterances,
         assemblyAiJobId: transcript.id,
+        audioDurationSec,
       });
 
     } catch (err: unknown) {

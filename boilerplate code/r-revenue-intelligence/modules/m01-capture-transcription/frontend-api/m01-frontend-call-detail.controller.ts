@@ -11,12 +11,33 @@ import {
 } from '@nestjs/common';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { M01FrontendTranscriptService } from './m01-frontend-transcript.service';
+import { M01FrontendCallProcessingService } from './m01-frontend-call-processing.service';
+import { M01FrontendCallsService } from './m01-frontend-calls.service';
 
 /** M01 call detail: transcript, briefs, next-steps (under /api/calls/:callId). */
 @Controller('api/calls/:callId')
 @UseGuards(TenantGuard)
 export class M01FrontendCallDetailController {
-  constructor(private readonly svc: M01FrontendTranscriptService) {}
+  constructor(
+    private readonly svc: M01FrontendTranscriptService,
+    private readonly processing: M01FrontendCallProcessingService,
+    private readonly callsUi: M01FrontendCallsService,
+  ) {}
+
+  @Get('metadata')
+  getMetadata(@Param('callId') callId: string, @Req() req: Record<string, string>) {
+    return this.callsUi.getCallMetadata(callId, req.tenantId);
+  }
+
+  @Get('process-status')
+  getProcessStatus(@Param('callId') callId: string, @Req() req: Record<string, string>) {
+    return this.processing.getStatus(callId, req.tenantId);
+  }
+
+  @Post('process')
+  processCall(@Param('callId') callId: string, @Req() req: Record<string, string>) {
+    return this.processing.processCall(callId, req.tenantId);
+  }
 
   @Get('transcript')
   getTranscript(
@@ -87,6 +108,16 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     return this.svc.generateBrief(callId, req.tenantId, body);
+  }
+
+  /** Re-run AI pipeline + refresh analyzed brief (UI: Regenerate). */
+  @Post('briefs/:briefId/regenerate')
+  regenerateBrief(
+    @Param('callId') callId: string,
+    @Param('briefId') _briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    return this.processing.processCall(callId, req.tenantId);
   }
 
   @Post('briefs/:briefId/share-link')

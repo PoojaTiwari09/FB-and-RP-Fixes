@@ -19,6 +19,11 @@ import {
 import { getS3RecordingById } from '../lib/s3-recordings-catalog';
 import { downloadRemoteAudioToLocal } from '../lib/fetch-remote-audio';
 import { getPublicAudioUrl } from '../lib/upload-paths';
+import { resolvePublicTranscriptionUrl } from '../lib/public-audio-url';
+import {
+  durationSecondsFromUtterances,
+  uniqueSpeakersFromUtterances,
+} from '../lib/call-duration.util';
 
 @Injectable()
 export class CallService {
@@ -127,6 +132,19 @@ export class CallService {
     return call;
   }
 
+  /** Queue AssemblyAI transcription for an existing call (Calls List open). */
+  async enqueueTranscription(callId: string, tenantId: string) {
+    const call = await this.calls.findById(callId, tenantId);
+    if (!call) throw new NotFoundException(`Call ${callId} not found`);
+    if (!call.audioUrl) {
+      throw new BadRequestException('Call has no recording to transcribe');
+    }
+    const audioUrl = resolvePublicTranscriptionUrl(call.audioUrl, callId);
+    await this.queue.add('transcribe', { callId, audioUrl, tenantId });
+    await this.calls.updateStatus(callId, tenantId, 'processing');
+    return { callId, transcriptStatus: 'processing' as const };
+  }
+
   // ── US-22: Extended org-wide search with date/rep/type filters ──────────
   async searchTranscripts(tenantId: string, query: ExtendedSearchQueryDto) {
     return this.search.searchAcrossOrg(tenantId, query);
@@ -161,6 +179,21 @@ export class CallService {
   }
 
   // ── Internal: called by worker after transcription completes ─────────
+  /** Persist duration + speakers from transcript (list/detail stay in sync with recording). */
+  async syncCallMetadataFromTranscript(callId: string, tenantId: string) {
+    const record = await this.getCallDetail(callId, tenantId);
+    if (!record) return;
+    const utterances = record.transcript?.utterances ?? [];
+    const durationSeconds = durationSecondsFromUtterances(utterances);
+    if (durationSeconds > 0) {
+      await this.calls.updateDurationSeconds(callId, tenantId, durationSeconds);
+    }
+    const speakers = uniqueSpeakersFromUtterances(utterances);
+    if (speakers.length > 0) {
+      await this.calls.updateParticipants(callId, tenantId, speakers);
+    }
+  }
+
   async onTranscriptionCompleted(
     callId: string,
     tenantId: string,
@@ -172,9 +205,21 @@ export class CallService {
         confidence: number; sequenceIndex: number;
       }>;
       assemblyAiJobId?: string;
+      audioDurationSec?: number;
     },
   ) {
     const tx = await this.transcripts.create({ tenantId, callId, ...transcriptData });
+    const durationSeconds =
+      transcriptData.audioDurationSec && transcriptData.audioDurationSec > 0
+        ? transcriptData.audioDurationSec
+        : durationSecondsFromUtterances(transcriptData.utterances);
+    if (durationSeconds > 0) {
+      await this.calls.updateDurationSeconds(callId, tenantId, durationSeconds);
+    }
+    const speakers = uniqueSpeakersFromUtterances(transcriptData.utterances);
+    if (speakers.length > 0) {
+      await this.calls.updateParticipants(callId, tenantId, speakers);
+    }
     await this.calls.updateStatus(callId, tenantId, 'completed');
 
     // CT-10: emit BOTH the canonical platform name (`call.transcription.completed`,

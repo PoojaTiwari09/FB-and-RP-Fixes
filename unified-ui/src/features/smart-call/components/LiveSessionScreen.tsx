@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Zap, Copy, ChevronDown, ChevronUp, X, Layers, Focus, Key } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Layers, Key } from 'lucide-react';
 import type {
   SessionStartResponse,
   PreCallBrief,
@@ -12,7 +13,11 @@ import type {
 } from '@smart-call/types/smart-call.types';
 import { useSmartCallSession } from '@smart-call/hooks/useSmartCallSession';
 import { loadSmartCallApiKeys, type SmartCallApiKeys } from '@smart-call/lib/api-keys';
+import SmartCallLivePanels from '@smart-call/components/SmartCallLivePanels';
+import SmartCallPiPOverlay from '@smart-call/components/SmartCallPiPOverlay';
 import OverlayWidget from '@smart-call/components/OverlayWidget';
+import { overlayFromSession } from '@smart-call/lib/overlay-from-session';
+import { useLiveAssistPiP } from '@smart-call/live-assist/hooks/useLiveAssistPiP';
 import EndSessionModal from '@smart-call/components/EndSessionModal';
 import ApiKeysModal from '@smart-call/components/ApiKeysModal';
 import AudioCaptureModal from '@smart-call/components/AudioCaptureModal';
@@ -181,6 +186,7 @@ export default function LiveSessionScreen({ session, preCallBrief, onEnd }: Prop
         company: preCallBrief.contactCompany,
         stage: preCallBrief.dealStage,
         contact: preCallBrief.contactName,
+        rep: 'You',
       }
     : undefined;
 
@@ -199,11 +205,50 @@ export default function LiveSessionScreen({ session, preCallBrief, onEnd }: Prop
     });
 
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [overlayActive, setOverlayActive] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
+  const [floatingOverlayOpen, setFloatingOverlayOpen] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
-  const [competitorOpen, setCompetitorOpen] = useState(true);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [pipError, setPipError] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  const {
+    openPiP,
+    closePiP,
+    isOpen: overlayOpen,
+    portalTarget,
+    isSupported: pipSupported,
+  } = useLiveAssistPiP({ width: 320, height: 640 });
+
+  const overlayActive = floatingOverlayOpen || overlayOpen;
+
+  const handleLaunchOverlay = useCallback(() => {
+    setPipError('');
+    if (overlayActive) {
+      setFloatingOverlayOpen(false);
+      closePiP();
+      return;
+    }
+    setFloatingOverlayOpen(true);
+  }, [overlayActive, closePiP]);
+
+  const handlePopOutPiP = useCallback(async () => {
+    setPipError('');
+    try {
+      await openPiP();
+      setFloatingOverlayOpen(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('gesture') || msg.includes('user activation')) {
+        setPipError('Click Pop out again — the browser needs a direct click.');
+      } else if (!pipSupported) {
+        setPipError('Pop-out requires Chrome 116+ (Document Picture-in-Picture).');
+      } else {
+        setPipError(msg || 'Could not open overlay window.');
+      }
+    }
+  }, [openPiP, pipSupported]);
 
   // Session timer
   useEffect(() => {
@@ -269,27 +314,21 @@ export default function LiveSessionScreen({ session, preCallBrief, onEnd }: Prop
           </button>
 
           <button
-            onClick={() => setOverlayActive((v) => !v)}
+            type="button"
+            onClick={() => void handleLaunchOverlay()}
+            title={
+              overlayActive
+                ? 'Close movable coaching overlay'
+                : 'Open draggable overlay (drag header). Use Pop out for Teams/Meet tabs.'
+            }
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
               overlayActive
-                ? 'bg-green-500 border-green-500 text-white'
+                ? 'bg-violet-600 border-violet-600 text-white'
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             <Layers size={13} />
-            {overlayActive ? 'Overlay Active' : 'Enable Overlay'}
-          </button>
-
-          <button
-            onClick={() => setFocusMode((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-              focusMode
-                ? 'bg-blue-500 border-blue-500 text-white'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <Focus size={13} />
-            Focus Mode
+            {overlayActive ? 'Close Overlay' : 'Launch Overlay'}
           </button>
 
           <span className="text-sm font-mono font-semibold text-gray-700 tabular-nums min-w-[42px] text-center">
@@ -326,221 +365,53 @@ export default function LiveSessionScreen({ session, preCallBrief, onEnd }: Prop
         </div>
       )}
 
-      {/* ── Main panels ────────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-
-        {/* LEFT PANEL — Live Guidance + Responses + Competitor Intel */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-
-          {/* Live Guidance */}
-          {data.guidance && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Zap size={15} className="text-blue-500 shrink-0" />
-                <span className="text-sm font-semibold text-gray-800">Live Guidance</span>
-              </div>
-              <span className="inline-block px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-medium">
-                {data.guidance.currentStage}
-              </span>
-              <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                <span className="text-gray-400">↗</span>
-                <span>
-                  <span className="font-medium">Next: </span>
-                  {data.guidance.nextSuggestion}
-                </span>
-              </p>
-            </div>
-          )}
-
-          {/* Suggested Responses */}
-          {data.responses.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-1">
-                Suggested Responses
-              </p>
-              {data.responses.map((resp, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleCopyResponse(resp, i)}
-                  className="w-full flex items-start gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-200 hover:bg-blue-50/30 transition-colors text-left group"
-                >
-                  <span className="mt-0.5 shrink-0 text-gray-300 group-hover:text-blue-400 transition-colors">
-                    💬
-                  </span>
-                  <span className="text-sm text-gray-700 flex-1 leading-relaxed">{resp}</span>
-                  <Copy
-                    size={13}
-                    className={`shrink-0 mt-0.5 transition-colors ${
-                      copiedIdx === i ? 'text-green-500' : 'text-gray-300 group-hover:text-gray-400'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Competitor Intelligence */}
-          {data.competitors.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => setCompetitorOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🎯</span>
-                  <span className="text-xs font-semibold text-orange-500 uppercase tracking-widest">
-                    Competitor Intelligence
-                  </span>
-                </div>
-                {competitorOpen
-                  ? <ChevronUp size={14} className="text-gray-400" />
-                  : <ChevronDown size={14} className="text-gray-400" />}
-              </button>
-              {competitorOpen && (
-                <div className="px-4 pb-4 space-y-5 border-t border-gray-100 pt-3">
-                  {data.competitors.map((comp) => (
-                    <CompetitorBlock key={comp.competitorName} comp={comp} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Empty state while events load */}
-          {!data.guidance && data.responses.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                <Zap size={18} className="text-gray-300" />
-              </div>
-              <p className="text-sm text-gray-400">AI is listening...</p>
-              <p className="text-xs text-gray-300 mt-1">Guidance will appear shortly</p>
-            </div>
-          )}
+      {pipError && (
+        <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-800 shrink-0">
+          {pipError}
         </div>
-
-        {/* RIGHT PANEL — Analytics (hidden in Focus Mode) */}
-        {!focusMode && (
-          <div className="w-80 shrink-0 border-l border-gray-200 overflow-y-auto p-4 space-y-5 bg-white">
-
-            {/* Intent & Risk Signals */}
-            <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                Intent &amp; Risk Signals
-              </p>
-              {data.signals.length === 0 ? (
-                <p className="text-xs text-gray-300">Signals will appear as the call progresses.</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {data.signals.map((sig) => <SignalRow key={sig.label} signal={sig} />)}
-                </div>
-              )}
-            </div>
-
-            {/* Talk Ratio */}
-            {data.talkRatio && (
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                  Talk Ratio
-                </p>
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>You</span>
-                      <span className="font-semibold">{data.talkRatio.repPercent}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                        style={{ width: `${data.talkRatio.repPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>Customer</span>
-                      <span className="font-semibold">{data.talkRatio.customerPercent}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-green-500 rounded-full transition-all duration-500"
-                        style={{ width: `${data.talkRatio.customerPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Conversation Metrics */}
-            {data.metrics && (
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                  Conversation Metrics
-                </p>
-                <div className="space-y-1.5">
-                  {[
-                    { label: 'Interruptions',   value: String(data.metrics.interruptions), badge: false },
-                    {
-                      label: 'Speaking Pace',
-                      value: data.metrics.speakingPace === 'GOOD' ? 'Good' : data.metrics.speakingPace,
-                      badge: true,
-                      badgeClass: 'bg-green-100 text-green-700',
-                    },
-                    { label: 'Words per Minute', value: String(data.metrics.wordsPerMinute), badge: false },
-                    { label: 'Questions Asked',  value: String(data.metrics.questionsAsked),  badge: false },
-                  ].map((m) => (
-                    <div key={m.label} className="flex items-center justify-between py-1">
-                      <span className="text-xs text-gray-500">{m.label}</span>
-                      {m.badge ? (
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${m.badgeClass}`}>
-                          {m.value}
-                        </span>
-                      ) : (
-                        <span className="text-sm font-semibold text-gray-800">{m.value}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Conversation Summaries */}
-            <div>
-              <div className="flex items-center gap-1.5 mb-2">
-                <span className="w-2 h-2 rounded-full bg-pink-400 shrink-0" />
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-                  Conversation Summaries
-                </p>
-              </div>
-              {data.summarySegments.length === 0 ? (
-                <p className="text-xs text-gray-300 text-center py-3">
-                  Summaries will appear as the conversation progresses
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {data.summarySegments.map((seg, i) => (
-                    <SummarySegment key={i} seg={seg} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Overlay Widget ─────────────────────────────────────────────── */}
-      {overlayActive && (
-        <OverlayWidget
-          data={data.overlay}
-          logEntries={data.logEntries}
-          signals={data.signals}
-          talkRatio={data.talkRatio}
-          metrics={data.metrics}
-          contactName={session.contactName}
-          contactCompany={session.contactCompany}
-          onClose={() => setOverlayActive(false)}
-        />
       )}
+
+      {/* ── Main live session panels (unchanged) ───────────────────────── */}
+      <SmartCallLivePanels
+        data={data}
+        isCapturing={isCapturing}
+        layout="page"
+        onCopyResponse={handleCopyResponse}
+        copiedIdx={copiedIdx}
+      />
+
+      {/* Draggable dark overlay — Coach / Signals / Log (stays on screen while you work) */}
+      {mounted &&
+        floatingOverlayOpen &&
+        createPortal(
+          <OverlayWidget
+            mode="floating"
+            data={overlayFromSession(data)}
+            logEntries={data.logEntries}
+            signals={data.signals}
+            talkRatio={data.talkRatio}
+            metrics={data.metrics}
+            contactName={session.contactName}
+            contactCompany={session.contactCompany}
+            onClose={() => setFloatingOverlayOpen(false)}
+            popOutSupported={pipSupported}
+            onPopOut={() => void handlePopOutPiP()}
+          />,
+          document.body,
+        )}
+
+      {/* Document PiP — same overlay, floats above Teams / Meet / other browser tabs */}
+      {overlayOpen &&
+        portalTarget &&
+        createPortal(
+          <SmartCallPiPOverlay
+            data={data}
+            contactName={session.contactName}
+            contactCompany={session.contactCompany}
+            onClose={closePiP}
+          />,
+          portalTarget,
+        )}
 
       {/* ── End Session Modal ──────────────────────────────────────────── */}
       {showEndModal && (

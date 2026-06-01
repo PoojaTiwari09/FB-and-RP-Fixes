@@ -31,6 +31,8 @@ import { PiiRedactionService }      from './services/pii-redaction.service';
 import { AuditLogService }          from './services/audit-log.service';
 import { AiExtractionClient }       from './services/ai-extraction.client';
 import { AiExtractionSubscriber }   from './services/ai-extraction.subscriber';
+import { CallAiPipelineService }    from './services/call-ai-pipeline.service';
+import { M01FrontendCallProcessingService } from './frontend-api/m01-frontend-call-processing.service';
 import { M02IngestClient }          from './services/m02-ingest.client';
 import { AiExtractorService }       from './services/ai-extractor.service';
 
@@ -97,6 +99,8 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     CallService,
     M01FrontendCallsService,
     M01FrontendTranscriptService,
+    M01FrontendCallProcessingService,
+    CallAiPipelineService,
     M01FrontendSmartCallService,
     M01FrontendSmartCallPersistenceService,
     M01FrontendAiReviewerService,

@@ -1,4 +1,5 @@
-import { formatDuration } from './m01-frontend.mapper';
+import { formatDurationClock } from './m01-frontend.mapper';
+import { resolveDurationSeconds } from '../lib/call-duration.util';
 
 function formatTimestampMs(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -26,12 +27,29 @@ export function mapUtterance(u: any) {
 }
 
 export function mapTalkRatio(talkRatio: any) {
-  const repPct = Math.round((talkRatio?.rep?.percentage ?? 0.5) * 100);
-  const custPct = 100 - repPct;
-  return {
-    rep: { percentage: repPct },
-    customer: { percentage: custPct },
-  };
+  if (talkRatio?.rep?.percentage != null) {
+    const repPct = Math.round(
+      (talkRatio.rep.percentage <= 1 ? talkRatio.rep.percentage * 100 : talkRatio.rep.percentage),
+    );
+    const custRaw = talkRatio?.customer?.percentage;
+    const custPct =
+      custRaw != null
+        ? Math.round(custRaw <= 1 ? custRaw * 100 : custRaw)
+        : 100 - repPct;
+    return { rep: { percentage: repPct }, customer: { percentage: custPct } };
+  }
+
+  const speakers = Array.isArray(talkRatio?.speakers) ? talkRatio.speakers : [];
+  if (speakers.length > 0) {
+    const sorted = [...speakers].sort(
+      (a: { duration_ms?: number }, b: { duration_ms?: number }) =>
+        (b.duration_ms ?? 0) - (a.duration_ms ?? 0),
+    );
+    const repPct = Math.round((sorted[0]?.percentage ?? 0.5) * 100);
+    return { rep: { percentage: repPct }, customer: { percentage: 100 - repPct } };
+  }
+
+  return { rep: { percentage: 50 }, customer: { percentage: 50 } };
 }
 
 export function mapTopicsFromHighlights(highlights: any[] | null | undefined) {
@@ -48,8 +66,8 @@ export function mapTopicsFromHighlights(highlights: any[] | null | undefined) {
 
 export function mapAudio(call: any) {
   return {
-    audioUrl: call.audioUrl || '',
-    duration: formatDuration(call.durationSeconds ?? 0),
+    audioUrl: call.audioUrl || call.recordingUrl || '',
+    duration: formatDurationClock(resolveDurationSeconds(call)),
     format: 'mp3',
   };
 }
