@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@300;400;600&family=Hanken+Grotesk:wght@500;600;700&family=Source+Sans+Pro:wght@300;400;600&family=Source+Code+Pro:wght@400;500&display=swap');
+
+:root {
+  --font-serif: 'Source Serif Pro', serif;
+  --font-sans: 'Source Sans Pro', sans-serif;
+  --font-mono: 'Source Code Pro', monospace;
+  --font-accent: 'Hanken Grotesk', sans-serif;
+}
+
+.calls-feature-wrapper {
+  font-family: var(--font-sans);
+}
+
+.calls-feature-wrapper h1,
+.calls-feature-wrapper h2,
+.calls-feature-wrapper h3,
+.calls-feature-wrapper h4,
+.calls-feature-wrapper h5,
+.calls-feature-wrapper h6,
+.calls-feature-wrapper .font-serif {
+  font-family: var(--font-serif);
+}
+
+.calls-feature-wrapper .font-sans {
+  font-family: var(--font-sans);
+}
+
+.calls-feature-wrapper .font-mono {
+  font-family: var(--font-mono);
+}

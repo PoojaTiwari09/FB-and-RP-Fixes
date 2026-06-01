@@ -2,15 +2,35 @@
 
 Runnable **backend + frontend** per module. **Docker** = Postgres + Redis only. **pnpm** = all APIs and UIs.
 
+## Unified demo (UI + one API) — recommended
+
+From this folder:
+
+```powershell
+.\setup-first-time.ps1    # once
+.\stop-demo.ps1           # free ports
+.\start-demo.ps1          # Docker + API :3001 + UI :3000
+```
+
+Open **http://localhost:3000/engage**. Full steps: **[RUN-DEMO.md](./RUN-DEMO.md)**.
+
+| Path | Role |
+|------|------|
+| `unified-ui/` | Next.js UI (:3000) |
+| `boilerplate code/r-revenue-intelligence/` | Unified API (:3001) |
+| `start-demo.ps1` / `stop-demo.ps1` | Start/stop scripts |
+
 ## Repository layout
 
 ```text
 r-revenue-intelligence-monorepo/          ← git root (push this folder)
 ├── docker-compose.yml                    # Postgres :5433, Redis :6379
+├── unified-ui/                             # Revenue Intelligence UI (:3000)
+├── start-demo.ps1, stop-demo.ps1         # Demo orchestration
 ├── .env.example                          # copy → app .env (see below)
 ├── doc/                                  # API docs + integration contracts
 └── boilerplate code/r-revenue-intelligence/   ← application (pnpm commands here)
-    ├── apps/m01-api … m10-api
+    ├── apps/unified-api, m01-api … m10-api
     ├── apps/web/src/modules/m01 … m10
     ├── modules/m01 … m10
     └── packages/database

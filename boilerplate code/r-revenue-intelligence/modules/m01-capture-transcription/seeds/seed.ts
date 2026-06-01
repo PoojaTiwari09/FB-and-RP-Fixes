@@ -50,7 +50,7 @@ async function main() {
       callOwner:        'Sarah Chen',
       accountId:        'acme-corp-001',
       opportunityId:    'opp-acme-q2',
-      audioUrl:         'https://github.com/AssemblyAI-Examples/audio-examples/raw/main/2_speakers_1.wav',
+      audioUrl:         'https://recordings-buttons.s3.eu-north-1.amazonaws.com/2mins_sales.mp3',
       transcriptStatus: 'completed',
       transcript: {
         create: {
@@ -131,7 +131,7 @@ async function main() {
       callSource:       'teams',
       participants:     ['David Park (Rep)', 'Lisa Wang (Gamma)'],
       callOwner:        'David Park',
-      audioUrl:         'https://github.com/AssemblyAI-Examples/audio-examples/raw/main/2_speakers_1.wav',
+      audioUrl:         'https://recordings-buttons.s3.eu-north-1.amazonaws.com/3mins_sales.mp3',
       transcriptStatus: 'processing',
     },
   });

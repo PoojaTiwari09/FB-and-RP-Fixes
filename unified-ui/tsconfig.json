@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@training/*": ["./src/features/training/*"],
+      "@engage/*": ["./src/features/engage/*"],
+      "@calls/*": ["./src/features/calls/*"],
+      "@smart-call/*": ["./src/features/smart-call/*"],
+      "@topics/*": ["./src/features/topics/*"],
+      "@trackers/*": ["./src/features/trackers/*"],
+      "@forecast/*": ["./src/features/forecast-boards/*"],
+      "@revenue/*": ["./src/features/revenue/*"],
+      "@deal-drivers/*": ["./src/features/deal-drivers/*"],
+      "@ai-deep-researcher/*": ["./src/features/ai-deep-researcher/*"],
+      "@ai-revenue-predictor/*": ["./src/features/ai-revenue-predictor/*"],
+      "@data-cloud/*": ["./src/features/data-cloud/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}

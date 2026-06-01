@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { existsSync } from 'fs';
 import { CallService } from '../services/call.service';
 import { getLocalAudioPath } from '../lib/upload-paths';
-import { S3_RECORDINGS_CATALOG } from '../lib/s3-recordings-catalog';
+import { resolvePublicTranscriptionUrl } from '../lib/public-audio-url';
 import { mapAiReviewerCallRow } from './m01-frontend.mapper';
 
 function wrapData<T>(payload: T) {
@@ -144,21 +144,16 @@ export class M01FrontendAiReviewerService {
 
 function resolvePlayableAudioUrl(record: { id?: string; recordingUrl?: string; audioUrl?: string }): string {
   const raw = record.recordingUrl || record.audioUrl || '';
+  const seed = String(record.id ?? '0');
+
   if (raw.includes('/uploads/audio/')) {
     const filename = raw.split('/').pop()?.split('?')[0];
     if (filename && existsSync(getLocalAudioPath(filename))) {
       return raw;
     }
-  } else if (raw && !raw.includes('localhost') && !raw.includes('127.0.0.1')) {
-    return raw;
   }
 
-  const seed = String(record.id ?? '0');
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash + seed.charCodeAt(i)) % S3_RECORDINGS_CATALOG.length;
-  }
-  return S3_RECORDINGS_CATALOG[hash]?.sourceUrl ?? S3_RECORDINGS_CATALOG[0].sourceUrl;
+  return resolvePublicTranscriptionUrl(raw, seed);
 }
 
 function formatTs(ms: number): string {
