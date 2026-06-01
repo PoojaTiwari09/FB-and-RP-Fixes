@@ -48,11 +48,15 @@ async function bootstrap() {
   // Do not read monolith PORT from .env (often 3002) — unified demo is always :3001 unless overridden.
   const port = parseInt(process.env.UNIFIED_API_PORT ?? '3001', 10);
 
+  app.getHttpAdapter().get('/health', (_req, res) => {
+    res.json({ status: 'ok', service: 'unified-api' });
+  });
+
   app.getHttpAdapter().get('/', (_req, res) => {
     res.json({
       service: 'unified-api',
       status: 'ok',
-      modules: ['M01', 'M02', 'M09'],
+      modules: ['M01', 'M02', 'M08-Engage', 'M09'],
       ui: 'http://localhost:3000',
       samples: {
         m01Calls: `http://localhost:${port}/api/calls?page=1&size=1`,
@@ -75,7 +79,7 @@ async function bootstrap() {
     }
   }
 
-  logger.log(`Unified API (M01+M02+M09) on http://localhost:${port}`);
+  logger.log(`Unified API (M01+M02+M08 Engage+M09) on http://localhost:${port}`);
   logger.log('Frontend: http://localhost:3000');
 }
 

@@ -9,6 +9,7 @@ import { EventPublisherModule } from '../../../modules/platform-core/events/even
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
 import { M09CoachingTrainingModule } from '../../../modules/m09-coaching-training/m09-coaching-training.module';
+import { EngageBridgeModule } from '../../../modules/m08-sales-engagement/frontend-api/engage-bridge.module';
 
 const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
   .split(',')
@@ -45,6 +46,7 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
     M01CaptureTranscriptionModule,
     M02ConversationIntelligenceModule,
     M09CoachingTrainingModule,
+    EngageBridgeModule,
   ],
 })
 export class UnifiedAppModule {
