@@ -29,14 +29,34 @@ export class M01FrontendCallsService {
 
     if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
       const offset = (q.page - 1) * q.size;
+      const extra: Record<string, unknown> = {};
+      const andClauses: Record<string, unknown>[] = [];
+      if (q.search?.trim()) {
+        const needle = q.search.trim();
+        andClauses.push({
+          OR: [
+            { title: { contains: needle, mode: 'insensitive' } },
+            { callOwner: { contains: needle, mode: 'insensitive' } },
+            { accountId: { contains: needle, mode: 'insensitive' } },
+          ],
+        });
+      }
+      if (rawQuery.type && rawQuery.type !== 'All Types') {
+        const typeNeedle = String(rawQuery.type).replace(/-/g, ' ');
+        andClauses.push({
+          OR: [
+            { title: { contains: typeNeedle, mode: 'insensitive' } },
+            { callType: { contains: typeNeedle, mode: 'insensitive' } },
+          ],
+        });
+      }
+      if (andClauses.length > 0) extra.AND = andClauses;
       const { records, total } = await this.callRepo.findAll(
         tenantId,
         { sortBy: 'callDate', order: 'desc', limit: q.size, offset },
-        {},
+        extra,
       );
-      const calls = records.map((r: any) =>
-        mapAiReviewerCallRow({ ...r, reviewStatus: 'Not Reviewed' }),
-      );
+      const calls = records.map((r: any) => mapAiReviewerCallRow(r));
       return {
         data: {
           calls,

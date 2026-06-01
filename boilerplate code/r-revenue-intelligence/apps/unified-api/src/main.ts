@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
+import express from 'express';
+import { resolveUploadsRoot } from '../../../modules/m01-capture-transcription/lib/upload-paths';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
@@ -18,14 +20,25 @@ import { ZodExceptionFilter } from './zod-exception.filter';
 import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
 import { M09Repository } from '../../../modules/m09-coaching-training/repositories/m09.repository';
 
-const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'audio');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
 async function bootstrap() {
   const logger = new Logger('Unified-API');
   const app = await NestFactory.create<NestExpressApplication>(UnifiedAppModule);
+
+  const uploadsRoot = resolveUploadsRoot();
+  logger.log(`Uploads directory: ${uploadsRoot}`);
+
+  // Serve /uploads/audio/* without SPA index fallback (prevents ENOENT on index.html)
+  app.use(
+    '/uploads',
+    express.static(uploadsRoot, {
+      index: false,
+      redirect: false,
+      fallthrough: true,
+    }),
+  );
+  app.use('/uploads', (_req, res) => {
+    res.status(404).json({ error: 'Upload not found' });
+  });
 
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));

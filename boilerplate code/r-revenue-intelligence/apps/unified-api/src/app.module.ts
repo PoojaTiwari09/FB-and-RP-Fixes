@@ -2,9 +2,6 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
-
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
@@ -37,11 +34,6 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
         maxRetriesPerRequest: null,
         retryStrategy: (times: number) => Math.min(times * 200, 5000),
       },
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
-      serveRoot: '/uploads',
-      serveStaticOptions: { fallthrough: true },
     }),
     M01CaptureTranscriptionModule,
     M02ConversationIntelligenceModule,

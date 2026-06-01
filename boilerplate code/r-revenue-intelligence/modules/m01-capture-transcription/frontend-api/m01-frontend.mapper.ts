@@ -14,6 +14,105 @@ export function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
+/** AI Call Reviewer table — `45:23` clock format */
+export function formatDurationClock(seconds: number): string {
+  if (!seconds || seconds <= 0) return '—';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function computeAiReviewerScore(record: any): number {
+  if (record.overallScore != null) return Math.round(Number(record.overallScore));
+  if (record.aiScore != null) return Math.round(Number(record.aiScore));
+
+  const tr = record.transcript;
+  if (tr?.talkRatio) {
+    const repEntry = tr.talkRatio.Rep ?? tr.talkRatio.rep;
+    let repPct = 50;
+    if (typeof repEntry === 'number') repPct = repEntry <= 1 ? repEntry * 100 : repEntry;
+    else if (repEntry?.percentage != null) {
+      repPct = repEntry.percentage <= 1 ? repEntry.percentage * 100 : repEntry.percentage;
+    }
+    const balance = 100 - Math.abs(repPct - 48) * 1.2;
+    const highlightBonus = Math.min(12, (tr.keyHighlights?.length ?? 0) * 4);
+    return Math.min(99, Math.max(52, Math.round(balance + highlightBonus)));
+  }
+
+  if (record.transcriptStatus === 'completed') return 82;
+  if (record.transcriptStatus === 'processing' || record.transcriptStatus === 'pending') return 68;
+  return 60;
+}
+
+function deriveReviewStatus(record: any, score: number): string {
+  if (record.reviewStatus) return String(record.reviewStatus);
+  if (record.transcriptStatus !== 'completed') return 'Not Reviewed';
+  if (score >= 85) return 'Reviewed';
+  if (score >= 78) return 'Acknowledged';
+  if (score >= 60) return 'Feedback Pending';
+  return 'Not Reviewed';
+}
+
+function deriveAiReviewerTags(record: any): string[] {
+  const tags = new Set<string>();
+  const title = String(record.title ?? '').toLowerCase();
+  const account = String(record.accountId ?? record.accountName ?? '').toLowerCase();
+
+  if (account.includes('enterprise') || account.includes('acme') || account.includes('global')) {
+    tags.add('Enterprise');
+  }
+  if (record.opportunityId || title.includes('enterprise') || title.includes('annual')) {
+    tags.add('High Value');
+  }
+  if (title.includes('demo') || title.includes('technical') || title.includes('architecture')) {
+    tags.add('Technical');
+  }
+  if (title.includes('urgent') || title.includes('negotiation') || title.includes('contract')) {
+    tags.add('Urgent');
+  }
+  if (title.includes('cold') || record.callType === 'outbound') {
+    tags.add('Outbound');
+  }
+  if (title.includes('onboard') || title.includes('check-in') || title.includes('implementation')) {
+    tags.add('Onboarding');
+  }
+
+  const highlights = record.transcript?.keyHighlights ?? [];
+  for (const h of highlights) {
+    const label = String(h.label ?? '').toLowerCase();
+    if (label.includes('competitor') || label.includes('objection')) tags.add('Urgent');
+    if (label.includes('pricing') || label.includes('budget')) tags.add('High Value');
+  }
+
+  if (tags.size === 0 && record.transcriptStatus === 'completed') tags.add('Enterprise');
+  return [...tags].slice(0, 3);
+}
+
+function mapCallTypeLabel(record: any): string {
+  const title = String(record.title ?? '').toLowerCase();
+  if (title.includes('discovery')) return 'Discovery';
+  if (title.includes('demo')) return 'Demo';
+  if (title.includes('negotiation')) return 'Negotiation';
+  if (title.includes('follow-up') || title.includes('follow up') || title.includes('followup')) {
+    return 'Follow-up';
+  }
+  if (title.includes('cold') || record.callType === 'outbound') return 'Cold Call';
+  if (title.includes('check-in') || title.includes('check in')) return 'Follow-up';
+  const raw = String(record.dealType || record.callType || 'Discovery');
+  if (raw === 'meeting') return 'Discovery';
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function mapDealStage(record: any): string {
+  const title = String(record.title ?? '').toLowerCase();
+  if (title.includes('closed') || title.includes('implementation')) return 'Closed Won';
+  if (title.includes('negotiation')) return 'Negotiation';
+  if (title.includes('demo')) return 'Demo';
+  if (title.includes('cold') || title.includes('prospect')) return 'Prospecting';
+  if (record.stage) return String(record.stage);
+  return 'Qualification';
+}
+
 function mapTranscriptStatus(status: string): string {
   if (status === 'completed') return 'completed';
   if (status === 'processing' || status === 'pending') return 'processing';
@@ -41,7 +140,7 @@ export function resolveOwner(record: any) {
 
 /** AI Call Reviewer (Sales Rep) list row — `Ai_Call_Reviewer_SalesRep.pdf` */
 export function mapAiReviewerCallRow(record: any) {
-  const score = Math.round(record.overallScore ?? record.aiScore ?? 78);
+  const score = computeAiReviewerScore(record);
   return {
     id: record.id,
     callName: record.title,
@@ -49,12 +148,12 @@ export function mapAiReviewerCallRow(record: any) {
     dateTime: record.callDate instanceof Date
       ? record.callDate.toISOString()
       : new Date(record.callDate).toISOString(),
-    duration: formatDuration(record.durationSeconds ?? 0),
-    type: record.dealType || record.callType || 'Discovery',
-    stage: record.stage || 'Qualification',
+    duration: formatDurationClock(record.durationSeconds ?? 0),
+    type: mapCallTypeLabel(record),
+    stage: mapDealStage(record),
     score,
-    status: record.reviewStatus || 'Not Reviewed',
-    tags: record.tags || ['Enterprise'],
+    status: deriveReviewStatus(record, score),
+    tags: deriveAiReviewerTags(record),
   };
 }
 

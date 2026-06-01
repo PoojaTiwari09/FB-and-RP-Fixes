@@ -19,7 +19,13 @@ const CALL_1 = '11111111-1111-1111-1111-000000000001';
 const CALL_2 = '11111111-1111-1111-1111-000000000002';
 const CALL_3 = '11111111-1111-1111-1111-000000000003';
 
+const DEMO_CALL_IDS = [CALL_1, CALL_2, CALL_3];
+
 async function clean() {
+  // Remove stable demo rows even if an older seed used a different tenantId (e.g. dev-tenant-001).
+  await prisma.callShare.deleteMany({ where: { callId: { in: DEMO_CALL_IDS } } });
+  await prisma.callNote.deleteMany({ where: { callId: { in: DEMO_CALL_IDS } } });
+  await prisma.callRecord.deleteMany({ where: { id: { in: DEMO_CALL_IDS } } });
   await prisma.callShare.deleteMany({ where: { tenantId: TENANT_ID } });
   await prisma.callNote.deleteMany({ where: { tenantId: TENANT_ID } });
   // Utterances cascade from Transcript; Transcript cascades from CallRecord.

@@ -51,3 +51,4 @@ export class M01FrontendSmartCallController {
   summaries(@Param('sessionId') sessionId: string) {
     return this.svc.listSummaries(sessionId);
   }
+}

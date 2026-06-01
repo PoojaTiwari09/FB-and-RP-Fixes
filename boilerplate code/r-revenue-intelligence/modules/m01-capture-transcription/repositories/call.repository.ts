@@ -33,7 +33,11 @@ export class CallRepository {
         orderBy: { [sortBy]: order },
         take: limit,
         skip: offset,
-        include: { transcript: { select: { id: true, summary: true } } },
+        include: {
+          transcript: {
+            select: { id: true, summary: true, keyHighlights: true, talkRatio: true },
+          },
+        },
       }),
       this.prisma.callRecord.count({ where }),
     ]);
