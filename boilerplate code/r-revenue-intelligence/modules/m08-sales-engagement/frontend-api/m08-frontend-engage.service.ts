@@ -22,26 +22,63 @@ export class M08FrontendEngageService {
   async getTasks(tenantId: string) {
     const dbTasks = await this.prisma.engageTask.findMany({
       where: { tenantId },
-      orderBy: { createdAt: 'desc' },
     });
 
-    // Map DB fields to frontend format expected by the rep engage components
-    return dbTasks.map((t) => ({
-      taskId: t.taskId,
-      contactId: t.contactId || '',
-      contactName: t.contactName,
-      company: t.companyName,
-      channelType: t.channel.toUpperCase(),
-      sequenceName: resolveSequenceName(t),
-      sequenceStep: resolveSequenceStep(t),
-      scheduledTime: t.scheduledTime || '',
-      dueDateTime: resolveDueDateTime(t),
-      interactionCount: t.interactionCount,
-      priority: t.priority.toUpperCase(),
-      status: t.status.toUpperCase(),
-      isOverdue: t.isOverdue,
-      isAtRisk: t.isAtRisk,
-    }));
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const mappedTasks = dbTasks.map((t) => {
+      const isCompleted = t.status.toUpperCase() === 'COMPLETED';
+      let isOverdue = t.isOverdue;
+      if (!isCompleted && t.dueDate && t.dueDate < todayStr) {
+        isOverdue = true;
+      }
+      const priority = (isOverdue ? 'HIGH' : t.priority).toUpperCase();
+
+      return {
+        taskId: t.taskId,
+        contactId: t.contactId || '',
+        contactName: t.contactName,
+        company: t.companyName,
+        channelType: t.channel.toUpperCase(),
+        sequenceName: resolveSequenceName(t),
+        sequenceStep: resolveSequenceStep(t),
+        scheduledTime: t.scheduledTime || '',
+        dueDateTime: resolveDueDateTime(t),
+        interactionCount: t.interactionCount,
+        priority,
+        status: t.status.toUpperCase(),
+        isOverdue,
+        isAtRisk: t.isAtRisk,
+        dueDate: t.dueDate,
+        dueTime: t.dueTime || '',
+        createdAt: t.createdAt,
+      };
+    });
+
+    // Properly sort tasks: Priority First, then Due Date Ascending, then Due Time Ascending, then CreatedAt Descending
+    mappedTasks.sort((a, b) => {
+      const priorityOrder: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
+      const pDiff = (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
+      if (pDiff !== 0) return pDiff;
+
+      if (a.dueDate && b.dueDate) {
+        const dDiff = a.dueDate.localeCompare(b.dueDate);
+        if (dDiff !== 0) return dDiff;
+      } else if (a.dueDate) {
+        return -1;
+      } else if (b.dueDate) {
+        return 1;
+      }
+
+      if (a.dueTime && b.dueTime) {
+        const tDiff = a.dueTime.localeCompare(b.dueTime);
+        if (tDiff !== 0) return tDiff;
+      }
+
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+
+    return mappedTasks.map(({ dueDate, dueTime, createdAt, ...rest }) => rest);
   }
 
   async getTaskSummary(tenantId: string) {
@@ -49,13 +86,22 @@ export class M08FrontendEngageService {
       where: { tenantId },
     });
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const totalTasksToday = tasks.filter((t) => t.status !== 'COMPLETED').length;
     const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length;
     const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
     const upcomingCount = tasks.filter((t) => t.status === 'PENDING').length;
     const atRiskCount = tasks.filter((t) => t.isAtRisk && t.status !== 'COMPLETED').length;
     const dueTodayCount = tasks.filter((t) => t.status !== 'COMPLETED').length;
-    const highPriorityCount = tasks.filter((t) => t.priority === 'HIGH' && t.status !== 'COMPLETED').length;
+    
+    // Dynamically calculate high priority count including overdue tasks
+    const highPriorityCount = tasks.filter((t) => {
+      const isCompleted = t.status === 'COMPLETED';
+      if (isCompleted) return false;
+      const isOverdue = t.isOverdue || (t.dueDate && t.dueDate < todayStr);
+      return isOverdue || t.priority === 'HIGH';
+    }).length;
 
     const total = completedCount + upcomingCount + inProgressCount;
     const progressPercent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
@@ -252,6 +298,11 @@ export class M08FrontendEngageService {
 
   async createTask(tenantId: string, body: any) {
     const taskId = `task_${Date.now()}`;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dueDate = body.dueDate || todayStr;
+    const isOverdue = dueDate < todayStr;
+    const priority = (isOverdue ? 'HIGH' : (body.priority || 'NORMAL')).toUpperCase();
+
     const newTask = await this.prisma.engageTask.create({
       data: {
         tenantId,
@@ -261,18 +312,18 @@ export class M08FrontendEngageService {
         companyName: body.companyName || 'New Company',
         channel: (body.channel || 'custom').toUpperCase(),
         status: 'PENDING',
-        dueDate: body.dueDate || new Date().toISOString().split('T')[0],
+        dueDate,
         dueTime: body.dueTime || null,
         scheduledTime: body.dueTime || null,
         dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
-        priority: (body.priority || 'NORMAL').toUpperCase(),
+        priority,
         assigneeId: body.assigneeId || 'me',
         assigneeName: body.assigneeName || 'Alex Morgan',
         assigneeRole: body.assigneeRole || 'Account Executive',
         todoType: body.todoType || 'manual',
         entityType: body.entityType || 'lead',
         interactionCount: 0,
-        isOverdue: false,
+        isOverdue,
         isAtRisk: false,
         recommendedNextSteps: body.recommendedNextSteps || [],
       },

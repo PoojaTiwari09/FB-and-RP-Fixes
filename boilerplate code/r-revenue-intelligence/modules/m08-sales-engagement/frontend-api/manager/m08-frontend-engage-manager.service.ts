@@ -37,7 +37,23 @@ export class M08FrontendEngageManagerService {
       where: { tenantId },
     });
 
-    let list = tasks.filter((t) => {
+    const todayStrRaw = new Date().toISOString().split('T')[0];
+
+    const normalizedTasks = tasks.map((t) => {
+      const isCompleted = isCompletedStatus(t.status);
+      let isOverdue = t.isOverdue;
+      if (!isCompleted && t.dueDate && t.dueDate < todayStrRaw) {
+        isOverdue = true;
+      }
+      const priority = isOverdue ? 'HIGH' : t.priority;
+      return {
+        ...t,
+        isOverdue,
+        priority,
+      };
+    });
+
+    let list = normalizedTasks.filter((t) => {
       if (query.assigneeId === 'me') return true;
       return t.assigneeId === query.assigneeId;
     });
@@ -98,8 +114,14 @@ export class M08FrontendEngageManagerService {
       );
     } else {
       sorted.sort((a, b) => {
-        const d = String(a.dueDate).localeCompare(String(b.dueDate));
-        return d !== 0 ? d : String(a.dueTime || '').localeCompare(String(b.dueTime || ''));
+        const priorityOrder: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
+        const pDiff = (priorityOrder[String(a.priority).toUpperCase()] ?? 1) - (priorityOrder[String(b.priority).toUpperCase()] ?? 1);
+        if (pDiff !== 0) return pDiff;
+
+        const dDiff = String(a.dueDate).localeCompare(String(b.dueDate));
+        if (dDiff !== 0) return dDiff;
+
+        return String(a.dueTime || '').localeCompare(String(b.dueTime || ''));
       });
     }
 
@@ -195,12 +217,15 @@ export class M08FrontendEngageManagerService {
         ? tasks
         : tasks.filter((t) => t.assigneeId === assigneeId);
 
+    const todayStrSummary = new Date().toISOString().split('T')[0];
     const openTasks = list.filter((t) => !isCompletedStatus(t.status));
     const completedToday = list.filter((t) => isCompletedStatus(t.status)).length;
     const totalToday = openTasks.length;
-    const highPriorityRemaining = openTasks.filter(
-      (t) => String(t.priority).toUpperCase() === 'HIGH',
-    ).length;
+    // Dynamically promote overdue tasks to HIGH when calculating high priority count
+    const highPriorityRemaining = openTasks.filter((t) => {
+      const isOverdue = t.isOverdue || (t.dueDate && t.dueDate < todayStrSummary);
+      return isOverdue || String(t.priority).toUpperCase() === 'HIGH';
+    }).length;
     const atRisk = openTasks.filter((t) => t.isAtRisk).length;
     const inProgress = list.filter((t) => normalizeEngageStatus(t.status) === 'IN_PROGRESS').length;
     const upcoming = list.filter((t) => normalizeEngageStatus(t.status) === 'PENDING').length;
@@ -429,6 +454,11 @@ export class M08FrontendEngageManagerService {
       }
     }
 
+    const todayStrCreate = new Date().toISOString().split('T')[0];
+    const dueDateCreate = body.dueDate || todayStrCreate;
+    const isOverdueCreate = dueDateCreate < todayStrCreate;
+    const priorityCreate = (isOverdueCreate ? 'HIGH' : (body.priority || 'NORMAL')).toUpperCase();
+
     const newTask = await this.prisma.engageTask.create({
       data: {
         tenantId,
@@ -439,18 +469,18 @@ export class M08FrontendEngageManagerService {
         companyName,
         channel: (body.taskType || body.channel || 'custom').toUpperCase(),
         status: 'PENDING',
-        dueDate: body.dueDate || new Date().toISOString().split('T')[0],
+        dueDate: dueDateCreate,
         dueTime: body.dueTime || null,
         scheduledTime: body.dueTime || null,
         dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
-        priority: (body.priority || 'NORMAL').toUpperCase(),
+        priority: priorityCreate,
         assigneeId: assignee.id,
         assigneeName: assignee.name,
         assigneeRole: assignee.role,
         todoType: body.todoType || 'manual',
         entityType: body.entityType || 'lead',
         interactionCount: 0,
-        isOverdue: false,
+        isOverdue: isOverdueCreate,
         isAtRisk: false,
         recommendedNextSteps: body.recommendedNextSteps || [],
       },

@@ -36,7 +36,7 @@
     "seed:m10": "node scripts/seed_m10_demo.cjs",
     "dev:ai-services": "pnpm --dir apps/ai-services exec python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
     "build": "pnpm -r run build",
-    "db:migrate": "pnpm --filter database run db:migrate"
+    "db:migrate": "pnpm --filter @rri/database run db:migrate"
   },
   "pnpm": {
     "overrides": {

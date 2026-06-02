@@ -13,7 +13,7 @@ Push-Location $BackendRoot
 $env:DATABASE_URL = $dbUrl
 
 Write-Host "[1/5] Prisma schema sync (engage + tracker tables)..." -ForegroundColor Yellow
-pnpm --filter database run db:push 2>$null | Out-Null
+pnpm --filter @rri/database run db:push -- --accept-data-loss 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {
   Write-Host '  db:push failed - trying db:migrate...' -ForegroundColor Yellow
   pnpm run db:migrate 2>$null | Out-Null
