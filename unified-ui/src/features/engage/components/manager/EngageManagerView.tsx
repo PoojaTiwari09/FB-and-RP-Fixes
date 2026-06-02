@@ -26,6 +26,7 @@ export default function EngageManagerView() {
     tabCounts,
     statusPills,
     summary,
+    recentActivity,
     
     // States
     selectedUserId,
@@ -90,12 +91,13 @@ export default function EngageManagerView() {
   const isReadOnly = selectedUserId !== 'me';
 
   return (
-    <div className="flex-1 flex flex-col min-w-0" style={{ backgroundColor: '#F9FAFB' }}>
+    <div className="flex flex-col h-full min-h-0 overflow-hidden" style={{ backgroundColor: '#F9FAFB' }}>
       
       {/* Warning Banner for manager looking at teammate workspaces */}
       {isReadOnly && <ViewOnlyBanner selectedUserId={selectedUserId} />}
 
       {/* Header */}
+      <div className="shrink-0">
       <CompactHeader
         headerAlert={summary.headerAlert}
         onCreateClick={() => setIsCreateModalOpen(true)}
@@ -128,14 +130,12 @@ export default function EngageManagerView() {
         onChannelChange={setActiveChannel}
         statusPills={statusPills}
       />
+      </div>
 
-      {/* Grid Content: 8 Column Tasks + 4 Column Activity */}
-      <div className="max-w-[1800px] mx-auto px-6 py-6 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Left Column: Tasks */}
-          <div className="lg:col-span-8">
-            {/* Progress - Only on Today tab */}
+      {/* Grid Content: scrollable task list + activity sidebar */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-y-auto px-6 py-6">
+          <div className="max-w-[1200px] mx-auto w-full space-y-6">
             {activeStatusTab === 'today' && !isEmpty && (
               <CompactProgress
                 completedCount={summary.completedToday}
@@ -144,7 +144,6 @@ export default function EngageManagerView() {
               />
             )}
 
-            {/* Task Lists */}
             <TaskList
               groups={groups}
               collapsedGroups={collapsedGroups}
@@ -164,11 +163,10 @@ export default function EngageManagerView() {
               groupBy={groupBy}
             />
           </div>
+        </div>
 
-          {/* Right Column: Recent Activity */}
-          <div className="lg:col-span-4">
-            <RecentActivitySidebar />
-          </div>
+        <div className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-white px-4 py-6 hidden lg:block">
+          <RecentActivitySidebar activities={recentActivity} />
         </div>
       </div>
 

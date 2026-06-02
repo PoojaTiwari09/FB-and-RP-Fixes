@@ -206,13 +206,13 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
   };
 
   return (
-    <div className="calls-font-scope bg-[#f8fafc] min-h-screen text-gray-800 flex flex-col pb-16">
+    <div className="calls-font-scope bg-[#f8fafc] flex flex-col flex-1 min-h-0 h-full overflow-hidden text-gray-800">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}
 
       {/* ═══════════════ HEADER AREA (WHITE BG) ═══════════════ */}
-      <div className="bg-white border-b border-gray-200 py-7 px-8 text-left w-full">
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 py-7 px-8 text-left w-full">
         <div className="space-y-3 flex flex-col items-start text-left w-full">
           <div className="w-full text-left">
             <button
@@ -255,7 +255,7 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
       </div>
 
       {/* ═══════════════ CONTENT AREA (GRAY BG, COLOR DIFF) ═══════════════ */}
-      <div className="flex-1 bg-[#f8fafc] py-8 px-6">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-[#f8fafc] py-8 px-6 pb-12">
         <div className="max-w-4xl mx-auto space-y-6">
 
         {/* ─── Readiness Banner ─── */}
@@ -477,6 +477,6 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
 
       </div>
     </div>
-  </div>
+    </div>
   );
 }

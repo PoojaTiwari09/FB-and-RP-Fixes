@@ -1,5 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import {
+  appendEngageTaskNote,
+  latestEngageTaskNote,
+  parseEngageTaskNotes,
+} from './m08-task-notes.util';
+import { buildAutoEmailDraft } from './m08-email-draft.util';
+import { rephraseEmailWithGroq } from './m08-groq-rephrase.util';
+import {
+  buildTaskTitle,
+  resolveDueDateTime,
+  resolveSequenceName,
+  resolveSequenceStep,
+} from './m08-task-format.util';
+import { resolveTeamMember, mapTaskAssignee } from './m08-team-members.util';
 
 @Injectable()
 export class M08FrontendEngageService {
@@ -18,10 +32,10 @@ export class M08FrontendEngageService {
       contactName: t.contactName,
       company: t.companyName,
       channelType: t.channel.toUpperCase(),
-      sequenceName: t.sequenceName || '',
-      sequenceStep: t.sequenceStep || '',
+      sequenceName: resolveSequenceName(t),
+      sequenceStep: resolveSequenceStep(t),
       scheduledTime: t.scheduledTime || '',
-      dueDateTime: t.dueDateTime || '',
+      dueDateTime: resolveDueDateTime(t),
       interactionCount: t.interactionCount,
       priority: t.priority.toUpperCase(),
       status: t.status.toUpperCase(),
@@ -85,17 +99,33 @@ export class M08FrontendEngageService {
 
     return {
       taskId: t.taskId,
-      taskTitle: t.title,
+      taskTitle: buildTaskTitle(t),
       contactId: t.contactId || '',
       contactName: t.contactName,
       company: t.companyName,
       arrValue: t.arr || '',
-      scheduledDateTime: t.dueDateTime || '',
+      scheduledDateTime: resolveDueDateTime(t),
       aiInsight: t.aiInsight || '',
       recommendedNextSteps: t.recommendedNextSteps || [],
       recentActivity: (t.recentActivity as any) || [],
-      existingNotes: t.notes || '',
+      existingNotes: latestEngageTaskNote(t.notes) || '',
     };
+  }
+
+  async getNotes(tenantId: string, taskId: string) {
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!t) return [];
+
+    return parseEngageTaskNotes(t.notes).map((n) => ({
+      noteId: n.noteId,
+      taskId: t.taskId,
+      note: n.note,
+      authorName: n.authorName,
+      timestamp: n.createdAt,
+      createdAt: n.createdAt,
+    }));
   }
 
   async getContactDetails(tenantId: string, contactId: string) {
@@ -119,20 +149,37 @@ export class M08FrontendEngageService {
   }
 
   async getEmailDraft(tenantId: string, taskId: string) {
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!t) return null;
+
     const d = await this.prisma.emailDraft.findFirst({
       where: { tenantId, taskId },
     });
-    if (!d) return null;
 
-    return {
-      taskId: d.taskId,
-      contactName: d.contactName || '',
-      contactEmail: d.contactEmail || '',
-      fromEmail: d.fromEmail || '',
-      fromLabel: d.fromLabel || '',
-      subject: d.subject,
-      bodyHtml: d.bodyHtml,
-    };
+    if (d) {
+      return {
+        taskId: d.taskId,
+        contactName: d.contactName || t.contactName,
+        contactEmail: d.contactEmail || '',
+        fromEmail: d.fromEmail || 'alex.chen@company.com',
+        fromLabel: d.fromLabel || 'alex.chen@company.com (Gmail)',
+        subject: d.subject,
+        bodyHtml: d.bodyHtml,
+        sequenceName: t.sequenceName || '',
+        sequenceStep: t.sequenceStep || '',
+        dueDateTime: t.dueDateTime || '',
+      };
+    }
+
+    const contact = t.contactId
+      ? await this.prisma.engageContact.findFirst({
+          where: { tenantId, contactId: t.contactId },
+        })
+      : null;
+
+    return buildAutoEmailDraft(t, contact);
   }
 
   async getLinkedInDraft(tenantId: string, taskId: string) {
@@ -250,11 +297,30 @@ export class M08FrontendEngageService {
   }
 
   async saveNotes(tenantId: string, taskId: string, notes: string) {
-    const updated = await this.prisma.engageTask.update({
-      where: { taskId },
-      data: { notes },
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
     });
-    return { status: 'success', data: updated };
+    if (!t) throw new NotFoundException('Task not found');
+
+    const serialized = appendEngageTaskNote(t.notes, notes);
+    const saved = parseEngageTaskNotes(serialized)[0];
+
+    await this.prisma.engageTask.update({
+      where: { taskId },
+      data: { notes: serialized },
+    });
+
+    return {
+      status: 'success',
+      data: {
+        noteId: saved.noteId,
+        taskId,
+        note: saved.note,
+        authorName: saved.authorName,
+        timestamp: saved.createdAt,
+        createdAt: saved.createdAt,
+      },
+    };
   }
 
   async sendEmail(tenantId: string, taskId: string, body: any) {
@@ -306,17 +372,32 @@ export class M08FrontendEngageService {
   }
 
   async rephraseEmail(tenantId: string, taskId: string, body: any) {
-    const text = body.bodyHtml || body.body || '';
-    const rephrasedBody = text
-      ? `${text}\n\n[AI Rephrased: Clearer, more concise call-to-action added.]`
-      : 'Hi Sarah,\n\nFollowing up on our Q2 renewal. Let me know if you would like to run through the ROI projections.\n\nBest,\nAlex';
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
 
-    return {
-      status: 'success',
-      data: {
-        rephrasedBody,
-      },
-    };
+    try {
+      const rephrasedBody = await rephraseEmailWithGroq({
+        subject: body.subject,
+        body: body.body || body.currentBody,
+        bodyHtml: body.bodyHtml,
+        contactName: body.contactName || t?.contactName,
+        company: body.company || body.companyName || t?.companyName,
+        tone: body.tone,
+      });
+
+      return {
+        status: 'success',
+        data: { rephrasedBody },
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Rephrase failed';
+      return {
+        status: 'error',
+        message,
+        data: { rephrasedBody: body.body || body.currentBody || '' },
+      };
+    }
   }
 
   async markComplete(tenantId: string, taskId: string) {
@@ -344,12 +425,18 @@ export class M08FrontendEngageService {
   }
 
   async reassignTask(tenantId: string, taskId: string, newAssigneeId: string) {
+    const task = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    const member = resolveTeamMember(newAssigneeId);
     const updated = await this.prisma.engageTask.update({
-      where: { taskId },
+      where: { taskId: task.taskId },
       data: {
-        assigneeId: newAssigneeId,
-        assigneeName: newAssigneeId === 'me' ? 'Alex Morgan' : 'Sarah Chen',
-        assigneeRole: newAssigneeId === 'me' ? 'Account Executive' : 'Senior AE',
+        assigneeId: member.id,
+        assigneeName: member.name,
+        assigneeRole: member.role,
       },
     });
     return { status: 'success', data: updated };

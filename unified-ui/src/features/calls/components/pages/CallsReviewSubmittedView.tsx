@@ -53,7 +53,7 @@ export default function CallsReviewSubmittedView({ reviewId }: CallsReviewSubmit
   };
 
   return (
-    <div className="bg-[#f0f4f8] min-h-screen flex items-center justify-center p-6">
+    <div className="flex flex-col flex-1 min-h-0 h-full overflow-y-auto bg-[#f0f4f8] items-center justify-center p-6">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}

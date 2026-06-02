@@ -19,11 +19,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-background text-foreground">
+      <body className="h-full overflow-hidden bg-background text-foreground">
         <RoleProvider session={session}>
-          <div className="flex min-h-screen">
+          <div className="flex h-full overflow-hidden">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
               {children}
             </div>
           </div>

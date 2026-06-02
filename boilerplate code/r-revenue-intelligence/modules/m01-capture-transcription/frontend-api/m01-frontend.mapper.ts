@@ -4,6 +4,7 @@ import {
   resolveDurationSeconds,
   uniqueSpeakersFromUtterances,
 } from '../lib/call-duration.util';
+import { buildReviewFromTranscript } from './m01-transcript-review.util';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -30,6 +31,9 @@ export function formatDurationClock(seconds: number): string {
 function computeAiReviewerScore(record: any): number {
   if (record.overallScore != null) return Math.round(Number(record.overallScore));
   if (record.aiScore != null) return Math.round(Number(record.aiScore));
+
+  const fromReview = buildReviewFromTranscript(record);
+  if (fromReview) return fromReview.overallScore;
 
   const tr = record.transcript;
   if (tr?.talkRatio) {

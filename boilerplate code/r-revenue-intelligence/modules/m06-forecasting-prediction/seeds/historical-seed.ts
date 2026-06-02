@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma-client';
+import { PrismaClient } from '@rri/database';
 
 const prisma = new PrismaClient();
 
@@ -47,7 +47,6 @@ async function main() {
   await prisma.forecastAuditLog.deleteMany({});
   await prisma.forecastSubmission.deleteMany({});
   await prisma.aiForecastSnapshot.deleteMany({});
-  await prisma.historicalConversionRate.deleteMany({});
   await prisma.crmDeal.deleteMany({});
   await prisma.forecastUser.deleteMany({});
   await prisma.forecastPeriod.deleteMany({});
@@ -100,6 +99,7 @@ async function main() {
 
   const q2 = await prisma.forecastPeriod.create({
     data: {
+      id: 'q2-fy26-demo',
       tenantId,
       name: 'Q2 FY26',
       startDate: new Date('2026-04-01T00:00:00Z'),
@@ -107,6 +107,49 @@ async function main() {
       revenueTarget: 150000000,
       status: 'open',
     },
+  });
+
+  // Seed Forecast Boards for Q1 and Q2 so the Forecast Boards API works
+  await prisma.forecastBoard.create({
+    data: {
+      id: 'board-q1',
+      tenantId,
+      name: 'Q1 FY26 Forecast Board',
+      scope: 'Global Sales Org',
+      periodType: 'Quarterly',
+      activePeriod: q1.id,
+      status: 'active',
+      isPublished: true,
+      columns: {
+        create: [
+          { tenantId, label: 'Pipeline', type: 'Metric', submissionMode: 'Auto', sortOrder: 1 },
+          { tenantId, label: 'Best Case', type: 'Submission', submissionMode: 'Manual', sortOrder: 2 },
+          { tenantId, label: 'Commit', type: 'Submission', submissionMode: 'Manual', sortOrder: 3 },
+          { tenantId, label: 'Closed Won', type: 'Metric', submissionMode: 'Auto', sortOrder: 4 },
+        ]
+      }
+    }
+  });
+
+  await prisma.forecastBoard.create({
+    data: {
+      id: 'board-q2',
+      tenantId,
+      name: 'Q2 FY26 Forecast Board',
+      scope: 'Global Sales Org',
+      periodType: 'Quarterly',
+      activePeriod: q2.id,
+      status: 'active',
+      isPublished: true,
+      columns: {
+        create: [
+          { id: 'col-pipeline', tenantId, label: 'Pipeline', type: 'Metric', submissionMode: 'Auto', sortOrder: 1 },
+          { id: 'col-best-case', tenantId, label: 'Best Case', type: 'Submission', submissionMode: 'Manual', sortOrder: 2 },
+          { id: 'col-commit', tenantId, label: 'Commit', type: 'Submission', submissionMode: 'Manual', sortOrder: 3 },
+          { id: 'col-closed', tenantId, label: 'Closed Won', type: 'Metric', submissionMode: 'Auto', sortOrder: 4 },
+        ]
+      }
+    }
   });
 
   // ── Historical Forecast Periods needed for baseline lookups ──────────────

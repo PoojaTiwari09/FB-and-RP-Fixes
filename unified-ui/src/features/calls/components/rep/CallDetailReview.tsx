@@ -24,6 +24,8 @@ function QuestionBlock({ q, callId }: { q: ScorecardQuestion; callId: string }) 
       ? 'text-green-700'
       : q.managerAnswer === 'No'
       ? 'text-red-700'
+      : q.managerAnswer === 'Partial'
+      ? 'text-yellow-700'
       : 'text-yellow-700';
 
   return (
@@ -143,7 +145,7 @@ export default function CallDetailReview({ callId }: { callId: string }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#F9FAFB' }}>
+    <div className="flex-1 min-h-0 overflow-y-auto" style={{ backgroundColor: '#F9FAFB' }}>
       <div className="max-w-5xl mx-auto p-8">
         {/* Scorecard Header Card */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6" style={{ borderColor: '#E5E7EB' }}>

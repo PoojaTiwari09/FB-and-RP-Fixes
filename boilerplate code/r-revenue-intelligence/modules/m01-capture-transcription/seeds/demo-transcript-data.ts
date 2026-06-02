@@ -8,6 +8,18 @@ export const AUDIO_2MIN =
   'https://recordings-buttons.s3.eu-north-1.amazonaws.com/2mins_sales.mp3';
 export const AUDIO_3MIN =
   'https://recordings-buttons.s3.eu-north-1.amazonaws.com/3mins_sales.mp3';
+export const AUDIO_10MIN =
+  'https://recordings-buttons.s3.eu-north-1.amazonaws.com/10mins_sales.wav';
+export const AUDIO_RESOURCES =
+  'https://recordings-buttons.s3.eu-north-1.amazonaws.com/resources_sample-calls.mp3';
+
+/** Stable demo call IDs — keep in sync with seeds/seed.ts */
+export const DEMO_CALL_IDS = [
+  '11111111-1111-1111-1111-000000000001',
+  '11111111-1111-1111-1111-000000000002',
+  '11111111-1111-1111-1111-000000000003',
+  '11111111-1111-1111-1111-000000000004',
+] as const;
 
 export type DemoUtterance = {
   speaker: string;
@@ -40,6 +52,32 @@ export type DemoTranscriptBundle = {
 function durationFromUtterances(utterances: DemoUtterance[], fallbackSec: number) {
   const last = utterances[utterances.length - 1];
   return last ? Math.ceil(last.endMs / 1000) : fallbackSec;
+}
+
+function buildSummaryFromText(fullText: string, fallback: string): string {
+  const trimmed = fullText.trim();
+  if (trimmed.length < 120) return fallback;
+  const sentences = trimmed.match(/[^.!?]+[.!?]+/g) ?? [trimmed];
+  return sentences.slice(0, 3).join(' ').trim().slice(0, 480);
+}
+
+function buildHighlights(
+  utterances: DemoUtterance[],
+  keywords: string[],
+): DemoTranscriptBundle['keyHighlights'] {
+  const highlights: DemoTranscriptBundle['keyHighlights'] = [];
+  for (const keyword of keywords) {
+    const hit = utterances.find((u) => u.text.toLowerCase().includes(keyword.toLowerCase()));
+    if (hit) {
+      highlights.push({
+        label: keyword.replace(/\s+/g, '_'),
+        text: hit.text.slice(0, 160),
+        timestampMs: hit.startMs,
+        speaker: hit.speaker,
+      });
+    }
+  }
+  return highlights;
 }
 
 export const DEMO_2MIN: DemoTranscriptBundle = {
@@ -121,5 +159,54 @@ export const DEMO_3MIN: DemoTranscriptBundle = {
     'Send proposal with implementation plan, timeline, and pricing within 24 hours',
     'Schedule follow-up call to review proposal',
     'Gather user count and customization requirements for quote',
+  ],
+};
+
+export const DEMO_10MIN: DemoTranscriptBundle = {
+  ...(bundle.tenMin as Omit<DemoTranscriptBundle, 'summary' | 'keyHighlights' | 'nextSteps' | 'durationSeconds'>),
+  durationSeconds: durationFromUtterances(
+    (bundle.tenMin as { utterances: DemoUtterance[] }).utterances,
+    600,
+  ),
+  summary: buildSummaryFromText(
+    (bundle.tenMin as { fullText: string }).fullText,
+    'MedProCRM rep discusses medical CRM features, HIPAA compliance, pricing, ROI, and implementation with Dr. Smith over a detailed discovery call.',
+  ),
+  keyHighlights: buildHighlights((bundle.tenMin as { utterances: DemoUtterance[] }).utterances, [
+    'pricing',
+    'HIPAA',
+    'demo',
+    'implementation',
+  ]),
+  nextSteps: [
+    'Send updated contract proposal and legal redlines',
+    'Schedule follow-up with legal and procurement stakeholders',
+    'Confirm pilot timeline and pricing approval path',
+  ],
+};
+
+export const DEMO_RESOURCES: DemoTranscriptBundle = {
+  ...(bundle.resourcesSample as Omit<
+    DemoTranscriptBundle,
+    'summary' | 'keyHighlights' | 'nextSteps' | 'durationSeconds'
+  >),
+  durationSeconds: durationFromUtterances(
+    (bundle.resourcesSample as { utterances: DemoUtterance[] }).utterances,
+    180,
+  ),
+  summary: buildSummaryFromText(
+    (bundle.resourcesSample as { fullText: string }).fullText,
+    'Charlie Johnson called Parker Scarves about a wrong scarf color shipped for his wife\'s birthday; the agent arranged an exchange at Karen\'s Boutique and sent a gift for the inconvenience.',
+  ),
+  keyHighlights: buildHighlights((bundle.resourcesSample as { utterances: DemoUtterance[] }).utterances, [
+    'wrong color',
+    'exchange',
+    'birthday',
+    'gift',
+  ]),
+  nextSteps: [
+    'Share resource library access and sample call playlist',
+    'Schedule enablement training for the sales team',
+    'Send follow-up with highlighted sample calls',
   ],
 };

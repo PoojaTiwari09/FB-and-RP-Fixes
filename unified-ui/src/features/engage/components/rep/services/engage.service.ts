@@ -4,6 +4,7 @@ import type {
   Task,
   TaskSummary,
   TaskDetail,
+  TaskNote,
   RecentActivity,
   ContactDetails,
   EmailDraft,
@@ -26,7 +27,11 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);
   }
-  return (await res.json()) as T;
+  const text = await res.text();
+  if (!text.trim()) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
 
 export async function getTasks(): Promise<Task[]> {
@@ -43,6 +48,10 @@ export async function getRecentActivity(limit = 10): Promise<RecentActivity[]> {
 
 export async function getTaskDetail(taskId: string): Promise<TaskDetail | undefined> {
   return apiRequest<TaskDetail | undefined>(`/tasks/${taskId}/detail`);
+}
+
+export async function fetchTaskNotes(taskId: string): Promise<TaskNote[]> {
+  return apiRequest<TaskNote[]>(`/tasks/${taskId}/notes`);
 }
 
 export async function getContactDetails(contactId: string): Promise<ContactDetails | undefined> {
@@ -99,12 +108,50 @@ export async function saveDraft(taskId: string, draftData: any): Promise<any> {
   });
 }
 
-export async function rephraseEmail(taskId: string, emailData: any): Promise<any> {
-  return apiRequest<any>(`/tasks/${taskId}/ai-rephrase`, {
+export async function rephraseEmail(
+  taskId: string,
+  emailData: {
+    subject?: string;
+    body?: string;
+    bodyHtml?: string;
+    contactName?: string;
+    company?: string;
+    tone?: string;
+  },
+): Promise<{ rephrasedBody: string }> {
+  const res = await fetch('/api/engage/rephrase', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(emailData),
+    body: JSON.stringify({ taskId, ...emailData }),
   });
+
+  const text = await res.text();
+  if (!res.ok) {
+    let message = `Rephrase failed (${res.status})`;
+    try {
+      const err = JSON.parse(text) as { error?: string };
+      if (err.error) message = err.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+
+  if (!text.trim()) {
+    throw new Error('Rephrase returned an empty response');
+  }
+
+  const payload = JSON.parse(text) as {
+    rephrasedBody?: string;
+    data?: { rephrasedBody?: string };
+  };
+
+  const rephrasedBody = payload.rephrasedBody || payload.data?.rephrasedBody;
+  if (!rephrasedBody) {
+    throw new Error('Rephrase response missing body text');
+  }
+
+  return { rephrasedBody };
 }
 
 export async function markComplete(taskId: string): Promise<any> {

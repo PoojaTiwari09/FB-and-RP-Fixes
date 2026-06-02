@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, ChevronDown, Mail, Paperclip, Sparkles } from 'lucide-react';
-import type { Task } from './types/engage.types';
-import { MOCK_EMAIL_DRAFTS, MOCK_CONTACT_DETAILS } from './mocks/engage.mock';
+import type { ContactDetails, Task, TaskDetail } from './types/engage.types';
+import {
+  getContactDetails,
+  getEmailDraft,
+  getTaskDetail,
+  rephraseEmail,
+  saveDraft,
+  sendEmail,
+} from './services/engage.service';
 import ContactSidebar from './ContactSidebar';
 
 interface EmailTaskScreenProps {
@@ -17,6 +24,63 @@ interface EmailTaskScreenProps {
 
 type ActiveTab = 'email' | 'crm';
 
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
+}
+
+function plainTextToHtml(text: string): string {
+  return text
+    .split(/\n\s*\n/)
+    .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br/>')}</p>`)
+    .join('\n');
+}
+
+function fallbackContact(task: Task, contactEmail = ''): ContactDetails {
+  return {
+    contactId: task.contactId,
+    contactName: task.contactName,
+    jobTitle: '',
+    company: task.company,
+    phone: '',
+    email: contactEmail,
+    linkedInUrl: '',
+    engagementTimeline: [],
+    accountInfo: { accountName: task.company, arrValue: '' },
+    dealInfo: {},
+  };
+}
+
+function buildFallbackDraft(task: Task, detail: TaskDetail | null | undefined, contactEmail: string) {
+  const first = task.contactName.split(' ')[0] || 'there';
+  const steps = detail?.recommendedNextSteps?.filter(Boolean).slice(0, 4) ?? [];
+  const insight = detail?.aiInsight?.trim();
+  const subject =
+    task.sequenceName && task.sequenceStep
+      ? `${task.sequenceName} — ${task.sequenceStep} for ${task.company}`
+      : `Following up — ${task.company}`;
+
+  const stepsText =
+    steps.length > 0
+      ? `\n\nWhat's next:\n${steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}`
+      : '\n\nWould you be open to a brief call this week to walk through priorities and timeline?';
+
+  const body = `Hi ${first},
+
+I wanted to follow up regarding ${task.company}.${insight ? `\n\n${insight}` : ''}${stepsText}
+
+Best,
+Alex`;
+
+  return { subject, body, contactEmail };
+}
+
 export default function EmailTaskScreen({
   task,
   allTasks,
@@ -25,27 +89,128 @@ export default function EmailTaskScreen({
   onNavigate,
   inQueue = false,
 }: EmailTaskScreenProps) {
-  const draft   = MOCK_EMAIL_DRAFTS[task.taskId];
-  const contact = MOCK_CONTACT_DETAILS[task.contactId];
-
   const [activeTab, setActiveTab] = useState<ActiveTab>('email');
-  const [to, setTo] = useState(draft?.contactEmail ?? '');
-  const [subject, setSubject] = useState(draft?.subject ?? '');
-  const [body, setBody] = useState(
-    draft?.bodyHtml.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n\n').trim() ?? ''
-  );
+  const [to, setTo] = useState('');
+  const [fromLabel, setFromLabel] = useState('alex.chen@company.com (Gmail)');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [contact, setContact] = useState<ContactDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [rephrasing, setRephrasing] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
 
-  const handleSend = () => {
-    setSendSuccess(true);
-    setTimeout(() => { setSendSuccess(false); onClose(); }, 1200);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setSendSuccess(false);
+    setDraftSaved(false);
+
+    Promise.all([
+      getEmailDraft(task.taskId),
+      getTaskDetail(task.taskId),
+      task.contactId ? getContactDetails(task.contactId) : Promise.resolve(undefined),
+    ])
+      .then(([draft, detail, contactData]) => {
+        if (!active) return;
+
+        const contactEmail = contactData?.email || draft?.contactEmail || '';
+        const resolvedDraft =
+          draft?.subject && draft?.bodyHtml
+            ? draft
+            : buildFallbackDraft(task, detail, contactEmail);
+
+        if (draft?.subject && draft?.bodyHtml) {
+          setTo(draft.contactEmail || contactEmail);
+          setFromLabel(draft.fromLabel || `${draft.fromEmail} (Gmail)`);
+          setSubject(draft.subject || '');
+          setBody(htmlToPlainText(draft.bodyHtml || ''));
+        } else {
+          setTo(resolvedDraft.contactEmail);
+          setFromLabel('alex.chen@company.com (Gmail)');
+          setSubject(resolvedDraft.subject);
+          setBody(resolvedDraft.body);
+        }
+
+        setContact(contactData || fallbackContact(task, contactEmail));
+      })
+      .catch((err) => {
+        console.error('Failed to load email task data:', err);
+        if (active) {
+          const fallback = buildFallbackDraft(task, null, '');
+          setTo(fallback.contactEmail);
+          setSubject(fallback.subject);
+          setBody(fallback.body);
+          setContact(fallbackContact(task));
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [task.taskId, task.contactId, task.contactName, task.company]);
+
+  const handleSend = async () => {
+    try {
+      await sendEmail(task.taskId, {
+        to,
+        from: fromLabel,
+        subject,
+        body,
+        bodyHtml: plainTextToHtml(body),
+      });
+      setSendSuccess(true);
+      setTimeout(() => {
+        setSendSuccess(false);
+        onClose();
+      }, 1200);
+    } catch (err) {
+      console.error('Failed to send email:', err);
+    }
   };
 
-  const handleSaveDraft = () => {
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 2000);
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft(task.taskId, {
+        contactName: task.contactName,
+        contactEmail: to,
+        fromEmail: fromLabel.replace(/\s*\(.*\)$/, ''),
+        fromLabel,
+        subject,
+        body,
+        bodyHtml: plainTextToHtml(body),
+      });
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2000);
+    } catch (err) {
+      console.error('Failed to save draft:', err);
+    }
   };
+
+  const handleRephrase = async () => {
+    if (!body.trim()) return;
+    setRephrasing(true);
+    try {
+      const { rephrasedBody } = await rephraseEmail(task.taskId, {
+        subject,
+        body,
+        contactName: task.contactName,
+        company: task.company,
+      });
+      setBody(rephrasedBody);
+    } catch (err) {
+      console.error('Failed to rephrase email:', err);
+    } finally {
+      setRephrasing(false);
+    }
+  };
+
+  const dueLabel = task.dueDateTime?.startsWith('Due:')
+    ? task.dueDateTime.replace(/^Due:\s*/, '')
+    : task.scheduledTime || 'Today 2:00 PM';
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -93,7 +258,7 @@ export default function EmailTaskScreen({
               <Mail size={10} /> Email
             </span>
             <span className="text-gray-300">·</span>
-            <span>Due: Today 2:00 PM</span>
+            <span>Due: {dueLabel}</span>
             {task.sequenceName && (
               <>
                 <span className="text-gray-300">·</span>
@@ -121,7 +286,14 @@ export default function EmailTaskScreen({
             ))}
           </div>
 
-          {activeTab === 'email' ? (
+          {loading ? (
+            <div className="flex-1 px-5 py-5 space-y-4">
+              <div className="skeleton h-10 rounded-lg" />
+              <div className="skeleton h-10 rounded-lg" />
+              <div className="skeleton h-10 rounded-lg" />
+              <div className="skeleton h-48 rounded-lg" />
+            </div>
+          ) : activeTab === 'email' ? (
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
               {/* To */}
               <div>
@@ -138,8 +310,12 @@ export default function EmailTaskScreen({
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">From</label>
                 <div className="relative">
-                  <select className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none cursor-pointer text-gray-800 bg-white">
-                    <option>{draft?.fromLabel ?? 'you@company.com (Gmail)'}</option>
+                  <select
+                    value={fromLabel}
+                    onChange={(e) => setFromLabel(e.target.value)}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none cursor-pointer text-gray-800 bg-white"
+                  >
+                    <option>{fromLabel}</option>
                   </select>
                   <ChevronDown
                     size={14}
@@ -164,8 +340,12 @@ export default function EmailTaskScreen({
                 <button className="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer transition-colors">
                   Use Template
                 </button>
-                <button className="flex items-center gap-1.5 text-xs font-medium text-purple-600 border border-purple-200 rounded-lg px-3 py-1.5 hover:bg-purple-50 cursor-pointer transition-colors">
-                  <Sparkles size={12} /> AI Rephrase
+                <button
+                  onClick={handleRephrase}
+                  disabled={rephrasing}
+                  className="flex items-center gap-1.5 text-xs font-medium text-purple-600 border border-purple-200 rounded-lg px-3 py-1.5 hover:bg-purple-50 disabled:opacity-50 cursor-pointer transition-colors"
+                >
+                  <Sparkles size={12} /> {rephrasing ? 'Rephrasing…' : 'AI Rephrase'}
                 </button>
               </div>
 
@@ -196,13 +376,15 @@ export default function EmailTaskScreen({
           <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-gray-200 bg-white">
             <button
               onClick={handleSaveDraft}
-              className="text-sm font-medium text-gray-600 border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors"
+              disabled={loading}
+              className="text-sm font-medium text-gray-600 border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
             >
               {draftSaved ? 'Draft Saved!' : 'Save Draft'}
             </button>
             <button
               onClick={handleSend}
-              className="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg px-5 py-2 cursor-pointer transition-colors"
+              disabled={loading}
+              className="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg px-5 py-2 cursor-pointer transition-colors"
             >
               {sendSuccess ? 'Sent!' : 'Send'}
             </button>

@@ -15,6 +15,9 @@ if (-not (Test-Path (Join-Path $UnifiedUi "package.json"))) {
   exit 1
 }
 
+Write-Host "[Env] Syncing API keys from .env..." -ForegroundColor Yellow
+& (Join-Path $Root "scripts\sync-env.ps1") 2>$null | Out-Null
+
 Write-Host "[Ports] Clearing 3000 and 3001..." -ForegroundColor Yellow
 & (Join-Path $Root "free-ui-ports.ps1") 2>$null | Out-Null
 if (Test-Path (Join-Path $BackendRoot "scripts\free_ports_all.ps1")) {
@@ -56,9 +59,10 @@ Write-Host "[API] Unified M01+M02+M09 on :3001..." -ForegroundColor Yellow
 $apiCmd = @"
 `$Host.UI.RawUI.WindowTitle = 'Unified API :3001'
 Set-Location '$BackendRoot'
+if (Test-Path '.env') { Get-Content '.env' | ForEach-Object { if (`$_ -match '^\s*([^#=]+)=(.*)$') { [System.Environment]::SetEnvironmentVariable(`$matches[1].Trim(), `$matches[2].Trim(), 'Process') } } }
 `$env:DATABASE_URL='$dbUrl'
 `$env:UNIFIED_API_PORT='3001'
-`$env:CORS_ORIGINS='http://localhost:3000'
+`$env:CORS_ORIGINS='http://localhost:3000,http://127.0.0.1:3000'
 pnpm run dev:unified-api
 "@
 Start-DevWindow -Title "Unified API :3001" -Command $apiCmd
@@ -68,7 +72,7 @@ Write-Host "[UI] Unified app :3000..." -ForegroundColor Yellow
 $uiCmd = @"
 `$Host.UI.RawUI.WindowTitle = 'Unified UI :3000'
 Set-Location '$UnifiedUi'
-if (-not (Test-Path '.env.local') -and (Test-Path '.env.example')) { Copy-Item '.env.example' '.env.local' }
+if (-not (Test-Path '.env.local')) { & '$Root\scripts\sync-env.ps1' | Out-Null }
 if (-not (Test-Path 'node_modules')) { npm install }
 Write-Host 'Open -> http://localhost:3000/engage' -ForegroundColor Cyan
 Write-Host 'API  -> http://localhost:3001' -ForegroundColor Cyan

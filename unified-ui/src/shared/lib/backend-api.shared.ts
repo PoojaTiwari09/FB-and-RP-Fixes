@@ -1,10 +1,26 @@
 /** Matches m09-api dev seed (see m09-memory.store.ts). */
-export const BACKEND_ORG_ID =
-  process.env.BACKEND_ORG_ID ?? '00000000-0000-0000-0000-000000000001';
-export const BACKEND_REP_USER_ID =
-  process.env.BACKEND_REP_USER_ID ?? '00000000-0000-0000-0000-000000000003';
-export const BACKEND_MANAGER_USER_ID =
-  process.env.BACKEND_MANAGER_USER_ID ?? '00000000-0000-0000-0000-000000000002';
+const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
+const DEFAULT_REP_USER_ID = '00000000-0000-0000-0000-000000000003';
+const DEFAULT_MANAGER_USER_ID = '00000000-0000-0000-0000-000000000002';
+
+function envOrDefault(raw: string | undefined, fallback: string): string {
+  const trimmed = raw?.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
+  return trimmed;
+}
+
+export const BACKEND_ORG_ID = envOrDefault(
+  process.env.NEXT_PUBLIC_BACKEND_ORG_ID ?? process.env.BACKEND_ORG_ID,
+  DEFAULT_ORG_ID,
+);
+export const BACKEND_REP_USER_ID = envOrDefault(
+  process.env.NEXT_PUBLIC_BACKEND_REP_USER_ID ?? process.env.BACKEND_REP_USER_ID,
+  DEFAULT_REP_USER_ID,
+);
+export const BACKEND_MANAGER_USER_ID = envOrDefault(
+  process.env.NEXT_PUBLIC_BACKEND_MANAGER_USER_ID ?? process.env.BACKEND_MANAGER_USER_ID,
+  DEFAULT_MANAGER_USER_ID,
+);
 
 export type BackendRole = 'sales_rep' | 'sales_manager';
 

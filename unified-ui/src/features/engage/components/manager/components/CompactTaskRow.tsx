@@ -165,8 +165,17 @@ export default function CompactTaskRow({
           )}
         </div>
 
-        {/* Line 3: Metadata - Engagement, Due Date, Status */}
+        {/* Line 3: Metadata - Assignee, Engagement, Due Date, Status */}
         <div className="flex items-center gap-2.5 flex-wrap text-gray-500" style={{ fontSize: '11.5px' }}>
+          {task.assigneeName && (
+            <>
+              <span className="inline-flex items-center gap-1 font-medium" style={{ color: '#374151' }}>
+                Assignee: {task.assigneeName}
+              </span>
+              <span className="text-gray-300">•</span>
+            </>
+          )}
+
           {task.interactionCount > 0 && (
             <span
               className="inline-flex items-center gap-1 hidden sm:inline-flex"

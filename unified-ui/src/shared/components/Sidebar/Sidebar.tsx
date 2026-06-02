@@ -136,7 +136,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`flex flex-col bg-white border-r border-gray-200 transition-all duration-300 shrink-0 min-h-screen ${
+      className={`sticky top-0 flex h-full flex-col bg-white border-r border-gray-200 transition-all duration-300 shrink-0 self-start overflow-y-auto ${
         isCollapsed ? 'w-[64px]' : 'w-[240px]'
       }`}
     >

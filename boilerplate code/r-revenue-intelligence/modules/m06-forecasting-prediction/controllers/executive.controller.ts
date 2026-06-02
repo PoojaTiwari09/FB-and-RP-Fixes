@@ -8,10 +8,12 @@ export class M06ExecutiveController {
   constructor(private readonly service: M06ForecastingPredictionService) {}
 
   @Get('executive/dashboard')
+  @Get('executive/board')
   async getExecutiveDashboard(
     @Headers(TenantHeader.toLowerCase()) tenantId: string,
     @Query('region') region?: string,
     @Query('baseline') baseline?: string,
+    @Query('periodId') periodId?: string,
   ) {
     if (!tenantId) throw new ForbiddenException('Tenant ID required');
 
@@ -28,6 +30,14 @@ export class M06ExecutiveController {
     // Map baseline 'current' or undefined to undefined for service logic
     const mappedBaseline = baseline === 'current' ? undefined : baseline;
 
-    return this.service.getExecutiveDashboard(tenantId, mappedBaseline, region);
+    return this.service.getExecutiveDashboard(tenantId, mappedBaseline, region, periodId);
+  }
+
+  @Get('executive/trends')
+  async getExecutiveTrends(
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    return this.service.getExecutiveTrends(tenantId);
   }
 }

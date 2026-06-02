@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search, Check } from 'lucide-react';
-import { MOCK_TEAM_MEMBERS } from '../mocks/engage.mock';
+import { fetchTeamMembers } from '../services/engage.service';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+}
 
 interface ReassignTaskModalProps {
   isOpen: boolean;
@@ -25,10 +31,22 @@ export default function ReassignTaskModal({
   const [selectedRepId, setSelectedRepId] = useState<string>('');
   const [scope, setScope] = useState<'this_task_only' | 'this_and_future_tasks'>('this_task_only');
   const [reason, setReason] = useState('');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSearchQuery('');
+    setSelectedRepId('');
+    setScope('this_task_only');
+    setReason('');
+    fetchTeamMembers()
+      .then((members) => setTeamMembers(members))
+      .catch(() => setTeamMembers([]));
+  }, [isOpen, contactName, currentAssignee.id]);
 
   if (!isOpen) return null;
 
-  const filteredReps = MOCK_TEAM_MEMBERS.filter(
+  const filteredReps = teamMembers.filter(
     (m) =>
       m.id !== currentAssignee.id &&
       (m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

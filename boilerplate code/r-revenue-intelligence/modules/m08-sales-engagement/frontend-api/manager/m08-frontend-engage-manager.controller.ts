@@ -109,9 +109,9 @@ export class M08FrontendEngageManagerController {
   reassign(
     @Req() req: any,
     @Param('taskId') taskId: string,
-    @Body() body: { newAssigneeId: string },
+    @Body() body: { newAssigneeId: string; scope?: string; reason?: string },
   ) {
-    return this.svc.reassignTask(req.tenantId, taskId, body.newAssigneeId);
+    return this.svc.reassignTask(req.tenantId, taskId, body);
   }
 
   @Post('api/tasks/:taskId/mark-complete')

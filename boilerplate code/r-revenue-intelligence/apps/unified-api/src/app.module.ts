@@ -7,8 +7,9 @@ import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-tran
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
 import { M09CoachingTrainingModule } from '../../../modules/m09-coaching-training/m09-coaching-training.module';
 import { EngageBridgeModule } from '../../../modules/m08-sales-engagement/frontend-api/engage-bridge.module';
+import { M06ForecastingPredictionModule } from '../../../modules/m06-forecasting-prediction/m06-forecasting-prediction.module';
 
-const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
+const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -39,6 +40,7 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
     M02ConversationIntelligenceModule,
     M09CoachingTrainingModule,
     EngageBridgeModule,
+    M06ForecastingPredictionModule,
   ],
 })
 export class UnifiedAppModule {

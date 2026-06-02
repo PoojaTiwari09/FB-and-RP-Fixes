@@ -1,1 +1,1060 @@
-{"twoMin":{"fullText":"Good morning. Is this John from XYZ Corporation? Yes, that's me. How can I help you? Hi John. My name is Emily and I'm calling from ABC Sales. We specialize in enterprise CRM solutions. CRM solutions? We're actually looking at implementing a new system soon. Great timing. We've helped numerous companies like yours integrate our CRM solution to streamline their sales and marketing efforts. That sounds interesting. What sets your solution apart from the competition? Our CRM solution offers real time data analytics, AI driven lead scoring and seamless integration with popular marketing automation tools. I'm not sure if our IT department would be comfortable with a new system. What kind of support do you offer? We have a dedicated support team available 247 as well as a comprehensive knowledge base and online resources for our customers. That sounds good. What's the typical implementation timeline for your CRM solution? We've seen successful implementations in as little as 6, 8 weeks depending on the complexity of the project. That's a bit tight for our schedule. Do you have any flexibility with the timeline? We can work with you to adjust the timeline to fit your needs. However, I do want to emphasize the importance of getting your CRM solution up and and running as soon as possible to start seeing the benefits. I see what you mean. Can you give me a rough estimate of the costs involved? Our enterprise CRM solution typically starts at $50, 000 per year with discounts available for larger deployments. That's a bit higher than we were expecting. Do you have any promotions or discounts available? We're currently running a promotion for new customers which includes a 10% discount on on the first year's licensing fees. That sounds more reasonable. Can I get a demo of the system to see how it works? Absolutely. I can schedule a demo for you at your convenience. Would you prefer a live demo or a recorded one? Live demo would be great, thanks. Excellent. I'll send you a calendar invite with a few different time slots to choose from. In the meantime, I'll send over some more information about our CR REM solution. Sounds good. Thanks for your time today, Emily. You're welcome, John. I look forward to speaking with you again soon.","durationSeconds":1,"utterances":[{"speaker":"Rep","text":"Good morning. Is this John from XYZ Corporation?","startMs":160,"endMs":3200,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":0},{"speaker":"Customer","text":"Yes, that's me. How can I help you?","startMs":3680,"endMs":5760,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":1},{"speaker":"Rep","text":"Hi John. My name is Emily and I'm calling from ABC Sales. We specialize in enterprise CRM solutions.","startMs":6160,"endMs":13760,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":2},{"speaker":"Customer","text":"CRM solutions? We're actually looking at implementing a new system soon.","startMs":14320,"endMs":18800,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":3},{"speaker":"Rep","text":"Great timing. We've helped numerous companies like yours integrate our CRM solution to streamline their sales and marketing efforts.","startMs":19360,"endMs":27680,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":4},{"speaker":"Customer","text":"That sounds interesting. What sets your solution apart from the competition?","startMs":28410,"endMs":32330,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":5},{"speaker":"Rep","text":"Our CRM solution offers real time data analytics, AI driven lead scoring and seamless integration with popular marketing automation tools.","startMs":32810,"endMs":42410,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":6},{"speaker":"Customer","text":"I'm not sure if our IT department would be comfortable with a new system. What kind of support do you offer?","startMs":42810,"endMs":48170,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":7},{"speaker":"Rep","text":"We have a dedicated support team available 247 as well as a comprehensive knowledge base and online resources for our customers.","startMs":48650,"endMs":57850,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":8},{"speaker":"Customer","text":"That sounds good. What's the typical implementation timeline for your CRM solution?","startMs":58500,"endMs":63540,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":9},{"speaker":"Rep","text":"We've seen successful implementations in as little as 6, 8 weeks depending on the complexity of the project.","startMs":64020,"endMs":70740,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":10},{"speaker":"Customer","text":"That's a bit tight for our schedule. Do you have any flexibility with the timeline?","startMs":71460,"endMs":75700,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":11},{"speaker":"Rep","text":"We can work with you to adjust the timeline to fit your needs. However, I do want to emphasize the importance of getting your CRM solution up and and running as soon as possible to start seeing the benefits.","startMs":76100,"endMs":88580,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":12},{"speaker":"Customer","text":"I see what you mean. Can you give me a rough estimate of the costs involved?","startMs":89060,"endMs":93060,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":13},{"speaker":"Rep","text":"Our enterprise CRM solution typically starts at $50, 000 per year with discounts available for larger deployments.","startMs":93620,"endMs":102420,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":14},{"speaker":"Customer","text":"That's a bit higher than we were expecting. Do you have any promotions or discounts available?","startMs":102900,"endMs":107620,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":15},{"speaker":"Rep","text":"We're currently running a promotion for new customers which includes a 10% discount on on the first year's licensing fees.","startMs":108180,"endMs":115490,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":16},{"speaker":"Customer","text":"That sounds more reasonable. Can I get a demo of the system to see how it works?","startMs":115890,"endMs":120370,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":17},{"speaker":"Rep","text":"Absolutely. I can schedule a demo for you at your convenience. Would you prefer a live demo or a recorded one?","startMs":120770,"endMs":127730,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":18},{"speaker":"Customer","text":"Live demo would be great, thanks.","startMs":128130,"endMs":129970,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":19},{"speaker":"Rep","text":"Excellent. I'll send you a calendar invite with a few different time slots to choose from. In the meantime, I'll send over some more information about our CR REM solution.","startMs":130450,"endMs":140690,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":20},{"speaker":"Customer","text":"Sounds good. Thanks for your time today, Emily.","startMs":141410,"endMs":143810,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":21},{"speaker":"Rep","text":"You're welcome, John. I look forward to speaking with you again soon.","startMs":144210,"endMs":147730,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":22}],"talkRatio":{"Rep":{"durationMs":93790,"percentage":0.6878621195452879},"Customer":{"durationMs":42560,"percentage":0.31213788045471214}},"count":23},"threeMin":{"fullText":"Hello, this is Alex from Salesforce Solutions. How are you today? Hi Alex. I'm doing well. Thanks for calling. We're actually in the process of evaluating some new CRM systems. Great to hear that. We've helped many companies like yours streamline their sales and marketing efforts with our enterprise CRM solution. Can you tell me a bit more about your current CRM setup and what you're looking for in a new system? We're currently using a homegrown solution, but it's become outdated and difficult to maintain. We're looking for something more scalable and user friendly. I completely understand. Our enterprise CRM is designed to handle large scale deployments and provides a user friendly interface for your sales and marketing teams. Can I ask, what are your primary pain points with your current system? Well, it's slow and our users are complaining about the lack of customization options. We also need better integration with our existing systems. I see. Our system is built on a cloud based architecture so you can expect fast performance and scalability. We also offer a wide range of customization options including custom fields, workflows and integration with other systems like your ERP and marketing automation tools. That sounds promising, but what about data security and compliance? We have to meet certain regulations in our industry. Absolutely. We take data security and compliance very seriously. Our system meets all major industry standards including gdpr, HIPAA and PCI dss. We also offer regular security audits and penetration testing to ensure our system remains secure. Okay, that's good to hear. What kind of support and training do you offer to ensure a smooth implementation? We offer a comprehensive implementation plan including onboarding, training and ongoing support. Our team of experts will work closely with you to ensure a seamless transition to our system. That sounds like a lot of value. What's the typical ROI for your enterprise CRM solution? Our customers have reported an average ROI of 300% within the first year of implementation. This is due to increased sales productivity, improved customer satisfaction and reduced costs associated with manual data entry and reporting. Wow, that's impressive. Can you walk me through the implementation process and timeline? Our implementation process typically takes 1216 weeks, depending on the scope of the project. We'll work closely with you to define the project plan, configure the system and and provide training to your users. Okay, I think we're starting to get a good idea of what your solution can do for us. Can you give me a rough estimate of the total cost of ownership? Our enterprise CRM solution is priced based on the number of users and the level of customization required. I can provide you with a customized quote based on your specific needs. Okay, that sounds fair. Can you send me a proposal with more details on the implementation plan timeline and cost? Absolutely. I'll send you a comprehensive proposal within the next 24 hours. Would you like to schedule a follow up call to discuss further? Yes, that would be great. Thank you, Alex, for your time today. You're welcome. It was a pleasure discussing our enterprise CRM solution with you. I'll send you the proposal and look forward to our next call. Great. Thanks again. Have a great day.","durationSeconds":1,"utterances":[{"speaker":"Rep","text":"Hello, this is Alex from Salesforce Solutions. How are you today?","startMs":160,"endMs":3680,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":0},{"speaker":"Customer","text":"Hi Alex. I'm doing well. Thanks for calling. We're actually in the process of evaluating some new CRM systems.","startMs":4240,"endMs":11200,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":1},{"speaker":"Rep","text":"Great to hear that. We've helped many companies like yours streamline their sales and marketing efforts with our enterprise CRM solution. Can you tell me a bit more about your current CRM setup and what you're looking for in a new system?","startMs":11680,"endMs":25440,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":2},{"speaker":"Customer","text":"We're currently using a homegrown solution, but it's become outdated and difficult to maintain. We're looking for something more scalable and user friendly.","startMs":26090,"endMs":34490,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":3},{"speaker":"Rep","text":"I completely understand. Our enterprise CRM is designed to handle large scale deployments and provides a user friendly interface for your sales and marketing teams. Can I ask, what are your primary pain points with your current system?","startMs":34810,"endMs":49610,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":4},{"speaker":"Customer","text":"Well, it's slow and our users are complaining about the lack of customization options. We also need better integration with our existing systems.","startMs":50250,"endMs":58830,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":5},{"speaker":"Rep","text":"I see. Our system is built on a cloud based architecture so you can expect fast performance and scalability. We also offer a wide range of customization options including custom fields, workflows and integration with other systems like your ERP and marketing automation tools.","startMs":59230,"endMs":77550,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":6},{"speaker":"Customer","text":"That sounds promising, but what about data security and compliance? We have to meet certain regulations in our industry.","startMs":78240,"endMs":84880,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":7},{"speaker":"Rep","text":"Absolutely. We take data security and compliance very seriously. Our system meets all major industry standards including gdpr, HIPAA and PCI dss. We also offer regular security audits and penetration testing to ensure our system remains secure.","startMs":85680,"endMs":103440,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":8},{"speaker":"Customer","text":"Okay, that's good to hear. What kind of support and training do you offer to ensure a smooth implementation?","startMs":104160,"endMs":109520,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":9},{"speaker":"Rep","text":"We offer a comprehensive implementation plan including onboarding, training and ongoing support. Our team of experts will work closely with you to ensure a seamless transition to our system.","startMs":110080,"endMs":122000,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":10},{"speaker":"Customer","text":"That sounds like a lot of value. What's the typical ROI for your enterprise CRM solution?","startMs":122560,"endMs":128080,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":11},{"speaker":"Rep","text":"Our customers have reported an average ROI of 300% within the first year of implementation. This is due to increased sales productivity, improved customer satisfaction and reduced costs associated with manual data entry and reporting.","startMs":128560,"endMs":145180,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":12},{"speaker":"Customer","text":"Wow, that's impressive. Can you walk me through the implementation process and timeline?","startMs":145660,"endMs":150300,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":13},{"speaker":"Rep","text":"Our implementation process typically takes 1216 weeks, depending on the scope of the project. We'll work closely with you to define the project plan, configure the system and and provide training to your users.","startMs":150700,"endMs":163590,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":14},{"speaker":"Customer","text":"Okay, I think we're starting to get a good idea of what your solution can do for us. Can you give me a rough estimate of the total cost of ownership?","startMs":163990,"endMs":171750,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":15},{"speaker":"Rep","text":"Our enterprise CRM solution is priced based on the number of users and the level of customization required. I can provide you with a customized quote based on your specific needs.","startMs":172150,"endMs":183670,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":16},{"speaker":"Customer","text":"Okay, that sounds fair. Can you send me a proposal with more details on the implementation plan timeline and cost?","startMs":184230,"endMs":191030,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":17},{"speaker":"Rep","text":"Absolutely. I'll send you a comprehensive proposal within the next 24 hours. Would you like to schedule a follow up call to discuss further?","startMs":191850,"endMs":200010,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":18},{"speaker":"Customer","text":"Yes, that would be great. Thank you, Alex, for your time today.","startMs":200490,"endMs":203450,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":19},{"speaker":"Rep","text":"You're welcome. It was a pleasure discussing our enterprise CRM solution with you. I'll send you the proposal and look forward to our next call.","startMs":204090,"endMs":212410,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":20},{"speaker":"Customer","text":"Great. Thanks again.","startMs":212890,"endMs":214010,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":21},{"speaker":"Rep","text":"Have a great day.","startMs":214650,"endMs":215530,"confidence":0.92,"isLowConfidence":false,"sequenceIndex":22}],"talkRatio":{"Rep":{"durationMs":138470,"percentage":0.6814133162738054},"Customer":{"durationMs":64740,"percentage":0.3185866837261946}},"count":23}}
+{
+  "twoMin": {
+    "fullText": "Good morning. Is this John from XYZ Corporation? Yes, that's me. How can I help you? Hi John. My name is Emily and I'm calling from ABC Sales. We specialize in enterprise CRM solutions. CRM solutions? We're actually looking at implementing a new system soon. Great timing. We've helped numerous companies like yours integrate our CRM solution to streamline their sales and marketing efforts. That sounds interesting. What sets your solution apart from the competition? Our CRM solution offers real time data analytics, AI driven lead scoring and seamless integration with popular marketing automation tools. I'm not sure if our IT department would be comfortable with a new system. What kind of support do you offer? We have a dedicated support team available 247 as well as a comprehensive knowledge base and online resources for our customers. That sounds good. What's the typical implementation timeline for your CRM solution? We've seen successful implementations in as little as 6, 8 weeks depending on the complexity of the project. That's a bit tight for our schedule. Do you have any flexibility with the timeline? We can work with you to adjust the timeline to fit your needs. However, I do want to emphasize the importance of getting your CRM solution up and and running as soon as possible to start seeing the benefits. I see what you mean. Can you give me a rough estimate of the costs involved? Our enterprise CRM solution typically starts at $50, 000 per year with discounts available for larger deployments. That's a bit higher than we were expecting. Do you have any promotions or discounts available? We're currently running a promotion for new customers which includes a 10% discount on on the first year's licensing fees. That sounds more reasonable. Can I get a demo of the system to see how it works? Absolutely. I can schedule a demo for you at your convenience. Would you prefer a live demo or a recorded one? Live demo would be great, thanks. Excellent. I'll send you a calendar invite with a few different time slots to choose from. In the meantime, I'll send over some more information about our CR REM solution. Sounds good. Thanks for your time today, Emily. You're welcome, John. I look forward to speaking with you again soon.",
+    "durationSeconds": 1,
+    "utterances": [
+      {
+        "speaker": "Rep",
+        "text": "Good morning. Is this John from XYZ Corporation?",
+        "startMs": 160,
+        "endMs": 3200,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 0
+      },
+      {
+        "speaker": "Customer",
+        "text": "Yes, that's me. How can I help you?",
+        "startMs": 3680,
+        "endMs": 5760,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 1
+      },
+      {
+        "speaker": "Rep",
+        "text": "Hi John. My name is Emily and I'm calling from ABC Sales. We specialize in enterprise CRM solutions.",
+        "startMs": 6160,
+        "endMs": 13760,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 2
+      },
+      {
+        "speaker": "Customer",
+        "text": "CRM solutions? We're actually looking at implementing a new system soon.",
+        "startMs": 14320,
+        "endMs": 18800,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 3
+      },
+      {
+        "speaker": "Rep",
+        "text": "Great timing. We've helped numerous companies like yours integrate our CRM solution to streamline their sales and marketing efforts.",
+        "startMs": 19360,
+        "endMs": 27680,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 4
+      },
+      {
+        "speaker": "Customer",
+        "text": "That sounds interesting. What sets your solution apart from the competition?",
+        "startMs": 28410,
+        "endMs": 32330,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 5
+      },
+      {
+        "speaker": "Rep",
+        "text": "Our CRM solution offers real time data analytics, AI driven lead scoring and seamless integration with popular marketing automation tools.",
+        "startMs": 32810,
+        "endMs": 42410,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 6
+      },
+      {
+        "speaker": "Customer",
+        "text": "I'm not sure if our IT department would be comfortable with a new system. What kind of support do you offer?",
+        "startMs": 42810,
+        "endMs": 48170,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 7
+      },
+      {
+        "speaker": "Rep",
+        "text": "We have a dedicated support team available 247 as well as a comprehensive knowledge base and online resources for our customers.",
+        "startMs": 48650,
+        "endMs": 57850,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 8
+      },
+      {
+        "speaker": "Customer",
+        "text": "That sounds good. What's the typical implementation timeline for your CRM solution?",
+        "startMs": 58500,
+        "endMs": 63540,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 9
+      },
+      {
+        "speaker": "Rep",
+        "text": "We've seen successful implementations in as little as 6, 8 weeks depending on the complexity of the project.",
+        "startMs": 64020,
+        "endMs": 70740,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 10
+      },
+      {
+        "speaker": "Customer",
+        "text": "That's a bit tight for our schedule. Do you have any flexibility with the timeline?",
+        "startMs": 71460,
+        "endMs": 75700,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 11
+      },
+      {
+        "speaker": "Rep",
+        "text": "We can work with you to adjust the timeline to fit your needs. However, I do want to emphasize the importance of getting your CRM solution up and and running as soon as possible to start seeing the benefits.",
+        "startMs": 76100,
+        "endMs": 88580,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 12
+      },
+      {
+        "speaker": "Customer",
+        "text": "I see what you mean. Can you give me a rough estimate of the costs involved?",
+        "startMs": 89060,
+        "endMs": 93060,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 13
+      },
+      {
+        "speaker": "Rep",
+        "text": "Our enterprise CRM solution typically starts at $50, 000 per year with discounts available for larger deployments.",
+        "startMs": 93620,
+        "endMs": 102420,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 14
+      },
+      {
+        "speaker": "Customer",
+        "text": "That's a bit higher than we were expecting. Do you have any promotions or discounts available?",
+        "startMs": 102900,
+        "endMs": 107620,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 15
+      },
+      {
+        "speaker": "Rep",
+        "text": "We're currently running a promotion for new customers which includes a 10% discount on on the first year's licensing fees.",
+        "startMs": 108180,
+        "endMs": 115490,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 16
+      },
+      {
+        "speaker": "Customer",
+        "text": "That sounds more reasonable. Can I get a demo of the system to see how it works?",
+        "startMs": 115890,
+        "endMs": 120370,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 17
+      },
+      {
+        "speaker": "Rep",
+        "text": "Absolutely. I can schedule a demo for you at your convenience. Would you prefer a live demo or a recorded one?",
+        "startMs": 120770,
+        "endMs": 127730,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 18
+      },
+      {
+        "speaker": "Customer",
+        "text": "Live demo would be great, thanks.",
+        "startMs": 128130,
+        "endMs": 129970,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 19
+      },
+      {
+        "speaker": "Rep",
+        "text": "Excellent. I'll send you a calendar invite with a few different time slots to choose from. In the meantime, I'll send over some more information about our CR REM solution.",
+        "startMs": 130450,
+        "endMs": 140690,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 20
+      },
+      {
+        "speaker": "Customer",
+        "text": "Sounds good. Thanks for your time today, Emily.",
+        "startMs": 141410,
+        "endMs": 143810,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 21
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, John. I look forward to speaking with you again soon.",
+        "startMs": 144210,
+        "endMs": 147730,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 22
+      }
+    ],
+    "talkRatio": {
+      "Rep": {
+        "durationMs": 93790,
+        "percentage": 0.6878621195452879
+      },
+      "Customer": {
+        "durationMs": 42560,
+        "percentage": 0.31213788045471214
+      }
+    },
+    "count": 23
+  },
+  "threeMin": {
+    "fullText": "Hello, this is Alex from Salesforce Solutions. How are you today? Hi Alex. I'm doing well. Thanks for calling. We're actually in the process of evaluating some new CRM systems. Great to hear that. We've helped many companies like yours streamline their sales and marketing efforts with our enterprise CRM solution. Can you tell me a bit more about your current CRM setup and what you're looking for in a new system? We're currently using a homegrown solution, but it's become outdated and difficult to maintain. We're looking for something more scalable and user friendly. I completely understand. Our enterprise CRM is designed to handle large scale deployments and provides a user friendly interface for your sales and marketing teams. Can I ask, what are your primary pain points with your current system? Well, it's slow and our users are complaining about the lack of customization options. We also need better integration with our existing systems. I see. Our system is built on a cloud based architecture so you can expect fast performance and scalability. We also offer a wide range of customization options including custom fields, workflows and integration with other systems like your ERP and marketing automation tools. That sounds promising, but what about data security and compliance? We have to meet certain regulations in our industry. Absolutely. We take data security and compliance very seriously. Our system meets all major industry standards including gdpr, HIPAA and PCI dss. We also offer regular security audits and penetration testing to ensure our system remains secure. Okay, that's good to hear. What kind of support and training do you offer to ensure a smooth implementation? We offer a comprehensive implementation plan including onboarding, training and ongoing support. Our team of experts will work closely with you to ensure a seamless transition to our system. That sounds like a lot of value. What's the typical ROI for your enterprise CRM solution? Our customers have reported an average ROI of 300% within the first year of implementation. This is due to increased sales productivity, improved customer satisfaction and reduced costs associated with manual data entry and reporting. Wow, that's impressive. Can you walk me through the implementation process and timeline? Our implementation process typically takes 1216 weeks, depending on the scope of the project. We'll work closely with you to define the project plan, configure the system and and provide training to your users. Okay, I think we're starting to get a good idea of what your solution can do for us. Can you give me a rough estimate of the total cost of ownership? Our enterprise CRM solution is priced based on the number of users and the level of customization required. I can provide you with a customized quote based on your specific needs. Okay, that sounds fair. Can you send me a proposal with more details on the implementation plan timeline and cost? Absolutely. I'll send you a comprehensive proposal within the next 24 hours. Would you like to schedule a follow up call to discuss further? Yes, that would be great. Thank you, Alex, for your time today. You're welcome. It was a pleasure discussing our enterprise CRM solution with you. I'll send you the proposal and look forward to our next call. Great. Thanks again. Have a great day.",
+    "durationSeconds": 1,
+    "utterances": [
+      {
+        "speaker": "Rep",
+        "text": "Hello, this is Alex from Salesforce Solutions. How are you today?",
+        "startMs": 160,
+        "endMs": 3680,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 0
+      },
+      {
+        "speaker": "Customer",
+        "text": "Hi Alex. I'm doing well. Thanks for calling. We're actually in the process of evaluating some new CRM systems.",
+        "startMs": 4240,
+        "endMs": 11200,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 1
+      },
+      {
+        "speaker": "Rep",
+        "text": "Great to hear that. We've helped many companies like yours streamline their sales and marketing efforts with our enterprise CRM solution. Can you tell me a bit more about your current CRM setup and what you're looking for in a new system?",
+        "startMs": 11680,
+        "endMs": 25440,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 2
+      },
+      {
+        "speaker": "Customer",
+        "text": "We're currently using a homegrown solution, but it's become outdated and difficult to maintain. We're looking for something more scalable and user friendly.",
+        "startMs": 26090,
+        "endMs": 34490,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 3
+      },
+      {
+        "speaker": "Rep",
+        "text": "I completely understand. Our enterprise CRM is designed to handle large scale deployments and provides a user friendly interface for your sales and marketing teams. Can I ask, what are your primary pain points with your current system?",
+        "startMs": 34810,
+        "endMs": 49610,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 4
+      },
+      {
+        "speaker": "Customer",
+        "text": "Well, it's slow and our users are complaining about the lack of customization options. We also need better integration with our existing systems.",
+        "startMs": 50250,
+        "endMs": 58830,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 5
+      },
+      {
+        "speaker": "Rep",
+        "text": "I see. Our system is built on a cloud based architecture so you can expect fast performance and scalability. We also offer a wide range of customization options including custom fields, workflows and integration with other systems like your ERP and marketing automation tools.",
+        "startMs": 59230,
+        "endMs": 77550,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 6
+      },
+      {
+        "speaker": "Customer",
+        "text": "That sounds promising, but what about data security and compliance? We have to meet certain regulations in our industry.",
+        "startMs": 78240,
+        "endMs": 84880,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 7
+      },
+      {
+        "speaker": "Rep",
+        "text": "Absolutely. We take data security and compliance very seriously. Our system meets all major industry standards including gdpr, HIPAA and PCI dss. We also offer regular security audits and penetration testing to ensure our system remains secure.",
+        "startMs": 85680,
+        "endMs": 103440,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 8
+      },
+      {
+        "speaker": "Customer",
+        "text": "Okay, that's good to hear. What kind of support and training do you offer to ensure a smooth implementation?",
+        "startMs": 104160,
+        "endMs": 109520,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 9
+      },
+      {
+        "speaker": "Rep",
+        "text": "We offer a comprehensive implementation plan including onboarding, training and ongoing support. Our team of experts will work closely with you to ensure a seamless transition to our system.",
+        "startMs": 110080,
+        "endMs": 122000,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 10
+      },
+      {
+        "speaker": "Customer",
+        "text": "That sounds like a lot of value. What's the typical ROI for your enterprise CRM solution?",
+        "startMs": 122560,
+        "endMs": 128080,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 11
+      },
+      {
+        "speaker": "Rep",
+        "text": "Our customers have reported an average ROI of 300% within the first year of implementation. This is due to increased sales productivity, improved customer satisfaction and reduced costs associated with manual data entry and reporting.",
+        "startMs": 128560,
+        "endMs": 145180,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 12
+      },
+      {
+        "speaker": "Customer",
+        "text": "Wow, that's impressive. Can you walk me through the implementation process and timeline?",
+        "startMs": 145660,
+        "endMs": 150300,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 13
+      },
+      {
+        "speaker": "Rep",
+        "text": "Our implementation process typically takes 1216 weeks, depending on the scope of the project. We'll work closely with you to define the project plan, configure the system and and provide training to your users.",
+        "startMs": 150700,
+        "endMs": 163590,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 14
+      },
+      {
+        "speaker": "Customer",
+        "text": "Okay, I think we're starting to get a good idea of what your solution can do for us. Can you give me a rough estimate of the total cost of ownership?",
+        "startMs": 163990,
+        "endMs": 171750,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 15
+      },
+      {
+        "speaker": "Rep",
+        "text": "Our enterprise CRM solution is priced based on the number of users and the level of customization required. I can provide you with a customized quote based on your specific needs.",
+        "startMs": 172150,
+        "endMs": 183670,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 16
+      },
+      {
+        "speaker": "Customer",
+        "text": "Okay, that sounds fair. Can you send me a proposal with more details on the implementation plan timeline and cost?",
+        "startMs": 184230,
+        "endMs": 191030,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 17
+      },
+      {
+        "speaker": "Rep",
+        "text": "Absolutely. I'll send you a comprehensive proposal within the next 24 hours. Would you like to schedule a follow up call to discuss further?",
+        "startMs": 191850,
+        "endMs": 200010,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 18
+      },
+      {
+        "speaker": "Customer",
+        "text": "Yes, that would be great. Thank you, Alex, for your time today.",
+        "startMs": 200490,
+        "endMs": 203450,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 19
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome. It was a pleasure discussing our enterprise CRM solution with you. I'll send you the proposal and look forward to our next call.",
+        "startMs": 204090,
+        "endMs": 212410,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 20
+      },
+      {
+        "speaker": "Customer",
+        "text": "Great. Thanks again.",
+        "startMs": 212890,
+        "endMs": 214010,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 21
+      },
+      {
+        "speaker": "Rep",
+        "text": "Have a great day.",
+        "startMs": 214650,
+        "endMs": 215530,
+        "confidence": 0.92,
+        "isLowConfidence": false,
+        "sequenceIndex": 22
+      }
+    ],
+    "talkRatio": {
+      "Rep": {
+        "durationMs": 138470,
+        "percentage": 0.6814133162738054
+      },
+      "Customer": {
+        "durationMs": 64740,
+        "percentage": 0.3185866837261946
+      }
+    },
+    "count": 23
+  },
+  "tenMin": {
+    "fullText": "Good morning, Dr. Smith. Thank you for taking the time to speak with me today. Good morning, what can I do for you? I'm calling from MedProCRM, and I'd like to discuss how our medical CRM system can help streamline your practice's workflow and improve patient care. I'm not sure, we're happy with our current system. I understand that change can be daunting, but our system has been designed specifically for medical practices like yours. It can help you manage patient relationships, track appointments, and even send reminders to patients. That sounds interesting, but how does it compare to what we're currently using? Our system is cloud-based, which means you can access it from anywhere at any time. It's also highly customizable, so you can tailor it to meet the specific needs of your practice. I see, and what kind of support can we expect if we switch to your system? We offer dedicated support to all our clients, including training, troubleshooting, and regular software updates. That sounds good, but what about the cost? Our pricing model is based on the number of users in your practice. I can provide you with a custom quote based on your specific needs. Okay, I'd like to hear more about that. Our system is priced per user per month, with discounts available for larger practices. I see, and what kind of return on investment can we expect? Our system has been shown to increase productivity by up to 30% and reduce no-shows by up to 25%. That's impressive. I'd like to learn more about how it works. I'd be happy to walk you through the features and benefits of our system. Okay, let's get started then. Great, let me just pull up a demo on my computer real quick. Sounds good. Okay, so as you can see here, our system allows you to manage patient relationships, track appointments, and even send reminders to patients. That looks really user-friendly. Yes, we've designed it to be easy to use, even for those who aren't tech-savvy. I like that. And what about security? Our system uses the latest encryption technology to ensure that all patient data is secure and protected. That's great to hear. I'm glad you're impressed. We take security very seriously. Okay, I think I'm starting to get a good idea of how it works. Great, I'm glad I could help clarify things for you. Yes, thanks for your time today. You're welcome, Dr. Smith. I'll send you a follow-up email with some more information and a quote for your practice. Sounds good, thank you again. You're welcome, Dr. Smith. Have a great day. You too. I'll talk to you soon, Dr. Smith. Okay, sounds good. Dr. Smith, I'd like to discuss how our medical CRM can help streamline your practice's workflow. I'm listening. What makes you think our practice needs a CRM? Well, our system allows you to manage patient interactions, appointments, and medical history in one place. That sounds convenient, but how does it help with communication between staff members? With our medical CRM, your team can access patient information, share updates, and collaborate in real time. I see. And what about patient engagement? How does your system help with that? Our system allows patients to schedule appointments online, access their medical records, and receive reminders and notifications. That's great. What about security and compliance? I need to ensure our patient data is protected. Our system meets all relevant HIPAA and security standards, ensuring the confidentiality and integrity of patient data. I appreciate that. Can you walk me through the implementation process? We'll provide a dedicated project manager to guide you through setup, training, and onboarding. That sounds good. What about support and maintenance? We offer 24/7 support, regular software updates, and proactive monitoring to ensure system uptime. I'm impressed. What's the cost of implementation, and what are the ongoing fees? We offer a customized pricing model based on your practice's specific needs. I can provide a detailed quote for you. I'd like that. Can you also provide some case studies or references from similar practices? Absolutely. I can send you some success stories and contact information for satisfied customers. Great. What's the next step in this process? I'd like to schedule a follow-up meeting to discuss the details. And answer any additional questions you may have. Sounds good. When were you thinking? How about next Wednesday at 2 PM? That works for me. I'll make sure to clear my schedule. Great. I'll send you a calendar invite and look forward to speaking with you then. Sounds good. Thanks for your time today. You're welcome, Dr. Smith. It was a pleasure discussing our medical CRM with you. Yes, I appreciate it. I'll be in touch soon. I'm looking forward to it. Have a great day, Dr. Smith. You too, take care. Will do. Goodbye for now, Dr. Smith. Goodbye. Is there anything else I can assist you with today, Dr. Smith? No, I think we've covered everything. Great, I'm glad we could have this conversation, Dr. Smith. Me too, it was informative. I'm happy to answer any further questions you may have in the future. I appreciate that. Thanks again for your time. You're welcome, Dr. Smith. Have a great day. Before we wrap up, I just want to confirm that you understand the benefits of implementing a medical CRM system in your practice. Yes, I think I do. It will help us streamline patient communication, automate follow-ups, and improve overall patient satisfaction. Exactly. And with our system, you'll also be able to track patient interactions, including phone calls, emails, and in-person visits. That sounds like a huge time saver. We're always looking for ways to reduce administrative burdens. I completely understand. Our system is designed to be user-friendly and easy to navigate, so you can focus on what matters most— providing great patient care. That's reassuring to hear. Can you tell me more about the reporting and analytics features of your system? Absolutely. Our system provides real-time reporting and analytics, so you can track key performance indicators and make data-driven decisions. That's exactly what we need. We want to be able to measure the effectiveness of our patient engagement strategies. Our system can help you do just that. We also offer custom reporting and analytics packages to meet your specific needs. Wow, that sounds impressive. Can you walk me through the implementation process? Of course. Our implementation team will work closely with you to ensure a seamless transition to our system. That's great to hear. What kind of support can I expect after implementation? We offer comprehensive support, including online resources, phone support, and on-site training. That's fantastic. I appreciate your commitment to customer support. We're dedicated to helping you get the most out of our system. Is there anything else you'd like to know or discuss? Actually, yes. Can you tell me more about the security and compliance features of your system? Our system meets all relevant HIPAA and security standards, so you can be confident that your patient data is safe and secure. That's great to hear. We take patient confidentiality very seriously. We do too. Our system is designed to protect patient data and ensure compliance with all relevant regulations. I appreciate your emphasis on security and compliance. It's essential to us. We want to help you build trust with your patients and maintain a strong reputation in the medical community. That makes sense. Can you tell me more about the pricing and licensing options for your system? Our pricing is competitive and based on the size of your practice. We also offer flexible licensing options to meet your specific needs. That sounds reasonable. Can you give me a rough estimate of the costs? I'd be happy to provide a custom quote for your practice. Can you tell me a little bit more about your current technology infrastructure? We're currently using a combination of paper records and an outdated electronic health record system. I see. Our system can help you upgrade to a more modern and efficient solution. That would be a huge improvement. Can you tell me more about the user interface and user experience of your system? Our system is designed to be intuitive and easy to use, with a clean and modern interface. That sounds great. I appreciate your attention to detail and commitment to user experience. We want to make sure that your staff can focus on what matters most— providing great patient care. I completely agree. Can you tell me more about the integration capabilities of your system? Our system can integrate with a variety of other systems and technologies, including electronic health records and practice management systems. That's fantastic! We're currently using a few different systems and would love to streamline our workflow. Our system can help you do just that. We also offer custom integration services to meet your specific needs. Wow, that sounds like a game changer. Can you walk me through the next steps and what I can expect? Of course. Our implementation team will work closely with you to ensure a seamless transition to our system. That sounds great. I'm excited to get started. We're excited to have you on board. Is there anything else you'd like to discuss or any other questions you have? No, I think that's all for now. Thank you again for your time and expertise. You're welcome, Dr. Smith. It was a pleasure speaking with you. Likewise, I look forward to hearing from you soon. Great, I'll be in touch shortly to discuss the next steps and answer any additional questions you may have.",
+    "durationSeconds": 589,
+    "utterances": [
+      {
+        "speaker": "Rep",
+        "text": "Good morning, Dr. Smith.",
+        "startMs": 100,
+        "endMs": 2080,
+        "confidence": 0.96544933,
+        "isLowConfidence": false,
+        "sequenceIndex": 0
+      },
+      {
+        "speaker": "Customer",
+        "text": "Thank you for taking the time to speak with me today. Good morning, what can I do for you? I'm calling from MedProCRM, and I'd like to discuss how our medical CRM system can help streamline your practice's workflow and improve patient care. I'm not sure, we're happy with our current system. I understand that change can be daunting, but our system has been designed specifically for medical practices like yours. It can help you manage patient relationships, track appointments, and even send reminders to patients. That sounds interesting, but how does it compare to what we're currently using? Our system is cloud-based, which means you can access it from anywhere at any time. It's also highly customizable, so you can tailor it to meet the specific needs of your practice. I see, and what kind of support can we expect if we switch to your system? We offer dedicated support to all our clients, including training, troubleshooting, and regular software updates. That sounds good, but what about the cost? Our pricing model is based on the number of users in your practice. I can provide you with a custom quote based on your specific needs. Okay, I'd like to hear more about that. Our system is priced per user per month, with discounts available for larger practices. I see, and what kind of return on investment can we expect? Our system has been shown to increase productivity by up to 30% and reduce no-shows by up to 25%. That's impressive. I'd like to learn more about how it works. I'd be happy to walk you through the features and benefits of our system. Okay, let's get started then. Great, let me just pull up a demo on my computer real quick. Sounds good. Okay, so as you can see here, our system allows you to manage patient relationships, track appointments, and even send reminders to patients. That looks really user-friendly. Yes, we've designed it to be easy to use, even for those who aren't tech-savvy. I like that. And what about security? Our system uses the latest encryption technology to ensure that all patient data is secure and protected.",
+        "startMs": 2080,
+        "endMs": 128470,
+        "confidence": 0.9872725,
+        "isLowConfidence": false,
+        "sequenceIndex": 1
+      },
+      {
+        "speaker": "Rep",
+        "text": "That's great to hear.",
+        "startMs": 128700,
+        "endMs": 130010,
+        "confidence": 0.98239756,
+        "isLowConfidence": false,
+        "sequenceIndex": 2
+      },
+      {
+        "speaker": "Customer",
+        "text": "I'm glad you're impressed.",
+        "startMs": 130280,
+        "endMs": 131550,
+        "confidence": 0.99663883,
+        "isLowConfidence": false,
+        "sequenceIndex": 3
+      },
+      {
+        "speaker": "Rep",
+        "text": "We take security very seriously.",
+        "startMs": 131660,
+        "endMs": 133430,
+        "confidence": 0.9943155,
+        "isLowConfidence": false,
+        "sequenceIndex": 4
+      },
+      {
+        "speaker": "Customer",
+        "text": "Okay, I think I'm starting to get a good idea of how it works. Great, I'm glad I could help clarify things for you. Yes, thanks for your time today.",
+        "startMs": 134170,
+        "endMs": 142720,
+        "confidence": 0.98191595,
+        "isLowConfidence": false,
+        "sequenceIndex": 5
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, Dr. Smith.",
+        "startMs": 143069,
+        "endMs": 145010,
+        "confidence": 0.9925067,
+        "isLowConfidence": false,
+        "sequenceIndex": 6
+      },
+      {
+        "speaker": "Customer",
+        "text": "I'll send you a follow-up email with some more information and a quote for your practice. Sounds good, thank you again.",
+        "startMs": 145010,
+        "endMs": 151020,
+        "confidence": 0.9875245,
+        "isLowConfidence": false,
+        "sequenceIndex": 7
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, Dr. Smith. Have a great day.",
+        "startMs": 151590,
+        "endMs": 154060,
+        "confidence": 0.95739186,
+        "isLowConfidence": false,
+        "sequenceIndex": 8
+      },
+      {
+        "speaker": "Customer",
+        "text": "You too. I'll talk to you soon, Dr. Smith. Okay, sounds good.",
+        "startMs": 154610,
+        "endMs": 159390,
+        "confidence": 0.99458104,
+        "isLowConfidence": false,
+        "sequenceIndex": 9
+      },
+      {
+        "speaker": "Rep",
+        "text": "Dr.",
+        "startMs": 159810,
+        "endMs": 160460,
+        "confidence": 0.6556258,
+        "isLowConfidence": true,
+        "sequenceIndex": 10
+      },
+      {
+        "speaker": "Customer",
+        "text": "Smith, I'd like to discuss how our medical CRM can help streamline your practice's workflow. I'm listening. What makes you think our practice needs a CRM? Well, our system allows you to manage patient interactions, appointments, and medical history in one place. That sounds convenient, but how does it help with communication between staff members? With our medical CRM, your team can access patient information, share updates, and collaborate in real time. I see. And what about patient engagement? How does your system help with that? Our system allows patients to schedule appointments online, access their medical records, and receive reminders and notifications.",
+        "startMs": 160460,
+        "endMs": 200670,
+        "confidence": 0.992284,
+        "isLowConfidence": false,
+        "sequenceIndex": 11
+      },
+      {
+        "speaker": "Rep",
+        "text": "That's great.",
+        "startMs": 201180,
+        "endMs": 201940,
+        "confidence": 0.9845005,
+        "isLowConfidence": false,
+        "sequenceIndex": 12
+      },
+      {
+        "speaker": "Customer",
+        "text": "What about security and compliance? I need to ensure our patient data is protected. Our system meets all relevant HIPAA and security standards, ensuring the confidentiality and integrity of patient data. I appreciate that. Can you walk me through the implementation process? We'll provide a dedicated project manager to guide you through setup, training, and onboarding. That sounds good. What about support and maintenance? We offer 24/7 support, regular software updates, and proactive monitoring to ensure system uptime. I'm impressed. What's the cost of implementation, and what are the ongoing fees? We offer a customized pricing model based on your practice's specific needs. I can provide a detailed quote for you. I'd like that. Can you also provide some case studies or references from similar practices? Absolutely. I can send you some success stories and contact information for satisfied customers. Great. What's the next step in this process? I'd like to schedule a follow-up meeting to discuss the details. And answer any additional questions you may have. Sounds good. When were you thinking? How about next Wednesday at 2 PM?",
+        "startMs": 201940,
+        "endMs": 272610,
+        "confidence": 0.9887207,
+        "isLowConfidence": false,
+        "sequenceIndex": 13
+      },
+      {
+        "speaker": "Rep",
+        "text": "That works for me.",
+        "startMs": 273179,
+        "endMs": 274279,
+        "confidence": 0.9984786,
+        "isLowConfidence": false,
+        "sequenceIndex": 14
+      },
+      {
+        "speaker": "Customer",
+        "text": "I'll make sure to clear my schedule. Great. I'll send you a calendar invite and look forward to speaking with you then. Sounds good. Thanks for your time today.",
+        "startMs": 274279,
+        "endMs": 282870,
+        "confidence": 0.9935739,
+        "isLowConfidence": false,
+        "sequenceIndex": 15
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, Dr. Smith.",
+        "startMs": 283600,
+        "endMs": 285560,
+        "confidence": 0.99292886,
+        "isLowConfidence": false,
+        "sequenceIndex": 16
+      },
+      {
+        "speaker": "Customer",
+        "text": "It was a pleasure discussing our medical CRM with you. Yes, I appreciate it. I'll be in touch soon. I'm looking forward to it.",
+        "startMs": 285560,
+        "endMs": 293210,
+        "confidence": 0.98770195,
+        "isLowConfidence": false,
+        "sequenceIndex": 17
+      },
+      {
+        "speaker": "Rep",
+        "text": "Have a great day, Dr. Smith. You too, take care.",
+        "startMs": 293210,
+        "endMs": 296920,
+        "confidence": 0.9605509,
+        "isLowConfidence": false,
+        "sequenceIndex": 18
+      },
+      {
+        "speaker": "Customer",
+        "text": "Will do.",
+        "startMs": 297130,
+        "endMs": 297949,
+        "confidence": 0.7627264,
+        "isLowConfidence": false,
+        "sequenceIndex": 19
+      },
+      {
+        "speaker": "Rep",
+        "text": "Goodbye for now, Dr. Smith. Goodbye.",
+        "startMs": 297949,
+        "endMs": 301090,
+        "confidence": 0.98415315,
+        "isLowConfidence": false,
+        "sequenceIndex": 20
+      },
+      {
+        "speaker": "Customer",
+        "text": "Is there anything else I can assist you with today, Dr.",
+        "startMs": 301090,
+        "endMs": 303709,
+        "confidence": 0.9982101,
+        "isLowConfidence": false,
+        "sequenceIndex": 21
+      },
+      {
+        "speaker": "Rep",
+        "text": "Smith?",
+        "startMs": 303709,
+        "endMs": 304670,
+        "confidence": 0.99967605,
+        "isLowConfidence": false,
+        "sequenceIndex": 22
+      },
+      {
+        "speaker": "Customer",
+        "text": "No, I think we've covered everything. Great, I'm glad we could have this conversation, Dr. Smith. Me too, it was informative. I'm happy to answer any further questions you may have in the future. I appreciate that. Thanks again for your time.",
+        "startMs": 304670,
+        "endMs": 319710,
+        "confidence": 0.97938275,
+        "isLowConfidence": false,
+        "sequenceIndex": 23
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, Dr. Smith. Have a great day.",
+        "startMs": 320170,
+        "endMs": 322670,
+        "confidence": 0.980431,
+        "isLowConfidence": false,
+        "sequenceIndex": 24
+      },
+      {
+        "speaker": "Customer",
+        "text": "Before we wrap up, I just want to confirm that you understand the benefits of implementing a medical CRM system in your practice. Yes, I think I do. It will help us streamline patient communication, automate follow-ups, and improve overall patient satisfaction. Exactly. And with our system, you'll also be able to track patient interactions, including phone calls, emails, and in-person visits. That sounds like a huge time saver. We're always looking for ways to reduce administrative burdens. I completely understand. Our system is designed to be user-friendly and easy to navigate, so you can focus on what matters most— providing great patient care. That's reassuring to hear. Can you tell me more about the reporting and analytics features of your system? Absolutely. Our system provides real-time reporting and analytics, so you can track key performance indicators and make data-driven decisions. That's exactly what we need. We want to be able to measure the effectiveness of our patient engagement strategies. Our system can help you do just that. We also offer custom reporting and analytics packages to meet your specific needs. Wow, that sounds impressive. Can you walk me through the implementation process?",
+        "startMs": 323269,
+        "endMs": 396930,
+        "confidence": 0.98384815,
+        "isLowConfidence": false,
+        "sequenceIndex": 25
+      },
+      {
+        "speaker": "Rep",
+        "text": "Of course.",
+        "startMs": 397750,
+        "endMs": 398670,
+        "confidence": 0.8501866,
+        "isLowConfidence": false,
+        "sequenceIndex": 26
+      },
+      {
+        "speaker": "Customer",
+        "text": "Our implementation team will work closely with you to ensure a seamless transition to our system.",
+        "startMs": 398670,
+        "endMs": 403850,
+        "confidence": 0.9982863,
+        "isLowConfidence": false,
+        "sequenceIndex": 27
+      },
+      {
+        "speaker": "Rep",
+        "text": "That's great to hear.",
+        "startMs": 404240,
+        "endMs": 405560,
+        "confidence": 0.95005,
+        "isLowConfidence": false,
+        "sequenceIndex": 28
+      },
+      {
+        "speaker": "Customer",
+        "text": "What kind of support can I expect after implementation? We offer comprehensive support, including online resources, phone support, and on-site training. That's fantastic. I appreciate your commitment to customer support. We're dedicated to helping you get the most out of our system. Is there anything else you'd like to know or discuss? Actually, yes. Can you tell me more about the security and compliance features of your system? Our system meets all relevant HIPAA and security standards, so you can be confident that your patient data is safe and secure.",
+        "startMs": 405560,
+        "endMs": 438680,
+        "confidence": 0.9926838,
+        "isLowConfidence": false,
+        "sequenceIndex": 29
+      },
+      {
+        "speaker": "Rep",
+        "text": "That's great to hear.",
+        "startMs": 438680,
+        "endMs": 440400,
+        "confidence": 0.9556659,
+        "isLowConfidence": false,
+        "sequenceIndex": 30
+      },
+      {
+        "speaker": "Customer",
+        "text": "We take patient confidentiality very seriously. We do too. Our system is designed to protect patient data and ensure compliance with all relevant regulations. I appreciate your emphasis on security and compliance. It's essential to us. We want to help you build trust with your patients and maintain a strong reputation in the medical community. That makes sense. Can you tell me more about the pricing and licensing options for your system? Our pricing is competitive and based on the size of your practice. We also offer flexible licensing options to meet your specific needs. That sounds reasonable. Can you give me a rough estimate of the costs? I'd be happy to provide a custom quote for your practice. Can you tell me a little bit more about your current technology infrastructure? We're currently using a combination of paper records and an outdated electronic health record system. I see. Our system can help you upgrade to a more modern and efficient solution. That would be a huge improvement. Can you tell me more about the user interface and user experience of your system? Our system is designed to be intuitive and easy to use, with a clean and modern interface. That sounds great. I appreciate your attention to detail and commitment to user experience. We want to make sure that your staff can focus on what matters most— providing great patient care. I completely agree. Can you tell me more about the integration capabilities of your system? Our system can integrate with a variety of other systems and technologies, including electronic health records and practice management systems. That's fantastic! We're currently using a few different systems and would love to streamline our workflow. Our system can help you do just that. We also offer custom integration services to meet your specific needs. Wow, that sounds like a game changer. Can you walk me through the next steps and what I can expect?",
+        "startMs": 440400,
+        "endMs": 554680,
+        "confidence": 0.98946744,
+        "isLowConfidence": false,
+        "sequenceIndex": 31
+      },
+      {
+        "speaker": "Rep",
+        "text": "Of course.",
+        "startMs": 555330,
+        "endMs": 556210,
+        "confidence": 0.9349202,
+        "isLowConfidence": false,
+        "sequenceIndex": 32
+      },
+      {
+        "speaker": "Customer",
+        "text": "Our implementation team will work closely with you to ensure a seamless transition to our system. That sounds great. I'm excited to get started. We're excited to have you on board. Is there anything else you'd like to discuss or any other questions you have? No, I think that's all for now. Thank you again for your time and expertise.",
+        "startMs": 556210,
+        "endMs": 574890,
+        "confidence": 0.997106,
+        "isLowConfidence": false,
+        "sequenceIndex": 33
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, Dr. Smith.",
+        "startMs": 575879,
+        "endMs": 577499,
+        "confidence": 0.96902215,
+        "isLowConfidence": false,
+        "sequenceIndex": 34
+      },
+      {
+        "speaker": "Customer",
+        "text": "It was a pleasure speaking with you. Likewise, I look forward to hearing from you soon. Great, I'll be in touch shortly to discuss the next steps and answer any additional questions you may have.",
+        "startMs": 577499,
+        "endMs": 588300,
+        "confidence": 0.9869902,
+        "isLowConfidence": false,
+        "sequenceIndex": 35
+      }
+    ],
+    "talkRatio": {
+      "Rep": {
+        "durationMs": 30713,
+        "percentage": 0.0530417902921072
+      },
+      "Customer": {
+        "durationMs": 548321,
+        "percentage": 0.9469582097078928
+      }
+    },
+    "count": 36
+  },
+  "resourcesSample": {
+    "fullText": "This call is now being recorded. Parker Scarves, how may I help you? I bought a scarf online for my wife and it turns out they shipped the wrong color. Oh, I am so sorry, sir. I got it for her birthday, which is tonight, and now I'm not 100% sure what I need to do. Okay, let me see if I can help you. Do you have the item number of the Parker scarf? I don't think so. It's called a New Yorker, I think. Excellent. Okay. What color did you want the New Yorker in? Blue. The one they shipped was light blue. I wanted the darker one. Did you want navy blue or royal blue? What's the difference there? The royal blue is a bit brighter. That's the one I want. Okay. What zip code are you located in? 19406. Okay, it appears that we do not— or I'm sorry, that we do have that item in stock at Karen's Boutique at the Hunter Mall. Is that close by? It is. It's right by my office. Okay, what is your name, sir? Charlie Johnson. Charlie Johnson. Is that J-O-H-N-S-O-N? Yes, ma'am. And Mr. Johnson, do you have the Parker scarf in light blue with you now? I do. They shipped it to my office. It just came in not that long ago. Okay. What I will do is make arrangements with Karen's Boutique for you to exchange the Parker scarf at no additional cost. And in addition, I was able to look up your order in our system, and I'm going to send out a special gift to you to make up for the inconvenience. Oh, excellent. Thank you so much. You're welcome, and thank you for calling Parker Scarf, and I hope your wife enjoys her birthday gift. Oh, thank you. Thank you very much. You're very welcome. Goodbye. Bye-bye.",
+    "durationSeconds": 115,
+    "utterances": [
+      {
+        "speaker": "Rep",
+        "text": "This call is now being recorded. Parker Scarves, how may I help you?",
+        "startMs": 100,
+        "endMs": 4580,
+        "confidence": 0.9741863,
+        "isLowConfidence": false,
+        "sequenceIndex": 0
+      },
+      {
+        "speaker": "Customer",
+        "text": "I bought a scarf online for my wife and it turns out they shipped the wrong color.",
+        "startMs": 5600,
+        "endMs": 9650,
+        "confidence": 0.9713544,
+        "isLowConfidence": false,
+        "sequenceIndex": 1
+      },
+      {
+        "speaker": "Rep",
+        "text": "Oh, I am so sorry, sir.",
+        "startMs": 10560,
+        "endMs": 12560,
+        "confidence": 0.9656889,
+        "isLowConfidence": false,
+        "sequenceIndex": 2
+      },
+      {
+        "speaker": "Customer",
+        "text": "I got it for her birthday, which is tonight, and now I'm not 100% sure what I need to do.",
+        "startMs": 13230,
+        "endMs": 17810,
+        "confidence": 0.9674419,
+        "isLowConfidence": false,
+        "sequenceIndex": 3
+      },
+      {
+        "speaker": "Rep",
+        "text": "Okay, let me see if I can help you. Do you have the item number of the Parker scarf?",
+        "startMs": 18370,
+        "endMs": 22830,
+        "confidence": 0.9870755,
+        "isLowConfidence": false,
+        "sequenceIndex": 4
+      },
+      {
+        "speaker": "Customer",
+        "text": "I don't think so. It's called a New Yorker, I think.",
+        "startMs": 23760,
+        "endMs": 26980,
+        "confidence": 0.8937889,
+        "isLowConfidence": false,
+        "sequenceIndex": 5
+      },
+      {
+        "speaker": "Rep",
+        "text": "Excellent. Okay. What color did you want the New Yorker in?",
+        "startMs": 28130,
+        "endMs": 31620,
+        "confidence": 0.8676074,
+        "isLowConfidence": false,
+        "sequenceIndex": 6
+      },
+      {
+        "speaker": "Customer",
+        "text": "Blue. The one they shipped was light blue. I wanted the darker one.",
+        "startMs": 32479,
+        "endMs": 37410,
+        "confidence": 0.96797746,
+        "isLowConfidence": false,
+        "sequenceIndex": 7
+      },
+      {
+        "speaker": "Rep",
+        "text": "Did you want navy blue or royal blue?",
+        "startMs": 38220,
+        "endMs": 40829,
+        "confidence": 0.99457836,
+        "isLowConfidence": false,
+        "sequenceIndex": 8
+      },
+      {
+        "speaker": "Customer",
+        "text": "What's the difference there?",
+        "startMs": 41700,
+        "endMs": 43860,
+        "confidence": 0.9108941,
+        "isLowConfidence": false,
+        "sequenceIndex": 9
+      },
+      {
+        "speaker": "Rep",
+        "text": "The royal blue is a bit brighter.",
+        "startMs": 44000,
+        "endMs": 46350,
+        "confidence": 0.98534644,
+        "isLowConfidence": false,
+        "sequenceIndex": 10
+      },
+      {
+        "speaker": "Customer",
+        "text": "That's the one I want.",
+        "startMs": 47210,
+        "endMs": 48470,
+        "confidence": 0.9958506,
+        "isLowConfidence": false,
+        "sequenceIndex": 11
+      },
+      {
+        "speaker": "Rep",
+        "text": "Okay. What zip code are you located in?",
+        "startMs": 49540,
+        "endMs": 52050,
+        "confidence": 0.95941573,
+        "isLowConfidence": false,
+        "sequenceIndex": 12
+      },
+      {
+        "speaker": "Customer",
+        "text": "19406.",
+        "startMs": 52800,
+        "endMs": 53550,
+        "confidence": 0.9700872,
+        "isLowConfidence": false,
+        "sequenceIndex": 13
+      },
+      {
+        "speaker": "Rep",
+        "text": "Okay, it appears that we do not— or I'm sorry, that we do have that item in stock at Karen's Boutique at the Hunter Mall. Is that close by?",
+        "startMs": 55530,
+        "endMs": 64000,
+        "confidence": 0.94271904,
+        "isLowConfidence": false,
+        "sequenceIndex": 14
+      },
+      {
+        "speaker": "Customer",
+        "text": "It is. It's right by my office.",
+        "startMs": 64610,
+        "endMs": 66270,
+        "confidence": 0.95514166,
+        "isLowConfidence": false,
+        "sequenceIndex": 15
+      },
+      {
+        "speaker": "Rep",
+        "text": "Okay, what is your name, sir?",
+        "startMs": 66989,
+        "endMs": 69190,
+        "confidence": 0.90676796,
+        "isLowConfidence": false,
+        "sequenceIndex": 16
+      },
+      {
+        "speaker": "Customer",
+        "text": "Charlie Johnson.",
+        "startMs": 69829,
+        "endMs": 71870,
+        "confidence": 0.9887322,
+        "isLowConfidence": false,
+        "sequenceIndex": 17
+      },
+      {
+        "speaker": "Rep",
+        "text": "Charlie Johnson. Is that J-O-H-N-S-O-N?",
+        "startMs": 71870,
+        "endMs": 74530,
+        "confidence": 0.86343926,
+        "isLowConfidence": false,
+        "sequenceIndex": 18
+      },
+      {
+        "speaker": "Customer",
+        "text": "Yes, ma'am.",
+        "startMs": 75810,
+        "endMs": 77430,
+        "confidence": 0.98315966,
+        "isLowConfidence": false,
+        "sequenceIndex": 19
+      },
+      {
+        "speaker": "Rep",
+        "text": "And Mr. Johnson, do you have the Parker scarf in light blue with you now?",
+        "startMs": 77430,
+        "endMs": 80830,
+        "confidence": 0.94766635,
+        "isLowConfidence": false,
+        "sequenceIndex": 20
+      },
+      {
+        "speaker": "Customer",
+        "text": "I do. They shipped it to my office. It just came in not that long ago.",
+        "startMs": 81729,
+        "endMs": 86009,
+        "confidence": 0.94525343,
+        "isLowConfidence": false,
+        "sequenceIndex": 21
+      },
+      {
+        "speaker": "Rep",
+        "text": "Okay. What I will do is make arrangements with Karen's Boutique for you to exchange the Parker scarf at no additional cost. And in addition, I was able to look up your order in our system, and I'm going to send out a special gift to you to make up for the inconvenience.",
+        "startMs": 86460,
+        "endMs": 101090,
+        "confidence": 0.95665556,
+        "isLowConfidence": false,
+        "sequenceIndex": 22
+      },
+      {
+        "speaker": "Customer",
+        "text": "Oh, excellent. Thank you so much.",
+        "startMs": 102120,
+        "endMs": 104010,
+        "confidence": 0.9378812,
+        "isLowConfidence": false,
+        "sequenceIndex": 23
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're welcome, and thank you for calling Parker Scarf, and I hope your wife enjoys her birthday gift.",
+        "startMs": 104320,
+        "endMs": 109380,
+        "confidence": 0.96094733,
+        "isLowConfidence": false,
+        "sequenceIndex": 24
+      },
+      {
+        "speaker": "Customer",
+        "text": "Oh, thank you. Thank you very much.",
+        "startMs": 109610,
+        "endMs": 112020,
+        "confidence": 0.8957751,
+        "isLowConfidence": false,
+        "sequenceIndex": 25
+      },
+      {
+        "speaker": "Rep",
+        "text": "You're very welcome.",
+        "startMs": 112020,
+        "endMs": 113060,
+        "confidence": 0.96632445,
+        "isLowConfidence": false,
+        "sequenceIndex": 26
+      },
+      {
+        "speaker": "Customer",
+        "text": "Goodbye. Bye-bye.",
+        "startMs": 113519,
+        "endMs": 114569,
+        "confidence": 0.62156856,
+        "isLowConfidence": true,
+        "sequenceIndex": 27
+      }
+    ],
+    "talkRatio": {
+      "Rep": {
+        "durationMs": 59360,
+        "percentage": 0.6231235959774096
+      },
+      "Customer": {
+        "durationMs": 35902,
+        "percentage": 0.3768764040225903
+      }
+    },
+    "count": 28
+  }
+}

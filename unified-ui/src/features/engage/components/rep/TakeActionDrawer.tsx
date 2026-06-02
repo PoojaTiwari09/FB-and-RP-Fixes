@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { X, Phone, Mail, MessageSquare, Building2, DollarSign, Calendar, Pencil } from 'lucide-react';
-import type { Task, TaskDetail } from './types/engage.types';
-import { getTaskDetail, saveNotes } from './services/engage.service';
+import type { Task, TaskDetail, TaskNote } from './types/engage.types';
+import { getTaskDetail, fetchTaskNotes, saveNotes } from './services/engage.service';
 
 interface TakeActionDrawerProps {
   task: Task;
@@ -15,17 +15,21 @@ interface TakeActionDrawerProps {
 export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: TakeActionDrawerProps) {
   const [detail, setDetail] = useState<TaskDetail | null>(null);
   const [note, setNote] = useState('');
+  const [savedNotes, setSavedNotes] = useState<TaskNote[]>([]);
   const [aiLoading, setAiLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     let active = true;
     setAiLoading(true);
-    getTaskDetail(task.taskId)
-      .then((data) => {
+    setNote('');
+    setSavedNotes([]);
+
+    Promise.all([getTaskDetail(task.taskId), fetchTaskNotes(task.taskId)])
+      .then(([data, notes]) => {
         if (active) {
           setDetail(data || null);
-          setNote(data?.existingNotes ?? '');
+          setSavedNotes(notes || []);
           setAiLoading(false);
         }
       })
@@ -41,10 +45,16 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
   }, [task.taskId]);
 
   const handleSaveNote = async () => {
+    const trimmed = note.trim();
+    if (!trimmed) return;
+
     try {
-      await saveNotes(task.taskId, note);
+      await saveNotes(task.taskId, trimmed);
+      const updated = await fetchTaskNotes(task.taskId);
+      setSavedNotes(updated || []);
+      setNote('');
       if (detail) {
-        setDetail({ ...detail, existingNotes: note });
+        setDetail({ ...detail, existingNotes: trimmed });
       }
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -64,7 +74,7 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
     : null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-[360px] border-l border-gray-200 bg-white flex flex-col overflow-hidden z-40" style={{ boxShadow: '-4px 0 16px rgba(0,0,0,0.08)' }}>
+    <div className="w-[360px] shrink-0 h-full border-l border-gray-200 bg-white flex flex-col overflow-hidden" style={{ boxShadow: '-4px 0 16px rgba(0,0,0,0.08)' }}>
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-gray-200">
         <div className="flex items-start justify-between gap-2">
@@ -194,6 +204,49 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
         {/* Notes */}
         <div className="px-4 py-3">
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Notes</p>
+
+          {savedNotes.length > 0 && (
+            <div className="mb-3">
+              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Previously Saved Notes ({savedNotes.length})
+              </p>
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {savedNotes.map((saved) => {
+                  const dateStr = new Date(saved.timestamp || saved.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  const initials = saved.authorName
+                    .split(' ')
+                    .map((part) => part[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase();
+
+                  return (
+                    <div
+                      key={saved.noteId}
+                      className="p-3 rounded-lg bg-gray-50 border border-gray-100 flex flex-col gap-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-semibold text-[10px] flex-shrink-0">
+                            {initials}
+                          </div>
+                          <span className="font-semibold text-gray-700 truncate">{saved.authorName}</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400 font-medium flex-shrink-0">{dateStr}</span>
+                      </div>
+                      <p className="text-gray-600 leading-relaxed break-words whitespace-pre-wrap">{saved.note}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -203,7 +256,8 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
           />
           <button
             onClick={handleSaveNote}
-            className="mt-2 flex items-center gap-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+            disabled={!note.trim()}
+            className="mt-2 flex items-center gap-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
           >
             <Pencil size={11} />
             Save Note

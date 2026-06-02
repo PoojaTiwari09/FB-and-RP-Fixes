@@ -819,6 +819,8 @@ model ForecastSubmission {
   approvedAt       DateTime?
   reopenedAt       DateTime?
   overriddenAt     DateTime?
+  committedDealIds Json?
+  idempotencyKey   String?   @unique
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -960,11 +962,134 @@ model Quota {
   periodId  String
   repUserId String
   amount    Float
+  aprTarget Float?
+  mayTarget Float?
+  junTarget Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, periodId, repUserId])
   @@map("quotas")
+  @@schema("public")
+}
+
+model ForecastBoard {
+  id              String    @id @default(uuid())
+  tenantId        String
+  name            String
+  scope           String?
+  periodType      String
+  activePeriod    String
+  periodStartDate DateTime?
+  periodEndDate   DateTime?
+  description     String?
+  status          String    @default("draft")
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  columns         BoardColumn[]
+  crmMapping      BoardCrmMapping?
+  reminderConfig  BoardReminderConfig?
+  exclusions      BoardExclusion[]
+
+  @@index([tenantId, activePeriod, status])
+  @@map("forecast_boards")
+  @@schema("public")
+}
+
+model BoardColumn {
+  id             String   @id @default(uuid())
+  tenantId       String
+  boardId        String
+  label          String
+  type           String
+  submissionMode String?
+  sortOrder      Int      @default(0)
+  isVisible      Boolean  @default(true)
+  isDeleted      Boolean  @default(false)
+  infoTooltip    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  board          ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, boardId, sortOrder])
+  @@map("m06_board_columns")
+  @@schema("public")
+}
+
+model BoardExclusion {
+  id         String   @id @default(uuid())
+  tenantId   String
+  boardId    String
+  repUserId  String
+  excludedBy String?
+  excludedAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  board      ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, repUserId])
+  @@map("m06_board_exclusions")
+  @@schema("public")
+}
+
+model BoardCrmMapping {
+  id                    String   @id @default(uuid())
+  tenantId              String
+  boardId               String   @unique
+  crmConnection         String?
+  forecastCategoryField String?
+  pipelineSource        String?
+  closedSource          String?
+  closeDateField        String?
+  amountField           String?
+  columnMappings        Json?
+  stageMappings         Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  board                 ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("m06_board_crm_mappings")
+  @@schema("public")
+}
+
+model BoardReminderConfig {
+  id               String   @id @default(uuid())
+  tenantId         String
+  boardId          String   @unique
+  frequency        String?
+  sendDay          String?
+  sendTime         String?
+  timezoneBehavior String?
+  inAppEnabled     Boolean  @default(true)
+  slackEnabled     Boolean  @default(false)
+  autoDismiss      Boolean  @default(false)
+  messageTemplate  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  board            ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("m06_board_reminder_configs")
+  @@schema("public")
+}
+
+model BoardSubmissionAnnotation {
+  id           String   @id @default(uuid())
+  tenantId     String
+  boardId      String
+  submissionId String
+  managerId    String
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([boardId, submissionId])
+  @@map("m06_board_submission_annotations")
   @@schema("public")
 }
 
@@ -1597,9 +1722,11 @@ model CallReview {
   risksDetected      String[] @map("risks_detected")
   actionItemsList    String[] @map("action_items_list")
   scorecardName      String?  @map("scorecard_name")
+  scorecardId        String?  @map("scorecard_id")
   scorecardVersion   String?  @map("scorecard_version")
   reviewMode         String?  @map("review_mode")
   dueDate            String?  @map("due_date")
+  priority           String?  @default("Medium")
   status             String   @default("Pending")
   reviewer           String?  @default("You")
   quickStats         Json?    @map("quick_stats")
@@ -1613,6 +1740,45 @@ model CallReview {
 
   @@index([tenantId])
   @@map("call_reviews")
+  @@schema("public")
+}
+
+model M02Tracker {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  slug      String   @map("slug")
+  name      String
+  keywords  String[] @default([])
+  trend     Int      @default(0)
+  aiInsight String?  @map("ai_insight") @db.Text
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  detections M02TrackerDetection[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("m02_trackers")
+  @@schema("public")
+}
+
+model M02TrackerDetection {
+  id               String     @id @default(uuid())
+  tenantId         String     @map("tenant_id")
+  trackerId        String     @map("tracker_id")
+  entityType       String     @map("entity_type")
+  entityId         String     @map("entity_id")
+  matchedKeyword   String     @map("matched_keyword")
+  snippet          String     @db.Text
+  timestampSeconds Int?       @map("timestamp_seconds")
+  accountName      String?    @map("account_name")
+  repName          String?    @map("rep_name")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  tracker          M02Tracker @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, trackerId])
+  @@index([tenantId, entityId])
+  @@map("m02_tracker_detections")
   @@schema("public")
 }
 

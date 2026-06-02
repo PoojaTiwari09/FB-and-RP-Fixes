@@ -1399,6 +1399,14 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
         onClose={() => setShareOpen(false)}
         callId={callId}
         briefId={shareBriefId}
+        pdfData={{
+          metadata,
+          aiSummary: summary?.summary || activeBrief?.overview?.text || '',
+          nextSteps,
+          talkRatio,
+          topics,
+          brief: activeBrief,
+        }}
       />
 
       {/* Generate Brief Modal */}

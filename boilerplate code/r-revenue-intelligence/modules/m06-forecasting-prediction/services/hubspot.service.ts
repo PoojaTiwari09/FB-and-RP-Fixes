@@ -32,7 +32,10 @@ function mapStage(hubspotStage: string): string {
 
 @Injectable()
 export class HubSpotService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly hubspotClient: HubSpotClientService,
+  ) {}
 
   // ── 1. Generate OAuth redirect URL ────────────────────────────────────────
   getAuthUrl(tenantId: string): string {

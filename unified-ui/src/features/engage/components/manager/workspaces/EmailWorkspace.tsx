@@ -130,7 +130,13 @@ export default function EmailWorkspace({
   const handleAIRephrase = async (tone: string) => {
     setRephrasing(true);
     try {
-      const text = await engageService.rephraseEmail(task.id, { currentBody: body, tone });
+      const text = await engageService.rephraseEmail(task.id, {
+        currentBody: body,
+        subject,
+        contactName: task.contactName,
+        companyName: task.companyName,
+        tone,
+      });
       setBody(text);
     } catch (e) {
       // Silent catch

@@ -9,6 +9,7 @@ $checks = @(
   @{ Name = "M01 calls"; Url = "$base/api/calls?page=1&size=1" }
   @{ Name = "M02 search"; Url = "$base/api/search/calls?tab=calls&page=1&size=1" }
   @{ Name = "M09 trainings"; Url = "$base/api/trainings" }
+  @{ Name = "M08 engage tasks"; Url = "$base/api/engage/tasks" }
 )
 
 Write-Host ""
@@ -25,7 +26,7 @@ foreach ($c in $checks) {
   }
 }
 Write-Host ""
-if ($ok -eq 3) {
+if ($ok -eq 4) {
   Write-Host "API is up. Open http://localhost:3000/engage" -ForegroundColor Green
 } else {
   Write-Host "API not ready. Wait 10s and run again, or restart:" -ForegroundColor Yellow

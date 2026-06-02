@@ -73,6 +73,15 @@ export interface TaskDetail {
   existingNotes?: string;
 }
 
+export interface TaskNote {
+  noteId: string;
+  taskId: string;
+  note: string;
+  authorName: string;
+  timestamp: string;
+  createdAt: string;
+}
+
 // ─── Recent Activity ──────────────────────────────────────────────────────────
 
 export interface RecentActivity {

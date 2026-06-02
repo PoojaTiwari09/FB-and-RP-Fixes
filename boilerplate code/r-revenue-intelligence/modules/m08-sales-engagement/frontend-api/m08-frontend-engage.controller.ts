@@ -35,8 +35,9 @@ export class M08FrontendEngageController {
   }
 
   @Get('tasks/:taskId/email-draft')
-  emailDraft(@Param('taskId') taskId: string, @Req() req: any) {
-    return this.svc.getEmailDraft(req.tenantId, taskId);
+  async emailDraft(@Param('taskId') taskId: string, @Req() req: any) {
+    const draft = await this.svc.getEmailDraft(req.tenantId, taskId);
+    return draft ?? {};
   }
 
   @Get('tasks/:taskId/linkedin-draft')
@@ -59,6 +60,11 @@ export class M08FrontendEngageController {
   @Post('tasks')
   createTask(@Body() body: any, @Req() req: any) {
     return this.svc.createTask(req.tenantId, body);
+  }
+
+  @Get('tasks/:taskId/notes')
+  taskNotes(@Param('taskId') taskId: string, @Req() req: any) {
+    return this.svc.getNotes(req.tenantId, taskId);
   }
 
   @Post('tasks/:taskId/notes')

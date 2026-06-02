@@ -61,6 +61,9 @@ export function useEngage(initialAssigneeId?: string) {
 
   // Toast Notifications State
   const [toasts, setToasts] = useState<{ id: string; type: 'success' | 'info' | 'warning' | 'error'; message: string }[]>([]);
+  const [recentActivity, setRecentActivity] = useState<
+    { id: string; contactName: string; companyName: string; activityType: string; description: string; timeAgo: string }[]
+  >([]);
 
   const showToast = useCallback((type: 'success' | 'info' | 'warning' | 'error', message: string) => {
     const id = Date.now().toString();
@@ -75,7 +78,7 @@ export function useEngage(initialAssigneeId?: string) {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [tasksData, summaryData] = await Promise.all([
+      const [tasksData, summaryData, activityData] = await Promise.all([
         engageService.fetchTasks({
           assigneeId: selectedUserId,
           date: todayStr,
@@ -87,6 +90,7 @@ export function useEngage(initialAssigneeId?: string) {
           filters: appliedFilters,
         }),
         engageService.fetchSummary(selectedUserId, todayStr),
+        engageService.fetchRecentActivity(),
       ]);
 
       startTransition(() => {
@@ -94,6 +98,7 @@ export function useEngage(initialAssigneeId?: string) {
         setTabCounts(tasksData.tabCounts);
         setStatusPills(tasksData.statusPills);
         setSummary(summaryData);
+        setRecentActivity(activityData || []);
         const flatTasks: Task[] = [];
         tasksData.groups.forEach(g => flatTasks.push(...g.tasks));
         setTasks(flatTasks);
@@ -148,11 +153,12 @@ export function useEngage(initialAssigneeId?: string) {
       showToast('success', `Task${scopeText} reassigned to ${res.assigneeName}`);
       setIsReassignModalOpen(false);
       setFocusedTask(null);
+      setSelectedUserId(newAssigneeId);
       loadData();
     } catch (e) {
       showToast('error', 'Reassignment failed');
     }
-  }, [loadData, showToast]);
+  }, [loadData, showToast, setSelectedUserId]);
 
   const handleSaveNotes = useCallback(async (taskId: string, notes: string) => {
     try {
@@ -342,6 +348,7 @@ export function useEngage(initialAssigneeId?: string) {
     tabCounts,
     statusPills,
     summary,
+    recentActivity,
     
     // States
     selectedUserId,

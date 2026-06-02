@@ -82,16 +82,28 @@ interface TaskCardProps {
   onLinkedIn:     (task: Task) => void;
 }
 
+function formatDueLabel(dueDateTime: string, scheduledTime?: string): string {
+  if (!dueDateTime) return scheduledTime || 'Today';
+
+  const parsed = new Date(dueDateTime);
+  if (!Number.isNaN(parsed.getTime())) {
+    return (
+      parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ', ' +
+      parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    );
+  }
+
+  const human = dueDateTime.replace(/^Due:\s*/i, '').trim();
+  return human || scheduledTime || 'Today';
+}
+
 function TaskCard({ task, isSelected, isCompleted, isActive, onToggleSelect, onTakeAction, onEmail, onLinkedIn }: TaskCardProps) {
   const [hv,      setHv]      = useState(false);
   const [emailHv, setEmailHv] = useState(false);
   const [liHv,    setLiHv]    = useState(false);
 
-  const due = new Date(task.dueDateTime);
-  const dueStr =
-    due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-    ', ' +
-    due.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const dueStr = formatDueLabel(task.dueDateTime, task.scheduledTime);
 
   const metaLine = [
     task.company,
@@ -105,7 +117,7 @@ function TaskCard({ task, isSelected, isCompleted, isActive, onToggleSelect, onT
 
   return (
     <div
-      className="flex items-stretch overflow-hidden"
+      className="flex items-stretch"
       onMouseEnter={() => setHv(true)}
       onMouseLeave={() => setHv(false)}
       style={{
@@ -278,7 +290,7 @@ function TaskGroup({ label, count, tasks, selectedIds, completedIds, activeTaskI
 function RecentActivityPanel({ activities }: { activities: RecentActivity[] }) {
   return (
     <div
-      className="w-72 flex-shrink-0 flex flex-col"
+      className="w-72 shrink-0 h-full flex flex-col overflow-hidden"
       style={{ borderLeft: `1px solid ${C.border}`, backgroundColor: C.white }}
     >
       <div className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -453,10 +465,10 @@ export default function EngageRepView() {
 
   return (
     <>
-      <div className="flex flex-col h-full" style={{ backgroundColor: C.pageBg }}>
+      <div className="flex flex-col h-full min-h-0 overflow-hidden" style={{ backgroundColor: C.pageBg }}>
 
         {/* ── Header ─────────────────────────────────────────────────── */}
-        <div style={{ backgroundColor: C.white, borderBottom: `1px solid ${C.border}` }}>
+        <div className="shrink-0" style={{ backgroundColor: C.white, borderBottom: `1px solid ${C.border}` }}>
 
           {/* Title row */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
@@ -606,7 +618,7 @@ export default function EngageRepView() {
         <div className="flex flex-1 min-h-0 overflow-hidden">
 
           {/* Task list */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 pb-24">
+          <div className="flex-1 min-w-0 overflow-y-auto px-6 py-5 space-y-5 pb-24">
 
             {/* Progress card */}
             <div
@@ -696,19 +708,18 @@ export default function EngageRepView() {
             )}
           </div>
 
-          {/* Right panel */}
-          {!drawerTask && <RecentActivityPanel activities={recentActivity} />}
+          {/* Right panel — in-flow column so task Take Action buttons stay visible */}
+          {drawerTask ? (
+            <TakeActionDrawer
+              task={drawerTask}
+              onClose={() => setDrawerTask(null)}
+              onEmail={setEmailTask}
+              onMessage={setLinkedInTask}
+            />
+          ) : (
+            <RecentActivityPanel activities={recentActivity} />
+          )}
         </div>
-
-        {/* TakeActionDrawer — fixed full height overlay on the right */}
-        {drawerTask && (
-          <TakeActionDrawer
-            task={drawerTask}
-            onClose={() => setDrawerTask(null)}
-            onEmail={setEmailTask}
-            onMessage={setLinkedInTask}
-          />
-        )}
 
       </div>
 

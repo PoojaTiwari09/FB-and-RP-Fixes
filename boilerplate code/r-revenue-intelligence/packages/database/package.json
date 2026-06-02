@@ -5,6 +5,7 @@
   "types": "index.d.ts",
   "scripts": {
     "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push --skip-generate",
     "db:generate": "prisma generate"
   },
   "dependencies": {

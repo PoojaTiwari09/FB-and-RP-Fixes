@@ -1,7 +1,19 @@
 "use client";
 
 import { Phone, Mail, Clock, MessageSquare } from 'lucide-react';
-import { MOCK_RECENT_ACTIVITY } from '../mocks/engage.mock';
+
+export interface RecentActivityItem {
+  id: string;
+  contactName: string;
+  companyName: string;
+  activityType: string;
+  description: string;
+  timeAgo: string;
+}
+
+interface RecentActivitySidebarProps {
+  activities?: RecentActivityItem[];
+}
 
 function LinkedinIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
@@ -23,11 +35,6 @@ function LinkedinIcon({ className, style }: { className?: string; style?: React.
   );
 }
 
-
-interface RecentActivitySidebarProps {
-  activities?: typeof MOCK_RECENT_ACTIVITY;
-}
-
 const iconMap = {
   call: Phone,
   email: Mail,
@@ -46,7 +53,7 @@ const iconBgMap = {
   linkedin: '#EFF6FF',
 };
 
-export default function RecentActivitySidebar({ activities = MOCK_RECENT_ACTIVITY }: RecentActivitySidebarProps) {
+export default function RecentActivitySidebar({ activities = [] }: RecentActivitySidebarProps) {
   return (
     <div
       className="rounded-lg p-4"
@@ -65,55 +72,58 @@ export default function RecentActivitySidebar({ activities = MOCK_RECENT_ACTIVIT
       </div>
 
       <div className="space-y-3">
-        {activities.map((activity) => {
-          // Normalize activity type
-          const rawType = activity.activityType.toLowerCase();
-          const activityType = rawType.includes('email') 
-            ? 'email' 
-            : rawType.includes('linkedin') 
-              ? 'linkedin' 
-              : 'call';
+        {activities.length === 0 ? (
+          <p className="text-xs" style={{ color: '#9CA3AF' }}>
+            No recent activity yet.
+          </p>
+        ) : (
+          activities.map((activity) => {
+            const rawType = activity.activityType.toLowerCase();
+            const activityType = rawType.includes('email')
+              ? 'email'
+              : rawType.includes('linkedin')
+                ? 'linkedin'
+                : 'call';
 
-          const Icon = iconMap[activityType] || MessageSquare;
-          const iconColor = iconColorMap[activityType] || '#6B7280';
-          const iconBg = iconBgMap[activityType] || '#F3F4F6';
+            const Icon = iconMap[activityType] || MessageSquare;
+            const iconColor = iconColorMap[activityType] || '#6B7280';
+            const iconBg = iconBgMap[activityType] || '#F3F4F6';
 
-          return (
-            <div
-              key={activity.id}
-              className="flex items-start gap-3 pb-3"
-              style={{
-                borderBottom: '1px solid #F3F4F6',
-              }}
-            >
+            return (
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: iconBg }}
+                key={activity.id}
+                className="flex items-start gap-3 pb-3"
+                style={{ borderBottom: '1px solid #F3F4F6' }}
               >
-                <Icon className="w-4 h-4" style={{ color: iconColor }} />
-              </div>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: iconBg }}
+                >
+                  <Icon className="w-4 h-4" style={{ color: iconColor }} />
+                </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-sm font-semibold truncate" style={{ color: '#111827' }}>
-                    {activity.contactName}
-                  </span>
-                  <span style={{ color: '#D1D5DB' }}>•</span>
-                  <span className="text-xs truncate" style={{ color: '#9CA3AF' }}>
-                    {activity.companyName}
-                  </span>
-                </div>
-                <p className="text-xs mb-1 line-clamp-2 leading-relaxed" style={{ color: '#6B7280' }}>
-                  {activity.description}
-                </p>
-                <div className="flex items-center gap-1 text-xs" style={{ color: '#9CA3AF' }}>
-                  <Clock className="w-3 h-3 text-gray-400" />
-                  <span>{activity.timeAgo}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-sm font-semibold truncate" style={{ color: '#111827' }}>
+                      {activity.contactName}
+                    </span>
+                    <span style={{ color: '#D1D5DB' }}>•</span>
+                    <span className="text-xs truncate" style={{ color: '#9CA3AF' }}>
+                      {activity.companyName}
+                    </span>
+                  </div>
+                  <p className="text-xs mb-1 line-clamp-2 leading-relaxed" style={{ color: '#6B7280' }}>
+                    {activity.description}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: '#9CA3AF' }}>
+                    <Clock className="w-3 h-3 text-gray-400" />
+                    <span>{activity.timeAgo}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

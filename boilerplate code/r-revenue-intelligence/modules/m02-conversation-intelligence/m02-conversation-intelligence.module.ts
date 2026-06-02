@@ -20,6 +20,8 @@ import {
   M02FrontendScorecardsController,
   M02FrontendUsersController,
 } from './frontend-api/m02-frontend-call-reviews.controller';
+import { M02FrontendTrackersController } from './frontend-api/m02-frontend-trackers.controller';
+import { M02FrontendTrackersService } from './frontend-api/m02-frontend-trackers.service';
 import { M02FrontendCallReviewsService } from './frontend-api/m02-frontend-call-reviews.service';
 import { M02FrontendSearchService } from './frontend-api/m02-frontend-search.service';
 import { ConversationIngestService } from './services/ingest.service';
@@ -57,10 +59,12 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     M02FrontendUsersController,
     M02FrontendMetaController,
     M02FrontendAnalyticsController,
+    M02FrontendTrackersController,
   ],
   providers: [
     M02FrontendSearchService,
     M02FrontendCallReviewsService,
+    M02FrontendTrackersService,
     ConversationIngestService,
     // Application services
     M02ConversationIntelligenceService,

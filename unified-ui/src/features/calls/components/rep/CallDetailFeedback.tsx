@@ -91,15 +91,22 @@ function FeedbackCard({
 
 // ─── Acknowledgement Section ──────────────────────────────────────────────────
 
+const DEFAULT_ACKNOWLEDGEMENT: FeedbackData['acknowledgement'] = {
+  isAcknowledged: false,
+  acknowledgedAt: null,
+  repResponse: null,
+};
+
 function AcknowledgementSection({
   callId,
   initialData,
 }: {
   callId: string;
-  initialData: FeedbackData['acknowledgement'];
+  initialData?: FeedbackData['acknowledgement'];
 }) {
-  const [ack, setAck] = useState(initialData);
-  const [response, setResponse] = useState(initialData.repResponse ?? '');
+  const safe = initialData ?? DEFAULT_ACKNOWLEDGEMENT;
+  const [ack, setAck] = useState(safe);
+  const [response, setResponse] = useState(safe.repResponse ?? '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -206,7 +213,14 @@ function AcknowledgementSection({
 // ─── Action Items ─────────────────────────────────────────────────────────────
 
 function ActionItemCard({ callId, item }: { callId: string; item: ActionItem }) {
-  const [status, setStatus] = useState(item.status);
+  const normalizeStatus = (s: string) => {
+    const lower = s.toLowerCase();
+    if (lower === 'completed' || lower === 'done') return 'Completed';
+    if (lower === 'in progress' || lower === 'in_progress') return 'In Progress';
+    if (lower === 'pending' || lower === 'not started' || lower === 'not_started') return 'Not Started';
+    return STATUS_OPTIONS.includes(s) ? s : 'Not Started';
+  };
+  const [status, setStatus] = useState(normalizeStatus(item.status));
   const [notes, setNotes] = useState(item.notes);
   const [updating, setUpdating] = useState(false);
   const [toast, setToast] = useState(false);
@@ -284,6 +298,10 @@ export default function CallDetailFeedback({ callId }: { callId: string }) {
   useEffect(() => {
     fetchFeedback(callId)
       .then(setFeedback)
+      .catch((err) => {
+        console.error('Failed to load feedback:', err);
+        setFeedback(null);
+      })
       .finally(() => setLoading(false));
   }, [callId]);
 
@@ -305,11 +323,11 @@ export default function CallDetailFeedback({ callId }: { callId: string }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 pt-3 pb-8">
+    <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-3 pb-8">
       <div className="max-w-5xl mx-auto w-full">
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {feedback.tags.map((tag) => {
+          {(feedback.tags ?? []).map((tag) => {
             const isBestPractice = tag === 'Best Practice';
             const isNeedsCoaching = tag === 'Needs Coaching';
             const badgeClass = isBestPractice 
@@ -335,13 +353,13 @@ export default function CallDetailFeedback({ callId }: { callId: string }) {
               title="Strengths"
               icon={<TrendingUp size={18} className="text-emerald-600" />}
               iconBg="bg-emerald-50"
-              items={feedback.strengths}
+              items={feedback.strengths ?? []}
             />
             <FeedbackCard
               title="Improvement Areas"
               icon={<AlertTriangle size={18} className="text-amber-600" />}
               iconBg="bg-amber-50"
-              items={feedback.improvementAreas}
+              items={feedback.improvementAreas ?? []}
             />
           </div>
 
@@ -350,14 +368,14 @@ export default function CallDetailFeedback({ callId }: { callId: string }) {
             icon={<MessageSquare size={18} className="text-blue-600" />}
             iconBg="bg-blue-50"
             isText
-            text={feedback.coachingNotes}
+            text={feedback.coachingNotes ?? ''}
           />
 
           <FeedbackCard
             title="Recommended Actions"
             icon={<Target size={18} className="text-purple-600" />}
             iconBg="bg-purple-50"
-            items={feedback.recommendedActions}
+            items={feedback.recommendedActions ?? []}
           />
         </div>
 
@@ -371,14 +389,14 @@ export default function CallDetailFeedback({ callId }: { callId: string }) {
         <h3 className="text-xl font-semibold text-gray-800 mb-4 font-serif">
           Action Items
           <span className="ml-2 text-xs font-normal text-gray-400 font-sans">
-            ({feedback.actionItems.length})
+            ({(feedback.actionItems ?? []).length})
           </span>
         </h3>
-        {feedback.actionItems.length === 0 ? (
+        {(feedback.actionItems ?? []).length === 0 ? (
           <p className="text-sm text-gray-400 italic">No action items assigned.</p>
         ) : (
           <div className="space-y-3">
-            {feedback.actionItems.map((item) => (
+            {(feedback.actionItems ?? []).map((item) => (
               <ActionItemCard key={item.id} callId={callId} item={item} />
             ))}
           </div>

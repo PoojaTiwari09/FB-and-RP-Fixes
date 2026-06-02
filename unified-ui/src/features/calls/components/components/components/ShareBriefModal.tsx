@@ -5,20 +5,21 @@ import { X, Link2, Mail, Download, ClipboardCopy, Check, Loader2 } from 'lucide-
 import {
   generateShareLink,
   shareInternally,
-  exportBriefAsPdf,
   fetchFormattedSummary,
 } from '../services/calls.service';
+import { exportCallBriefPdf, type CallBriefPdfData } from '../../utils/exportCallBriefPdf';
 
 interface ShareBriefModalProps {
   isOpen: boolean;
   onClose: () => void;
   callId: string;
   briefId: string;
+  pdfData?: CallBriefPdfData | null;
 }
 
 type ActionKey = 'link' | 'internal' | 'pdf' | 'text';
 
-export default function ShareBriefModal({ isOpen, onClose, callId, briefId }: ShareBriefModalProps) {
+export default function ShareBriefModal({ isOpen, onClose, callId, briefId, pdfData }: ShareBriefModalProps) {
   const [loading, setLoading] = useState<ActionKey | null>(null);
   const [done, setDone] = useState<ActionKey | null>(null);
 
@@ -52,11 +53,15 @@ export default function ShareBriefModal({ isOpen, onClose, callId, briefId }: Sh
     }
   };
 
-  // ── Export as PDF ── GET /api/calls/:callId/briefs/:briefId/export/pdf
+  // ── Export as PDF — client-side brief with all call + analysis sections
   const handleExportPdf = async () => {
     setLoading('pdf');
     try {
-      await exportBriefAsPdf(callId, briefId);
+      if (pdfData) {
+        exportCallBriefPdf(pdfData);
+      } else {
+        throw new Error('Call data not loaded');
+      }
       markDone('pdf');
     } finally {
       setLoading(null);

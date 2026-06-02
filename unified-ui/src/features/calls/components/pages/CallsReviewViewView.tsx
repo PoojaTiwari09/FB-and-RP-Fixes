@@ -175,13 +175,13 @@ export default function CallsReviewViewView({ reviewId }: CallsReviewViewViewPro
   const isPassing = overallScore >= 75;
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen text-gray-800 pb-16">
+    <div className="bg-[#f8fafc] flex flex-col flex-1 min-h-0 h-full overflow-hidden text-gray-800">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}
 
       {/* ═══════════════ HEADER ═══════════════ */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-start gap-3">
             <button
@@ -234,7 +234,8 @@ export default function CallsReviewViewView({ reviewId }: CallsReviewViewViewPro
       </div>
 
       {/* ═══════════════ TWO COLUMN CONTAINER ═══════════════ */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="max-w-7xl mx-auto px-6 py-6 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
           {/* ════════════ LEFT COLUMN (8/12 width) — Overall, Sections, Coaching ════════════ */}
@@ -466,6 +467,7 @@ export default function CallsReviewViewView({ reviewId }: CallsReviewViewViewPro
           </div>
 
         </div>
+      </div>
       </div>
     </div>
   );

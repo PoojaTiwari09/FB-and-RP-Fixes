@@ -1,0 +1,698 @@
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
+import * as crypto from 'crypto';
+import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { PrismaService } from '../database/prisma.service';
+import { ForecastBoardsRepository } from '../repositories/forecast-boards.repository';
+
+type BoardColumnLike = {
+  id: string;
+  label: string;
+  type?: string;
+  columnType?: string;
+  submissionMode?: string;
+  sortOrder?: number;
+  isVisible?: boolean;
+  infoTooltip?: string | null;
+};
+
+@Injectable()
+export class ForecastBoardsService {
+  constructor(
+    @Optional() private readonly repo?: ForecastBoardsRepository,
+    @Optional()
+    private readonly prisma: PrismaService = undefined as any,
+    @Optional()
+    private readonly eventPublisher: EventPublisherService = undefined as any,
+  ) {}
+
+  private isManagerRole(role?: string) {
+    const r = role?.toLowerCase();
+    return r === 'manager' || r === 'executive' || r === 'admin';
+  }
+
+  private assertManager(role?: string) {
+    if (role && !this.isManagerRole(role)) throw new ForbiddenException('Manager access required');
+  }
+
+  private assertAdminOrManager(role?: string) {
+    if (role && !this.isManagerRole(role)) throw new ForbiddenException('Manager or admin access required');
+  }
+
+  private periodId(board: any) {
+    return board.periodId ?? board.activePeriod;
+  }
+
+  private normalizeColumn(column: BoardColumnLike) {
+    const columnType = column.columnType ?? column.type ?? 'Metric';
+    return {
+      ...column,
+      columnType,
+      type: columnType,
+      submissionMode: column.submissionMode ?? 'N/A',
+      isVisible: column.isVisible ?? true,
+      sortOrder: column.sortOrder ?? 0,
+      infoTooltip: column.infoTooltip ?? null,
+    };
+  }
+
+  private initials(name?: string | null) {
+    return (name || '')
+      .split(' ')
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  private isSubmissionColumn(column: BoardColumnLike) {
+    const type = (column.columnType ?? column.type ?? '').toLowerCase();
+    return type === 'submission' && (column.submissionMode ?? '').toLowerCase() === 'manual';
+  }
+
+  private submissionField(column: BoardColumnLike) {
+    const label = column.label.toLowerCase();
+    if (label.includes('commit') || label.includes('forecasted retention')) return 'commitForecast';
+    if (label.includes('best') || label.includes('actual retention')) return 'bestCaseForecast';
+    return null;
+  }
+
+  private async loadBoard(tenantId: string, boardId: string) {
+    const board = await this.prisma.forecastBoard.findFirst({
+      where: { id: boardId, tenantId },
+      include: {
+        columns: { where: { isDeleted: false }, orderBy: { sortOrder: 'asc' } },
+        exclusions: true,
+      },
+    });
+    if (!board) throw new NotFoundException('Board not found');
+    return board;
+  }
+
+  async listPeriods(tenantId: string) {
+    if (this.repo?.findPeriodsByTenant) {
+      const periods = await this.repo.findPeriodsByTenant(tenantId);
+      return periods.map((period: any) => ({
+        periodId: period.id,
+        tenantId: period.tenantId,
+        name: period.name,
+        startDate: period.startDate.toISOString().slice(0, 10),
+        endDate: period.endDate.toISOString().slice(0, 10),
+        revenueTarget: period.revenueTarget,
+        isLocked: period.isLocked,
+      }));
+    }
+    const periods = await this.prisma.forecastPeriod.findMany({ where: { tenantId }, orderBy: { startDate: 'desc' } });
+    return periods.map((period) => ({
+      periodId: period.id,
+      tenantId: period.tenantId,
+      name: period.name,
+      startDate: period.startDate.toISOString().slice(0, 10),
+      endDate: period.endDate.toISOString().slice(0, 10),
+      revenueTarget: period.revenueTarget,
+      isLocked: period.isLocked,
+    }));
+  }
+
+  async getBoard(tenantId: string, periodId: string) {
+    if (this.repo?.resolvePeriod) {
+      const period = await this.repo.resolvePeriod(tenantId, periodId);
+      if (!period) throw new NotFoundException('Period not found');
+      const [aiPrediction, coverageMetrics, submissions] = await Promise.all([
+        this.repo.findLatestAiSnapshot(tenantId, period.id),
+        this.repo.findLatestCoverageMetrics(tenantId, period.id),
+        this.repo.findSubmissionsForPeriod(tenantId, period.id),
+      ]);
+      return { period, aiPrediction, coverageMetrics, submissions };
+    }
+    const period = await this.loadPeriod(tenantId, periodId);
+    if (!period) throw new NotFoundException('Period not found');
+    const [aiPrediction, submissions] = await Promise.all([
+      this.prisma.aiForecastSnapshot.findFirst({ where: { tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } }),
+      this.prisma.forecastSubmission.findMany({ where: { tenantId, periodId: period.id } }),
+    ]);
+    return { period, aiPrediction, coverageMetrics: null, submissions };
+  }
+
+  async submitManualForecast(
+    tenantId: string,
+    periodId: string,
+    userId: string,
+    data: { submittedAmount: number; bestCaseAmount?: number; notes?: string; committedDealIds?: string[]; lob?: string },
+    idempotencyKey?: string,
+  ): Promise<any> {
+    if (this.repo?.resolvePeriod) {
+      const period = await this.repo.resolvePeriod(tenantId, periodId);
+      if (!period) throw new NotFoundException('Period not found');
+      if (period.isLocked || period.status === 'locked') throw new ForbiddenException('Forecast period is locked');
+      if (idempotencyKey) {
+        const existing = await (this.repo as any).findSubmissionByIdempotencyKey(tenantId, idempotencyKey);
+        if (existing) return existing;
+      }
+      const previous = await (this.repo as any).findMaxVersionForUser(tenantId, period.id, userId, data.lob ?? 'Enterprise Software');
+      const version = (previous?.version ?? 0) + 1;
+      const submission = await this.repo.appendSubmission({
+        tenantId,
+        periodId: period.id,
+        repUserId: userId,
+        lob: data.lob ?? previous?.lob ?? 'Enterprise Software',
+        version,
+        commitForecast: data.submittedAmount,
+        bestCaseForecast: data.bestCaseAmount,
+        committedDealIds: data.committedDealIds ?? [],
+        idempotencyKey,
+        notes: data.notes,
+        status: 'submitted',
+        submittedAt: new Date(),
+      });
+      await this.repo.appendAuditLog({
+        tenantId,
+        forecastSubmissionId: submission.id,
+        action: 'Submitted',
+        actorId: userId,
+        actorRole: 'Sales Rep',
+        metadata: { version },
+      });
+      this.eventPublisher?.publish('forecast.submitted', {
+        tenantId,
+        occurredAt: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
+        payload: { submissionId: submission.id, periodId: period.id, userId, submittedAmount: data.submittedAmount, version },
+      });
+      return { ...submission, submittedAmount: data.submittedAmount };
+    }
+    const submission = await this.prisma.forecastSubmission.create({
+      data: {
+        tenantId,
+        periodId,
+        repUserId: userId,
+        lob: data.lob ?? 'Enterprise',
+        version: 1,
+        commitForecast: data.submittedAmount,
+        bestCaseForecast: data.bestCaseAmount,
+        committedDealIds: data.committedDealIds ?? [],
+        idempotencyKey,
+        notes: data.notes,
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
+    });
+    return { ...submission, submittedAmount: data.submittedAmount };
+  }
+
+  private async loadPeriod(tenantId: string, periodId: string) {
+    return this.prisma.forecastPeriod.findFirst({ where: { id: periodId, tenantId } });
+  }
+
+  private inPeriodWhere(period: any) {
+    return period ? { closeDate: { gte: period.startDate, lte: period.endDate } } : {};
+  }
+
+  private latestByRep(submissions: any[]) {
+    const map = new Map<string, any>();
+    for (const submission of submissions) {
+      if (!map.has(submission.repUserId)) map.set(submission.repUserId, submission);
+    }
+    return map;
+  }
+
+  private buildCells(columns: any[], submission: any, pipeline: number, closed: number, quota: number | null, annotation?: string | null) {
+    const cells: Record<string, any> = {};
+    for (const rawColumn of columns) {
+      const column = this.normalizeColumn(rawColumn);
+      const label = column.label.toLowerCase();
+      let value: number | null = null;
+      let isAutoSubmit = false;
+      if (label.includes('pipeline')) {
+        value = pipeline;
+        isAutoSubmit = true;
+      } else if (label.includes('closed')) {
+        value = closed;
+        isAutoSubmit = true;
+      } else if (label.includes('target')) {
+        value = quota;
+        isAutoSubmit = true;
+      } else if (label.includes('commit') || label.includes('forecasted retention')) {
+        value = submission?.commitForecast ?? null;
+      } else if (label.includes('best') || label.includes('actual retention')) {
+        value = submission?.bestCaseForecast ?? null;
+      }
+      cells[column.id] = {
+        value,
+        submissionId: submission?.id ?? null,
+        lastUpdatedAt: submission?.updatedAt ?? submission?.submittedAt ?? null,
+        isAutoSubmit,
+        note: submission?.notes ?? null,
+        managerAnnotation: annotation ?? submission?.managerComment ?? null,
+      };
+    }
+    return cells;
+  }
+
+  private mapDeal(deal: any) {
+    const isPastDue = new Date(deal.closeDate) < new Date() && !deal.isClosedWon && !deal.isClosedLost;
+    return {
+      id: deal.id,
+      dealName: deal.dealName,
+      accountName: deal.accountName ?? deal.dealName,
+      amount: deal.amount,
+      stage: deal.stage,
+      closeDate: deal.closeDate,
+      isClosedWon: deal.isClosedWon,
+      isClosedLost: deal.isClosedLost,
+      region: deal.region,
+      lob: deal.lob,
+      riskScore: deal.riskScore ?? null,
+      riskLabel: deal.riskLabel ?? deal.riskReason ?? null,
+      riskFlags: deal.riskFlags ?? [],
+      isPastDue,
+    };
+  }
+
+  async listBoards(tenantId: string) {
+    const boards = await this.prisma.forecastBoard.findMany({
+      where: { tenantId, status: 'active' },
+      orderBy: { createdAt: 'desc' },
+    });
+    return boards.map((board) => ({
+      id: board.id,
+      name: board.name,
+      status: board.status,
+      periodType: board.periodType,
+      periodId: this.periodId(board),
+      teamId: (board as any).teamId ?? board.scope,
+      createdAt: board.createdAt,
+    }));
+  }
+
+  async getBoardByPeriod(tenantId: string, periodId: string) {
+    const board = await this.prisma.forecastBoard.findFirst({
+      where: { tenantId, activePeriod: periodId, status: 'active' },
+      include: { columns: { where: { isDeleted: false }, orderBy: { sortOrder: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!board) throw new NotFoundException('No active board exists for that period');
+    const period = await this.loadPeriod(tenantId, this.periodId(board));
+    return {
+      board: {
+        id: board.id,
+        name: board.name,
+        status: board.status,
+        periodType: board.periodType,
+        periodId: this.periodId(board),
+        teamId: (board as any).teamId ?? board.scope,
+        createdAt: board.createdAt,
+        columns: board.columns.map((column) => this.normalizeColumn(column)),
+      },
+      period: period && {
+        id: period.id,
+        name: period.name,
+        startDate: period.startDate,
+        endDate: period.endDate,
+        isLocked: period.isLocked,
+      },
+    };
+  }
+
+  async getBoardView(tenantId: string, boardId: string, role: string, userId: string, includeInactive = false): Promise<{ rows: any[]; [key: string]: any }> {
+    const board = await this.loadBoard(tenantId, boardId);
+    const period = await this.loadPeriod(tenantId, this.periodId(board));
+    const columns = board.columns.map((column) => this.normalizeColumn(column));
+    const isManager = this.isManagerRole(role);
+
+    let users = isManager
+      ? await this.prisma.forecastUser.findMany({ where: { tenantId, OR: [{ managerId: userId }, { id: userId }] } })
+      : await this.prisma.forecastUser.findMany({ where: { tenantId, id: userId } });
+
+    if (!includeInactive) users = users.filter((user) => user.role !== 'inactive');
+    users.sort((a, b) => (a.id === userId ? -1 : b.id === userId ? 1 : a.name.localeCompare(b.name)));
+
+    const userIds = users.flatMap((user) => [user.id, user.repId].filter(Boolean) as string[]);
+    const exclusions = board.exclusions.filter((exclusion) => exclusion.isActive);
+    const excludedIds = new Set(exclusions.map((exclusion) => exclusion.repUserId));
+
+    const [submissions, quotas, deals, snapshots, annotations] = await Promise.all([
+      this.prisma.forecastSubmission.findMany({
+        where: { tenantId, periodId: this.periodId(board), repUserId: { in: userIds } },
+        orderBy: [{ repUserId: 'asc' }, { version: 'desc' }, { createdAt: 'desc' }],
+      }),
+      this.prisma.quota.findMany({ where: { tenantId, periodId: this.periodId(board), repUserId: { in: userIds } } }),
+      this.prisma.crmDeal.findMany({ where: { tenantId, repUserId: { in: userIds }, ...this.inPeriodWhere(period) } }),
+      this.prisma.aiForecastSnapshot.findMany({ where: { tenantId, periodId: this.periodId(board) }, orderBy: { predictedAmount: 'desc' } }),
+      this.prisma.boardSubmissionAnnotation.findMany({ where: { tenantId, boardId } }),
+    ]);
+
+    const latestSubmission = this.latestByRep(submissions);
+    const quotaByRep = new Map(quotas.map((quota) => [quota.repUserId, quota]));
+    const annotationBySubmission = new Map(annotations.map((annotation) => [annotation.submissionId, annotation.content]));
+    const aiRankByRep = new Map(snapshots.map((snapshot: any, index) => [snapshot.repUserId ?? snapshot.submissionId, index + 1]));
+
+    const rows = users
+      .map((user) => {
+        const ids = [user.id, user.repId].filter(Boolean) as string[];
+        const isExcluded = ids.some((id) => excludedIds.has(id));
+        const repDeals = deals.filter((deal) => deal.repUserId && ids.includes(deal.repUserId));
+        const pipeline = repDeals.filter((deal) => !deal.isClosedWon && !deal.isClosedLost).reduce((sum, deal) => sum + deal.amount, 0);
+        const closed = repDeals.filter((deal) => deal.isClosedWon).reduce((sum, deal) => sum + deal.amount, 0);
+        const submission = ids.map((id) => latestSubmission.get(id)).find(Boolean);
+        const quotaRecord = ids.map((id) => quotaByRep.get(id)).find(Boolean);
+        const quota = quotaRecord?.amount ?? null;
+        const attainmentPct = quota && quota > 0 ? (closed / quota) * 100 : null;
+        return {
+          userId: user.id,
+          name: user.name,
+          repUserId: user.id,
+          repName: user.name,
+          avatarInitials: this.initials(user.name),
+          isExcluded,
+          isInactive: user.role === 'inactive',
+          cells: this.buildCells(columns, submission, pipeline, closed, quota, annotationBySubmission.get(submission?.id)),
+          targetAttainment: { quota, closed, attainmentPct },
+          aiPredictionScore: isManager ? null : aiRankByRep.get(user.id) ?? null,
+          submissionStatus: submission?.status ?? 'not_started',
+          metrics: {
+            pipeline,
+            closed,
+            bestCase: submission?.bestCaseForecast ?? null,
+            commit: submission?.commitForecast ?? null,
+            target: quota,
+            targetAttainment: attainmentPct,
+          },
+          deals: repDeals.map((deal) => this.mapDeal(deal)),
+        };
+      })
+      .filter((row) => includeInactive || !row.isInactive);
+
+    const rollupRows = rows.filter((row) => !row.isExcluded);
+    const rollupCells = columns.reduce((acc, column) => {
+      acc[column.id] = rollupRows.reduce((sum, row) => sum + (Number(row.cells[column.id]?.value) || 0), 0);
+      return acc;
+    }, {} as Record<string, number>);
+    const totalQuota = rollupRows.reduce((sum, row) => sum + (row.targetAttainment.quota || 0), 0);
+    const totalClosed = rollupRows.reduce((sum, row) => sum + row.targetAttainment.closed, 0);
+    const rollup = {
+      cells: rollupCells,
+      targetAttainment: { totalQuota, totalClosed, attainmentPct: totalQuota > 0 ? (totalClosed / totalQuota) * 100 : null },
+      submittedCount: rollupRows.filter((row) => row.submissionStatus === 'submitted' || row.submissionStatus === 'approved').length,
+      totalCount: rollupRows.length,
+    };
+
+    const firstRow = rows[0];
+    const dueDays = period ? Math.ceil((period.endDate.getTime() - Date.now()) / 86400000) : 999;
+    const deadlineBanner = dueDays >= 0 && dueDays <= 3 && firstRow?.submissionStatus === 'not_started'
+      ? { message: `Your forecast is due in ${dueDays} day(s)`, isDue: true }
+      : null;
+
+    const latestSnapshot = await this.prisma.aiForecastSnapshot.findFirst({
+      where: { tenantId, periodId: this.periodId(board) },
+      orderBy: { computedAt: 'desc' },
+    });
+
+    const envelope = {
+      board: { id: board.id, name: board.name, status: board.status, periodType: board.periodType },
+      period: period && { id: period.id, name: period.name, startDate: period.startDate, endDate: period.endDate, isLocked: period.isLocked },
+      columns,
+      rollup,
+      deadlineBanner,
+      aiPredictionSummary: latestSnapshot && {
+        predictedAmount: latestSnapshot.predictedAmount,
+        confidenceRangeLow: latestSnapshot.confidenceRangeLow,
+        confidenceRangeHigh: latestSnapshot.confidenceRangeHigh,
+        computedAt: latestSnapshot.computedAt,
+      },
+    };
+
+    const shapedRows = rows.map(({ deals: _deals, ...row }) => row);
+    if (isManager) return { ...envelope, rows: shapedRows };
+    return { ...envelope, rows: shapedRows, repRow: shapedRows[0] ?? null, deals: firstRow?.deals ?? [] };
+  }
+
+  async submitForecast(
+    tenantId: string,
+    boardId: string,
+    data: { columnId: string; repUserId: string; value: number; note?: string },
+    actorId?: string,
+    role?: string,
+  ): Promise<any> {
+    if (!data.columnId || !data.repUserId || data.value == null || data.value < 0) {
+      throw new BadRequestException('columnId, repUserId, and non-negative value are required');
+    }
+    const normalizedRole = role?.toLowerCase();
+    if (normalizedRole === 'sales_rep' && actorId && actorId !== data.repUserId) {
+      throw new ForbiddenException('Sales reps can submit only their own forecast');
+    }
+
+    const board = await this.loadBoard(tenantId, boardId);
+    const period = await this.loadPeriod(tenantId, this.periodId(board));
+    if (period?.isLocked) throw new BadRequestException('Period is locked - submissions not allowed');
+    if (role && board.exclusions.some((exclusion) => exclusion.isActive && exclusion.repUserId === data.repUserId)) {
+      throw new ForbiddenException('Rep is excluded from this board');
+    }
+
+    const column = board.columns.find((item) => item.id === data.columnId);
+    if (!column || !this.isSubmissionColumn(column)) throw new BadRequestException('Column is not manually submittable');
+    const field = this.submissionField(column);
+    if (!field) throw new BadRequestException('Only Commit and Best Case columns can be submitted');
+
+    const latest = await this.prisma.forecastSubmission.findFirst({
+      where: { tenantId, periodId: this.periodId(board), repUserId: data.repUserId },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+    });
+    if (role && latest && !['draft', 'reopened'].includes(latest.status)) {
+      throw new ForbiddenException('Submission is locked until a manager reopens it');
+    }
+
+    const submission = await this.prisma.forecastSubmission.create({
+      data: {
+        tenantId,
+        periodId: this.periodId(board),
+        repUserId: data.repUserId,
+        lob: latest?.lob ?? 'Enterprise',
+        version: (latest?.version ?? 0) + 1,
+        commitForecast: field === 'commitForecast' ? data.value : latest?.commitForecast ?? 0,
+        bestCaseForecast: field === 'bestCaseForecast' ? data.value : latest?.bestCaseForecast ?? null,
+        notes: data.note ?? latest?.notes,
+        status: 'submitted',
+        submittedAt: new Date(),
+      },
+    });
+
+    await this.prisma.forecastAuditLog.create({
+      data: {
+        tenantId,
+        forecastSubmissionId: submission.id,
+        action: 'BOARD_SUBMIT',
+        actorId: actorId || data.repUserId,
+        actorRole: role || 'sales_rep',
+        metadata: { boardId, columnId: data.columnId, columnLabel: column.label, value: data.value, periodId: this.periodId(board), repUserId: data.repUserId },
+      },
+    });
+
+    this.eventPublisher?.publish('forecast.submitted', {
+      tenantId,
+      correlationId: crypto.randomUUID(),
+      payload: { submissionId: submission.id, periodId: submission.periodId, userId: data.repUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob },
+    });
+
+    return { ...submission, submission, timestamp: submission.updatedAt };
+  }
+
+  async getRepDeals(tenantId: string, boardId: string, repUserId: string, columnId: string, actorId?: string, role?: string) {
+    if (role?.toLowerCase() === 'sales_rep' && actorId !== repUserId) throw new ForbiddenException('Sales reps can view only their own deals');
+    const board = await this.loadBoard(tenantId, boardId);
+    const period = await this.loadPeriod(tenantId, this.periodId(board));
+    const column = board.columns.find((item) => item.id === columnId);
+    if (!column) throw new BadRequestException('Invalid columnId');
+    const label = column.label.toLowerCase();
+    const where: any = { tenantId, repUserId, ...this.inPeriodWhere(period) };
+    if (label.includes('closed')) where.isClosedWon = true;
+    if (label.includes('pipeline')) {
+      where.isClosedWon = false;
+      where.isClosedLost = false;
+    }
+    const deals = (await this.prisma.crmDeal.findMany({ where, orderBy: { amount: 'desc' } })).map((deal) => this.mapDeal(deal));
+    return { deals, totalValue: deals.reduce((sum, deal) => sum + deal.amount, 0), count: deals.length };
+  }
+
+  async getRepHistory(tenantId: string, boardId: string, repUserId: string, columnId: string, actorId?: string, role?: string): Promise<any> {
+    if (role?.toLowerCase() === 'sales_rep' && actorId !== repUserId) throw new ForbiddenException('Sales reps can view only their own history');
+    const board = await this.loadBoard(tenantId, boardId);
+    const period = await this.loadPeriod(tenantId, this.periodId(board));
+    const column = board.columns.find((item) => item.id === columnId);
+    if (!column) throw new BadRequestException('Invalid columnId');
+    const field = this.submissionField(column);
+    const submissions = await this.prisma.forecastSubmission.findMany({
+      where: { tenantId, periodId: this.periodId(board), repUserId },
+      orderBy: { createdAt: 'asc' },
+    });
+    let previousValue: number | null = null;
+    const history = submissions.map((submission) => {
+      const value = Number(field === 'bestCaseForecast' ? submission.bestCaseForecast : submission.commitForecast);
+      const delta = previousValue == null ? null : value - previousValue;
+      const entry = {
+        weekLabel: `Week ${period ? Math.max(1, Math.ceil((submission.createdAt.getTime() - period.startDate.getTime()) / 604800000)) : 1}`,
+        submitterName: submission.managerId ? 'Manager' : 'Sales Rep',
+        submittedAt: submission.submittedAt ?? submission.createdAt,
+        value,
+        previousValue,
+        delta,
+        deltaDirection: delta == null ? null : delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+        note: submission.notes,
+      };
+      previousValue = value;
+      return entry;
+    });
+    return Object.assign(history, { history });
+  }
+
+  async getRepDrilldown(tenantId: string, boardId: string, repUserId: string, actorId?: string, role?: string) {
+    this.assertManager(role);
+    const board = await this.loadBoard(tenantId, boardId);
+    if (role === 'manager') {
+      const directReport = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: repUserId, managerId: actorId } });
+      if (!directReport) throw new ForbiddenException('Rep is not a direct report');
+    }
+    const view = await this.getBoardView(tenantId, boardId, 'sales_rep', repUserId);
+    const rep = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: repUserId } });
+    const submission = await this.prisma.forecastSubmission.findFirst({
+      where: { tenantId, periodId: this.periodId(board), repUserId },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+    });
+    return {
+      rep: { id: repUserId, name: rep?.name, avatarInitials: this.initials(rep?.name) },
+      summaryCards: {
+        pipeline: view.repRow?.cells[view.columns.find((c: any) => c.label.toLowerCase().includes('pipeline'))?.id]?.value ?? 0,
+        commit: submission?.commitForecast ?? null,
+        bestCase: submission?.bestCaseForecast ?? null,
+        closed: view.repRow?.targetAttainment.closed ?? 0,
+      },
+      deals: (view.deals ?? []).map((deal: any) => ({ ...deal, actualRetention: deal.isClosedWon ? deal.amount : null, forecastedRetention: submission?.commitForecast ?? null, churn: null, upForRenewal: false, upForRenewalAmount: null })),
+      submission,
+      targetAttainment: view.repRow?.targetAttainment ?? { quota: null, closed: 0, attainmentPct: null },
+      existingAnnotation: submission?.managerComment ?? null,
+      columns: view.columns,
+    };
+  }
+
+  async addManagerAnnotation(tenantId: string, boardId: string, submissionId: string, managerId: string, annotation: string, role?: string, repUserId?: string) {
+    this.assertManager(role);
+    if (!annotation.trim()) throw new BadRequestException('annotation is required');
+    const saved = await this.prisma.boardSubmissionAnnotation.upsert({
+      where: { boardId_submissionId: { boardId, submissionId } },
+      create: { boardId, tenantId, submissionId, managerId, content: annotation },
+      update: { content: annotation, managerId },
+    });
+    await this.prisma.forecastSubmission.update({ where: { id: submissionId }, data: { managerComment: annotation, managerId } });
+    await this.prisma.forecastAuditLog.create({
+      data: { tenantId, forecastSubmissionId: submissionId, action: 'MANAGER_ANNOTATION', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId } },
+    });
+    return { ...saved, annotation: saved.content, updatedAt: saved.updatedAt };
+  }
+
+  async excludeMember(tenantId: string, boardId: string, repUserId: string, managerId: string, reason?: string, role?: string) {
+    this.assertAdminOrManager(role);
+    await this.loadBoard(tenantId, boardId);
+    const exclusion = await this.prisma.boardExclusion.upsert({
+      where: { boardId_repUserId: { boardId, repUserId } },
+      create: { boardId, tenantId, repUserId, excludedBy: managerId },
+      update: { isActive: true, excludedBy: managerId, excludedAt: new Date() },
+    });
+    return { ...exclusion, excluded: exclusion.isActive, repUserId, impactMessage: "This rep's data has been removed from all team rollups and analytics" };
+  }
+
+  async removeExclusion(tenantId: string, boardId: string, repUserId: string, role?: string) {
+    this.assertAdminOrManager(role);
+    await this.loadBoard(tenantId, boardId);
+    await this.prisma.boardExclusion.update({ where: { boardId_repUserId: { boardId, repUserId } }, data: { isActive: false } });
+    return { included: true, repUserId };
+  }
+
+  async approveSubmission(tenantId: string, boardId: string, submissionId: string, managerId: string, role?: string) {
+    this.assertManager(role);
+    const submission = await this.prisma.forecastSubmission.update({
+      where: { id: submissionId },
+      data: { status: 'approved', approvedAt: new Date(), managerId },
+    });
+    await this.prisma.forecastAuditLog.create({ data: { tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_APPROVED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
+    return { submissionId, status: 'approved', approvedAt: submission.approvedAt };
+  }
+
+  async reopenSubmission(tenantId: string, boardId: string, submissionId: string, managerId: string, role?: string) {
+    this.assertManager(role);
+    const submission = await this.prisma.forecastSubmission.update({
+      where: { id: submissionId },
+      data: { status: 'reopened', reopenedAt: new Date(), managerId },
+    });
+    await this.prisma.forecastAuditLog.create({ data: { tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_REOPENED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
+    return { submissionId, status: 'reopened', reopenedAt: submission.reopenedAt };
+  }
+
+  async overrideSubmission(tenantId: string, boardId: string, repUserId: string, managerId: string, data: { columnId: string; value: number; note: string }, role?: string) {
+    this.assertManager(role);
+    const board = await this.loadBoard(tenantId, boardId);
+    const column = board.columns.find((item) => item.id === data.columnId);
+    if (!column) throw new BadRequestException('Invalid columnId');
+    const field = this.submissionField(column);
+    if (!field) throw new BadRequestException('Only Commit and Best Case columns can be updated');
+    const latest = await this.prisma.forecastSubmission.findFirst({
+      where: { tenantId, periodId: this.periodId(board), repUserId },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+    });
+    const submission = await this.prisma.forecastSubmission.create({
+      data: {
+        tenantId,
+        periodId: this.periodId(board),
+        repUserId,
+        lob: latest?.lob ?? 'Enterprise',
+        version: (latest?.version ?? 0) + 1,
+        commitForecast: field === 'commitForecast' ? data.value : latest?.commitForecast ?? 0,
+        bestCaseForecast: field === 'bestCaseForecast' ? data.value : latest?.bestCaseForecast ?? null,
+        managerComment: data.note,
+        managerId,
+        status: 'submitted',
+        submittedAt: latest?.submittedAt ?? new Date(),
+      },
+    });
+    await this.prisma.forecastAuditLog.create({
+      data: { tenantId, forecastSubmissionId: submission.id, action: 'MANAGER_OVERRIDE', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId, columnLabel: column.label, oldValue: latest?.[field], newValue: data.value } },
+    });
+    this.eventPublisher?.publish('forecast.submitted', { tenantId, correlationId: crypto.randomUUID(), payload: { submissionId: submission.id, periodId: submission.periodId, userId: repUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob } });
+    return { submission };
+  }
+
+  async getPendingApprovalsCount(tenantId: string, boardId: string, managerId: string) {
+    const board = await this.loadBoard(tenantId, boardId);
+    const reps = await this.prisma.forecastUser.findMany({ where: { tenantId, managerId } });
+    const count = await this.prisma.forecastSubmission.count({
+      where: { tenantId, periodId: this.periodId(board), repUserId: { in: reps.map((rep) => rep.id) }, status: 'submitted' },
+    });
+    return { pendingCount: count };
+  }
+
+  async getPendingApprovals(tenantId: string, boardId: string, managerId: string) {
+    const board = await this.loadBoard(tenantId, boardId);
+    const reps = await this.prisma.forecastUser.findMany({ where: { tenantId, managerId } });
+    const submissions = await this.prisma.forecastSubmission.findMany({
+      where: { tenantId, periodId: this.periodId(board), repUserId: { in: reps.map((rep) => rep.id) }, status: 'submitted' },
+      orderBy: { submittedAt: 'desc' },
+    });
+    return submissions.map((submission) => {
+      const rep = reps.find((item) => item.id === submission.repUserId);
+      return {
+        repUserId: submission.repUserId,
+        repName: rep?.name,
+        avatarInitials: this.initials(rep?.name),
+        commitValue: submission.commitForecast,
+        bestCaseValue: submission.bestCaseForecast,
+        submittedAt: submission.submittedAt,
+        note: submission.notes,
+      };
+    });
+  }
+}

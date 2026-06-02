@@ -43,7 +43,9 @@ export default function CallDetailLayout({ callId, children }: CallDetailLayoutP
   const [call, setCall] = useState<CallDetail | null>(null);
 
   useEffect(() => {
-    fetchCall(callId).then(setCall);
+    fetchCall(callId)
+      .then(setCall)
+      .catch((err) => console.error('Failed to load call:', err));
   }, [callId]);
 
   const tabs = [
@@ -142,8 +144,8 @@ export default function CallDetailLayout({ callId, children }: CallDetailLayoutP
         </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Tab Content — flex column so tab panels can scroll internally */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {children}
       </div>
     </div>

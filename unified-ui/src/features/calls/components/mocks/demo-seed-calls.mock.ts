@@ -17,12 +17,22 @@ const AUDIO_2MIN =
   'https://recordings-buttons.s3.eu-north-1.amazonaws.com/2mins_sales.mp3';
 const AUDIO_3MIN =
   'https://recordings-buttons.s3.eu-north-1.amazonaws.com/3mins_sales.mp3';
+const AUDIO_10MIN =
+  'https://recordings-buttons.s3.eu-north-1.amazonaws.com/10mins_sales.wav';
+const AUDIO_RESOURCES =
+  'https://recordings-buttons.s3.eu-north-1.amazonaws.com/resources_sample-calls.mp3';
 
 const SUMMARY_2MIN =
   'Emily from ABC Sales reached John at XYZ Corporation about enterprise CRM. They discussed real-time analytics, AI lead scoring, 24/7 support, a 6-8 week implementation window, and pricing starting at $50,000/year with a 10% new-customer discount. John requested a live demo; Emily will send a calendar invite and follow-up materials.';
 
 const SUMMARY_3MIN =
   'Alex from Salesforce Solutions spoke with a buyer replacing a homegrown CRM. They covered scalability, customization, ERP and marketing integrations, GDPR/HIPAA/PCI compliance, onboarding and training, 300% average first-year ROI, a 12-16 week implementation timeline, and user-based pricing. Alex will send a full proposal within 24 hours and schedule a follow-up call.';
+
+const SUMMARY_10MIN =
+  'Sarah Chen negotiated an enterprise contract with Acme Industries covering competitor comparison, pricing at $85K/year, budget negotiation, phased pilot terms, and legal review of contract and renewal clauses.';
+
+const SUMMARY_RESOURCES =
+  'Michael Rodriguez walked GlobalTech Partners through the resource library and sample calls, covering workflow automation demos, CRM integration, training expansion, and customer feedback on resource load times.';
 
 export const DEMO_SEED_CALL_IDS = [
   '11111111-1111-1111-1111-000000000001',
@@ -66,24 +76,24 @@ export const DEMO_SEED_CALLS_LIST: CallsListResponse = {
     },
     {
       callId: DEMO_SEED_CALL_IDS[2],
-      callTitle: 'CRM Pricing & Demo Scheduling — Globex Inc',
-      dealType: 'Renewal',
-      account: 'globex-inc',
-      owner: { ownerId: 'Emily Thompson', ownerName: 'Emily Thompson', avatarInitials: 'ET' },
-      dateTime: '2026-05-17T11:15:00.000Z',
-      duration: clock(149),
-      keyInsight: SUMMARY_2MIN,
+      callTitle: 'Enterprise Contract Negotiation — Acme Industries',
+      dealType: 'Expansion',
+      account: 'acme-industries',
+      owner: { ownerId: 'Sarah Chen', ownerName: 'Sarah Chen', avatarInitials: 'SC' },
+      dateTime: '2026-05-17T11:00:00.000Z',
+      duration: clock(600),
+      keyInsight: SUMMARY_10MIN,
       status: 'completed',
     },
     {
       callId: DEMO_SEED_CALL_IDS[3],
-      callTitle: 'Security, ROI & Implementation — Initech',
-      dealType: 'Expansion',
-      account: 'initech',
-      owner: { ownerId: 'Alex Rodriguez', ownerName: 'Alex Rodriguez', avatarInitials: 'AR' },
-      dateTime: '2026-05-16T09:45:00.000Z',
-      duration: clock(217),
-      keyInsight: SUMMARY_3MIN,
+      callTitle: 'Resource Library Walkthrough — GlobalTech Partners',
+      dealType: 'New Business',
+      account: 'globaltech-partners',
+      owner: { ownerId: 'Michael Rodriguez', ownerName: 'Michael Rodriguez', avatarInitials: 'MR' },
+      dateTime: '2026-05-16T09:30:00.000Z',
+      duration: clock(240),
+      keyInsight: SUMMARY_RESOURCES,
       status: 'completed',
     },
   ],
@@ -120,31 +130,31 @@ const META: Record<string, CallMetadata & { audioUrl: string }> = {
   },
   [DEMO_SEED_CALL_IDS[2]]: {
     callId: DEMO_SEED_CALL_IDS[2],
-    callTitle: 'CRM Pricing & Demo Scheduling — Globex Inc',
-    account: 'globex-inc',
+    callTitle: 'Enterprise Contract Negotiation — Acme Industries',
+    account: 'acme-industries',
     type: 'outbound',
-    dealType: 'Renewal',
+    dealType: 'Expansion',
     date: 'May 17, 2026',
-    time: '11:15 AM UTC',
-    duration: clock(149),
-    source: 'dialer',
-    audioUrl: AUDIO_2MIN,
-    participants: [{ name: 'Emily Thompson (Rep)' }, { name: 'Tom Bradley (Globex)' }],
-    owner: { ownerId: 'Emily Thompson', ownerName: 'Emily Thompson', avatarInitials: 'ET' },
+    time: '11:00 AM UTC',
+    duration: clock(600),
+    source: 'zoom',
+    audioUrl: AUDIO_10MIN,
+    participants: [{ name: 'Sarah Chen (Rep)' }, { name: 'Lisa Park (Acme Industries)' }],
+    owner: { ownerId: 'Sarah Chen', ownerName: 'Sarah Chen', avatarInitials: 'SC' },
   },
   [DEMO_SEED_CALL_IDS[3]]: {
     callId: DEMO_SEED_CALL_IDS[3],
-    callTitle: 'Security, ROI & Implementation — Initech',
-    account: 'initech',
+    callTitle: 'Resource Library Walkthrough — GlobalTech Partners',
+    account: 'globaltech-partners',
     type: 'inbound',
-    dealType: 'Expansion',
+    dealType: 'New Business',
     date: 'May 16, 2026',
-    time: '9:45 AM UTC',
-    duration: clock(217),
-    source: 'zoom',
-    audioUrl: AUDIO_3MIN,
-    participants: [{ name: 'Alex Rodriguez (Rep)' }, { name: 'Lisa Park (Initech)' }],
-    owner: { ownerId: 'Alex Rodriguez', ownerName: 'Alex Rodriguez', avatarInitials: 'AR' },
+    time: '9:30 AM UTC',
+    duration: clock(240),
+    source: 'webex',
+    audioUrl: AUDIO_RESOURCES,
+    participants: [{ name: 'Michael Rodriguez (Rep)' }, { name: 'James Wu (GlobalTech)' }],
+    owner: { ownerId: 'Michael Rodriguez', ownerName: 'Michael Rodriguez', avatarInitials: 'MR' },
   },
 };
 
@@ -170,8 +180,6 @@ function briefFor(callId: string, summary: string, account: string): BriefDetail
 export const DEMO_SEED_BRIEF_MAP: Record<string, BriefDetail> = {
   [DEMO_SEED_CALL_IDS[0]]: briefFor(DEMO_SEED_CALL_IDS[0], SUMMARY_2MIN, 'xyz-corp'),
   [DEMO_SEED_CALL_IDS[1]]: briefFor(DEMO_SEED_CALL_IDS[1], SUMMARY_3MIN, 'northwind-systems'),
-  [DEMO_SEED_CALL_IDS[2]]: briefFor(DEMO_SEED_CALL_IDS[2], SUMMARY_2MIN, 'globex-inc'),
-  [DEMO_SEED_CALL_IDS[3]]: briefFor(DEMO_SEED_CALL_IDS[3], SUMMARY_3MIN, 'initech'),
 };
 
 const TRANSCRIPT_2MIN: TranscriptResponse = {
@@ -186,7 +194,6 @@ const TRANSCRIPT_2MIN: TranscriptResponse = {
 
 export const DEMO_SEED_TRANSCRIPT_MAP: Record<string, TranscriptResponse> = {
   [DEMO_SEED_CALL_IDS[0]]: TRANSCRIPT_2MIN,
-  [DEMO_SEED_CALL_IDS[2]]: TRANSCRIPT_2MIN,
   [DEMO_SEED_CALL_IDS[1]]: {
     totalCount: 3,
     transcript: [
@@ -195,28 +202,16 @@ export const DEMO_SEED_TRANSCRIPT_MAP: Record<string, TranscriptResponse> = {
       { entryId: 't3', timestamp: '00:15', speakerName: 'Rep', speakerType: 'rep', text: 'Our platform includes ERP integration and compliance tooling.', confidence: 'high' },
     ],
   },
-  [DEMO_SEED_CALL_IDS[3]]: {
-    totalCount: 3,
-    transcript: [
-      { entryId: 't1', timestamp: '00:00', speakerName: 'Rep', speakerType: 'rep', text: 'Happy to walk through security, ROI, and implementation timeline.', confidence: 'high' },
-      { entryId: 't2', timestamp: '00:10', speakerName: 'Customer', speakerType: 'customer', text: 'What ROI do customers typically see in year one?', confidence: 'high' },
-      { entryId: 't3', timestamp: '00:18', speakerName: 'Rep', speakerType: 'rep', text: 'We average about 300% ROI in the first year.', confidence: 'high' },
-    ],
-  },
 };
 
 export const DEMO_SEED_TRANSCRIPT_SUMMARY_MAP: Record<string, TranscriptSummary> = {
   [DEMO_SEED_CALL_IDS[0]]: { summary: SUMMARY_2MIN, generatedAt: '2026-05-19T10:00:00.000Z' },
-  [DEMO_SEED_CALL_IDS[2]]: { summary: SUMMARY_2MIN, generatedAt: '2026-05-17T11:15:00.000Z' },
   [DEMO_SEED_CALL_IDS[1]]: { summary: SUMMARY_3MIN, generatedAt: '2026-05-18T14:30:00.000Z' },
-  [DEMO_SEED_CALL_IDS[3]]: { summary: SUMMARY_3MIN, generatedAt: '2026-05-16T09:45:00.000Z' },
 };
 
 export const DEMO_SEED_TALK_RATIO_MAP: Record<string, TalkRatio> = {
   [DEMO_SEED_CALL_IDS[0]]: { rep: { percentage: 52 }, customer: { percentage: 48 } },
   [DEMO_SEED_CALL_IDS[1]]: { rep: { percentage: 55 }, customer: { percentage: 45 } },
-  [DEMO_SEED_CALL_IDS[2]]: { rep: { percentage: 52 }, customer: { percentage: 48 } },
-  [DEMO_SEED_CALL_IDS[3]]: { rep: { percentage: 55 }, customer: { percentage: 45 } },
 };
 
 export const DEMO_SEED_TOPICS_MAP: Record<string, TopicsResponse> = {
@@ -231,12 +226,6 @@ export const DEMO_SEED_TOPICS_MAP: Record<string, TopicsResponse> = {
       { topicId: 't1', label: 'integration', timestamp: '01:20', description: 'ERP integration', color: 'orange' },
     ],
   },
-  [DEMO_SEED_CALL_IDS[2]]: {
-    topics: [{ topicId: 't1', label: 'pricing', timestamp: '01:05', description: 'Pricing discussion', color: 'blue' }],
-  },
-  [DEMO_SEED_CALL_IDS[3]]: {
-    topics: [{ topicId: 't1', label: 'timeline', timestamp: '02:00', description: 'Implementation timeline', color: 'purple' }],
-  },
 };
 
 export const DEMO_SEED_NEXT_STEPS_MAP: Record<string, NextStepsResponse> = {
@@ -248,12 +237,6 @@ export const DEMO_SEED_NEXT_STEPS_MAP: Record<string, NextStepsResponse> = {
   },
   [DEMO_SEED_CALL_IDS[1]]: {
     nextSteps: [{ stepId: 'ns1', description: 'Send full proposal within 24 hours', completed: false }],
-  },
-  [DEMO_SEED_CALL_IDS[2]]: {
-    nextSteps: [{ stepId: 'ns1', description: 'Schedule demo with Globex team', completed: false }],
-  },
-  [DEMO_SEED_CALL_IDS[3]]: {
-    nextSteps: [{ stepId: 'ns1', description: 'Share security and ROI documentation', completed: false }],
   },
 };
 

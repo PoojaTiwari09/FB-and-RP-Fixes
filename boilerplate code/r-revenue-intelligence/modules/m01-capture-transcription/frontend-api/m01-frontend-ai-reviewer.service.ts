@@ -4,6 +4,8 @@ import { CallService } from '../services/call.service';
 import { getLocalAudioPath } from '../lib/upload-paths';
 import { resolvePublicTranscriptionUrl } from '../lib/public-audio-url';
 import { mapAiReviewerCallRow } from './m01-frontend.mapper';
+import { buildReviewFromTranscript } from './m01-transcript-review.util';
+import { buildFeedbackFromTranscript } from './m01-transcript-feedback.util';
 
 function wrapData<T>(payload: T) {
   return { data: payload };
@@ -68,54 +70,20 @@ export class M01FrontendAiReviewerService {
     });
   }
 
-  mapReview() {
-    return wrapData({
-      scorecardName: 'Enterprise Sales Scorecard',
-      scorecardVersion: 'v2.1',
-      reviewedBy: { name: 'Alex Manager', role: 'Sales Manager' },
-      reviewDate: new Date().toISOString(),
-      overallScore: 82,
-      status: 'Reviewed',
-      sections: [
-        {
-          sectionName: 'Discovery',
-          sectionScore: 85,
-          questions: [
-            {
-              questionText: 'Did the rep uncover pain points?',
-              managerAnswer: 'Yes',
-              score: 4,
-              maxScore: 5,
-              managerComments: 'Good depth on budget cycle.',
-              aiSuggestion: 'Ask about decision committee earlier.',
-              transcriptTimestamp: '03:12',
-            },
-          ],
-        },
-      ],
-    });
+  mapReview(record: any) {
+    const review = buildReviewFromTranscript(record);
+    if (!review) {
+      return wrapData(null);
+    }
+    return wrapData(review);
   }
 
-  mapFeedback() {
-    return wrapData({
-      tags: ['Discovery', 'Objection Handling'],
-      strengths: ['Clear agenda', 'Handled pricing objection well'],
-      improvementAreas: ['Talk ratio — listen more in middle section'],
-      coachingNotes: 'Strong opening; tighten close with explicit next step.',
-      recommendedActions: ['Practice SPIN questioning', 'Send recap within 1 hour'],
-      actionItems: [
-        {
-          id: 'ai-1',
-          title: 'Send proposal',
-          description: 'Include ROI one-pager',
-          dueDate: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
-          assignedBy: 'Alex Manager',
-          status: 'pending',
-          notes: '',
-        },
-      ],
-      acknowledged: false,
-    });
+  mapFeedback(record: any) {
+    const feedback = buildFeedbackFromTranscript(record);
+    if (!feedback) {
+      return wrapData(null);
+    }
+    return wrapData(feedback);
   }
 
   acknowledgeFeedback() {

@@ -226,15 +226,38 @@ export async function saveEmailDraft(
 
 export async function rephraseEmail(
   taskId: string,
-  body: { currentBody: string; tone?: string }
+  body: { currentBody: string; subject?: string; contactName?: string; companyName?: string; tone?: string },
 ): Promise<string> {
-  const endpoint = `/api/tasks/${taskId}/ai-rephrase`;
-  const res = await apiFetch('POST', endpoint, {
+  const res = await fetch('/api/engage/rephrase', {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      taskId,
+      subject: body.subject,
+      body: body.currentBody,
+      contactName: body.contactName,
+      company: body.companyName,
+      tone: body.tone,
+    }),
   });
-  const payload = await res.json();
-  return payload.data.rephrasedBody;
+
+  const text = await res.text();
+  if (!res.ok) {
+    let message = `Rephrase failed (${res.status})`;
+    try {
+      const err = JSON.parse(text) as { error?: string };
+      if (err.error) message = err.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+
+  const payload = JSON.parse(text) as {
+    rephrasedBody?: string;
+    data?: { rephrasedBody?: string };
+  };
+  return payload.rephrasedBody || payload.data?.rephrasedBody || '';
 }
 
 export async function fetchEmailTemplates(): Promise<{ id: string; name: string; subject: string; body: string }[]> {

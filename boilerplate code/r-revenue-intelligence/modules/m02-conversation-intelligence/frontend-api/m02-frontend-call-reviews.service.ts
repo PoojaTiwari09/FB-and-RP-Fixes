@@ -47,16 +47,54 @@ export class M02FrontendCallReviewsService {
     private readonly m02: M02ConversationIntelligenceService,
   ) {}
 
+  private buildReviewSeed(tenantId: string, c: any, index: number) {
+    const callTypes = ['Discovery', 'Demo', 'Negotiation', 'Training'];
+    const statuses = ['Pending', 'In Progress', 'Completed', 'Completed'];
+    const priorities = ['High', 'Medium', 'High', 'Medium'];
+    return {
+      tenantId,
+      reviewId: `rv_${String(index + 1).padStart(3, '0')}`,
+      callTitle: c.title,
+      scorecardName:
+        index === 2 ? 'Negotiation Scorecard' : index === 3 ? 'Demo Call Scorecard' : 'Discovery Call Scorecard',
+      scorecardId: index === 2 ? 'sc_03' : index === 1 ? 'sc_02' : 'sc_01',
+      customer: c.accountId || 'Unknown Account',
+      dateTime: (c.callDate instanceof Date ? c.callDate : new Date(c.callDate ?? Date.now())).toISOString(),
+      callType: callTypes[index] ?? c.callType ?? 'Discovery',
+      duration: formatMmSs(c.durationSeconds ?? 1800),
+      priority: priorities[index] ?? 'Medium',
+      status: statuses[index] ?? 'Pending',
+      aiFlags: index === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
+      dueDate: new Date(Date.now() + (7 - index) * 86400000).toISOString(),
+      salesRep: c.callOwner || 'Rep',
+      reviewer: 'Alex Martinez',
+      reviewMode: 'AI-Assisted',
+      scorecardVersion: 'v2.3',
+      talkRatio: { rep: 45, customer: 55 },
+      sentimentSummary: 'Positive with budget caution',
+      sentimentScore: 65 + index * 3,
+      risksDetected: index === 2 ? ['Contract timeline', 'Budget negotiation'] : ['Budget timeline unclear'],
+      keyHighlights: ['Customer asked about integration', 'Competitor mentioned'],
+      aiSummary: c.transcript?.summary || 'AI summary pending.',
+      quickStats: { topics: 4, actionItems: 3 },
+      dealLinked: `${c.accountId || 'Account'} — Q2 Initiative`,
+      hasReview: true,
+      questions: [],
+      feedback: {},
+    };
+  }
+
   private async ensureSeeded(tenantId: string) {
-    const count = await this.prisma.callReview.count({
-      where: { tenantId },
-    });
-    if (count > 0) return;
+    const DEMO_CALL_IDS = [
+      '11111111-1111-1111-1111-000000000001',
+      '11111111-1111-1111-1111-000000000002',
+      '11111111-1111-1111-1111-000000000003',
+      '11111111-1111-1111-1111-000000000004',
+    ];
 
     const calls = await this.prisma.callRecord.findMany({
-      where: { tenantId },
-      take: 8,
-      orderBy: { callDate: 'desc' },
+      where: { tenantId, id: { in: DEMO_CALL_IDS }, transcriptStatus: 'completed' },
+      orderBy: { id: 'asc' },
       include: { transcript: true },
     });
 
@@ -78,40 +116,20 @@ export class M02FrontendCallReviewsService {
 
     for (let i = 0; i < seedCalls.length; i++) {
       const c = seedCalls[i];
-      const reviewId = `rv_${String(i + 1).padStart(3, '0')}`;
+      const payload = this.buildReviewSeed(tenantId, c, i);
       await this.prisma.callReview.upsert({
-        where: { reviewId },
-        update: {},
-        create: {
-          tenantId,
-          reviewId,
-          callTitle: c.title,
-          scorecardName: 'Discovery Call Scorecard',
-          scorecardId: 'sc_01',
-          customer: c.accountId || 'Acme Corp',
-          dateTime: (c.callDate instanceof Date ? c.callDate : new Date()).toISOString(),
-          callType: i % 2 === 0 ? 'Discovery' : 'Demo',
-          duration: formatMmSs(c.durationSeconds ?? 1800),
-          priority: i === 0 ? 'High' : 'Medium',
-          status: i === 0 ? 'Pending' : i === 1 ? 'In Progress' : 'Completed',
-          aiFlags: i === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
-          dueDate: new Date(Date.now() + 7 * 86400000).toISOString(),
-          salesRep: c.callOwner || 'Sarah Chen',
-          reviewer: 'Alex Martinez',
-          reviewMode: 'AI-Assisted',
-          scorecardVersion: 'v2.3',
-          talkRatio: { rep: 45, customer: 55 },
-          sentimentSummary: 'Positive with budget caution',
-          sentimentScore: 65,
-          risksDetected: ['Budget timeline unclear'],
-          keyHighlights: ['Customer asked about integration', 'Competitor mentioned'],
-          aiSummary: c.transcript?.summary || 'AI summary pending.',
-          quickStats: { topics: 4, actionItems: 3 },
-          dealLinked: 'Acme Corp — Q2 Initiative',
-          hasReview: true,
-          questions: [],
-          feedback: {},
+        where: { reviewId: payload.reviewId },
+        update: {
+          callTitle: payload.callTitle,
+          customer: payload.customer,
+          dateTime: payload.dateTime,
+          salesRep: payload.salesRep,
+          duration: payload.duration,
+          aiSummary: payload.aiSummary,
+          callType: payload.callType,
+          priority: payload.priority,
         },
+        create: payload,
       });
     }
   }
@@ -157,11 +175,17 @@ export class M02FrontendCallReviewsService {
     }
 
     const totalCount = await this.prisma.callReview.count({ where });
+    const orderBy =
+      q.sort === 'oldest'
+        ? { createdAt: 'asc' as const }
+        : q.sort === 'dueDate'
+          ? { dueDate: 'asc' as const }
+          : { createdAt: 'desc' as const };
     const reviews = await this.prisma.callReview.findMany({
       where,
       skip: (q.page - 1) * q.size,
       take: q.size,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
     });
 
     return {

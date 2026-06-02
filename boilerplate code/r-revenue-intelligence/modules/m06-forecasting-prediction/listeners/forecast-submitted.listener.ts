@@ -17,7 +17,7 @@ export class ForecastSubmittedListener {
       userId: string;
       submittedAmount: number;
       version: number;
-      lob: string;
+      submittedAt?: string;
     };
   }) {
     const { tenantId, payload } = envelope;

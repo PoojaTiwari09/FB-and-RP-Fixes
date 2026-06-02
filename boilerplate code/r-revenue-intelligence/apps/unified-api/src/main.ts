@@ -47,7 +47,8 @@ async function bootstrap() {
     origin: UnifiedAppModule.corsOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, x-tenant-id, x-user-id, x-org-id',
+    allowedHeaders:
+      'Content-Type, Accept, Authorization, x-tenant-id, X-Tenant-ID, x-user-id, x-user-role, x-org-id',
   });
   app.useGlobalPipes(
     new ValidationPipe({
@@ -69,7 +70,7 @@ async function bootstrap() {
     res.json({
       service: 'unified-api',
       status: 'ok',
-      modules: ['M01', 'M02', 'M08-Engage', 'M09'],
+      modules: ['M01', 'M02', 'M06', 'M08-Engage', 'M09'],
       ui: 'http://localhost:3000',
       samples: {
         m01Calls: `http://localhost:${port}/api/calls?page=1&size=1`,

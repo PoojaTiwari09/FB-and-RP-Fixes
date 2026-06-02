@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
 import { M06PredictionQueueService } from './m06-prediction-queue.service';
@@ -46,11 +47,30 @@ export class M06ForecastingPredictionService {
   }
 
   private async resolvePeriod(tenantId: string, periodId: string) {
-    const where = periodId === 'current'
-      ? { tenantId, status: 'open' }
-      : { id: periodId, tenantId };
+    if (periodId === 'current') {
+      let period = await this.prisma.forecastPeriod.findFirst({
+        where: { tenantId, status: 'open' },
+        orderBy: { startDate: 'desc' },
+      });
+      if (!period) {
+        period = await this.prisma.forecastPeriod.findFirst({
+          where: { tenantId, isLocked: false },
+          orderBy: { startDate: 'desc' },
+        });
+      }
+      if (!period) {
+        period = await this.prisma.forecastPeriod.findFirst({
+          where: { tenantId },
+          orderBy: { startDate: 'desc' },
+        });
+      }
+      if (!period) throw new NotFoundException('Period not found');
+      return period;
+    }
 
-    const period = await this.prisma.forecastPeriod.findFirst({ where });
+    const period = await this.prisma.forecastPeriod.findFirst({
+      where: { id: periodId, tenantId },
+    });
     if (!period) throw new NotFoundException('Period not found');
     return period;
   }
@@ -488,7 +508,9 @@ export class M06ForecastingPredictionService {
     const openPeriod = await this.resolvePeriod(tenantId, 'current');
 
     if (openPeriod.isLocked || openPeriod.status === 'locked') {
-      throw new ForbiddenException('Forecast period is locked. No new submissions accepted.');
+      throw new ForbiddenException(
+        'Forecast period is locked. No new submissions accepted.',
+      );
     }
 
     const maxSub = await this.prisma.forecastSubmission.findFirst({
@@ -532,7 +554,9 @@ export class M06ForecastingPredictionService {
 
     const period = await this.resolvePeriod(tenantId, sub.periodId);
     if (period.isLocked || period.status === 'locked') {
-      throw new ForbiddenException('Forecast period is locked. No new submissions accepted.');
+      throw new ForbiddenException(
+        'Forecast period is locked. No new submissions accepted.',
+      );
     }
 
     const nextStatus = sub.status === 'reopened' ? 'resubmitted' : 'submitted';
@@ -597,6 +621,7 @@ export class M06ForecastingPredictionService {
         id: undefined,
         createdAt: undefined,
         updatedAt: undefined,
+        committedDealIds: sub.committedDealIds ? JSON.parse(JSON.stringify(sub.committedDealIds)) : [],
         version: newVersion,
         status: 'approved',
         managerId,
@@ -626,6 +651,7 @@ export class M06ForecastingPredictionService {
         id: undefined,
         createdAt: undefined,
         updatedAt: undefined,
+        committedDealIds: sub.committedDealIds ? JSON.parse(JSON.stringify(sub.committedDealIds)) : [],
         version: newVersion,
         status: 'reopened',
         managerId,
@@ -673,6 +699,7 @@ export class M06ForecastingPredictionService {
         id: undefined,
         createdAt: undefined,
         updatedAt: undefined,
+        committedDealIds: sub.committedDealIds ? JSON.parse(JSON.stringify(sub.committedDealIds)) : [],
         version: newVersion,
         managerOverride: overrideValue,
         managerComment: justification,
@@ -827,8 +854,9 @@ export class M06ForecastingPredictionService {
   async registerUser(data: any) {
     const existing = await this.prisma.forecastUser.findUnique({ where: { email: data.email } });
     if (existing) throw new Error('Email already registered');
+    const normalizedRole = data.role?.toLowerCase() || 'sales_rep';
     const user = await this.prisma.forecastUser.create({
-      data: { tenantId: 'demo-tenant-01', name: data.name, email: data.email, password: data.password, role: data.role, repId: data.role === 'sales_rep' ? `rep-${Date.now()}` : null }
+      data: { tenantId: 'demo-tenant-01', name: data.name, email: data.email, password: data.password, role: normalizedRole, repId: normalizedRole === 'sales_rep' ? `rep-${Date.now()}` : null }
     });
     const { password: _, ...safeUser } = user;
     return safeUser;

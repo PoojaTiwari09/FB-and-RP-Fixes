@@ -18,4 +18,16 @@ export const S3_RECORDINGS_FALLBACK: S3RecordingOption[] = [
     sourceUrl:
       'https://recordings-buttons.s3.eu-north-1.amazonaws.com/3mins_sales.mp3',
   },
+  {
+    id: '10mins_sales',
+    displayName: '10mins_sales.wav',
+    sourceUrl:
+      'https://recordings-buttons.s3.eu-north-1.amazonaws.com/10mins_sales.wav',
+  },
+  {
+    id: 'resources_sample',
+    displayName: 'resources_sample-calls.mp3',
+    sourceUrl:
+      'https://recordings-buttons.s3.eu-north-1.amazonaws.com/resources_sample-calls.mp3',
+  },
 ];
