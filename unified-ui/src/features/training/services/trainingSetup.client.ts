@@ -12,31 +12,15 @@ export async function createTrainingSession(
   trainingId: string,
   selectedVoiceId?: string,
 ): Promise<CreateSessionResponse> {
-  if (ENV.USE_MOCK_DATA) {
-    return {
-      sessionId: `mock-session-${Date.now()}`,
-      status: 'active',
-      startedAt: new Date().toISOString(),
-    };
-  }
-
-  try {
-    const res = await backendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions`, {
-      method: 'POST',
-      body: JSON.stringify({ selectedVoiceId, trainingId }),
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = (await res.json()) as Record<string, unknown>;
-    return {
-      sessionId: String(data['sessionId'] ?? data['session_id'] ?? ''),
-      status: String(data['status'] ?? 'active'),
-      startedAt: String(data['startedAt'] ?? data['started_at'] ?? ''),
-    };
-  } catch {
-    return {
-      sessionId: `mock-session-${Date.now()}`,
-      status: 'active',
-      startedAt: new Date().toISOString(),
-    };
-  }
+  const res = await backendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions`, {
+    method: 'POST',
+    body: JSON.stringify({ selectedVoiceId, trainingId }),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data = (await res.json()) as Record<string, unknown>;
+  return {
+    sessionId: String(data['sessionId'] ?? data['session_id'] ?? ''),
+    status: String(data['status'] ?? 'active'),
+    startedAt: String(data['startedAt'] ?? data['started_at'] ?? ''),
+  };
 }

@@ -13,7 +13,7 @@ import {
   fetchTopics,
   fetchNextSteps,
   updateNextStep,
-} from '../services/calls.service';
+} from '../services/calls-list.service';
 
 interface UseTranscriptReturn {
   transcript: TranscriptEntry[];

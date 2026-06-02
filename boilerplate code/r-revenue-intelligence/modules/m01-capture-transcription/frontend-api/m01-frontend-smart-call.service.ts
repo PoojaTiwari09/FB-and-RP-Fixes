@@ -1,72 +1,80 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { M01FrontendSmartCallPersistenceService } from './m01-frontend-smart-call-persistence.service';
-
-const DEMO_CONTACTS = [
-  {
-    contactId: 'cnt_001',
-    contactName: 'Sarah Chen',
-    jobTitle: 'VP of Sales',
-    company: 'Acme Corp',
-    avatarUrl: null as string | null,
-    lastInteractionLabel: 'Called 2 days ago',
-    phone: '+1 (555) 123-4567',
-  },
-  {
-    contactId: 'cnt_002',
-    contactName: 'Michael Rodriguez',
-    jobTitle: 'CTO',
-    company: 'TechFlow Inc',
-    avatarUrl: null,
-    lastInteractionLabel: 'Emailed 5 days ago',
-    phone: '+1 (555) 987-6543',
-  },
-];
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class M01FrontendSmartCallService {
   private readonly sessions = new Map<string, Record<string, unknown>>();
 
-  constructor(private readonly persistence: M01FrontendSmartCallPersistenceService) {}
+  constructor(
+    private readonly persistence: M01FrontendSmartCallPersistenceService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  listContacts(query: Record<string, string>) {
+  async listContacts(query: Record<string, string>) {
     const q = (query.q || '').toLowerCase();
-    let contacts = [...DEMO_CONTACTS];
-    if (q) {
-      contacts = contacts.filter(
-        (c) =>
-          c.contactName.toLowerCase().includes(q) ||
-          c.company.toLowerCase().includes(q),
-      );
-    }
     const limit = Math.min(50, parseInt(query.limit || '20', 10));
     const offset = parseInt(query.offset || '0', 10);
-    const slice = contacts.slice(offset, offset + limit);
+
+    const where: any = {};
+    if (q) {
+      where.OR = [
+        { contactName: { contains: q, mode: 'insensitive' } },
+        { company: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    const total = await this.prisma.engageContact.count({ where });
+    const list = await this.prisma.engageContact.findMany({
+      where,
+      skip: offset,
+      take: limit,
+      orderBy: { contactName: 'asc' },
+    });
+
     return {
-      contacts: slice,
-      total: contacts.length,
-      hasMore: offset + slice.length < contacts.length,
+      contacts: list.map((c) => ({
+        contactId: c.contactId,
+        contactName: c.contactName,
+        jobTitle: c.jobTitle || '',
+        company: c.company || '',
+        avatarUrl: null as string | null,
+        lastInteractionLabel: 'Seeded Contact',
+        phone: c.phone || '',
+      })),
+      total,
+      hasMore: offset + list.length < total,
     };
   }
 
-  getPreCallBrief(contactId: string) {
-    const c = DEMO_CONTACTS.find((x) => x.contactId === contactId);
+  async getPreCallBrief(contactId: string) {
+    const c = await this.prisma.engageContact.findFirst({
+      where: { contactId },
+    });
     if (!c) throw new NotFoundException('Contact not found');
+
+    const dealInfo = c.dealInfo as any;
+    const accountInfo = c.accountInfo as any;
+
     return {
       contactId,
       contactName: c.contactName,
-      contactCompany: c.company,
+      contactCompany: c.company || '',
       supportedIntegrations: ['ZOOM', 'MEET', 'TEAMS'],
       preCallBriefing:
+        c.notes ||
         "Sarah has shown high pricing interest. Last call focused on ROI concerns. Lead with the TechCorp case study — similar use case, 3x ROI in 6 months. She's the decision maker but needs IT sign-off.",
       keyObjections: ['Budget', 'Integration complexity'],
-      dealStage: 'Negotiation',
-      arrValue: '$240K ARR',
+      dealStage: dealInfo?.dealStage || 'Negotiation',
+      arrValue: accountInfo?.arrValue || '$240K ARR',
     };
   }
 
   async startSession(body: { contactId: string; taskId?: string; integration?: string }) {
-    const c = DEMO_CONTACTS.find((x) => x.contactId === body.contactId);
+    const c = await this.prisma.engageContact.findFirst({
+      where: { contactId: body.contactId },
+    });
     if (!c) throw new NotFoundException('Contact not found');
     const sessionId = randomUUID();
     const port = process.env.UNIFIED_API_PORT ?? process.env.M01_API_PORT ?? '3001';
@@ -86,7 +94,7 @@ export class M01FrontendSmartCallService {
       await this.persistence.startPersistedSession({
         externalSessionId: sessionId,
         contactId: body.contactId,
-        dealCompany: c.company,
+        dealCompany: c.company || undefined,
         clientName: c.contactName,
         sessionName: `Live Call - ${c.contactName}`,
       });
@@ -98,7 +106,7 @@ export class M01FrontendSmartCallService {
       sessionId,
       contactId: body.contactId,
       contactName: c.contactName,
-      contactCompany: c.company,
+      contactCompany: c.company || '',
       taskTitle: 'Follow up on Q2 contract renewal',
       status: 'LIVE',
       wsEndpoint: `ws://localhost:${port}/api/smart-call/ws/${sessionId}`,
@@ -206,29 +214,40 @@ export class M01FrontendSmartCallService {
     };
   }
 
-  getTranscript(sessionId: string) {
+  async getTranscript(sessionId: string) {
     const s = this.sessions.get(sessionId);
-    if (!s) throw new NotFoundException('Session not found');
-    const contact = DEMO_CONTACTS.find((x) => x.contactId === s?.contactId);
+    const dbSession = await this.prisma.liveCallSession.findUnique({
+      where: { id: sessionId },
+    });
+
+    const contactName = s?.contactName || dbSession?.clientName || 'Contact';
     const transcript = s?.transcript as { timestamp: string; speaker: string; text: string }[] | undefined;
+
+    const dbTranscript = dbSession?.transcript as any[];
+    const mappedDbTranscript = Array.isArray(dbTranscript)
+      ? dbTranscript.map((t: any) => ({
+          timestamp: t.timestamp || '0:00',
+          speaker: t.speaker || 'REP',
+          text: t.text || '',
+        }))
+      : undefined;
+
     return {
       sessionId,
-      contactName: contact?.contactName || 'Contact',
+      contactName,
       duration: '3:46',
-      segments: transcript?.length
-        ? transcript
-        : [
-            {
-              timestamp: '0:00',
-              speaker: 'REP',
-              text: 'Hi Sarah, thanks for taking the time to connect today.',
-            },
-            {
-              timestamp: '0:08',
-              speaker: 'CUSTOMER',
-              text: "I'm doing well, thanks. I wanted to discuss the renewal terms.",
-            },
-          ],
+      segments: transcript || mappedDbTranscript || [
+        {
+          timestamp: '0:00',
+          speaker: 'REP',
+          text: 'Hi Sarah, thanks for taking the time to connect today.',
+        },
+        {
+          timestamp: '0:08',
+          speaker: 'CUSTOMER',
+          text: "I'm doing well, thanks. I wanted to discuss the renewal terms.",
+        },
+      ],
     };
   }
 }

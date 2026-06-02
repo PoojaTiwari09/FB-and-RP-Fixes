@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { X, Phone, Mail, MessageSquare, Building2, DollarSign, Calendar, Pencil } from 'lucide-react';
-import type { Task } from './types/engage.types';
-import { MOCK_TASK_DETAILS } from './mocks/engage.mock';
+import type { Task, TaskDetail } from './types/engage.types';
+import { getTaskDetail, saveNotes } from './services/engage.service';
 
 interface TakeActionDrawerProps {
   task: Task;
@@ -13,21 +13,44 @@ interface TakeActionDrawerProps {
 }
 
 export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: TakeActionDrawerProps) {
-  const detail = MOCK_TASK_DETAILS[task.taskId];
-  const [note, setNote] = useState(detail?.existingNotes ?? '');
+  const [detail, setDetail] = useState<TaskDetail | null>(null);
+  const [note, setNote] = useState('');
   const [aiLoading, setAiLoading] = useState(true);
-  const [noteSaved, setNoteSaved] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
+    let active = true;
     setAiLoading(true);
-    setNote(MOCK_TASK_DETAILS[task.taskId]?.existingNotes ?? '');
-    const t = setTimeout(() => setAiLoading(false), 1400);
-    return () => clearTimeout(t);
+    getTaskDetail(task.taskId)
+      .then((data) => {
+        if (active) {
+          setDetail(data || null);
+          setNote(data?.existingNotes ?? '');
+          setAiLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching task detail:', err);
+        if (active) {
+          setAiLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [task.taskId]);
 
-  const handleSaveNote = () => {
-    setNoteSaved(true);
-    setTimeout(() => setNoteSaved(false), 2000);
+  const handleSaveNote = async () => {
+    try {
+      await saveNotes(task.taskId, note);
+      if (detail) {
+        setDetail({ ...detail, existingNotes: note });
+      }
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (err) {
+      console.error('Failed to save task notes:', err);
+    }
   };
 
   const scheduledDate = detail
@@ -183,10 +206,26 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
             className="mt-2 flex items-center gap-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
           >
             <Pencil size={11} />
-            {noteSaved ? 'Saved!' : 'Save Note'}
+            Save Note
           </button>
         </div>
       </div>
+
+      {/* Green Toast Message */}
+      {showToast && (
+        <div
+          className="absolute bottom-4 left-4 right-4 p-3 rounded-xl border flex items-center gap-2 shadow-lg animate-in slide-in-from-bottom duration-300"
+          style={{
+            backgroundColor: '#ECFDF5',
+            borderColor: '#A7F3D0',
+            color: '#047857',
+            zIndex: 50,
+          }}
+        >
+          <div className="w-2 h-2 rounded-full bg-[#10B981]" />
+          <p className="text-xs font-semibold">Note saved successfully</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   Post,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TenantGuard } from '../../../platform-core/guards/tenant.guard';
 import { M08FrontendEngageManagerService } from './m08-frontend-engage-manager.service';
@@ -19,6 +20,7 @@ export class M08FrontendEngageManagerController {
 
   @Get('api/tasks')
   tasks(
+    @Req() req: any,
     @Query('assigneeId') assigneeId = 'me',
     @Query('date') date?: string,
     @Query('tab') tab = 'today',
@@ -30,7 +32,7 @@ export class M08FrontendEngageManagerController {
     @Query('size') size?: string,
   ) {
     const today = new Date().toISOString().split('T')[0];
-    return this.svc.fetchTasks({
+    return this.svc.fetchTasks(req.tenantId, {
       assigneeId,
       date: date || today,
       tab,
@@ -45,117 +47,118 @@ export class M08FrontendEngageManagerController {
 
   @Get('api/tasks/summary')
   summary(
+    @Req() req: any,
     @Query('assigneeId') assigneeId = 'me',
     @Query('date') date?: string,
   ) {
     const today = new Date().toISOString().split('T')[0];
-    return this.svc.fetchSummary(assigneeId, date || today);
+    return this.svc.fetchSummary(req.tenantId, assigneeId, date || today);
   }
 
   @Get('api/tasks/filters-config')
-  filtersConfig() {
-    return this.svc.fetchFiltersConfig();
+  filtersConfig(@Req() req: any) {
+    return this.svc.fetchFiltersConfig(req.tenantId);
   }
 
   @Get('api/activities/recent')
-  recentActivity() {
-    return this.svc.fetchRecentActivity();
+  recentActivity(@Req() req: any) {
+    return this.svc.fetchRecentActivity(req.tenantId);
   }
 
   @Get('api/team/members')
-  teamMembers() {
-    return this.svc.fetchTeamMembers();
+  teamMembers(@Req() req: any) {
+    return this.svc.fetchTeamMembers(req.tenantId);
   }
 
   @Get('api/email-templates')
-  emailTemplates() {
-    return this.svc.emailTemplates();
+  emailTemplates(@Req() req: any) {
+    return this.svc.emailTemplates(req.tenantId);
   }
 
   @Get('api/search/linked-to')
-  linkedTo(@Query('search') search = '') {
-    return this.svc.searchLinkedEntities(search);
+  linkedTo(@Req() req: any, @Query('search') search = '') {
+    return this.svc.searchLinkedEntities(req.tenantId, search);
   }
 
   @Get('api/tasks/:taskId/detail')
-  taskDetail(@Param('taskId') taskId: string) {
-    return this.svc.fetchTaskDetail(taskId);
+  taskDetail(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.svc.fetchTaskDetail(req.tenantId, taskId);
   }
 
   @Get('api/tasks/:taskId/email-draft')
-  emailDraft(@Param('taskId') taskId: string) {
-    return this.svc.fetchEmailDraft(taskId);
+  emailDraft(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.svc.fetchEmailDraft(req.tenantId, taskId);
   }
 
   @Get('api/tasks/:taskId/linkedin-script')
-  linkedInScript(@Param('taskId') taskId: string) {
-    return this.svc.fetchLinkedInScript(taskId);
+  linkedInScript(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.svc.fetchLinkedInScript(req.tenantId, taskId);
   }
 
   @Get('api/contacts/:contactId/detail')
-  contactDetail(@Param('contactId') contactId: string) {
-    return this.svc.fetchContactDetail(contactId);
+  contactDetail(@Req() req: any, @Param('contactId') contactId: string) {
+    return this.svc.fetchContactDetail(req.tenantId, contactId);
   }
 
   @Post('api/tasks')
-  createTask(@Body() body: Record<string, unknown>) {
-    return this.svc.createTask(body);
+  createTask(@Req() req: any, @Body() body: Record<string, unknown>) {
+    return this.svc.createTask(req.tenantId, body);
   }
 
   @Patch('api/tasks/:taskId/reassign')
   reassign(
+    @Req() req: any,
     @Param('taskId') taskId: string,
     @Body() body: { newAssigneeId: string },
   ) {
-    return this.svc.reassignTask(taskId, body.newAssigneeId);
+    return this.svc.reassignTask(req.tenantId, taskId, body.newAssigneeId);
   }
 
   @Post('api/tasks/:taskId/mark-complete')
-  markComplete(@Param('taskId') taskId: string) {
-    return this.svc.markComplete(taskId);
+  markComplete(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.svc.markComplete(req.tenantId, taskId);
   }
 
   @Post('api/tasks/:taskId/skip')
-  skip(@Param('taskId') taskId: string) {
-    return this.svc.skipTask(taskId);
+  skip(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.svc.skipTask(req.tenantId, taskId);
   }
 
   @Post('api/tasks/:taskId/dismiss')
-  dismiss(@Param('taskId') taskId: string) {
-    return this.svc.dismissTask(taskId);
+  dismiss(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.svc.dismissTask(req.tenantId, taskId);
   }
 
   @Post('api/tasks/:taskId/action')
   action(
+    @Req() req: any,
     @Param('taskId') taskId: string,
     @Body() body: { action: string },
   ) {
-    return this.svc.logAction(taskId, body.action);
+    return this.svc.logAction(req.tenantId, taskId, body.action);
   }
 
   @Post('api/tasks/:taskId/notes')
-  notes(@Param('taskId') taskId: string, @Body() body: { notes: string }) {
-    return this.svc.fetchTaskDetail(taskId);
+  notes(
+    @Req() req: any,
+    @Param('taskId') taskId: string,
+    @Body() body: { notes: string },
+  ) {
+    return this.svc.saveNotes(req.tenantId, taskId, body.notes);
   }
 
   @Post('api/tasks/:taskId/send-email')
-  sendEmail() {
-    return { status: 'success', data: { ok: true } };
+  sendEmail(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
+    return this.svc.sendEmail(req.tenantId, taskId, body);
   }
 
   @Post('api/tasks/:taskId/save-draft')
-  saveDraft() {
-    return { status: 'success', data: { ok: true } };
+  saveDraft(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
+    return this.svc.saveDraft(req.tenantId, taskId, body);
   }
 
   @Post('api/tasks/:taskId/ai-rephrase')
-  rephrase() {
-    return {
-      status: 'success',
-      data: {
-        rephrasedBody:
-          'Hi Sarah,\n\nQuick follow-up on the Q2 renewal — ROI calculator attached.\n\nBest,\nAlex',
-      },
-    };
+  rephrase(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
+    return this.svc.rephraseEmail(req.tenantId, taskId, body);
   }
 }

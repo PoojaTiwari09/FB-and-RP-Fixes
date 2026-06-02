@@ -1,5 +1,4 @@
 // src/services/trainingResults.service.ts
-import { TRAINING_RESULTS_MOCK } from '@training/mocks/trainingResults.mock';
 import {
   TrainingResultsPage,
   PerformanceTier,
@@ -118,11 +117,6 @@ export async function fetchTrainingResults(
   rubric?: PlaybookSection[],
   ctx?: SessionContext
 ): Promise<TrainingResultsPage> {
-  // Mock mode: return mock immediately
-  if (ENV.USE_MOCK_DATA) {
-    return { ...TRAINING_RESULTS_MOCK, trainingId };
-  }
-
   // Try backend first (for when a real backend exists)
   try {
     const res = await fetch(
@@ -132,64 +126,59 @@ export async function fetchTrainingResults(
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const raw = await res.json();
     return adaptTrainingResults(raw as Record<string, unknown>, trainingId);
-  } catch {
+  } catch (backendError) {
     // Backend unavailable — use Groq to evaluate the transcript
-    console.info('[TrainingResultsService] Backend unavailable — evaluating via Groq');
+    console.info('[TrainingResultsService] Backend unavailable — evaluating via Groq', backendError);
   }
 
   // Groq evaluation path
   if (transcript && transcript.length > 0 && rubric && ctx) {
-    try {
-      const evaluation = await evaluateSession(transcript, rubric, ctx);
+    const evaluation = await evaluateSession(transcript, rubric, ctx);
 
-      // Map Groq evaluation result → TrainingResultsPage shape
-      return {
-        trainingId,
-        trainingTitle: ctx.trainingTitle,
-        overallScore: evaluation.overallScore,
-        maxScore: 100,
-        performanceTier: evaluation.performanceTier,
-        tierLabel: evaluation.performanceTier === 'excellent' ? 'Excellent'
-          : evaluation.performanceTier === 'good' ? 'Good'
-          : 'Needs Practice',
-        summaryText: evaluation.summaryText,
-        performanceTags: [],
-        scoredSections: evaluation.sections.map((s) => ({
-          id: s.id,
-          title: s.title,
-          score: s.score,
-          maxScore: 10,
-          status: s.score >= 8 ? 'mastered' : s.score >= 5 ? 'on-track' : 'needs-practice',
-          questions: rubric.find((r) => r.id === s.id)?.questions.map((q) => ({
-            id: q.id,
-            text: q.text,
-            tags: q.tags,
-          })) ?? [],
-        })),
-        performanceBreakdown: evaluation.sections.map((s) => ({
-          category: s.title,
-          score: s.score,
-          maxScore: 10,
-          percentage: Math.round((s.score / 10) * 100),
-          description: s.comment,
-          strengths: [],
-          areasForImprovement: [],
-        })),
-        transcript: transcript.map((msg, i) => ({
-          timestampSeconds: msg.timestampSeconds,
-          sender: msg.sender,
-          senderLabel: msg.sender === 'user' ? 'You' : ctx.persona.name,
-          text: msg.text,
-          quality: msg.sender === 'user'
-            ? (evaluation.perMessageQuality.find((q) => q.messageIndex === i)?.quality ?? null)
-            : null,
-        })),
-      };
-    } catch (err) {
-      console.warn('[TrainingResultsService] Groq evaluation failed, using mock:', err);
-    }
+    // Map Groq evaluation result → TrainingResultsPage shape
+    return {
+      trainingId,
+      trainingTitle: ctx.trainingTitle,
+      overallScore: evaluation.overallScore,
+      maxScore: 100,
+      performanceTier: evaluation.performanceTier,
+      tierLabel: evaluation.performanceTier === 'excellent' ? 'Excellent'
+        : evaluation.performanceTier === 'good' ? 'Good'
+        : 'Needs Practice',
+      summaryText: evaluation.summaryText,
+      performanceTags: [],
+      scoredSections: evaluation.sections.map((s) => ({
+        id: s.id,
+        title: s.title,
+        score: s.score,
+        maxScore: 10,
+        status: s.score >= 8 ? 'mastered' : s.score >= 5 ? 'on-track' : 'needs-practice',
+        questions: rubric.find((r) => r.id === s.id)?.questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          tags: q.tags,
+        })) ?? [],
+      })),
+      performanceBreakdown: evaluation.sections.map((s) => ({
+        category: s.title,
+        score: s.score,
+        maxScore: 10,
+        percentage: Math.round((s.score / 10) * 100),
+        description: s.comment,
+        strengths: [],
+        areasForImprovement: [],
+      })),
+      transcript: transcript.map((msg, i) => ({
+        timestampSeconds: msg.timestampSeconds,
+        sender: msg.sender,
+        senderLabel: msg.sender === 'user' ? 'You' : ctx.persona.name,
+        text: msg.text,
+        quality: msg.sender === 'user'
+          ? (evaluation.perMessageQuality.find((q) => q.messageIndex === i)?.quality ?? null)
+          : null,
+      })),
+    };
   }
 
-  // Final fallback: return mock data
-  return { ...TRAINING_RESULTS_MOCK, trainingId };
+  throw new Error('Could not load training results: backend failed and no transcript available for local AI evaluation.');
 }

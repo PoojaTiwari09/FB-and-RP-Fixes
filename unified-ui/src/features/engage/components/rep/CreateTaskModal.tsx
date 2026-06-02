@@ -6,7 +6,16 @@ import type { ChannelType } from './types/engage.types';
 
 interface CreateTaskModalProps {
   onClose: () => void;
-  onSave: () => void;
+  onSave: (taskData: {
+    channel: string;
+    title: string;
+    contactName: string;
+    companyName: string;
+    dueDate: string;
+    dueTime: string;
+    description: string;
+    assigneeId: string;
+  }) => void;
 }
 
 export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProps) {
@@ -18,10 +27,40 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
   const [description, setDescription] = useState('');
   const [assignTo, setAssignTo] = useState('');
 
+  const parseLinkedTo = (val: string) => {
+    const delimiters = [' - ', ' – ', ' | ', ' @ '];
+    for (const d of delimiters) {
+      if (val.includes(d)) {
+        const parts = val.split(d);
+        return {
+          contactName: parts[0].trim(),
+          companyName: parts[1].trim(),
+        };
+      }
+    }
+    return {
+      contactName: val.trim() || 'New Contact',
+      companyName: 'New Company',
+    };
+  };
+
   const handleSave = () => {
-    onSave();
+    if (!title.trim() || !linkedTo.trim()) return;
+    const { contactName, companyName } = parseLinkedTo(linkedTo);
+    onSave({
+      channel: taskType,
+      title,
+      contactName,
+      companyName,
+      dueDate,
+      dueTime,
+      description,
+      assigneeId: assignTo || 'me',
+    });
     onClose();
   };
+
+  const isValid = title.trim() !== '' && linkedTo.trim() !== '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -150,7 +189,10 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
           </button>
           <button
             onClick={handleSave}
-            className="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg px-5 py-2 cursor-pointer transition-colors"
+            disabled={!isValid}
+            className={`text-sm font-medium text-white rounded-lg px-5 py-2 transition-colors ${
+              isValid ? 'bg-purple-600 hover:bg-purple-700 cursor-pointer' : 'bg-gray-300 cursor-not-allowed'
+            }`}
           >
             Save Task
           </button>

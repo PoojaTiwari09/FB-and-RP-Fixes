@@ -1459,3 +1459,160 @@ model LiveCallSummary {
   @@map("live_call_summaries")
   @@schema("public")
 }
+
+model EngageTask {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  taskId          String   @unique @map("task_id")
+  title           String   @default("")
+  contactId       String?  @map("contact_id")
+  contactName     String   @map("contact_name")
+  companyName     String   @map("company_name")
+  channel         String
+  scheduledTime   String?  @map("scheduled_time")
+  dueDateTime     String?  @map("due_date_time")
+  isOverdue       Boolean  @default(false) @map("is_overdue")
+  isAtRisk        Boolean  @default(false) @map("is_at_risk")
+  interactionCount Int     @default(0) @map("interaction_count")
+  priority        String   @default("NORMAL")
+  status          String   @default("PENDING")
+  dueDate         String?  @map("due_date")
+  dueTime         String?  @map("due_time")
+  assigneeId      String?  @map("assignee_id")
+  assigneeName    String?  @map("assignee_name")
+  assigneeRole    String?  @map("assignee_role")
+  aiSignal        String?  @map("ai_signal")
+  aiSignalType    String?  @map("ai_signal_type")
+  arr             String?
+  aiInsight       String?  @map("ai_insight") @db.Text
+  notes           String?  @db.Text
+  todoType        String?  @map("todo_type")
+  entityType      String?  @map("entity_type")
+  workflowName    String?  @map("workflow_name")
+  workflowStep    String?  @map("workflow_step")
+  totalWorkflowSteps Int?  @map("total_workflow_steps")
+  snoozedUntil    String?  @map("snoozed_until")
+  sequenceName    String?  @map("sequence_name")
+  sequenceStep    String?  @map("sequence_step")
+  recentActivity  Json?
+  recommendedNextSteps String[] @map("recommended_next_steps")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId, status])
+  @@map("engage_tasks")
+  @@schema("public")
+}
+
+model EngageContact {
+  id                 String   @id @default(uuid())
+  tenantId           String   @map("tenant_id")
+  contactId          String   @unique @map("contact_id")
+  contactName        String   @map("contact_name")
+  jobTitle           String?  @map("job_title")
+  company            String?
+  phone              String?
+  email              String?
+  linkedInUrl        String?  @map("linkedin_url")
+  engagementTimeline Json?    @map("engagement_timeline")
+  accountInfo        Json?    @map("account_info")
+  dealInfo           Json?    @map("deal_info")
+  notes              String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("engage_contacts")
+  @@schema("public")
+}
+
+model EmailDraft {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  taskId       String   @unique @map("task_id")
+  contactName  String?  @map("contact_name")
+  contactEmail String?  @map("contact_email")
+  fromEmail    String?  @map("from_email")
+  fromLabel    String?  @map("from_label")
+  subject      String
+  bodyHtml     String   @map("body_html") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("email_drafts")
+  @@schema("public")
+}
+
+model EmailTemplate {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  templateId   String   @unique @map("template_id")
+  templateName String   @map("template_name")
+  subject      String
+  bodyHtml     String   @map("body_html") @db.Text
+  category     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("email_templates")
+  @@schema("public")
+}
+
+model EngageActivity {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  activityId   String   @unique @map("activity_id")
+  contactId    String?  @map("contact_id")
+  contactName  String   @map("contact_name")
+  company      String?
+  channelType  String   @map("channel_type")
+  summary      String
+  occurredAt   String   @map("occurred_at")
+  timeAgoLabel String?  @map("time_ago_label")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("engage_activities")
+  @@schema("public")
+}
+
+model CallReview {
+  id                 String   @id @default(uuid())
+  tenantId           String   @map("tenant_id")
+  reviewId           String   @unique @map("review_id")
+  callTitle          String   @map("call_title")
+  salesRep           String?  @map("sales_rep")
+  customer           String?
+  dateTime           String?  @map("date_time")
+  duration           String?
+  callType           String?  @map("call_type")
+  dealLinked         String?  @map("deal_linked")
+  callSource         String?  @map("call_source")
+  participants       Json?
+  aiSummary          String?  @map("ai_summary") @db.Text
+  keyHighlights      String[] @map("key_highlights")
+  talkRatio          Json?    @map("talk_ratio")
+  sentimentSummary   String?  @map("sentiment_summary")
+  sentimentScore     Int?     @map("sentiment_score")
+  risksDetected      String[] @map("risks_detected")
+  actionItemsList    String[] @map("action_items_list")
+  scorecardName      String?  @map("scorecard_name")
+  scorecardVersion   String?  @map("scorecard_version")
+  reviewMode         String?  @map("review_mode")
+  dueDate            String?  @map("due_date")
+  status             String   @default("Pending")
+  reviewer           String?  @default("You")
+  quickStats         Json?    @map("quick_stats")
+  aiFlags            String[] @map("ai_flags")
+  hasReview          Boolean  @default(false) @map("has_review")
+  questions          Json?    @default("[]")
+  feedback           Json?    @default("[]")
+  overallScore       Int?     @map("overall_score")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("call_reviews")
+  @@schema("public")
+}
+

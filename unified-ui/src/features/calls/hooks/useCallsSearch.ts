@@ -7,7 +7,7 @@ const emptySearchResponse: SearchResponse = {
   emailResults: [],
   chart: { days: [], weeks: [], months: [], quarters: [] },
   emailChart: { days: [], weeks: [], months: [], quarters: [] },
-  meta: { total: 0, callsCount: 0, emailsCount: 0 },
+  meta: { total: 0, page: 1, size: 20, totalPages: 1, callsCount: 0, emailsCount: 0 },
 };
 
 export function useCallsSearch() {

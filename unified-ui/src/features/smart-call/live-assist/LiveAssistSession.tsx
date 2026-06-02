@@ -6,7 +6,7 @@ import type { PreCallBrief, SessionStartResponse } from '@smart-call/types/smart
 const LiveAssistView = dynamic(
   () => import('./components/LiveAssistView'),
   { ssr: false, loading: () => <div className="p-8 text-sm text-gray-500">Loading Live Call Assist…</div> },
-);
+) as any;
 
 type Props = {
   session: SessionStartResponse;
@@ -30,7 +30,7 @@ export default function LiveAssistSession({ session, preCallBrief, onEnd }: Prop
         backendSessionId={session.sessionId}
         dealContext={dealContext}
         autoStartCapture
-        onEndSession={async (summary, segments) => {
+        onEndSession={async (summary: any, segments: any) => {
           const transcript = (segments as { text?: string }[])
             .map((s) => s.text)
             .filter(Boolean)

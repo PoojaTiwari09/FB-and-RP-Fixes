@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Layers, Key } from 'lucide-react';
+import { X, Layers, Key, Copy, ChevronUp, ChevronDown } from 'lucide-react';
 import type {
   SessionStartResponse,
   PreCallBrief,

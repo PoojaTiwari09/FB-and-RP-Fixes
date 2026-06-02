@@ -9,7 +9,7 @@ import type {
   BriefsListResponse,
   CallDetailTab,
 } from '../types/calls.types';
-import { fetchCallMetadata, fetchBriefsList, fetchBriefDetail } from '../services/calls.service';
+import { fetchCallMetadata, fetchBriefsList, fetchBriefDetail } from '../services/calls-list.service';
 
 interface UseCallDetailReturn {
   metadata: CallMetadata | null;

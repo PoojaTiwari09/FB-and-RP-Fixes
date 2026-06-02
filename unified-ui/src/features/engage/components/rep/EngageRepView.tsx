@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Phone, Mail, MessageSquare, Zap,
   Filter, Search, Plus, ChevronDown,
   AlertCircle, Clock, Flame,
 } from 'lucide-react';
-import type { Task, TabStatus, ChannelType, RecentActivity } from './types/engage.types';
-import { MOCK_TASKS, MOCK_TASK_SUMMARY, MOCK_RECENT_ACTIVITY, MOCK_CONTACT_DETAILS } from './mocks/engage.mock';
+import type { Task, TabStatus, ChannelType, RecentActivity, TaskSummary } from './types/engage.types';
+import { getTasks, getTaskSummary, getRecentActivity, createTask, markComplete } from './services/engage.service';
 import TakeActionDrawer from './TakeActionDrawer';
 import EmailTaskScreen from './EmailTaskScreen';
 import LinkedInTaskScreen from './LinkedInTaskScreen';
@@ -87,7 +87,6 @@ function TaskCard({ task, isSelected, isCompleted, isActive, onToggleSelect, onT
   const [emailHv, setEmailHv] = useState(false);
   const [liHv,    setLiHv]    = useState(false);
 
-  const contact = MOCK_CONTACT_DETAILS[task.contactId];
   const due = new Date(task.dueDateTime);
   const dueStr =
     due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
@@ -261,7 +260,7 @@ function TaskGroup({ label, count, tasks, selectedIds, completedIds, activeTaskI
             key={task.taskId}
             task={task}
             isSelected={selectedIds.includes(task.taskId)}
-            isCompleted={completedIds.includes(task.taskId)}
+            isCompleted={task.status.toUpperCase() === 'COMPLETED'}
             isActive={activeTaskId === task.taskId}
             onToggleSelect={onToggleSelect}
             onTakeAction={onTakeAction}
@@ -276,7 +275,7 @@ function TaskGroup({ label, count, tasks, selectedIds, completedIds, activeTaskI
 
 // ─── Recent activity panel ────────────────────────────────────────────────────
 
-function RecentActivityPanel() {
+function RecentActivityPanel({ activities }: { activities: RecentActivity[] }) {
   return (
     <div
       className="w-72 flex-shrink-0 flex flex-col"
@@ -285,11 +284,11 @@ function RecentActivityPanel() {
       <div className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: `1px solid ${C.border}` }}>
         <p className="text-sm font-semibold" style={{ color: C.darkText }}>Recent Activity</p>
         <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: C.subtleBg, color: C.grayText }}>
-          {MOCK_RECENT_ACTIVITY.length}
+          {activities.length}
         </span>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {MOCK_RECENT_ACTIVITY.map((act: RecentActivity) => (
+        {activities.map((act: RecentActivity) => (
           <div key={act.activityId} className="px-4 py-3" style={{ borderBottom: '1px solid #F9FAFB' }}>
             <div className="flex items-start gap-2.5">
               <div
@@ -332,14 +331,46 @@ export default function EngageRepView() {
   const [queueOpen,      setQueueOpen]      = useState(false);
   const [filterOpen,     setFilterOpen]     = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
-  const [completedIds,   setCompletedIds]   = useState<string[]>([]);
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [summary, setSummary] = useState<TaskSummary | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [tasksData, summaryData, activityData] = await Promise.all([
+        getTasks(),
+        getTaskSummary(),
+        getRecentActivity(),
+      ]);
+      setTasks(tasksData);
+      setSummary(summaryData);
+      setRecentActivity(activityData);
+    } catch (err) {
+      console.error('Failed to load engage rep data from DB:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredTasks = useMemo(() => {
-    return MOCK_TASKS.filter(task => {
-      if (activeTab === 'COMPLETED')               return completedIds.includes(task.taskId);
-      if (completedIds.includes(task.taskId))      return false;
-      if (activeTab === 'IN_PROGRESS')             return task.status === 'IN_PROGRESS';
-      if (activeTab === 'UPCOMING')                return !task.isOverdue && new Date(task.dueDateTime) > new Date();
+    return tasks.filter(task => {
+      const statusUpper = task.status.toUpperCase();
+      if (activeTab === 'COMPLETED') return statusUpper === 'COMPLETED';
+      if (statusUpper === 'COMPLETED') return false;
+      if (activeTab === 'IN_PROGRESS') return statusUpper === 'IN_PROGRESS';
+      if (activeTab === 'UPCOMING') {
+        const isUpcoming = !task.isOverdue && new Date(task.dueDateTime) > new Date();
+        return isUpcoming && statusUpper === 'PENDING';
+      }
+      
+      // TODAY tab
       if (channelFilter !== 'ALL' && task.channelType !== channelFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -347,10 +378,10 @@ export default function EngageRepView() {
       }
       return true;
     });
-  }, [activeTab, channelFilter, searchQuery, completedIds]);
+  }, [tasks, activeTab, channelFilter, searchQuery]);
 
-  const highPriority = filteredTasks.filter(t => t.priority === 'HIGH');
-  const normal       = filteredTasks.filter(t => t.priority !== 'HIGH');
+  const highPriority = filteredTasks.filter(t => t.priority.toUpperCase() === 'HIGH');
+  const normal       = filteredTasks.filter(t => t.priority.toUpperCase() !== 'HIGH');
 
   const taskGroups = useMemo(() => {
     if (groupBy === 'None') return null;
@@ -370,40 +401,55 @@ export default function EngageRepView() {
   }, [filteredTasks, groupBy]);
 
   const tabCounts: Record<TabStatus, number> = {
-    TODAY:       Math.max(0, MOCK_TASK_SUMMARY.totalTasksToday - completedIds.length),
-    IN_PROGRESS: MOCK_TASK_SUMMARY.inProgressCount,
-    UPCOMING:    MOCK_TASK_SUMMARY.upcomingCount,
-    COMPLETED:   completedIds.length,
+    TODAY:       summary?.totalTasksToday ?? 0,
+    IN_PROGRESS: summary?.inProgressCount ?? 0,
+    UPCOMING:    summary?.upcomingCount ?? 0,
+    COMPLETED:   summary?.completedCount ?? 0,
   };
 
   const toggleSelect = (id: string) =>
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
-  const handleMarkComplete = (taskId: string) => {
-    setCompletedIds(prev => [...prev, taskId]);
-    if (drawerTask?.taskId === taskId) setDrawerTask(null);
+  const handleMarkComplete = async (taskId: string) => {
+    try {
+      await markComplete(taskId);
+      await loadData();
+      if (drawerTask?.taskId === taskId) setDrawerTask(null);
+    } catch (err) {
+      console.error('Failed to mark task complete:', err);
+    }
   };
 
-  const handleBulkMarkComplete = () => {
-    setCompletedIds(prev => [...prev, ...selectedIds]);
-    setSelectedIds([]);
-    setDrawerTask(null);
+  const handleBulkMarkComplete = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => markComplete(id)));
+      setSelectedIds([]);
+      setDrawerTask(null);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to mark bulk tasks complete:', err);
+    }
   };
 
-  const handleQueueComplete = (ids: string[]) => {
-    setCompletedIds(prev => [...prev, ...ids]);
-    setQueueOpen(false);
-    setSelectedIds([]);
+  const handleQueueComplete = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map(id => markComplete(id)));
+      setQueueOpen(false);
+      setSelectedIds([]);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to complete queue:', err);
+    }
   };
 
-  const queueTasks  = selectedIds.length > 0 ? MOCK_TASKS.filter(t => selectedIds.includes(t.taskId)) : filteredTasks;
+  const queueTasks  = selectedIds.length > 0 ? tasks.filter(t => selectedIds.includes(t.taskId)) : filteredTasks;
   const emailIdx    = emailTask    ? filteredTasks.findIndex(t => t.taskId === emailTask.taskId)    : -1;
   const linkedInIdx = linkedInTask ? filteredTasks.findIndex(t => t.taskId === linkedInTask.taskId) : -1;
-  const total       = MOCK_TASK_SUMMARY.totalTasksToday;
-  const progressPct = total > 0 ? Math.round((completedIds.length / total) * 100) : 0;
-  const hpTotal     = MOCK_TASKS.filter(t => t.priority === 'HIGH').length;
-  const atRisk      = MOCK_TASK_SUMMARY.atRiskCount;
-  const dueToday    = MOCK_TASK_SUMMARY.dueTodayCount;
+  const total       = summary?.totalTasksToday ?? 0;
+  const progressPct = summary?.progressPercent ?? 0;
+  const hpTotal     = summary?.highPriorityCount ?? 0;
+  const atRisk      = summary?.atRiskCount ?? 0;
+  const dueToday    = summary?.dueTodayCount ?? 0;
 
   return (
     <>
@@ -573,7 +619,7 @@ export default function EngageRepView() {
                   Today&apos;s Progress
                 </p>
                 <p className="text-sm font-semibold" style={{ color: C.darkText }}>
-                  {completedIds.length}/{total}
+                  {summary?.completedCount ?? 0}/{total}
                 </p>
               </div>
               <div className="h-2 rounded-full overflow-hidden mb-2" style={{ backgroundColor: C.subtleBg }}>
@@ -619,7 +665,7 @@ export default function EngageRepView() {
                 {taskGroups.map(([label, tasks]) => (
                   <CollapsibleGroup
                     key={label} label={label} count={tasks.length}
-                    tasks={tasks} selectedIds={selectedIds} completedIds={completedIds}
+                    tasks={tasks} selectedIds={selectedIds} completedIds={[]}
                     activeTaskId={drawerTask?.taskId}
                     onToggleSelect={toggleSelect} onTakeAction={setDrawerTask}
                     onEmail={setEmailTask} onLinkedIn={setLinkedInTask}
@@ -631,7 +677,7 @@ export default function EngageRepView() {
                 {highPriority.length > 0 && (
                   <TaskGroup
                     label="High Priority" count={highPriority.length}
-                    tasks={highPriority} selectedIds={selectedIds} completedIds={completedIds}
+                    tasks={highPriority} selectedIds={selectedIds} completedIds={[]}
                     activeTaskId={drawerTask?.taskId}
                     onToggleSelect={toggleSelect} onTakeAction={setDrawerTask}
                     onEmail={setEmailTask} onLinkedIn={setLinkedInTask}
@@ -640,7 +686,7 @@ export default function EngageRepView() {
                 {normal.length > 0 && (
                   <TaskGroup
                     label="All Tasks" count={normal.length}
-                    tasks={normal} selectedIds={selectedIds} completedIds={completedIds}
+                    tasks={normal} selectedIds={selectedIds} completedIds={[]}
                     activeTaskId={drawerTask?.taskId}
                     onToggleSelect={toggleSelect} onTakeAction={setDrawerTask}
                     onEmail={setEmailTask} onLinkedIn={setLinkedInTask}
@@ -651,7 +697,7 @@ export default function EngageRepView() {
           </div>
 
           {/* Right panel */}
-          {!drawerTask && <RecentActivityPanel />}
+          {!drawerTask && <RecentActivityPanel activities={recentActivity} />}
         </div>
 
         {/* TakeActionDrawer — fixed full height overlay on the right */}
@@ -688,7 +734,19 @@ export default function EngageRepView() {
         />
       )}
       {filterOpen     && <FilterPanel    onClose={() => setFilterOpen(false)}     onApply={() => {}} />}
-      {createTaskOpen && <CreateTaskModal onClose={() => setCreateTaskOpen(false)} onSave={() => {}}  />}
+      {createTaskOpen && (
+        <CreateTaskModal
+          onClose={() => setCreateTaskOpen(false)}
+          onSave={async (taskData) => {
+            try {
+              await createTask(taskData);
+              await loadData();
+            } catch (err) {
+              console.error('Failed to create task:', err);
+            }
+          }}
+        />
+      )}
 
       <BulkActionBar
         selectedCount={selectedIds.length}
@@ -736,7 +794,7 @@ function CollapsibleGroup({ label, count, tasks, selectedIds, completedIds, acti
               key={task.taskId}
               task={task}
               isSelected={selectedIds.includes(task.taskId)}
-              isCompleted={completedIds.includes(task.taskId)}
+              isCompleted={task.status.toUpperCase() === 'COMPLETED'}
               isActive={activeTaskId === task.taskId}
               onToggleSelect={onToggleSelect}
               onTakeAction={onTakeAction}

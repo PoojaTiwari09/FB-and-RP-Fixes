@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -10,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { NotesRepository } from '../repositories/notes.repository';
 import { M01FrontendTranscriptService } from './m01-frontend-transcript.service';
 import { M01FrontendCallProcessingService } from './m01-frontend-call-processing.service';
 import { M01FrontendCallsService } from './m01-frontend-calls.service';
@@ -22,6 +24,7 @@ export class M01FrontendCallDetailController {
     private readonly svc: M01FrontendTranscriptService,
     private readonly processing: M01FrontendCallProcessingService,
     private readonly callsUi: M01FrontendCallsService,
+    private readonly notesRepo: NotesRepository,
   ) {}
 
   @Get('metadata')
@@ -149,6 +152,48 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     return this.svc.formattedSummary(callId, briefId, req.tenantId);
+  }
+
+  @Get('notes')
+  async getNotes(
+    @Param('callId') callId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const notes = await this.notesRepo.findByCallId(callId, req.tenantId || 'tenant_001');
+    return {
+      data: notes.map((n) => ({
+        noteId: n.id,
+        callId: n.callId,
+        note: n.content,
+        userId: n.authorId,
+        timestamp: n.createdAt.toISOString(),
+        createdAt: n.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  @Post('notes')
+  async createNote(
+    @Param('callId') callId: string,
+    @Body() body: { note?: string; content?: string; userId?: string },
+    @Req() req: Record<string, string>,
+  ) {
+    const noteText = body.note || body.content;
+    if (!noteText) {
+      throw new BadRequestException('Note content is required');
+    }
+    const authorId = body.userId || req.userId || 'usr_001';
+    const created = await this.notesRepo.create(callId, req.tenantId || 'tenant_001', authorId, { content: noteText });
+    return {
+      data: {
+        noteId: created.id,
+        callId: created.callId,
+        note: created.content,
+        userId: created.authorId,
+        timestamp: created.createdAt.toISOString(),
+        createdAt: created.createdAt.toISOString(),
+      },
+    };
   }
 }
 

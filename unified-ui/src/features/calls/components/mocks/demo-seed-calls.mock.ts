@@ -161,7 +161,7 @@ function briefFor(callId: string, summary: string, account: string): BriefDetail
     keyDiscussionPoints: [{ timestamp: '0:45', description: summary.slice(0, 120) + '…' }],
     customerNeeds: [{ title: 'From call summary', description: summary }],
     risks: [],
-    commitments: [{ description: 'Follow up per call conversation', assigneeType: 'rep', dueDate: null }],
+    commitments: [{ description: 'Follow up per call conversation', assigneeType: 'rep', dueDate: '' }],
     stakeholders: [{ name: 'Rep', title: '', company: account, avatarInitials: 'RE' }],
     activityContext: [],
   };

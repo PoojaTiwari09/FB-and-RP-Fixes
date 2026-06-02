@@ -11,80 +11,132 @@ import type {
   FilterOptions,
   EmailTemplate,
 } from '../types/engage.types';
-import {
-  MOCK_TASKS,
-  MOCK_TASK_SUMMARY,
-  MOCK_TASK_DETAILS,
-  MOCK_RECENT_ACTIVITY,
-  MOCK_CONTACT_DETAILS,
-  MOCK_EMAIL_DRAFTS,
-  MOCK_LINKEDIN_DRAFTS,
-  MOCK_FILTER_OPTIONS,
-  MOCK_EMAIL_TEMPLATES,
-} from '../mocks/engage.mock';
 
 const ENGAGE_BASE = `${ENV.M08_API_BASE_URL}/api/engage`;
 
-async function engageFetch<T>(path: string, fallback: T): Promise<T> {
-  if (ENV.USE_MOCK_DATA) return fallback;
-  try {
-    const res = await fetch(`${ENGAGE_BASE}${path}`, {
-      cache: 'no-store',
-      headers: getBridgeHeaders(),
-    });
-    if (!res.ok) throw new Error(`Engage API ${res.status}`);
-    return (await res.json()) as T;
-  } catch (error) {
-    console.warn(`engageFetch ${path}: using mock fallback`, error);
-    return fallback;
+async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const url = `${ENGAGE_BASE}${path}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...getBridgeHeaders(),
+      ...options?.headers,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
   }
+  return (await res.json()) as T;
 }
 
 export async function getTasks(): Promise<Task[]> {
-  return engageFetch('/tasks', MOCK_TASKS);
+  return apiRequest<Task[]>('/tasks');
 }
 
 export async function getTaskSummary(): Promise<TaskSummary> {
-  return engageFetch('/tasks/summary', MOCK_TASK_SUMMARY);
+  return apiRequest<TaskSummary>('/tasks/summary');
 }
 
 export async function getRecentActivity(limit = 10): Promise<RecentActivity[]> {
-  return engageFetch(`/activity/recent?limit=${limit}`, MOCK_RECENT_ACTIVITY.slice(0, limit));
+  return apiRequest<RecentActivity[]>(`/activity/recent?limit=${limit}`);
 }
 
 export async function getTaskDetail(taskId: string): Promise<TaskDetail | undefined> {
-  const data = await engageFetch<TaskDetail | null>(`/tasks/${taskId}/detail`, MOCK_TASK_DETAILS[taskId] ?? null);
-  return data ?? undefined;
+  return apiRequest<TaskDetail | undefined>(`/tasks/${taskId}/detail`);
 }
 
 export async function getContactDetails(contactId: string): Promise<ContactDetails | undefined> {
-  const data = await engageFetch<ContactDetails | null>(
-    `/contacts/${contactId}/details`,
-    MOCK_CONTACT_DETAILS[contactId] ?? null,
-  );
-  return data ?? undefined;
+  return apiRequest<ContactDetails | undefined>(`/contacts/${contactId}/details`);
 }
 
 export async function getEmailDraft(taskId: string): Promise<EmailDraft | undefined> {
-  const data = await engageFetch<EmailDraft | null>(
-    `/tasks/${taskId}/email-draft`,
-    MOCK_EMAIL_DRAFTS[taskId] ?? null,
-  );
-  return data ?? undefined;
+  return apiRequest<EmailDraft | undefined>(`/tasks/${taskId}/email-draft`);
 }
 
 export async function getLinkedInDraft(taskId: string): Promise<LinkedInDraft | undefined> {
-  const data = await engageFetch<LinkedInDraft | null>(
-    `/tasks/${taskId}/linkedin-draft`,
-    MOCK_LINKEDIN_DRAFTS[taskId] ?? null,
-  );
-  return data ?? undefined;
+  return apiRequest<LinkedInDraft | undefined>(`/tasks/${taskId}/linkedin-draft`);
 }
 
 export async function getFilterOptions(): Promise<FilterOptions> {
-  return engageFetch('/filters/options', MOCK_FILTER_OPTIONS);
+  return apiRequest<FilterOptions>('/filters/options');
 }
 
 export async function getEmailTemplates(): Promise<EmailTemplate[]> {
-  return engageFetch('/email-templates', MOCK_EMAIL_TEMPLATES);
+  return apiRequest<EmailTemplate[]>('/email-templates');
+}
+
+// --- Write Endpoints ---
+
+export async function createTask(task: Partial<Task>): Promise<any> {
+  return apiRequest<any>('/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(task),
+  });
+}
+
+export async function saveNotes(taskId: string, notes: string): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/notes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notes }),
+  });
+}
+
+export async function sendEmail(taskId: string, emailData: any): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/send-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(emailData),
+  });
+}
+
+export async function saveDraft(taskId: string, draftData: any): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/save-draft`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(draftData),
+  });
+}
+
+export async function rephraseEmail(taskId: string, emailData: any): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/ai-rephrase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(emailData),
+  });
+}
+
+export async function markComplete(taskId: string): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/mark-complete`, {
+    method: 'POST',
+  });
+}
+
+export async function skipTask(taskId: string): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/skip`, {
+    method: 'POST',
+  });
+}
+
+export async function dismissTask(taskId: string): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/dismiss`, {
+    method: 'POST',
+  });
+}
+
+export async function reassignTask(taskId: string, newAssigneeId: string): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}/reassign`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newAssigneeId }),
+  });
+}
+
+export async function updateTask(taskId: string, fields: Partial<Task>): Promise<any> {
+  return apiRequest<any>(`/tasks/${taskId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  });
 }

@@ -9,7 +9,8 @@ import { useAccountsDropdown, useParticipantsDropdown } from '@calls/components/
 import CallsTable from '@calls/components/components/components/CallsTable';
 import GenerateBriefModal from '@calls/components/components/components/GenerateBriefModal';
 import ShareBriefModal from '@calls/components/components/components/ShareBriefModal';
-import { generateBrief, regenerateBrief, saveCallNote } from '@calls/components/services/calls-list.service';
+import { generateBrief, regenerateBrief, saveCallNote, fetchCallNotes } from '@calls/components/services/calls-list.service';
+import type { NoteResponse } from '@calls/components/types/calls.types';
 import {
   ArrowLeft,
   Share2,
@@ -126,6 +127,24 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
   // Notes state
   const [notes, setNotes] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
+  const [savedNotes, setSavedNotes] = useState<NoteResponse[]>([]);
+
+  // Load call notes from database
+  useEffect(() => {
+    let active = true;
+    fetchCallNotes(callId)
+      .then((data) => {
+        if (active) {
+          setSavedNotes(data || []);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching call notes:', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [callId]);
 
   // Auto-focus transcript editor
   useEffect(() => {
@@ -149,6 +168,7 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
   useEffect(() => {
     setNotes('');
     setNoteSaved(false);
+    setSavedNotes([]);
     setActiveTab('briefs');
     setExpandedSections(new Set(['overview']));
     setIsPlaying(false);
@@ -313,7 +333,9 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
           await saveCallNote(callId, notes);
           setNotes('');
           setNoteSaved(true);
-          setTimeout(() => setNoteSaved(false), 2000);
+          setTimeout(() => setNoteSaved(false), 3000);
+          const updated = await fetchCallNotes(callId);
+          setSavedNotes(updated || []);
         } catch (error) {
           console.error('Error saving note:', error);
         }
@@ -1279,26 +1301,21 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
               style={{
                 border: '1px solid #E5E7EB',
                 boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+                position: 'relative',
               }}
             >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold" style={{ color: '#111827' }}>
                   Notes
                 </h3>
-                {noteSaved && (
-                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#10B981' }}>
-                    <Check className="w-3.5 h-3.5" />
-                    Notes saved
-                  </div>
-                )}
               </div>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 onKeyDown={handleNotesKeyDown}
-                placeholder="Add your notes here... (Ctrl+Enter to save)"
+                placeholder="Add your notes here... (Enter to save)"
                 rows={6}
-                className="w-full px-3.5 py-2.5 border rounded-md text-sm resize-none focus:outline-none transition-colors"
+                className="w-full px-3.5 py-2.5 border rounded-md text-sm resize-none focus:outline-none transition-colors mb-2"
                 style={{
                   borderColor: '#E5E7EB',
                   backgroundColor: '#FFFFFF',
@@ -1311,6 +1328,66 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
                   e.currentTarget.style.borderColor = '#E5E7EB';
                 }}
               />
+              <p className="text-[10px] text-gray-400 mb-4">Press Enter to save, Shift+Enter for new line.</p>
+
+              {/* Saved Notes History List */}
+              {savedNotes.length > 0 && (
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Previously Saved Notes ({savedNotes.length})
+                  </h4>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                    {savedNotes.map((n) => {
+                      const dateStr = new Date(n.timestamp || n.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+                      const initialStr = n.userId === 'usr_001' ? 'SC' : 'U';
+                      return (
+                        <div
+                          key={n.noteId}
+                          className="p-3 rounded-lg bg-gray-50 border border-gray-100 flex flex-col gap-2 text-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-semibold text-[10px]">
+                                {initialStr}
+                              </div>
+                              <span className="font-semibold text-gray-700">
+                                {n.userId === 'usr_001' ? 'Sarah Chen' : 'Rep'}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              {dateStr}
+                            </span>
+                          </div>
+                          <p className="text-gray-600 leading-relaxed break-words whitespace-pre-wrap">
+                            {n.note}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Green Toast Message */}
+              {noteSaved && (
+                <div
+                  className="absolute bottom-4 left-4 right-4 p-3 rounded-xl border flex items-center gap-2 shadow-lg animate-in slide-in-from-bottom duration-300"
+                  style={{
+                    backgroundColor: '#ECFDF5',
+                    borderColor: '#A7F3D0',
+                    color: '#047857',
+                    zIndex: 50,
+                  }}
+                >
+                  <div className="w-2 h-2 rounded-full bg-[#10B981]" />
+                  <p className="text-xs font-semibold">Note saved successfully</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

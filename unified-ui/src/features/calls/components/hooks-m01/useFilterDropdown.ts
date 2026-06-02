@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Account, ParticipantOption } from '../types/calls.types';
-import { fetchAccounts, fetchParticipants } from '../services/calls.service';
+import { fetchAccounts, fetchParticipants } from '../services/calls-list.service';
 
 interface UseFilterDropdownReturn<T> {
   options: T[];

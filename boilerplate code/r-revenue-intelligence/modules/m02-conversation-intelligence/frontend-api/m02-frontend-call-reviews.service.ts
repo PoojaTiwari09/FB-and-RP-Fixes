@@ -42,22 +42,16 @@ const COACHING_TAGS = [
 
 @Injectable()
 export class M02FrontendCallReviewsService {
-  private readonly reviews = new Map<string, Map<string, any>>();
-  private readonly drafts = new Map<string, any>();
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly m02: M02ConversationIntelligenceService,
   ) {}
 
-  private store(tenantId: string) {
-    if (!this.reviews.has(tenantId)) this.reviews.set(tenantId, new Map());
-    return this.reviews.get(tenantId)!;
-  }
-
   private async ensureSeeded(tenantId: string) {
-    const store = this.store(tenantId);
-    if (store.size > 0) return;
+    const count = await this.prisma.callReview.count({
+      where: { tenantId },
+    });
+    if (count > 0) return;
 
     const calls = await this.prisma.callRecord.findMany({
       where: { tenantId },
@@ -82,46 +76,57 @@ export class M02FrontendCallReviewsService {
           },
         ];
 
-    seedCalls.forEach((c, i) => {
+    for (let i = 0; i < seedCalls.length; i++) {
+      const c = seedCalls[i];
       const reviewId = `rv_${String(i + 1).padStart(3, '0')}`;
-      store.set(reviewId, {
-        reviewId,
-        callId: c.id,
-        callTitle: c.title,
-        scorecardName: 'Discovery Call Scorecard',
-        scorecardId: 'sc_01',
-        account: c.accountId || 'Acme Corp',
-        callDate: (c.callDate instanceof Date ? c.callDate : new Date()).toISOString(),
-        callType: i % 2 === 0 ? 'Discovery' : 'Demo',
-        duration: formatMmSs(c.durationSeconds ?? 1800),
-        priority: i === 0 ? 'High' : 'Medium',
-        status: i === 0 ? 'Pending' : i === 1 ? 'In Progress' : 'Completed',
-        aiFlags: i === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
-        dueDate: new Date(Date.now() + 7 * 86400000).toISOString(),
-        salesRep: c.callOwner || 'Sarah Chen',
-        reviewer: 'Alex Martinez',
-        reviewMode: 'AI-Assisted',
-        scorecardVersion: 'v2.3',
-        talkRatio: { rep: 45, customer: 55 },
-        sentimentSummary: 'Positive with budget caution',
-        sentimentScore: 65,
-        risksDetected: ['Budget timeline unclear'],
-        keyHighlights: ['Customer asked about integration', 'Competitor mentioned'],
-        aiSummary: c.transcript?.summary || 'AI summary pending.',
-        quickStats: { topics: 4, actionItems: 3 },
-        dealLinked: 'Acme Corp — Q2 Initiative',
+      await this.prisma.callReview.upsert({
+        where: { reviewId },
+        update: {},
+        create: {
+          tenantId,
+          reviewId,
+          callTitle: c.title,
+          scorecardName: 'Discovery Call Scorecard',
+          scorecardId: 'sc_01',
+          customer: c.accountId || 'Acme Corp',
+          dateTime: (c.callDate instanceof Date ? c.callDate : new Date()).toISOString(),
+          callType: i % 2 === 0 ? 'Discovery' : 'Demo',
+          duration: formatMmSs(c.durationSeconds ?? 1800),
+          priority: i === 0 ? 'High' : 'Medium',
+          status: i === 0 ? 'Pending' : i === 1 ? 'In Progress' : 'Completed',
+          aiFlags: i === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+          salesRep: c.callOwner || 'Sarah Chen',
+          reviewer: 'Alex Martinez',
+          reviewMode: 'AI-Assisted',
+          scorecardVersion: 'v2.3',
+          talkRatio: { rep: 45, customer: 55 },
+          sentimentSummary: 'Positive with budget caution',
+          sentimentScore: 65,
+          risksDetected: ['Budget timeline unclear'],
+          keyHighlights: ['Customer asked about integration', 'Competitor mentioned'],
+          aiSummary: c.transcript?.summary || 'AI summary pending.',
+          quickStats: { topics: 4, actionItems: 3 },
+          dealLinked: 'Acme Corp — Q2 Initiative',
+          hasReview: true,
+          questions: [],
+          feedback: {},
+        },
       });
-    });
+    }
   }
 
   private async getReview(tenantId: string, reviewId: string) {
     await this.ensureSeeded(tenantId);
-    const review = this.store(tenantId).get(reviewId);
+    const review = await this.prisma.callReview.findFirst({
+      where: { tenantId, reviewId },
+    });
     if (!review) throw new NotFoundException('Review not found');
     return review;
   }
 
   private async getCallForReview(tenantId: string, callId: string) {
+    if (!callId) return null;
     return this.prisma.callRecord.findFirst({
       where: { id: callId, tenantId },
       include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
@@ -131,39 +136,47 @@ export class M02FrontendCallReviewsService {
   async listReviews(tenantId: string, raw: Record<string, string>) {
     const q = CallReviewsListQuerySchema.parse(raw);
     await this.ensureSeeded(tenantId);
-    let rows = [...this.store(tenantId).values()];
 
+    const where: any = { tenantId };
     if (q.search) {
-      const needle = q.search.toLowerCase();
-      rows = rows.filter(
-        (r) =>
-          r.callTitle?.toLowerCase().includes(needle) ||
-          r.account?.toLowerCase().includes(needle) ||
-          r.salesRep?.toLowerCase().includes(needle),
-      );
+      const needle = q.search;
+      where.OR = [
+        { callTitle: { contains: needle, mode: 'insensitive' } },
+        { customer: { contains: needle, mode: 'insensitive' } },
+        { salesRep: { contains: needle, mode: 'insensitive' } },
+      ];
     }
     if (q.status && !/^all\b/i.test(q.status)) {
-      rows = rows.filter((r) => r.status === q.status);
+      where.status = q.status;
     }
     if (q.priority && !/^all\b/i.test(q.priority)) {
-      rows = rows.filter((r) => r.priority === q.priority);
+      where.priority = q.priority;
     }
     if (q.callType && !/^all\b/i.test(q.callType)) {
-      rows = rows.filter((r) => r.callType === q.callType);
+      where.callType = q.callType;
     }
 
-    const start = (q.page - 1) * q.size;
-    const slice = rows.slice(start, start + q.size);
+    const totalCount = await this.prisma.callReview.count({ where });
+    const reviews = await this.prisma.callReview.findMany({
+      where,
+      skip: (q.page - 1) * q.size,
+      take: q.size,
+      orderBy: { createdAt: 'desc' },
+    });
 
     return {
-      totalCount: rows.length,
-      data: slice.map(mapReviewListItem),
+      totalCount,
+      data: reviews.map(mapReviewListItem),
     };
   }
 
   async getReviewDetail(tenantId: string, reviewId: string) {
     const review = await this.getReview(tenantId, reviewId);
-    const call = await this.getCallForReview(tenantId, review.callId);
+    // Try to find a call record linked to this review
+    const call = await this.prisma.callRecord.findFirst({
+      where: { title: review.callTitle, tenantId },
+      include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
+    });
     return mapReviewDetail(review, call);
   }
 
@@ -182,32 +195,44 @@ export class M02FrontendCallReviewsService {
   async patchReview(tenantId: string, reviewId: string, body: unknown) {
     const dto = PatchReviewSchema.parse(body);
     const review = await this.getReview(tenantId, reviewId);
+    const data: any = {};
     const updated: string[] = [];
+
     if (dto.scorecardId) {
-      review.scorecardId = dto.scorecardId;
+      data.scorecardId = dto.scorecardId;
       const sc = SCORECARDS.find((s) => s.scorecardId === dto.scorecardId);
-      if (sc) review.scorecardName = sc.scorecardName;
+      if (sc) data.scorecardName = sc.scorecardName;
       updated.push('scorecardId');
     }
     if (dto.reviewerId) {
       const u = USERS.find((x) => x.userId === dto.reviewerId);
-      review.reviewer = u?.userName || dto.reviewerId;
+      data.reviewer = u?.userName || dto.reviewerId;
       updated.push('reviewerId');
+    }
+
+    if (Object.keys(data).length > 0) {
+      await this.prisma.callReview.update({
+        where: { reviewId },
+        data,
+      });
     }
     return { success: true, reviewId, updatedFields: updated };
   }
 
   async markNa(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
-    review.status = 'Not Applicable';
+    await this.getReview(tenantId, reviewId);
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: { status: 'Not Applicable' },
+    });
     return { success: true, status: 'Not Applicable', reviewId };
   }
 
   async getScorecardForm(tenantId: string, reviewId: string) {
-    await this.getReview(tenantId, reviewId);
-    const draft = this.drafts.get(reviewId);
+    const review = await this.getReview(tenantId, reviewId);
+    const questionsJson = review.questions as any;
+    const answeredCount = Array.isArray(questionsJson) ? questionsJson.length : 0;
     const sections = scorecardSectionsTemplate();
-    const answeredCount = draft?.answeredCount ?? 0;
     return {
       totalQuestions: 11,
       answeredCount,
@@ -217,7 +242,10 @@ export class M02FrontendCallReviewsService {
 
   async getTranscript(tenantId: string, reviewId: string) {
     const review = await this.getReview(tenantId, reviewId);
-    const call = await this.getCallForReview(tenantId, review.callId);
+    const call = await this.prisma.callRecord.findFirst({
+      where: { title: review.callTitle, tenantId },
+      include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
+    });
     const entries = (call?.transcript?.utterances ?? []).map((u) => ({
       timestamp: formatMmSs(Math.floor((u.startMs ?? 0) / 1000)),
       speaker: u.speaker,
@@ -245,12 +273,29 @@ export class M02FrontendCallReviewsService {
   }
 
   async saveAnswer(tenantId: string, reviewId: string, body: unknown) {
-    SaveAnswerSchema.parse(body);
-    const draft = this.drafts.get(reviewId) || { answeredCount: 0 };
-    draft.answeredCount = Math.min(11, (draft.answeredCount || 0) + 1);
-    this.drafts.set(reviewId, draft);
+    const dto = SaveAnswerSchema.parse(body);
     const review = await this.getReview(tenantId, reviewId);
-    if (review.status === 'Pending') review.status = 'In Progress';
+    const questionsJson = Array.isArray(review.questions) ? (review.questions as any[]) : [];
+
+    const existingIndex = questionsJson.findIndex((q) => q.questionId === dto.questionId);
+    if (existingIndex > -1) {
+      questionsJson[existingIndex] = dto;
+    } else {
+      questionsJson.push(dto);
+    }
+
+    const updateData: any = {
+      questions: questionsJson,
+    };
+
+    if (review.status === 'Pending') {
+      updateData.status = 'In Progress';
+    }
+
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: updateData,
+    });
     return { success: true, savedAt: new Date().toISOString() };
   }
 
@@ -259,37 +304,44 @@ export class M02FrontendCallReviewsService {
   }
 
   async getCoaching(tenantId: string, reviewId: string) {
-    await this.getReview(tenantId, reviewId);
-    const draft = this.drafts.get(`${reviewId}_coaching`);
-    return (
-      draft || {
-        strengths: [],
-        improvements: [],
-        coachingNotes: '',
-        recommendedActions: [],
-        internalNotes: '',
-        tags: [],
-        shareWithRep: true,
-      }
-    );
+    const review = await this.getReview(tenantId, reviewId);
+    const feedback = review.feedback as any;
+    if (feedback && typeof feedback === 'object' && !Array.isArray(feedback) && Object.keys(feedback).length > 0) {
+      return feedback;
+    }
+    return {
+      strengths: [],
+      improvements: [],
+      coachingNotes: '',
+      recommendedActions: [],
+      internalNotes: '',
+      tags: [],
+      shareWithRep: true,
+    };
   }
 
   async saveCoaching(tenantId: string, reviewId: string, body: unknown) {
     const dto = CoachingBodySchema.parse(body);
-    this.drafts.set(`${reviewId}_coaching`, dto);
+    await this.getReview(tenantId, reviewId);
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: {
+        feedback: dto as any,
+      },
+    });
     return { success: true, savedAt: new Date().toISOString() };
   }
 
   async getSummary(tenantId: string, reviewId: string) {
     const review = await this.getReview(tenantId, reviewId);
-    const draft = this.drafts.get(reviewId);
-    const answered = draft?.answeredCount ?? 8;
+    const questionsJson = review.questions as any;
+    const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
     return {
       isReadyForSubmission: answered >= 8,
-      overallScore: 88,
+      overallScore: review.overallScore || 88,
       overallTotal: 100,
-      overallPercent: 88,
-      passingStatus: 'Passing',
+      overallPercent: review.overallScore || 88,
+      passingStatus: (review.overallScore || 88) >= 75 ? 'Passing' : 'Failed',
       passThreshold: 75,
       scorecardName: review.scorecardName,
       scorecardVersion: review.scorecardVersion,
@@ -306,46 +358,62 @@ export class M02FrontendCallReviewsService {
 
   async submitReview(tenantId: string, reviewId: string) {
     const review = await this.getReview(tenantId, reviewId);
-    const coaching = this.drafts.get(`${reviewId}_coaching`);
-    review.status = 'Completed';
+    const feedback = review.feedback as any;
+
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: {
+        status: 'Completed',
+        overallScore: 88,
+      },
+    });
+
     return {
       success: true,
       reviewId,
       submittedAt: new Date().toISOString(),
       finalScore: 88,
       finalPercent: 88,
-      visibility: coaching?.shareWithRep ? 'Shared with Rep' : 'Not Shared',
+      visibility: feedback?.shareWithRep ? 'Shared with Rep' : 'Not Shared',
     };
   }
 
-  getSubmitted(reviewId: string) {
+  async getSubmitted(reviewId: string) {
+    const review = await this.prisma.callReview.findFirst({
+      where: { reviewId },
+    });
+    if (!review) throw new NotFoundException('Review not found');
+
+    const feedback = review.feedback as any;
     return {
-      callTitle: 'Discovery Call - Acme Corp Q2 Initiative',
-      salesRep: 'Sarah Chen',
-      finalScore: 88,
+      callTitle: review.callTitle,
+      salesRep: review.salesRep,
+      finalScore: review.overallScore || 88,
       finalTotal: 100,
-      finalPercent: 88,
-      passingStatus: 'Passing',
-      submittedAt: new Date().toISOString(),
-      visibility: 'Shared with Rep',
+      finalPercent: review.overallScore || 88,
+      passingStatus: (review.overallScore || 88) >= 75 ? 'Passing' : 'Failed',
+      submittedAt: review.updatedAt.toISOString(),
+      visibility: feedback?.shareWithRep ? 'Shared with Rep' : 'Not Shared',
     };
   }
 
-  getSubmittedView(tenantId: string, reviewId: string) {
+  async getSubmittedView(tenantId: string, reviewId: string) {
+    const review = await this.getReview(tenantId, reviewId);
+    const submittedData = await this.getSubmitted(reviewId);
     return {
-      ...this.getSubmitted(reviewId),
-      reviewerName: 'Alex Martinez',
-      scorecardName: 'Discovery Call Scorecard',
-      scorecardVersion: 'v2.3',
+      ...submittedData,
+      reviewerName: review.reviewer,
+      scorecardName: review.scorecardName,
+      scorecardVersion: review.scorecardVersion,
       aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
       sections: [
         { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
         { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
       ],
-      coaching: this.drafts.get(`${reviewId}_coaching`) || {},
+      coaching: review.feedback || {},
       auditTrail: [
-        { event: 'Review Created', user: 'System', at: new Date().toISOString() },
-        { event: 'Review Submitted', user: 'Alex Martinez', at: new Date().toISOString() },
+        { event: 'Review Created', user: 'System', at: review.createdAt.toISOString() },
+        { event: 'Review Submitted', user: review.reviewer || 'Alex Martinez', at: review.updatedAt.toISOString() },
       ],
     };
   }

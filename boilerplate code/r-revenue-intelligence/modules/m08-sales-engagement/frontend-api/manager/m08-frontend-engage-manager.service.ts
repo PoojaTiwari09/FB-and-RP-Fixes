@@ -1,88 +1,67 @@
-import { Injectable } from '@nestjs/common';
-import {
-  INITIAL_MOCK_TASKS,
-  MOCK_TEAM_MEMBERS,
-  MOCK_RECENT_ACTIVITY,
-  MOCK_EMAIL_TEMPLATES,
-  mockFetchTasksResponse,
-  mockFetchSummaryResponse,
-  mockFetchTaskDetailResponse,
-  mockFetchRecentActivityResponse,
-  mockFetchTeamMembersResponse,
-  mockFetchFiltersConfigResponse,
-  mockFetchEmailDraftResponse,
-  mockFetchLinkedInScriptResponse,
-  mockFetchContactDetailResponse,
-  mockCreateTaskApiResponse,
-  mockReassignTaskApiResponse,
-  mockSkipTaskResponse,
-  mockDismissTaskResponse,
-  mockActionResponse,
-  mockSearchLinkedEntitiesResponse,
-} from './m08-engage-manager.seed';
-
-type EngageTask = Record<string, unknown>;
-
-function getRelativeDateStr(daysOffset: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  return date.toISOString().split('T')[0];
-}
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class M08FrontendEngageManagerService {
-  private tasks: EngageTask[] = INITIAL_MOCK_TASKS() as EngageTask[];
+  constructor(private readonly prisma: PrismaService) {}
 
-  fetchTasks(query: {
-    assigneeId: string;
-    date: string;
-    tab: string;
-    channel?: string;
-    search?: string;
-    groupBy?: string;
-    sortBy?: string;
-    filters?: Record<string, unknown> | null;
-    page?: number;
-    size?: number;
-  }) {
-    let list = this.tasks.filter((t) => {
+  async fetchTasks(
+    tenantId: string,
+    query: {
+      assigneeId: string;
+      date: string;
+      tab: string;
+      channel?: string;
+      search?: string;
+      groupBy?: string;
+      sortBy?: string;
+      page?: number;
+      size?: number;
+    }
+  ) {
+    const tasks = await this.prisma.engageTask.findMany({
+      where: { tenantId },
+    });
+
+    let list = tasks.filter((t) => {
       if (query.assigneeId === 'me') return true;
       return t.assigneeId === query.assigneeId;
     });
 
     const todayStr = query.date;
-    const getCounts = (taskList: EngageTask[]) => ({
-      today: taskList.filter((t) => t.dueDate === todayStr && t.status !== 'completed').length,
-      inProgress: taskList.filter((t) => t.status === 'in_progress').length,
+    const getCounts = (taskList: any[]) => ({
+      today: taskList.filter((t) => t.dueDate === todayStr && t.status.toLowerCase() !== 'completed').length,
+      inProgress: taskList.filter((t) => t.status.toLowerCase() === 'in_progress').length,
       upcoming: taskList.filter(
-        (t) => t.dueDate !== todayStr && t.status !== 'completed' && !t.snoozedUntil,
+        (t) => t.dueDate !== todayStr && t.status.toLowerCase() !== 'completed' && !t.snoozedUntil,
       ).length,
-      completed: taskList.filter((t) => t.status === 'completed').length,
+      completed: taskList.filter((t) => t.status.toLowerCase() === 'completed').length,
     });
 
     let channelFilteredList = list;
     if (query.channel && query.channel !== 'all') {
-      channelFilteredList = list.filter((t) => t.channel === query.channel);
+      channelFilteredList = list.filter((t) => t.channel.toLowerCase() === query.channel?.toLowerCase());
     }
     const tabCounts = getCounts(channelFilteredList);
 
-    switch (query.tab) {
+    const currentTab = query.tab || 'today';
+    switch (currentTab) {
       case 'today':
         list = channelFilteredList.filter(
-          (t) => t.dueDate === todayStr && t.status !== 'completed',
+          (t) => t.dueDate === todayStr && t.status.toLowerCase() !== 'completed',
         );
         break;
       case 'inProgress':
-        list = channelFilteredList.filter((t) => t.status === 'in_progress');
+        list = channelFilteredList.filter((t) => t.status.toLowerCase() === 'in_progress');
         break;
       case 'upcoming':
         list = channelFilteredList.filter(
           (t) =>
-            t.dueDate !== todayStr && t.status !== 'completed' && !t.snoozedUntil,
+            t.dueDate !== todayStr && t.status.toLowerCase() !== 'completed' && !t.snoozedUntil,
         );
         break;
       case 'completed':
-        list = channelFilteredList.filter((t) => t.status === 'completed');
+        list = channelFilteredList.filter((t) => t.status.toLowerCase() === 'completed');
         break;
       default:
         list = channelFilteredList;
@@ -101,10 +80,10 @@ export class M08FrontendEngageManagerService {
     const sorted = [...list];
     const sortBy = query.sortBy || 'due_date';
     if (sortBy === 'priority') {
-      const order: Record<string, number> = { high: 0, normal: 1, low: 2 };
+      const order: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
       sorted.sort(
         (a, b) =>
-          (order[String(a.priority)] ?? 1) - (order[String(b.priority)] ?? 1),
+          (order[String(a.priority).toUpperCase()] ?? 1) - (order[String(b.priority).toUpperCase()] ?? 1),
       );
     } else if (sortBy === 'recent_activity') {
       sorted.sort((a, b) =>
@@ -113,7 +92,7 @@ export class M08FrontendEngageManagerService {
     } else {
       sorted.sort((a, b) => {
         const d = String(a.dueDate).localeCompare(String(b.dueDate));
-        return d !== 0 ? d : String(a.dueTime).localeCompare(String(b.dueTime));
+        return d !== 0 ? d : String(a.dueTime || '').localeCompare(String(b.dueTime || ''));
       });
     }
 
@@ -126,186 +105,486 @@ export class M08FrontendEngageManagerService {
     const atRisk = pagedTasks.filter((t) => t.aiSignalType === 'risk').length;
     const dueToday = pagedTasks.filter((t) => t.dueDate === todayStr).length;
 
-    const groups: { groupLabel: string; count: number; tasks: EngageTask[] }[] = [];
-    const highPriority = pagedTasks.filter((t) => t.priority === 'high');
-    const normalPriority = pagedTasks.filter((t) => t.priority !== 'high');
+    const groups: { groupLabel: string; count: number; tasks: any[] }[] = [];
+    const highPriority = pagedTasks.filter((t) => t.priority.toUpperCase() === 'HIGH');
+    const normalPriority = pagedTasks.filter((t) => t.priority.toUpperCase() !== 'HIGH');
+    
+    // Normalize mapping helper for tasks
+    const mapTask = (t: any) => ({
+      id: t.taskId,
+      title: t.title,
+      contactName: t.contactName,
+      companyName: t.companyName,
+      channel: t.channel.toLowerCase(),
+      scheduledTime: t.scheduledTime || '',
+      dueDateTime: t.dueDateTime || '',
+      isOverdue: t.isOverdue,
+      isAtRisk: t.isAtRisk,
+      interactionCount: t.interactionCount,
+      priority: t.priority.toLowerCase(),
+      status: t.status.toLowerCase(),
+      dueDate: t.dueDate,
+      dueTime: t.dueTime || '',
+      assigneeId: t.assigneeId || 'me',
+      assigneeName: t.assigneeName || 'Alex Morgan',
+      assigneeRole: t.assigneeRole || 'Account Executive',
+      arr: t.arr || '',
+      todoType: t.todoType || 'manual',
+      entityType: t.entityType || 'lead',
+      workflowName: t.workflowName || '',
+      workflowStep: t.workflowStep ? parseInt(t.workflowStep, 10) : undefined,
+      totalWorkflowSteps: t.totalWorkflowSteps || undefined,
+      aiSignal: t.aiSignal || '',
+      aiSignalType: t.aiSignalType || '',
+    });
+
     if (highPriority.length) {
-      groups.push({ groupLabel: 'High Priority', count: highPriority.length, tasks: highPriority });
+      groups.push({ groupLabel: 'High Priority', count: highPriority.length, tasks: highPriority.map(mapTask) });
     }
     if (normalPriority.length || !highPriority.length) {
-      groups.push({ groupLabel: 'All Tasks', count: normalPriority.length, tasks: normalPriority });
+      groups.push({ groupLabel: 'All Tasks', count: normalPriority.length, tasks: normalPriority.map(mapTask) });
     }
 
-    return mockFetchTasksResponse(groups, tabCounts, { atRisk, dueToday }, {
-      page,
-      size,
-      total,
-      totalPages,
-    });
+    // Capitalize status tab names to match response expected
+    const normalizedTabCounts = {
+      today: tabCounts.today,
+      inProgress: tabCounts.inProgress,
+      upcoming: tabCounts.upcoming,
+      completed: tabCounts.completed,
+    };
+
+    return {
+      status: 'success',
+      data: {
+        groups,
+        tabCounts: normalizedTabCounts,
+        statusPills: { atRisk, dueToday },
+        pagination: {
+          page,
+          size,
+          total,
+          totalPages,
+        },
+      },
+    };
   }
 
-  fetchSummary(assigneeId: string, date: string) {
+  async fetchSummary(tenantId: string, assigneeId: string, date: string) {
+    const tasks = await this.prisma.engageTask.findMany({
+      where: { tenantId },
+    });
+
     const list =
       assigneeId === 'me'
-        ? this.tasks
-        : this.tasks.filter((t) => t.assigneeId === assigneeId);
+        ? tasks
+        : tasks.filter((t) => t.assigneeId === assigneeId);
+
     const todayTasks = list.filter((t) => t.dueDate === date);
-    const completedToday = todayTasks.filter((t) => t.status === 'completed').length;
+    const completedToday = todayTasks.filter((t) => t.status.toLowerCase() === 'completed').length;
     const totalToday = todayTasks.length;
     const highPriorityRemaining = todayTasks.filter(
-      (t) => t.priority === 'high' && t.status !== 'completed',
+      (t) => t.priority.toUpperCase() === 'HIGH' && t.status.toLowerCase() !== 'completed',
     ).length;
     const atRisk = list.filter(
-      (t) => t.aiSignalType === 'risk' && t.status !== 'completed',
+      (t) => t.isAtRisk && t.status.toLowerCase() !== 'completed',
     ).length;
     const completionPercentage =
       totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 0;
 
-    return mockFetchSummaryResponse({
-      totalToday,
-      completedToday,
-      atRisk,
-      dueToday: totalToday,
-      highPriorityRemaining,
-      completionPercentage,
-      headerAlert: `${highPriorityRemaining} high-priority deals need attention today — ${atRisk} at risk of slipping`,
-    });
-  }
-
-  fetchTeamMembers() {
-    return mockFetchTeamMembersResponse(MOCK_TEAM_MEMBERS);
-  }
-
-  fetchRecentActivity() {
-    return mockFetchRecentActivityResponse(MOCK_RECENT_ACTIVITY);
-  }
-
-  fetchFiltersConfig() {
-    return mockFetchFiltersConfigResponse({
-      flows: [
-        'Enterprise Outbound Q2 2026',
-        'Mid-Market Follow-up',
-        'Social Selling Campaign',
-      ],
-      entityTypes: ['account', 'deal', 'lead'],
-      localTimes: ['morning', 'business_hours', 'custom'],
-    });
-  }
-
-  fetchTaskDetail(taskId: string) {
-    const task = this.tasks.find((t) => t.id === taskId) || this.tasks[0];
-    return mockFetchTaskDetailResponse(task);
-  }
-
-  fetchEmailDraft(taskId: string) {
-    const task = this.tasks.find((t) => t.id === taskId);
-    return mockFetchEmailDraftResponse(
-      task?.emailDraft || {
-        to: 'client@company.com',
-        fromOptions: ['alex.morgan@relanto.ai (Gmail)'],
-        subject: 'Outreach Follow-up',
-        body: 'Hi, following up on our connection.',
+    return {
+      status: 'success',
+      data: {
+        totalToday,
+        completedToday,
+        atRisk,
+        dueToday: totalToday,
+        highPriorityRemaining,
+        completionPercentage,
+        headerAlert: `${highPriorityRemaining} high-priority deals need attention today — ${atRisk} at risk of slipping`,
       },
-    );
+    };
   }
 
-  fetchLinkedInScript(taskId: string) {
-    const task = this.tasks.find((t) => t.id === taskId);
-    return mockFetchLinkedInScriptResponse({
-      messageScript: task?.linkedinScript?.messageScript || 'Hi, would love to connect.',
-      mutualConnections: task?.mutualConnections || 5,
-      linkedInProfileUrl: 'https://linkedin.com',
-    });
-  }
-
-  fetchContactDetail(contactId: string) {
-    return mockFetchContactDetailResponse({
-      id: contactId,
-      name: 'Sarah Chen',
-      role: 'VP of Sales',
-      companyName: 'Acme Corp',
-    });
-  }
-
-  searchLinkedEntities(search: string) {
-    const list = [
-      {
-        id: 'contact_sarah_chen_001',
-        name: 'Sarah Chen',
-        type: 'contact',
-        subLabel: 'VP of Sales · Acme Corp',
-      },
+  async fetchTeamMembers(tenantId: string) {
+    // Return seeded members
+    const members = [
+      { id: 'me', name: 'Alex Morgan', role: 'Account Executive' },
+      { id: 'sarah', name: 'Sarah Chen', role: 'Senior AE' },
+      { id: 'michael', name: 'Michael Rodriguez', role: 'Account Executive' },
+      { id: 'jennifer', name: 'Jennifer Kim', role: 'Team Lead' },
+      { id: 'david', name: 'David Park', role: 'Account Executive' },
+      { id: 'emily', name: 'Emily Thompson', role: 'Senior AE' },
     ];
+    return { status: 'success', data: members };
+  }
+
+  async fetchRecentActivity(tenantId: string) {
+    const activities = await this.prisma.engageActivity.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      status: 'success',
+      data: activities.map((a) => ({
+        id: a.activityId,
+        contactName: a.contactName,
+        companyName: a.company || '',
+        activityType: a.channelType.toLowerCase(),
+        description: a.summary,
+        timeAgo: a.timeAgoLabel || '1h ago',
+      })),
+    };
+  }
+
+  async fetchFiltersConfig(tenantId: string) {
+    return {
+      status: 'success',
+      data: {
+        flows: [
+          'Enterprise Outbound Q2 2026',
+          'Mid-Market Follow-up',
+          'Social Selling Campaign',
+        ],
+        entityTypes: ['account', 'deal', 'lead'],
+        localTimes: ['morning', 'business_hours', 'custom'],
+      },
+    };
+  }
+
+  async fetchTaskDetail(tenantId: string, taskId: string) {
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!t) throw new NotFoundException('Task not found');
+
+    return {
+      status: 'success',
+      data: {
+        id: t.taskId,
+        title: t.title,
+        contactName: t.contactName,
+        companyName: t.companyName,
+        channel: t.channel.toLowerCase(),
+        scheduledTime: t.scheduledTime || '',
+        dueDateTime: t.dueDateTime || '',
+        isOverdue: t.isOverdue,
+        isAtRisk: t.isAtRisk,
+        interactionCount: t.interactionCount,
+        priority: t.priority.toLowerCase(),
+        status: t.status.toLowerCase(),
+        dueDate: t.dueDate,
+        dueTime: t.dueTime || '',
+        assigneeId: t.assigneeId || 'me',
+        assigneeName: t.assigneeName || 'Alex Morgan',
+        assigneeRole: t.assigneeRole || 'Account Executive',
+        arr: t.arr || '',
+        todoType: t.todoType || 'manual',
+        entityType: t.entityType || 'lead',
+        workflowName: t.workflowName || '',
+        workflowStep: t.workflowStep ? parseInt(t.workflowStep, 10) : undefined,
+        totalWorkflowSteps: t.totalWorkflowSteps || undefined,
+        aiSignal: t.aiSignal || '',
+        aiSignalType: t.aiSignalType || '',
+        aiInsight: t.aiInsight || '',
+        recommendedNextSteps: t.recommendedNextSteps || [],
+        recentActivity: (t.recentActivity as any) || [],
+        notes: t.notes || '',
+      },
+    };
+  }
+
+  async fetchEmailDraft(tenantId: string, taskId: string) {
+    const d = await this.prisma.emailDraft.findFirst({
+      where: { tenantId, taskId },
+    });
+
+    if (!d) {
+      return {
+        status: 'success',
+        data: {
+          to: 'client@company.com',
+          fromOptions: ['alex.morgan@relanto.ai (Gmail)'],
+          subject: 'Outreach Follow-up',
+          body: 'Hi, following up on our connection.',
+        },
+      };
+    }
+
+    return {
+      status: 'success',
+      data: {
+        to: d.contactEmail || '',
+        fromOptions: d.fromLabel ? [d.fromLabel] : ['alex.morgan@relanto.ai (Gmail)'],
+        subject: d.subject,
+        body: d.bodyHtml,
+      },
+    };
+  }
+
+  async fetchLinkedInScript(tenantId: string, taskId: string) {
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!t) throw new NotFoundException('Task not found');
+
+    const contact = await this.prisma.engageContact.findFirst({
+      where: { tenantId, contactId: t.contactId || '' },
+    });
+
+    return {
+      status: 'success',
+      data: {
+        messageScript: (t as any).messageScript || 'Hi, would love to connect.',
+        mutualConnections: (t as any).mutualConnections || 5,
+        linkedInProfileUrl: contact?.linkedInUrl || 'https://linkedin.com',
+      },
+    };
+  }
+
+  async fetchContactDetail(tenantId: string, contactId: string) {
+    const c = await this.prisma.engageContact.findFirst({
+      where: { tenantId, contactId },
+    });
+    if (!c) throw new NotFoundException('Contact not found');
+
+    return {
+      status: 'success',
+      data: {
+        id: c.contactId,
+        name: c.contactName,
+        role: c.jobTitle || '',
+        companyName: c.company || '',
+      },
+    };
+  }
+
+  async searchLinkedEntities(tenantId: string, search: string) {
+    const contacts = await this.prisma.engageContact.findMany({
+      where: { tenantId },
+    });
+
+    const list = contacts.map((c) => ({
+      id: c.contactId,
+      name: c.contactName,
+      type: 'contact',
+      subLabel: `${c.jobTitle || 'Executive'} · ${c.company || 'Company'}`,
+    }));
+
     const q = search.toLowerCase();
     const filtered = list.filter(
       (i) =>
         i.name.toLowerCase().includes(q) || i.subLabel.toLowerCase().includes(q),
     );
-    return mockSearchLinkedEntitiesResponse(filtered);
-  }
 
-  createTask(body: Record<string, unknown>) {
-    const newId = `task_new_${Date.now()}`;
-    const newTask: EngageTask = {
-      id: newId,
-      title: body.title,
-      contactName: 'New Contact',
-      companyName: 'Linked Entity',
-      channel: 'custom',
-      status: 'pending',
-      dueDate: body.dueDate,
-      dueTime: body.dueTime,
-      assigneeId: body.assigneeId || 'me',
-      assigneeName: 'Alex Morgan',
-      assigneeRole: 'Account Executive',
-      priority: 'normal',
-      interactionCount: 0,
-      isOverdue: false,
-      scheduledTime: body.dueTime,
-      dueDateTime: `Today, ${body.dueTime}`,
+    return {
+      status: 'success',
+      data: {
+        results: filtered,
+      },
     };
-    this.tasks = [newTask, ...this.tasks];
-    return mockCreateTaskApiResponse(newTask);
   }
 
-  reassignTask(taskId: string, newAssigneeId: string) {
-    const member =
-      MOCK_TEAM_MEMBERS.find((m) => m.id === newAssigneeId) || MOCK_TEAM_MEMBERS[0];
-    this.tasks = this.tasks.map((t) =>
-      t.id === taskId
-        ? {
-            ...t,
-            assigneeId: member.id,
-            assigneeName: member.name,
-            assigneeRole: member.role,
-            updatedAt: new Date().toISOString(),
-          }
-        : t,
-    );
-    const updated = this.tasks.find((t) => t.id === taskId)!;
-    return mockReassignTaskApiResponse(updated);
+  async createTask(tenantId: string, body: Record<string, any>) {
+    const taskId = `task_${Date.now()}`;
+    const newTask = await this.prisma.engageTask.create({
+      data: {
+        tenantId,
+        taskId,
+        title: body.title,
+        contactName: body.contactName || 'New Contact',
+        companyName: body.companyName || 'New Company',
+        channel: (body.channel || 'custom').toUpperCase(),
+        status: 'PENDING',
+        dueDate: body.dueDate || new Date().toISOString().split('T')[0],
+        dueTime: body.dueTime || null,
+        scheduledTime: body.dueTime || null,
+        dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
+        priority: (body.priority || 'NORMAL').toUpperCase(),
+        assigneeId: body.assigneeId || 'me',
+        assigneeName: body.assigneeName || 'Alex Morgan',
+        assigneeRole: body.assigneeRole || 'Account Executive',
+        todoType: body.todoType || 'manual',
+        entityType: body.entityType || 'lead',
+        interactionCount: 0,
+        isOverdue: false,
+        isAtRisk: false,
+        recommendedNextSteps: body.recommendedNextSteps || [],
+      },
+    });
+
+    return {
+      status: 'success',
+      data: {
+        taskId: newTask.taskId,
+        status: newTask.status,
+        createdAt: newTask.createdAt.toISOString(),
+      },
+    };
   }
 
-  markComplete(taskId: string) {
-    this.tasks = this.tasks.map((t) =>
-      t.id === taskId ? { ...t, status: 'completed', updatedAt: new Date().toISOString() } : t,
-    );
+  async reassignTask(tenantId: string, taskId: string, newAssigneeId: string) {
+    const updated = await this.prisma.engageTask.update({
+      where: { taskId },
+      data: {
+        assigneeId: newAssigneeId,
+        assigneeName: newAssigneeId === 'me' ? 'Alex Morgan' : 'Sarah Chen',
+        assigneeRole: newAssigneeId === 'me' ? 'Account Executive' : 'Senior AE',
+      },
+    });
+
+    return {
+      status: 'success',
+      data: {
+        taskId: updated.taskId,
+        assigneeId: updated.assigneeId,
+        assigneeName: updated.assigneeName,
+        assigneeRole: updated.assigneeRole,
+        updatedAt: updated.updatedAt.toISOString(),
+      },
+    };
+  }
+
+  async markComplete(tenantId: string, taskId: string) {
+    await this.prisma.engageTask.update({
+      where: { taskId },
+      data: { status: 'COMPLETED' },
+    });
     return { status: 'success', data: { ok: true } };
   }
 
-  skipTask(taskId: string) {
-    return mockSkipTaskResponse(taskId);
+  async skipTask(tenantId: string, taskId: string) {
+    await this.prisma.engageTask.update({
+      where: { taskId },
+      data: { status: 'COMPLETED' },
+    });
+
+    return {
+      status: 'success',
+      data: {
+        taskId,
+        status: 'completed',
+        action: 'skipped',
+        updatedAt: new Date().toISOString(),
+      },
+    };
   }
 
-  dismissTask(taskId: string) {
-    return mockDismissTaskResponse(taskId);
+  async dismissTask(tenantId: string, taskId: string) {
+    await this.prisma.engageTask.update({
+      where: { taskId },
+      data: { status: 'COMPLETED' },
+    });
+
+    return {
+      status: 'success',
+      data: {
+        taskId,
+        status: 'completed',
+        action: 'dismissed',
+        updatedAt: new Date().toISOString(),
+      },
+    };
   }
 
-  logAction(taskId: string, action: string) {
-    return mockActionResponse(taskId, action);
+  async logAction(tenantId: string, taskId: string, action: string) {
+    return {
+      status: 'success',
+      data: {
+        taskId,
+        action,
+        loggedAt: new Date().toISOString(),
+      },
+    };
   }
 
-  emailTemplates() {
-    return { status: 'success', data: { templates: MOCK_EMAIL_TEMPLATES } };
+  async emailTemplates(tenantId: string) {
+    const templates = await this.prisma.emailTemplate.findMany({
+      where: { tenantId },
+    });
+
+    const mapped = templates.map((t) => ({
+      id: t.templateId,
+      name: t.templateName,
+      subject: t.subject,
+      body: t.bodyHtml,
+    }));
+
+    return {
+      status: 'success',
+      data: {
+        templates: mapped.length ? mapped : [],
+      },
+    };
+  }
+
+  async saveNotes(tenantId: string, taskId: string, notes: string) {
+    await this.prisma.engageTask.update({
+      where: { taskId },
+      data: { notes },
+    });
+    return { status: 'success', data: { ok: true } };
+  }
+
+  async saveDraft(tenantId: string, taskId: string, body: any) {
+    const draft = await this.prisma.emailDraft.upsert({
+      where: { taskId },
+      update: {
+        subject: body.subject,
+        bodyHtml: body.body || body.bodyHtml || '',
+        contactName: body.contactName,
+        contactEmail: body.contactEmail,
+        fromEmail: body.fromEmail,
+        fromLabel: body.fromLabel,
+      },
+      create: {
+        tenantId,
+        taskId,
+        subject: body.subject,
+        bodyHtml: body.body || body.bodyHtml || '',
+        contactName: body.contactName,
+        contactEmail: body.contactEmail,
+        fromEmail: body.fromEmail,
+        fromLabel: body.fromLabel,
+      },
+    });
+
+    return { status: 'success', data: draft };
+  }
+
+  async sendEmail(tenantId: string, taskId: string, body: any) {
+    const t = await this.prisma.engageTask.update({
+      where: { taskId },
+      data: { status: 'COMPLETED' },
+    });
+
+    await this.prisma.engageActivity.create({
+      data: {
+        tenantId,
+        activityId: `act_${Date.now()}`,
+        contactName: t.contactName,
+        company: t.companyName,
+        channelType: 'EMAIL',
+        summary: `Sent email: ${body.subject || 'Outreach'}`,
+        occurredAt: new Date().toISOString(),
+        timeAgoLabel: 'Just now',
+      },
+    });
+
+    return { status: 'success', data: { ok: true } };
+  }
+
+  async rephraseEmail(tenantId: string, taskId: string, body: any) {
+    const text = body.body || body.bodyHtml || '';
+    const rephrasedBody = text
+      ? `${text}\n\n[AI Rephrased: Clearer, more concise call-to-action added.]`
+      : 'Hi Sarah,\n\nFollowing up on our Q2 renewal. Let me know if you would like to run through the ROI projections.\n\nBest,\nAlex';
+
+    return {
+      status: 'success',
+      data: {
+        rephrasedBody,
+      },
+    };
   }
 }

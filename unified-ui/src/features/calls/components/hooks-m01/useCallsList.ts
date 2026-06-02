@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CallListItem, CallsListFilters, CallStatus, DurationFilter } from '../types/calls.types';
-import { fetchCallsList } from '../services/calls.service';
+import { fetchCallsList } from '../services/calls-list.service';
 import { MOCK_ACCOUNTS, MOCK_PARTICIPANTS, MOCK_CALL_METADATA_MAP } from '../mocks/calls.mock';
 
 interface UseCallsListReturn {

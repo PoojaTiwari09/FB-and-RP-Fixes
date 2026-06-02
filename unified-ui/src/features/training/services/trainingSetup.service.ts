@@ -1,10 +1,8 @@
 // src/services/trainingSetup.service.ts
-import { TRAINING_SETUP_MOCK } from '@training/mocks/trainingSetup.mock';
 import { TrainingSetupPage } from '@training/types/trainingSetup.types';
 import { ENV } from '@shared/config/env';
 import type { QuestionTag } from '@shared/types/shared.types';
 import { getVoices } from '@training/services/ai/elevenLabs.service';
-import type { ManagerActiveTraining } from '@training/types/trainingCreate.types';
 
 /**
  * Adapts raw API response to our typed shape.
@@ -34,7 +32,7 @@ function adaptTrainingSetup(raw: Record<string, unknown>, trainingId: string): T
       id: String(v['id'] ?? `voice-${i + 1}`),
       label: String(v['label'] ?? `Voice ${i + 1}`),
       description: String(v['description'] ?? ''),
-      previewText: String(v['previewText'] ?? (TRAINING_SETUP_MOCK.voices[i]?.previewText ?? '')),
+      previewText: String(v['previewText'] ?? ''),
     })),
     playbookSections: sections.map((s) => ({
       id: String(s['id'] ?? ''),
@@ -57,57 +55,20 @@ function adaptTrainingSetup(raw: Record<string, unknown>, trainingId: string): T
   };
 }
 
-async function getMockSetupWithCookies(trainingId: string, createdTrainingsStr?: string): Promise<TrainingSetupPage> {
-  const baseMock = { ...TRAINING_SETUP_MOCK, trainingId };
-
-  // Always fetch real voices from ElevenLabs (even in mock mode for setup data)
-  const liveVoices = await getVoices();
-
-  const isReassigned = trainingId.startsWith('reassigned-');
-  const actualId = trainingId.replace('reassigned-', '');
-
-  const created: ManagerActiveTraining[] = createdTrainingsStr ? JSON.parse(createdTrainingsStr) : [];
-  const customTraining = created.find(t => t.id === actualId);
-  
-  let title = customTraining?.trainingTitle || baseMock.trainingTitle;
-  if (isReassigned) title += ' (Reassigned)';
-
-  if (customTraining) {
-    return {
-      ...baseMock,
-      trainingTitle: title,
-      persona: customTraining.persona || baseMock.persona,
-      voices: liveVoices,
-    };
-  }
-
-  return { ...baseMock, trainingTitle: title, voices: liveVoices };
-}
-
 /**
  * Fetch training setup data.
  * Voices are ALWAYS fetched from ElevenLabs (not from backend or mock static data).
  */
 export async function fetchTrainingSetup(trainingId: string, createdTrainingsStr?: string): Promise<TrainingSetupPage> {
-  // Mock mode: use mock setup data but with live ElevenLabs voices
-  if (ENV.USE_MOCK_DATA) {
-    return getMockSetupWithCookies(trainingId, createdTrainingsStr);
-  }
-
-  try {
-    const [res, liveVoices] = await Promise.all([
-      fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, { next: { revalidate: 60 } }),
-      getVoices(),
-    ]);
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const raw = await res.json();
-    const setup = adaptTrainingSetup(raw as Record<string, unknown>, trainingId);
-    // Override voices from backend with live ElevenLabs voices
-    return { ...setup, voices: liveVoices };
-  } catch (error) {
-    // Silently fall back to mock without logging to avoid console clutter
-    return getMockSetupWithCookies(trainingId, createdTrainingsStr);
-  }
+  const [res, liveVoices] = await Promise.all([
+    fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, { next: { revalidate: 60 } }),
+    getVoices(),
+  ]);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const raw = await res.json();
+  const setup = adaptTrainingSetup(raw as Record<string, unknown>, trainingId);
+  // Override voices from backend with live ElevenLabs voices
+  return { ...setup, voices: liveVoices };
 }
 
 export interface CreateSessionResponse {
@@ -120,33 +81,16 @@ export async function createTrainingSession(
   trainingId: string,
   selectedVoiceId?: string
 ): Promise<CreateSessionResponse> {
-  if (ENV.USE_MOCK_DATA) {
-    return {
-      sessionId: `mock-session-${Date.now()}`,
-      status: 'active',
-      startedAt: new Date().toISOString(),
-    };
-  }
-
-  try {
-    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selectedVoiceId, trainingId }),
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = (await res.json()) as Record<string, unknown>;
-    return {
-      sessionId: String(data['sessionId'] ?? data['session_id'] ?? ''),
-      status: String(data['status'] ?? 'active'),
-      startedAt: String(data['startedAt'] ?? data['started_at'] ?? ''),
-    };
-  } catch (error) {
-    // Silently fall back to mock without logging to avoid console clutter
-    return {
-      sessionId: `mock-session-${Date.now()}`,
-      status: 'active',
-      startedAt: new Date().toISOString(),
-    };
-  }
+  const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ selectedVoiceId, trainingId }),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data = (await res.json()) as Record<string, unknown>;
+  return {
+    sessionId: String(data['sessionId'] ?? data['session_id'] ?? ''),
+    status: String(data['status'] ?? 'active'),
+    startedAt: String(data['startedAt'] ?? data['started_at'] ?? ''),
+  };
 }

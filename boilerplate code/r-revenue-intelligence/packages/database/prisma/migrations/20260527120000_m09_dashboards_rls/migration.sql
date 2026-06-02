@@ -1,6 +1,8 @@
 -- M09: Row-level security for AI trainer tables (dashboards schema)
 -- Apply when DATABASE_URL connects as a role that owns these tables.
 
+CREATE SCHEMA IF NOT EXISTS dashboards;
+
 ALTER TABLE dashboards.trainerscenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dashboards.trainersessions ENABLE ROW LEVEL SECURITY;
 

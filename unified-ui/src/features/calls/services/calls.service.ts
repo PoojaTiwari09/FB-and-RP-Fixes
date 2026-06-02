@@ -24,7 +24,7 @@ function normalizeSearchResponse(raw: Record<string, unknown>): SearchResponse {
     quarters: pick('quarters'),
   };
   return {
-    ...(raw as SearchResponse),
+    ...(raw as unknown as SearchResponse),
     chart:
       chart.days.length || chart.weeks.length
         ? chart
