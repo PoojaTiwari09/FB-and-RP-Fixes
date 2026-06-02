@@ -10,7 +10,7 @@ export const FrontendListCallsQuerySchema = z.object({
   account: z.string().optional(),
   participantId: z.string().optional(),
   ownerId: z.string().optional(),
-  dateRange: z.enum(['last7days', 'last30days', 'custom']).optional(),
+  dateRange: z.enum(['all', 'last7days', 'last30days', 'custom']).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });

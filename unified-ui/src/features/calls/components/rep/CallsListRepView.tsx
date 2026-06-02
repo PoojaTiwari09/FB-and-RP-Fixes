@@ -4,12 +4,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useCallsList } from '@calls/components/hooks/useCallsList';
 import { useCallDetail } from '@calls/components/hooks/useCallDetail';
 import { useTranscript } from '@calls/components/hooks/useTranscript';
+import { useCallProcessing } from '@calls/components/hooks/useCallProcessing';
 import { useAccountsDropdown, useParticipantsDropdown } from '@calls/components/hooks/useFilterDropdown';
 import CallsTable from '@calls/components/components/components/CallsTable';
 import GenerateBriefModal from '@calls/components/components/components/GenerateBriefModal';
 import ShareBriefModal from '@calls/components/components/components/ShareBriefModal';
 import { generateBrief, regenerateBrief, saveCallNote } from '@calls/components/services/calls-list.service';
-import type { BriefDetail } from '@calls/components/components/types/calls.types';
 import {
   ArrowLeft,
   Share2,
@@ -37,54 +37,7 @@ import {
   Activity,
 } from 'lucide-react';
 
-// ─── MOCK DATA FALLBACKS ──────────────────────────────────────────────────────
-
-const MOCK_FALLBACK_BRIEF: BriefDetail = {
-  briefId: 'brief_default',
-  briefTemplate: 'Executive Summary',
-  period: 'Last 30 days',
-  generatedAt: '2026-05-27T08:15:00Z',
-  generatedFrom: 'Executive Summary',
-  overview: {
-    text: "This call focused on Acme Corp's Q3 budget planning and their evaluation of our enterprise plan. The customer demonstrated strong interest in our offering and requested detailed ROI analysis to support the business case."
-  },
-  keyDiscussionPoints: [
-    { timestamp: '1:45', description: 'Enterprise plan pricing structure and tier comparison' },
-    { timestamp: '5:20', description: 'Salesforce CRM integration requirements and capabilities' },
-    { timestamp: '8:10', description: 'Data migration timeline and support process' },
-    { timestamp: '12:30', description: 'ROI analysis request for internal stakeholders' },
-    { timestamp: '18:45', description: 'Technical demo scheduling with IT team' }
-  ],
-  customerNeeds: [
-    { title: 'Seamless CRM Integration', description: 'Native Salesforce integration is critical for adoption across sales team' },
-    { title: 'ROI Justification', description: 'Need detailed analysis showing cost savings and efficiency gains for executive approval' },
-    { title: 'Quick Implementation', description: 'Looking to deploy before Q4 starts; timeline is a key factor' },
-    { title: 'Scalability', description: 'Solution must support 50+ users initially with room to expand to 200+' }
-  ],
-  risks: [
-    { title: 'Data Migration Complexity', description: 'Customer concerned about timeline and resource requirements for migrating data from legacy system', severity: 'medium' },
-    { title: 'Integration Testing', description: 'IT team wants thorough testing period before full rollout to sales team', severity: 'low' },
-    { title: 'Budget Approval Timeline', description: 'ROI analysis needed by end of week for executive committee review', severity: 'medium' }
-  ],
-  commitments: [
-    { description: 'Deliver detailed ROI analysis by Friday, May 22', assigneeType: 'rep', dueDate: 'May 22, 2026' },
-    { description: 'Schedule technical demo with IT team for next week', assigneeType: 'rep', dueDate: 'Week of May 24' },
-    { description: 'Review integration documentation and prepare questions', assigneeType: 'customer', dueDate: 'May 21, 2026' },
-    { description: 'Share current data architecture overview', assigneeType: 'customer', dueDate: 'May 20, 2026' },
-    { description: 'Provide migration timeline estimate and support plan', assigneeType: 'rep', dueDate: 'May 23, 2026' }
-  ],
-  stakeholders: [
-    { name: 'John Smith', title: 'VP of Sales', company: 'Acme Corp', avatarInitials: 'JS' },
-    { name: 'Sarah Chen', title: 'Director of IT', company: 'Acme Corp', avatarInitials: 'SC' },
-    { name: 'Alex Rodriguez', title: 'Account Executive', company: 'Our Company', avatarInitials: 'AR' }
-  ],
-  activityContext: [
-    { date: 'May 18', type: 'email', description: 'Sent product overview and pricing deck' },
-    { date: 'May 15', type: 'call', description: 'Initial discovery call - 15 min intro' },
-    { date: 'May 12', type: 'email', description: 'Introduced by mutual connection at TechConf 2026' },
-    { date: 'May 10', type: 'meeting', description: 'Met at TechConf 2026 networking event' }
-  ]
-};
+const DEMO_REP_OWNER = process.env.NEXT_PUBLIC_DEMO_REP_OWNER_NAME ?? 'Sarah Chen';
 
 const getDealTypeBadgeStyle = (dealType: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
@@ -101,14 +54,17 @@ const getDealTypeBadgeStyle = (dealType: string) => {
 interface CallDetailPanelProps {
   callId: string;
   onBack: () => void;
+  onProcessed?: () => void;
 }
 
-function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
+function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) {
   const {
     metadata,
     briefs,
     activeBrief,
-    reload,
+    isLoading: isDetailLoading,
+    error: detailError,
+    reload: reloadDetail,
   } = useCallDetail(callId);
 
   const {
@@ -123,7 +79,22 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
     showLowConfidenceOnly,
     setShowLowConfidenceOnly,
     toggleStepCompleted,
+    reload: reloadTranscript,
   } = useTranscript(callId);
+
+  const refreshAfterProcessing = useCallback(() => {
+    reloadDetail();
+    reloadTranscript();
+    onProcessed?.();
+  }, [reloadDetail, reloadTranscript, onProcessed]);
+
+  const {
+    phase: processPhase,
+    message: processMessage,
+    isProcessing: isCallProcessing,
+    error: processError,
+    retry: retryProcessing,
+  } = useCallProcessing(callId, { onReady: refreshAfterProcessing });
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'briefs' | 'transcript'>('briefs');
@@ -136,7 +107,7 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareBriefId, setShareBriefId] = useState<string>('brief_default');
+  const [shareBriefId, setShareBriefId] = useState<string>('');
 
   // Transcript Edit states
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -174,10 +145,15 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
     }
   }, [justEditedId]);
 
-  // Reset notes when call changes
+  // Reset panel state when call changes
   useEffect(() => {
     setNotes('');
     setNoteSaved(false);
+    setActiveTab('briefs');
+    setExpandedSections(new Set(['overview']));
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setShareBriefId('');
   }, [callId]);
 
   // Sync isPlaying state on audio events
@@ -243,32 +219,40 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
   const handleGenerate = useCallback(
     async (template: string, period: string) => {
       await generateBrief(callId, { briefTemplate: template, period });
-      reload();
+      reloadDetail();
     },
-    [callId, reload],
+    [callId, reloadDetail],
   );
 
   const handleRegenerate = useCallback(
     async (template: string, period: string) => {
-      const briefId = activeBrief?.briefId || 'brief_default';
+      const briefId = activeBrief?.briefId || briefs?.briefs[0]?.briefId;
+      if (!briefId) return;
       setIsRegenerating(true);
       try {
         await regenerateBrief(callId, briefId, { briefTemplate: template, period });
-        reload();
+        reloadDetail();
       } finally {
         setIsRegenerating(false);
       }
     },
-    [callId, activeBrief, reload],
+    [callId, activeBrief, reloadDetail],
   );
 
+  const resolveShareBriefId = () =>
+    activeBrief?.briefId || briefs?.briefs[0]?.briefId || '';
+
   const handleHeaderShareClick = () => {
-    setShareBriefId(activeBrief?.briefId || briefs?.briefs[0]?.briefId || 'brief_default');
+    const id = resolveShareBriefId();
+    if (!id) return;
+    setShareBriefId(id);
     setShareOpen(true);
   };
 
   const handleBriefShareClick = () => {
-    setShareBriefId(activeBrief?.briefId || briefs?.briefs[0]?.briefId || 'brief_default');
+    const id = resolveShareBriefId();
+    if (!id) return;
+    setShareBriefId(id);
     setShareOpen(true);
   };
 
@@ -337,53 +321,89 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
     }
   };
 
-  if (!metadata) {
+  if (detailError && !metadata) {
+    return (
+      <div className="flex flex-col flex-1 p-6 space-y-4 bg-[#F9FAFB]">
+        <button type="button" onClick={onBack} className="text-sm text-gray-600 hover:text-gray-900 w-fit">
+          ← Back to Calls
+        </button>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {detailError} Start the unified API on port 3001 and run{' '}
+          <code className="text-xs">seed-demo-data.ps1</code> if the call list is empty.
+        </div>
+      </div>
+    );
+  }
+
+  if (isDetailLoading || !metadata) {
     return (
       <div className="flex flex-col flex-1 p-6 space-y-6 bg-[#F9FAFB]">
         <div className="h-8 w-32 bg-gray-200 animate-pulse rounded" />
         <div className="h-24 bg-white border border-gray-200 rounded-lg animate-pulse" />
+        {isCallProcessing && (
+          <p className="text-sm text-gray-600">{processMessage ?? 'Processing call…'}</p>
+        )}
       </div>
     );
   }
 
   const dealStyle = getDealTypeBadgeStyle(metadata.dealType);
-  const audioSourceUrl = metadata.audioUrl || 'https://recordings-buttons.s3.eu-north-1.amazonaws.com/3mins_sales.mp3';
+  const audioSourceUrl = metadata.audioUrl || '';
 
-  // Brief variables with robust fallbacks
-  const currentBrief = activeBrief || MOCK_FALLBACK_BRIEF;
-  const overviewText = activeBrief?.overview?.text || MOCK_FALLBACK_BRIEF.overview.text;
-  const keyPoints = (activeBrief?.keyDiscussionPoints && activeBrief.keyDiscussionPoints.length > 0)
-    ? activeBrief.keyDiscussionPoints
-    : MOCK_FALLBACK_BRIEF.keyDiscussionPoints;
-  const customerNeeds = (activeBrief?.customerNeeds && activeBrief.customerNeeds.length > 0)
-    ? activeBrief.customerNeeds
-    : MOCK_FALLBACK_BRIEF.customerNeeds;
-  const risks = (activeBrief?.risks && activeBrief.risks.length > 0)
-    ? activeBrief.risks
-    : MOCK_FALLBACK_BRIEF.risks;
-  const commitments = (activeBrief?.commitments && activeBrief.commitments.length > 0)
-    ? activeBrief.commitments
-    : MOCK_FALLBACK_BRIEF.commitments;
-  const stakeholders = (activeBrief?.stakeholders && activeBrief.stakeholders.length > 0)
-    ? activeBrief.stakeholders
-    : MOCK_FALLBACK_BRIEF.stakeholders;
-  const activityContext = (activeBrief?.activityContext && activeBrief.activityContext.length > 0)
-    ? activeBrief.activityContext
-    : MOCK_FALLBACK_BRIEF.activityContext;
+  const overviewText = activeBrief?.overview?.text ?? '';
+  const keyPoints = activeBrief?.keyDiscussionPoints ?? [];
+  const customerNeeds = activeBrief?.customerNeeds ?? [];
+  const risks = activeBrief?.risks ?? [];
+  const commitments = activeBrief?.commitments ?? [];
+  const stakeholders = activeBrief?.stakeholders ?? [];
+  const activityContext = activeBrief?.activityContext ?? [];
 
-  const generatedDateString = activeBrief 
+  const generatedDateString = activeBrief
     ? new Date(activeBrief.generatedAt).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       })
-    : 'May 19, 2026 at 2:45 PM';
+    : '—';
+
+  const processingLabel =
+    processPhase === 'transcribing'
+      ? 'Transcribing recording…'
+      : processPhase === 'analyzing'
+        ? 'Analyzing transcript fields…'
+        : processMessage ?? 'Processing call…';
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-[#F9FAFB] overflow-y-auto px-8 py-6 space-y-6">
+      {(isCallProcessing || processError) && (
+        <div
+          className={`flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${
+            processError
+              ? 'border-red-200 bg-red-50 text-red-800'
+              : 'border-indigo-200 bg-indigo-50 text-indigo-900'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            {!processError && (
+              <span className="inline-block h-4 w-4 shrink-0 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+            )}
+            <span className="truncate">{processError ?? processingLabel}</span>
+          </div>
+          {processError && (
+            <button
+              type="button"
+              onClick={retryProcessing}
+              className="shrink-0 font-medium text-red-700 hover:text-red-900 underline"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Hidden Audio Player Element */}
       <audio
         ref={audioRef}
@@ -546,6 +566,23 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
       {/* Tab Contents */}
       {activeTab === 'briefs' ? (
         <div className="space-y-6">
+          {!activeBrief ? (
+            <div className="bg-white rounded-lg p-8 border border-gray-200 text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                No brief is available for this call yet. Generate one from the transcript or wait for processing to finish.
+              </p>
+              <button
+                type="button"
+                onClick={() => setGenerateOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white cursor-pointer"
+                style={{ backgroundColor: '#2563EB' }}
+              >
+                <Sparkles className="w-4 h-4" />
+                Generate Brief
+              </button>
+            </div>
+          ) : (
+          <>
           {/* Brief header with generate/share buttons */}
           <div className="flex items-center justify-between bg-white rounded-lg p-6 border border-gray-200">
             <div>
@@ -553,12 +590,12 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
               <div className="flex items-center gap-3.5 flex-wrap text-xs" style={{ color: '#6B7280' }}>
                 <div className="flex items-center gap-1.5">
                   <span>Generated from:</span>
-                  <span className="font-medium" style={{ color: '#111827' }}>{currentBrief.generatedFrom}</span>
+                  <span className="font-medium" style={{ color: '#111827' }}>{activeBrief?.generatedFrom ?? '—'}</span>
                 </div>
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#D1D5DB' }} />
                 <div className="flex items-center gap-1.5">
                   <span>Period:</span>
-                  <span className="font-medium" style={{ color: '#111827' }}>{currentBrief.period}</span>
+                  <span className="font-medium" style={{ color: '#111827' }}>{activeBrief?.period ?? '—'}</span>
                 </div>
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#D1D5DB' }} />
                 <div className="flex items-center gap-1.5">
@@ -865,6 +902,8 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
               )}
             </div>
           </div>
+          </>
+          )}
         </div>
       ) : (
         /* Transcript & Analysis Tab Content */
@@ -1323,6 +1362,8 @@ export default function CallsListRepView() {
     clearAccount,
     clearDealType,
     clearParticipantId,
+    setOwnerFilter,
+    reload: reloadCallsList,
   } = useCallsList();
 
   const { options: accounts } = useAccountsDropdown();
@@ -1347,19 +1388,25 @@ export default function CallsListRepView() {
     clearDealType();
     clearParticipantId();
     setMyCallsActive(false);
+    setOwnerFilter('');
   };
 
-  // Filter in-memory if My Calls is active (Alex Rodriguez is the AE owner)
-  const displayedCalls = myCallsActive
-    ? calls.filter((call) => call.owner.ownerName === 'Alex Rodriguez')
-    : calls;
+  const toggleMyCalls = () => {
+    const next = !myCallsActive;
+    setMyCallsActive(next);
+    setOwnerFilter(next ? DEMO_REP_OWNER : '');
+  };
 
   // ── If a call is selected, show detail panel ──
   if (selectedCallId) {
     return (
       <CallDetailPanel
         callId={selectedCallId}
-        onBack={() => setSelectedCallId(null)}
+        onProcessed={reloadCallsList}
+        onBack={() => {
+          setSelectedCallId(null);
+          reloadCallsList();
+        }}
       />
     );
   }
@@ -1438,7 +1485,7 @@ export default function CallsListRepView() {
                 <div className="py-1">
                   <button
                     onClick={() => {
-                      setMyCallsActive(!myCallsActive);
+                      toggleMyCalls();
                       setShowOwnerMenu(false);
                     }}
                     className="w-full flex items-center justify-between px-4 py-2 text-sm transition-colors text-left"
@@ -1880,7 +1927,7 @@ export default function CallsListRepView() {
             </div>
           </div>
         ) : (
-          <CallsTable calls={displayedCalls} onRowClick={setSelectedCallId} />
+          <CallsTable calls={calls} onRowClick={setSelectedCallId} />
         )}
       </div>
     </div>

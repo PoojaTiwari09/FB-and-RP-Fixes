@@ -14,6 +14,13 @@ import {
   mapUtterance,
 } from './m01-frontend-transcript.mapper';
 import { parseNextSteps, serializeNextSteps } from './m01-frontend-next-steps.util';
+import {
+  deriveCustomerNeeds,
+  deriveRisks,
+  deriveKeyDiscussionPointsFromUtterances,
+  deriveStakeholdersFromCall,
+} from './brief-field-analysis';
+import { resolveDurationSeconds } from '../lib/call-duration.util';
 import { randomUUID } from 'crypto';
 
 type StoredBrief = {
@@ -129,48 +136,129 @@ export class M01FrontendTranscriptService {
   private buildBriefBody(record: any): Record<string, unknown> {
     const t = record.transcript;
     const highlights = Array.isArray(t?.keyHighlights) ? t.keyHighlights : [];
+    const utterances = Array.isArray(t?.utterances) ? t.utterances : [];
+    const summary =
+      t?.summary?.trim() ||
+      (utterances.length > 0
+        ? utterances
+            .slice(0, 3)
+            .map((u: any) => u.text)
+            .join(' ')
+            .slice(0, 500)
+        : 'No summary available yet.');
+    const account = record.accountId || record.accountName || '';
     return {
-      overview: { text: t?.summary || 'No summary available yet.' },
-      keyDiscussionPoints: highlights.map((h: any) => ({
-        timestamp: h.timestampMs != null ? `${Math.floor(h.timestampMs / 1000)}s` : '—',
-        description: h.text || h.description || '',
-      })),
-      customerNeeds: [],
-      risks: [],
+      overview: { text: summary },
+      keyDiscussionPoints: deriveKeyDiscussionPointsFromUtterances(utterances, highlights),
+      customerNeeds: deriveCustomerNeeds(highlights, summary),
+      risks: deriveRisks(highlights, summary),
       commitments: parseNextSteps(t?.nextSteps).map((s) => ({
         description: s.description,
         assigneeType: 'rep',
         dueDate: null,
       })),
-      stakeholders: (record.participants ?? []).map((name: string) => ({
-        name,
-        title: '',
-        company: record.accountId || '',
-        avatarInitials: name.slice(0, 2).toUpperCase(),
-      })),
+      stakeholders: deriveStakeholdersFromCall(record.participants, utterances, account),
       activityContext: [],
     };
   }
 
+  private analyzedBriefId(callId: string) {
+    return `analyzed-${callId}`;
+  }
+
+  private autoBriefId(callId: string) {
+    return `auto-${callId}`;
+  }
+
+  /** Persist AI-analyzed brief after pipeline runs (Calls List detail open). */
+  async upsertAnalyzedBrief(callId: string, tenantId: string) {
+    const record = await this.loadCall(callId, tenantId);
+    const briefId = this.analyzedBriefId(callId);
+    const body = this.buildBriefBody(record);
+    const stored: StoredBrief = {
+      briefId,
+      callId,
+      briefTemplate: 'AI Call Analysis',
+      period: 'Full Call',
+      generatedAt: new Date().toISOString(),
+      generatedFrom: 'ai-analysis',
+      status: 'completed',
+      body,
+    };
+    this.briefs.set(briefId, stored);
+    return { briefId };
+  }
+
+  private autoBriefGeneratedAt(record: any): string {
+    const t = record.transcript;
+    const raw = t?.updatedAt || t?.createdAt || new Date();
+    return raw instanceof Date ? raw.toISOString() : new Date(raw).toISOString();
+  }
+
   async listBriefs(callId: string, tenantId: string, rawQuery: Record<string, string>) {
-    await this.loadCall(callId, tenantId);
+    const record = await this.loadCall(callId, tenantId);
     const page = Math.max(1, parseInt(rawQuery.page || '1', 10));
     const size = Math.min(100, Math.max(1, parseInt(rawQuery.size || '20', 10)));
-    const all = [...this.briefs.values()].filter((b) => b.callId === callId);
-    const slice = all.slice((page - 1) * size, page * size);
-    return {
-      briefs: slice.map((b) => ({
-        briefId: b.briefId,
-        briefTemplate: b.briefTemplate,
-        period: b.period,
-        generatedAt: b.generatedAt,
-        generatedFrom: b.generatedFrom,
-      })),
-    };
+    const stored = [...this.briefs.values()].filter((b) => b.callId === callId);
+    let items = stored.map((b) => ({
+      briefId: b.briefId,
+      briefTemplate: b.briefTemplate,
+      period: b.period,
+      generatedAt: b.generatedAt,
+      generatedFrom: b.generatedFrom,
+    }));
+    if (items.length === 0 && record.transcript) {
+      const analyzedId = this.analyzedBriefId(callId);
+      const analyzed = this.briefs.get(analyzedId);
+      if (analyzed) {
+        items = [
+          {
+            briefId: analyzed.briefId,
+            briefTemplate: analyzed.briefTemplate,
+            period: analyzed.period,
+            generatedAt: analyzed.generatedAt,
+            generatedFrom: analyzed.generatedFrom,
+          },
+        ];
+      } else {
+        items = [
+          {
+            briefId: this.autoBriefId(callId),
+            briefTemplate: 'Transcript Analysis',
+            period: 'Full Call',
+            generatedAt: this.autoBriefGeneratedAt(record),
+            generatedFrom: 'transcript',
+          },
+        ];
+      }
+    }
+    const slice = items.slice((page - 1) * size, page * size);
+    return { briefs: slice };
   }
 
   async getBrief(callId: string, briefId: string, tenantId: string) {
     const record = await this.loadCall(callId, tenantId);
+    const analyzed = this.briefs.get(this.analyzedBriefId(callId));
+    if (analyzed && (briefId === analyzed.briefId || briefId === this.analyzedBriefId(callId))) {
+      return {
+        briefId: analyzed.briefId,
+        briefTemplate: analyzed.briefTemplate,
+        period: analyzed.period,
+        generatedAt: analyzed.generatedAt,
+        generatedFrom: analyzed.generatedFrom,
+        ...(analyzed.body || this.buildBriefBody(record)),
+      };
+    }
+    if (briefId === this.autoBriefId(callId)) {
+      return {
+        briefId,
+        briefTemplate: 'Transcript Analysis',
+        period: 'Full Call',
+        generatedAt: this.autoBriefGeneratedAt(record),
+        generatedFrom: 'transcript',
+        ...this.buildBriefBody(record),
+      };
+    }
     const b = this.briefs.get(briefId);
     if (!b || b.callId !== callId) throw new NotFoundException('Brief not found');
     return {

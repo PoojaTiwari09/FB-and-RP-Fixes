@@ -153,10 +153,31 @@ export type WSEvent =
 
 // ─── Live Session Aggregated State ─────────────────────────────────────────
 
+export type TranscriptSpeaker = 'REP' | 'CUSTOMER';
+
 export interface LogEntry {
   timestamp: string; // MM:SS display format
   title: string;
   description: string;
+}
+
+export interface StrategicTip {
+  tip: string;
+  exactScript?: string;
+}
+
+export interface DiarizedLine {
+  id: string;
+  ts: number;
+  timeLabel: string;
+  speaker: TranscriptSpeaker;
+  speakerName: string;
+  text: string;
+}
+
+export interface PreviousSuggestion {
+  timeLabel: string;
+  text: string;
 }
 
 export interface LiveSessionData {
@@ -169,11 +190,16 @@ export interface LiveSessionData {
   summarySegments: ConversationSegment[];
   overlay: OverlayUpdateEvent | null;
   logEntries: LogEntry[];
+  strategicTips: StrategicTip[];
+  diarizedLines: DiarizedLine[];
+  previousSuggestions: PreviousSuggestion[];
+  objectionTimeline: string[];
+  contextSummary: string;
+  repName: string;
+  clientName: string;
 }
 
 // ─── Transcript ────────────────────────────────────────────────────────────
-
-export type TranscriptSpeaker = 'REP' | 'CUSTOMER';
 
 export interface TranscriptSegment {
   timestamp: string;

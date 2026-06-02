@@ -78,6 +78,17 @@ export class M01FrontendCallsService {
 
     const extra: Record<string, unknown> = {};
 
+    // Calls List UI: only show review-ready rows (recording + completed transcript).
+    const isCallsList =
+      !rawQuery.view &&
+      rawQuery.format !== 'ai-reviewer' &&
+      rawQuery.view !== 'ai-reviewer';
+    if (isCallsList && (!q.status || q.status === 'all')) {
+      extra.transcriptStatus = 'completed';
+      extra.audioUrl = { not: null };
+      extra.transcript = { isNot: null };
+    }
+
     if (q.status && q.status !== 'all') {
       extra.transcriptStatus =
         q.status === 'processing' ? { in: ['processing', 'pending'] } : q.status;
@@ -107,10 +118,10 @@ export class M01FrontendCallsService {
       else if (q.duration === '2to10') extra.durationSeconds = { gte: 120, lte: 600 };
       else if (q.duration === 'gt10') extra.durationSeconds = { gt: 600 };
     }
-    if (q.dateRange && q.dateRange !== 'custom') {
+    if (q.dateRange && q.dateRange !== 'all' && q.dateRange !== 'custom') {
       const days = q.dateRange === 'last7days' ? 7 : 30;
       extra.callDate = { gte: new Date(Date.now() - days * 86400000) };
-    } else if (q.startDate || q.endDate) {
+    } else if (q.dateRange === 'custom' && (q.startDate || q.endDate)) {
       extra.callDate = {
         ...(q.startDate ? { gte: new Date(q.startDate) } : {}),
         ...(q.endDate ? { lte: new Date(q.endDate) } : {}),

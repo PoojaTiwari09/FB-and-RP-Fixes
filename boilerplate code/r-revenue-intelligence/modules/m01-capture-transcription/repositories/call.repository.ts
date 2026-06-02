@@ -35,7 +35,17 @@ export class CallRepository {
         skip: offset,
         include: {
           transcript: {
-            select: { id: true, summary: true, keyHighlights: true, talkRatio: true },
+            select: {
+              id: true,
+              summary: true,
+              keyHighlights: true,
+              talkRatio: true,
+              utterances: {
+                select: { endMs: true, startMs: true },
+                orderBy: { endMs: 'desc' },
+                take: 1,
+              },
+            },
           },
         },
       }),
@@ -72,6 +82,21 @@ export class CallRepository {
     return this.prisma.callRecord.updateMany({
       where: { id, tenantId },                   // ✅ tenantId scoped
       data:  { transcriptStatus: status, failureReason },
+    });
+  }
+
+  async updateDurationSeconds(id: string, tenantId: string, durationSeconds: number) {
+    if (durationSeconds <= 0) return { count: 0 };
+    return this.prisma.callRecord.updateMany({
+      where: { id, tenantId },
+      data: { durationSeconds },
+    });
+  }
+
+  async updateParticipants(id: string, tenantId: string, participants: string[]) {
+    return this.prisma.callRecord.updateMany({
+      where: { id, tenantId },
+      data: { participants },
     });
   }
 

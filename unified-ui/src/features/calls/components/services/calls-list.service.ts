@@ -29,6 +29,8 @@ import type {
   NoteResponse,
   CallShareResponse,
   PdfExportResponse,
+  CallProcessStatus,
+  CallProcessResponse,
 } from '../types/calls.types';
 
 import {
@@ -52,9 +54,21 @@ import {
   MOCK_NEXT_STEPS_MAP,
 } from '../mocks/calls.mock';
 
+import {
+  DEMO_SEED_CALLS_LIST,
+  DEMO_SEED_METADATA_MAP,
+  DEMO_SEED_BRIEF_MAP,
+  DEMO_SEED_TRANSCRIPT_MAP,
+  DEMO_SEED_TRANSCRIPT_SUMMARY_MAP,
+  DEMO_SEED_TALK_RATIO_MAP,
+  DEMO_SEED_TOPICS_MAP,
+  DEMO_SEED_NEXT_STEPS_MAP,
+} from '../mocks/demo-seed-calls.mock';
+
 import { ENV } from '@shared/config/env';
 import { fetchApiOrMock } from '@shared/lib/api-data-source';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
+import { unwrapM01Payload } from '@shared/lib/m01-api-payload';
 
 // ─── Config (M01 bridge @ /api/calls) ───────────────────────
 
@@ -70,7 +84,65 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     headers: { ...DEFAULT_HEADERS, ...options?.headers },
   });
   if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
-  return res.json() as Promise<T>;
+  const json = (await res.json()) as Record<string, unknown>;
+  return unwrapM01Payload<T>(json);
+}
+
+/** Per-call mock lookup — never fall back to another call's data. */
+function mockForCall<T>(map: Record<string, T>, callId: string, label: string): T {
+  const hit = map[callId];
+  if (hit) return hit;
+  throw new Error(`[mock] No ${label} for callId=${callId}`);
+}
+
+function demoMockMap<T>(seed: Record<string, T>, legacy: Record<string, T>): Record<string, T> {
+  return { ...legacy, ...seed };
+}
+
+function demoMockForCall<T>(
+  seed: Record<string, T>,
+  legacy: Record<string, T>,
+  callId: string,
+  label: string,
+): T {
+  return mockForCall(demoMockMap(seed, legacy), callId, label);
+}
+
+function mockBriefsListForCall(callId: string): BriefsListResponse {
+  const stored = DEMO_SEED_BRIEF_MAP[callId] ?? MOCK_BRIEF_DETAIL_MAP[callId];
+  if (stored) {
+    return {
+      briefs: [
+        {
+          briefId: stored.briefId,
+          briefTemplate: stored.briefTemplate,
+          period: stored.period,
+          generatedAt: stored.generatedAt,
+          generatedFrom: stored.generatedFrom,
+        },
+      ],
+    };
+  }
+  return {
+    briefs: [
+      {
+        briefId: `auto-${callId}`,
+        briefTemplate: 'Transcript Analysis',
+        period: 'Full Call',
+        generatedAt: new Date().toISOString(),
+        generatedFrom: 'transcript',
+      },
+    ],
+  };
+}
+
+function mockBriefDetailForCall(callId: string, briefId: string): BriefDetail {
+  const maps = demoMockMap(DEMO_SEED_BRIEF_MAP, MOCK_BRIEF_DETAIL_MAP);
+  const byCall = maps[callId];
+  if (byCall && (briefId === byCall.briefId || briefId === `auto-${callId}` || briefId === `analyzed-${callId}`)) {
+    return byCall;
+  }
+  return mockForCall(maps, callId, 'brief detail');
 }
 
 // ─── 1. GET /api/calls ────────────────────────────────────────
@@ -86,17 +158,23 @@ export async function fetchCallsList(filters: Partial<CallsListFilters>): Promis
   if (filters.account && filters.account.length > 0) params.set('account', filters.account.join(','));
   if (filters.participantId && filters.participantId.length > 0) params.set('participantId', filters.participantId.join(','));
   if (filters.ownerId) params.set('ownerId', filters.ownerId);
-  if (filters.dateRange) params.set('dateRange', filters.dateRange);
+  if (filters.dateRange && filters.dateRange !== 'all') params.set('dateRange', filters.dateRange);
   if (filters.startDate) params.set('startDate', filters.startDate);
   if (filters.endDate) params.set('endDate', filters.endDate);
 
-  return fetchApiOrMock('CallsListResponse', () => apiFetch<CallsListResponse>(`/api/calls?${params.toString()}`), () => MOCK_CALLS_LIST);
+  return fetchApiOrMock(
+    'CallsListResponse',
+    () => apiFetch<CallsListResponse>(`/api/calls?${params.toString()}`),
+    () => DEMO_SEED_CALLS_LIST,
+  );
 }
 
 // ─── 2. GET /api/calls/:callId ────────────────────────────────
 
 export async function fetchCallDetail(callId: string): Promise<CallMetadata> {
-  return fetchApiOrMock('CallMetadata', () => apiFetch<CallMetadata>(`/api/calls/${callId}`), () => MOCK_CALL_METADATA_MAP[callId] ?? MOCK_CALL_METADATA);
+  return fetchApiOrMock('CallMetadata', () => apiFetch<CallMetadata>(`/api/calls/${callId}`), () =>
+    mockForCall(MOCK_CALL_METADATA_MAP, callId, 'call metadata'),
+  );
 }
 
 // ─── 3. GET /api/calls/accounts ───────────────────────────────
@@ -115,22 +193,65 @@ export async function fetchParticipants(search?: string, accountId?: string): Pr
   return fetchApiOrMock('ParticipantsResponse', () => apiFetch<ParticipantsResponse>(`/api/calls/participants?${params.toString()}`), () => MOCK_PARTICIPANTS);
 }
 
+// ─── 5b. Call processing (transcribe + analyze on open) ───────
+
+export async function fetchCallProcessStatus(callId: string): Promise<CallProcessStatus> {
+  return fetchApiOrMock(
+    'CallProcessStatus',
+    () => apiFetch<CallProcessStatus>(`/api/calls/${callId}/process-status`),
+    () => ({
+      callId,
+      transcriptStatus: 'completed',
+      phase: 'ready',
+      utteranceCount: 1,
+      hasSummary: true,
+      hasAudio: true,
+      message: 'Call is ready.',
+    }),
+  );
+}
+
+export async function triggerCallProcess(callId: string): Promise<CallProcessResponse> {
+  return fetchApiOrMock(
+    'CallProcessResponse',
+    () =>
+      apiFetch<CallProcessResponse>(`/api/calls/${callId}/process`, {
+        method: 'POST',
+      }),
+    () => ({
+      phase: 'ready',
+      transcriptStatus: 'completed',
+      message: 'Transcript and analysis fields are ready.',
+    }),
+  );
+}
+
 // ─── 6. GET /api/calls/:callId/metadata ──────────────────────
 
 export async function fetchCallMetadata(callId: string): Promise<CallMetadata> {
-  return fetchApiOrMock('CallMetadata', () => apiFetch<CallMetadata>(`/api/calls/${callId}/metadata`), () => MOCK_CALL_METADATA_MAP[callId] ?? MOCK_CALL_METADATA);
+  return fetchApiOrMock('CallMetadata', () => apiFetch<CallMetadata>(`/api/calls/${callId}/metadata`), () =>
+    demoMockForCall(DEMO_SEED_METADATA_MAP, MOCK_CALL_METADATA_MAP, callId, 'call metadata'),
+  );
 }
 
 // ─── 7. GET /api/calls/:callId/briefs ────────────────────────
 
 export async function fetchBriefsList(callId: string, page = 1, size = 10): Promise<BriefsListResponse> {
-  return fetchApiOrMock('BriefsListResponse', () => apiFetch<BriefsListResponse>(`/api/calls/${callId}/briefs?page=${page}&size=${size}`), () => MOCK_BRIEFS_LIST);
+  return fetchApiOrMock(
+    'BriefsListResponse',
+    () => apiFetch<BriefsListResponse>(`/api/calls/${callId}/briefs?page=${page}&size=${size}`),
+    () => mockBriefsListForCall(callId),
+  );
 }
 
 // ─── 8. GET /api/calls/:callId/briefs/:briefId ───────────────
 
 export async function fetchBriefDetail(callId: string, briefId: string): Promise<BriefDetail> {
-  return fetchApiOrMock('BriefDetail', () => apiFetch<BriefDetail>(`/api/calls/${callId}/briefs/${briefId}`), () => MOCK_BRIEF_DETAIL_MAP[callId] ?? Object.values(MOCK_BRIEF_DETAIL_MAP)[0]);
+  return fetchApiOrMock(
+    'BriefDetail',
+    () => apiFetch<BriefDetail>(`/api/calls/${callId}/briefs/${briefId}`),
+    () => mockBriefDetailForCall(callId, briefId),
+  );
 }
 
 // ─── 9. GET /api/brief-templates ─────────────────────────────
@@ -248,19 +369,25 @@ export async function fetchTranscript(
   if (params.size) qp.set('size', String(params.size));
   if (params.search) qp.set('search', params.search);
   if (params.showLowConfidenceOnly) qp.set('showLowConfidenceOnly', 'true');
-  return fetchApiOrMock('TranscriptResponse', () => apiFetch<TranscriptResponse>(`/api/calls/${callId}/transcript?${qp.toString()}`), () => MOCK_TRANSCRIPT_MAP[callId] ?? Object.values(MOCK_TRANSCRIPT_MAP)[0]);
+  return fetchApiOrMock('TranscriptResponse', () => apiFetch<TranscriptResponse>(`/api/calls/${callId}/transcript?${qp.toString()}`), () =>
+    demoMockForCall(DEMO_SEED_TRANSCRIPT_MAP, MOCK_TRANSCRIPT_MAP, callId, 'transcript'),
+  );
 }
 
 // ─── 23. GET /api/calls/:callId/transcript/summary ───────────
 
 export async function fetchTranscriptSummary(callId: string): Promise<TranscriptSummary> {
-  return fetchApiOrMock('TranscriptSummary', () => apiFetch<TranscriptSummary>(`/api/calls/${callId}/transcript/summary`), () => MOCK_TRANSCRIPT_SUMMARY_MAP[callId] ?? Object.values(MOCK_TRANSCRIPT_SUMMARY_MAP)[0]);
+  return fetchApiOrMock('TranscriptSummary', () => apiFetch<TranscriptSummary>(`/api/calls/${callId}/transcript/summary`), () =>
+    demoMockForCall(DEMO_SEED_TRANSCRIPT_SUMMARY_MAP, MOCK_TRANSCRIPT_SUMMARY_MAP, callId, 'transcript summary'),
+  );
 }
 
 // ─── 24. GET /api/calls/:callId/transcript/talk-ratio ────────
 
 export async function fetchTalkRatio(callId: string): Promise<TalkRatio> {
-  return fetchApiOrMock('TalkRatio', () => apiFetch<TalkRatio>(`/api/calls/${callId}/transcript/talk-ratio`), () => MOCK_TALK_RATIO_MAP[callId] ?? Object.values(MOCK_TALK_RATIO_MAP)[0]);
+  return fetchApiOrMock('TalkRatio', () => apiFetch<TalkRatio>(`/api/calls/${callId}/transcript/talk-ratio`), () =>
+    demoMockForCall(DEMO_SEED_TALK_RATIO_MAP, MOCK_TALK_RATIO_MAP, callId, 'talk ratio'),
+  );
 }
 
 // ─── 25. GET /api/calls/:callId/transcript/audio ─────────────
@@ -272,13 +399,17 @@ export async function fetchAudio(callId: string): Promise<AudioMeta> {
 // ─── 26. GET /api/calls/:callId/transcript/topics ────────────
 
 export async function fetchTopics(callId: string): Promise<TopicsResponse> {
-  return fetchApiOrMock('TopicsResponse', () => apiFetch<TopicsResponse>(`/api/calls/${callId}/transcript/topics`), () => MOCK_TOPICS_MAP[callId] ?? Object.values(MOCK_TOPICS_MAP)[0]);
+  return fetchApiOrMock('TopicsResponse', () => apiFetch<TopicsResponse>(`/api/calls/${callId}/transcript/topics`), () =>
+    demoMockForCall(DEMO_SEED_TOPICS_MAP, MOCK_TOPICS_MAP, callId, 'topics'),
+  );
 }
 
 // ─── 27. GET /api/calls/:callId/next-steps ───────────────────
 
 export async function fetchNextSteps(callId: string): Promise<NextStepsResponse> {
-  return fetchApiOrMock('NextStepsResponse', () => apiFetch<NextStepsResponse>(`/api/calls/${callId}/next-steps`), () => MOCK_NEXT_STEPS_MAP[callId] ?? Object.values(MOCK_NEXT_STEPS_MAP)[0]);
+  return fetchApiOrMock('NextStepsResponse', () => apiFetch<NextStepsResponse>(`/api/calls/${callId}/next-steps`), () =>
+    demoMockForCall(DEMO_SEED_NEXT_STEPS_MAP, MOCK_NEXT_STEPS_MAP, callId, 'next steps'),
+  );
 }
 
 // ─── 28. PATCH /api/calls/:callId/next-steps/:stepId ─────────

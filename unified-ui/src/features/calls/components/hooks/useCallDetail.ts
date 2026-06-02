@@ -35,6 +35,9 @@ export function useCallDetail(callId: string | null): UseCallDetailReturn {
     if (!callId) return;
     setIsLoading(true);
     setError(null);
+    setMetadata(null);
+    setBriefs(null);
+    setActiveBrief(null);
     try {
       const [meta, briefsData] = await Promise.all([
         fetchCallMetadata(callId),
@@ -43,13 +46,19 @@ export function useCallDetail(callId: string | null): UseCallDetailReturn {
       setMetadata(meta);
       setBriefs(briefsData);
 
-      // Auto-load first brief
       if (briefsData.briefs.length > 0) {
-        const detail = await fetchBriefDetail(callId, briefsData.briefs[0].briefId);
+        const analyzedId = `analyzed-${callId}`;
+        const autoId = `auto-${callId}`;
+        const preferred =
+          briefsData.briefs.find((b) => b.briefId === analyzedId) ??
+          briefsData.briefs.find((b) => b.briefId === autoId) ??
+          briefsData.briefs[0];
+        const detail = await fetchBriefDetail(callId, preferred.briefId);
         setActiveBrief(detail);
       }
-    } catch {
-      setError('Failed to load call details.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load call details.';
+      setError(msg.includes('404') ? 'Call not found on API — use seeded demo calls or check the API is running.' : `Failed to load call details: ${msg}`);
     } finally {
       setIsLoading(false);
     }

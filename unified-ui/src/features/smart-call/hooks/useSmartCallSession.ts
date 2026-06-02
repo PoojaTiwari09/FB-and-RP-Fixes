@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { LiveSessionData, WSEvent, Competitor } from '@smart-call/types/smart-call.types';
+import type {
+  LiveSessionData,
+  WSEvent,
+  Competitor,
+  TranscriptSpeaker,
+} from '@smart-call/types/smart-call.types';
+import {
+  buildDiarizedLine,
+  inferSpeaker,
+  mergeDiarizedLines,
+  speakerNamesFromInsights,
+  formatLiveTime,
+} from '@smart-call/lib/diarization';
 import type { SmartCallApiKeys } from '@smart-call/lib/api-keys';
 import type { AudioCapturePrefs } from '@smart-call/components/AudioCaptureModal';
 import { insightsToEvents } from '@smart-call/lib/insights-to-ui';
@@ -31,6 +43,13 @@ const INITIAL_STATE: LiveSessionData = {
   summarySegments: [],
   overlay: null,
   logEntries: [],
+  strategicTips: [],
+  diarizedLines: [],
+  previousSuggestions: [],
+  objectionTimeline: [],
+  contextSummary: '',
+  repName: 'You',
+  clientName: 'Client',
 };
 
 const CAPTURE_SLICE_MS = 5000;
@@ -47,7 +66,7 @@ const FULL_INSIGHT_COOLDOWN_MS = 8000;
 export type SmartCallSessionOptions = {
   apiKeys: SmartCallApiKeys;
   sessionId?: string;
-  dealContext?: { company?: string; stage?: string; value?: number; contact?: string };
+  dealContext?: { company?: string; stage?: string; value?: number; contact?: string; rep?: string };
 };
 
 type StoredSummary = {
@@ -151,18 +170,44 @@ export function useSmartCallSession(options: SmartCallSessionOptions) {
   const lastCompetitorAlertRef = useRef<Record<string, number>>({});
   const competitorsRef = useRef<Competitor[]>([]);
   const apiKeysRef = useRef(apiKeys);
+  const lastSpeakerRef = useRef<TranscriptSpeaker>('REP');
+  const repNameRef = useRef(dealContext?.rep ?? 'You');
+  const clientNameRef = useRef(dealContext?.contact ?? 'Client');
 
   useEffect(() => {
     apiKeysRef.current = apiKeys;
   }, [apiKeys]);
+
+  useEffect(() => {
+    if (dealContext?.contact) {
+      clientNameRef.current = dealContext.contact;
+    }
+    if (dealContext?.rep) {
+      repNameRef.current = dealContext.rep;
+    }
+    setData((prev) => ({
+      ...prev,
+      clientName: clientNameRef.current,
+      repName: repNameRef.current,
+    }));
+  }, [dealContext?.contact, dealContext?.rep]);
 
   const applyEvent = useCallback((event: WSEvent) => {
     setData((prev) => {
       switch (event.eventType) {
         case 'LIVE_GUIDANCE':
           return { ...prev, guidance: event };
-        case 'SUGGESTED_RESPONSES':
-          return { ...prev, responses: event.responses };
+        case 'SUGGESTED_RESPONSES': {
+          const timeLabel = callStartRef.current
+            ? formatLiveTime(Date.now(), callStartRef.current)
+            : 'Live';
+          const added = event.responses.map((text) => ({ timeLabel, text }));
+          return {
+            ...prev,
+            responses: event.responses,
+            previousSuggestions: [...added, ...prev.previousSuggestions].slice(0, 12),
+          };
+        }
         case 'COMPETITOR_INTELLIGENCE': {
           const merged = [...event.competitors, ...prev.competitors].slice(0, 4);
           competitorsRef.current = merged;
@@ -189,6 +234,52 @@ export function useSmartCallSession(options: SmartCallSessionOptions) {
 
   const applyInsights = useCallback(
     (insights: Record<string, unknown>, requestType: string) => {
+      const names = speakerNamesFromInsights(
+        insights,
+        repNameRef.current,
+        clientNameRef.current,
+      );
+      repNameRef.current = names.repName;
+      clientNameRef.current = names.clientName;
+
+      const strategicTips = Array.isArray(insights.strategicTips)
+        ? (insights.strategicTips as Array<{ tip?: string; exactScript?: string }>)
+            .filter((t) => t.tip?.trim())
+            .map((t) => ({ tip: String(t.tip), exactScript: t.exactScript }))
+        : [];
+
+      const objectionTimeline = Array.isArray(insights.objectionTimeline)
+        ? (insights.objectionTimeline as string[]).slice(0, 8)
+        : [];
+
+      const drift = insights.conversationDrift as
+        | { detected?: boolean; description?: string; recommendation?: string }
+        | undefined;
+      const driftEntries =
+        drift?.detected && drift.description
+          ? [
+              {
+                timestamp: 'Live',
+                title: 'Conversation drift',
+                description: `${drift.description}${drift.recommendation ? ` — ${drift.recommendation}` : ''}`,
+              },
+            ]
+          : [];
+
+      setData((prev) => ({
+        ...prev,
+        repName: names.repName,
+        clientName: names.clientName,
+        strategicTips: strategicTips.length ? strategicTips : prev.strategicTips,
+        objectionTimeline: objectionTimeline.length ? objectionTimeline : prev.objectionTimeline,
+        contextSummary: String(
+          insights.headline || insights.chunkSummary || prev.contextSummary || '',
+        ),
+        logEntries: driftEntries.length
+          ? [...driftEntries, ...prev.logEntries].slice(0, 8)
+          : prev.logEntries,
+      }));
+
       if (insights.strategicTips && Array.isArray(insights.strategicTips)) {
         const tips = insights.strategicTips as Array<{ tip?: string; exactScript?: string }>;
         tipStabilizerRef.current.update(tips);
@@ -495,9 +586,22 @@ export function useSmartCallSession(options: SmartCallSessionOptions) {
             ts: Date.now(),
             text,
           };
+          const speaker = inferSpeaker(text, lastSpeakerRef.current);
+          lastSpeakerRef.current = speaker;
+          const line = buildDiarizedLine(
+            segment,
+            speaker,
+            repNameRef.current,
+            clientNameRef.current,
+            callStartRef.current || segment.ts,
+          );
           segmentsRef.current = clipSegments([...segmentsRef.current, segment]);
           transcriptRef.current = segmentsRef.current.map((s) => s.text).join('\n');
           setLiveTranscript(transcriptRef.current);
+          setData((prev) => ({
+            ...prev,
+            diarizedLines: mergeDiarizedLines([...prev.diarizedLines, line]).slice(-60),
+          }));
           runLocalTick();
         } catch (err) {
           carryChunkRef.current = null;
@@ -661,9 +765,16 @@ export function useSmartCallSession(options: SmartCallSessionOptions) {
       recorderRef.current = recorder;
       isCapturingRef.current = true;
       callStartRef.current = Date.now();
+      lastSpeakerRef.current = 'REP';
       segmentsRef.current = [];
       transcriptRef.current = '';
       setLiveTranscript('');
+      setData((prev) => ({
+        ...prev,
+        diarizedLines: [],
+        previousSuggestions: [],
+        clientName: clientNameRef.current,
+      }));
       conversationMemoryRef.current = new ConversationMemory();
       tipStabilizerRef.current = new StrategicTipStabilizer();
       previousSignalsRef.current = null;

@@ -29,6 +29,7 @@ interface UseTranscriptReturn {
   showLowConfidenceOnly: boolean;
   setShowLowConfidenceOnly: (v: boolean) => void;
   toggleStepCompleted: (stepId: string) => void;
+  reload: () => void;
 }
 
 export function useTranscript(callId: string | null): UseTranscriptReturn {
@@ -42,13 +43,23 @@ export function useTranscript(callId: string | null): UseTranscriptReturn {
   const [searchQuery, setSearchQuery] = useState('');
   const [showLowConfidenceOnly, setShowLowConfidenceOnly] = useState(false);
 
+  useEffect(() => {
+    setRawTranscript([]);
+    setSummary(null);
+    setTalkRatio(null);
+    setTopics([]);
+    setNextSteps([]);
+    setSearchQuery('');
+    setShowLowConfidenceOnly(false);
+  }, [callId]);
+
   const loadTranscript = useCallback(async () => {
     if (!callId) return;
     try {
       const data = await fetchTranscript(callId, {});
       setRawTranscript(data.transcript);
     } catch {
-      /* handled at service level */
+      setRawTranscript([]);
     }
   }, [callId]);
 
@@ -122,6 +133,11 @@ export function useTranscript(callId: string | null): UseTranscriptReturn {
     [callId, nextSteps],
   );
 
+  const reload = useCallback(() => {
+    loadTranscript();
+    loadSidePanel();
+  }, [loadTranscript, loadSidePanel]);
+
   return {
     transcript: filteredTranscript,
     totalCount: filteredTranscript.length,
@@ -136,5 +152,6 @@ export function useTranscript(callId: string | null): UseTranscriptReturn {
     showLowConfidenceOnly,
     setShowLowConfidenceOnly,
     toggleStepCompleted,
+    reload,
   };
 }

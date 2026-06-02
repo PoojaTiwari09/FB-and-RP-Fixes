@@ -327,3 +327,23 @@ export interface PdfExportResponse {
   fileSizeKb: number;
   downloadUrl: string;
 }
+
+// ─── Call processing (transcribe + analyze on open) ───────────
+
+export type CallProcessPhase = 'transcribing' | 'analyzing' | 'ready' | 'error';
+
+export interface CallProcessStatus {
+  callId: string;
+  transcriptStatus: string;
+  phase: CallProcessPhase;
+  utteranceCount: number;
+  hasSummary: boolean;
+  hasAudio: boolean;
+  message: string;
+}
+
+export interface CallProcessResponse {
+  phase: CallProcessPhase;
+  transcriptStatus: string;
+  message: string;
+}
