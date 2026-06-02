@@ -77,20 +77,87 @@ export async function getVoices(): Promise<VoiceOption[]> {
 
 // ── Public: TTS ────────────────────────────────────────────────────────────
 
-/**
- * Synthesize speech for the AI agent reply.
- *
- * Always tries browser SpeechSynthesis first (guaranteed to work).
- * If ElevenLabs key is valid and returns audio, uses that instead for better quality.
- */
 export function synthesizeSpeech(
   text: string,
   voiceId: string,
   onEnd: () => void
 ): { stop: () => void } {
-  // Always start with browser TTS immediately (no latency, no API dependency)
-  // ElevenLabs enhancement can be layered on top later when subscription is confirmed
-  return browserTTS(text, onEnd);
+  if (!AI_CONFIG.ELEVENLABS_API_KEY) {
+    return browserTTS(text, onEnd);
+  }
+
+  let activeAudio: HTMLAudioElement | null = null;
+  let isStopped = false;
+  let browserFallback: { stop: () => void } | null = null;
+
+  async function startElevenLabs() {
+    try {
+      const response = await fetch(`${AI_CONFIG.ELEVENLABS_TTS_URL}/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': AI_CONFIG.ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json',
+          accept: 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text,
+          model_id: AI_CONFIG.ELEVENLABS_MODEL || 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`ElevenLabs TTS status: ${response.status}`);
+      }
+
+      if (isStopped) return;
+
+      const blob = await response.blob();
+      if (isStopped) return;
+
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      activeAudio = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        if (!isStopped) {
+          onEnd();
+        }
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        if (!isStopped) {
+          browserFallback = browserTTS(text, onEnd);
+        }
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.warn('[ElevenLabsService] ElevenLabs TTS failed, using browser fallback:', err);
+      if (!isStopped) {
+        browserFallback = browserTTS(text, onEnd);
+      }
+    }
+  }
+
+  startElevenLabs();
+
+  return {
+    stop: () => {
+      isStopped = true;
+      if (activeAudio) {
+        activeAudio.pause();
+      }
+      if (browserFallback) {
+        browserFallback.stop();
+      }
+    },
+  };
 }
 
 /**

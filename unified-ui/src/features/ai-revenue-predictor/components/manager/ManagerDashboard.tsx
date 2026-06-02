@@ -1,9 +1,9 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import MathDrawer from './MathDrawer';
-import PeriodToggle from './PeriodToggle';
-import ForecastBoard from './components/ForecastBoard';
-import { M06_LEGACY_API_BASE, fetchForecastBoard, type ForecastBoardPayload } from './api';
+import MathDrawer from '@forecast/MathDrawer';
+import PeriodToggle from '@forecast/PeriodToggle';
+import ForecastBoard from '@forecast/components/ForecastBoard';
+import { M06_LEGACY_API_BASE, fetchForecastBoard, type ForecastBoardPayload } from '@forecast/api';
 
 const API = M06_LEGACY_API_BASE;
 const TENANT = 'demo-tenant-01';
@@ -75,7 +75,7 @@ function BreakdownBar({ math, breakdown }: { math: any, breakdown?: any }) {
   );
 }
 
-function ReviewModal({ rep, user, onClose, onRefresh }:{ rep:any; user:any; onClose:()=>void; onRefresh:()=>void }) {
+function ReviewModal({ rep, user, onClose, onRefresh, selectedPeriod }:{ rep:any; user:any; onClose:()=>void; onRefresh:()=>void; selectedPeriod: string }) {
   const sub = rep.submission;
   const [comment, setComment] = useState('');
   const [overrideVal, setOverrideVal] = useState('');
@@ -256,7 +256,7 @@ export default function ManagerDashboard({ user, onLogout }:{ user:any; onLogout
       const [res, atRiskRes, tddRes] = await Promise.all([
         fetch(url, { headers: { 'x-tenant-id': TENANT }, signal: controller.signal }),
         fetch(`${API}/team/at-risk-deals?periodId=${periodId}`, { headers: { 'x-tenant-id': TENANT }, signal: controller.signal }),
-        fetchForecastBoard(TENANT, resolvedPeriodId, user.id, 'manager').catch(() => null)
+        fetchForecastBoard(TENANT, resolvedPeriodId, user.id, 'sales_manager').catch(() => null)
       ]);
       clearTimeout(timeout);
       if (!res.ok) throw new Error('Team board unavailable');

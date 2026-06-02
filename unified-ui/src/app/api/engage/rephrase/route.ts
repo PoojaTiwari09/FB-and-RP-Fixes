@@ -77,16 +77,18 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join('\n');
 
-  const systemPrompt = `You are an expert B2B sales email assistant. Rephrase sales outreach emails in fresh wording while keeping the same meaning.
+  const systemPrompt = `You are an expert B2B sales email assistant. Rephrase the provided text in a ${payload.tone || 'formal'} tone while keeping the same meaning.
 
 Rules:
-- Preserve ALL facts: names, companies, dates, numbers, product details, and the call-to-action
-- Keep the same intent, urgency, and professional tone
-- Keep a greeting and sign-off (adjust names only if already present in the original)
-- Match roughly the same length (within ±25%)
-- Use plain text with blank lines between paragraphs
-- Return ONLY the rephrased email body — no titles, labels, markdown, or meta commentary
-- Do NOT append notes like "[AI Rephrased]" or explain what you changed`;
+- Preserve ALL facts: names, companies, dates, numbers, product details, and the call-to-action.
+- If the input is a full email, maintain the structure (greeting, body, sign-off).
+- If the input is just a sentence or fragment, rephrase only that fragment.
+- Match the requested tone:
+  * casual: friendly, conversational, less formal, use contractions.
+  * formal: professional, respectful, standard business English.
+  * demanding: firm, urgent, authoritative, clear expectations.
+- Match roughly the same length.
+- Return ONLY the rephrased text — no titles, labels, markdown, or meta commentary.`;
 
   const userPrompt = `${contextLines ? `${contextLines}\n\n` : ''}Rephrase this email:\n\n${originalBody}`;
 

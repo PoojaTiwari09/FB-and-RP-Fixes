@@ -45,7 +45,16 @@ export class DealTaskService {
       .addOrderBy('task.createdAt', 'DESC')
       .getMany();
 
-    return tasks.map((task) => this.toResponseDto(task));
+    // Map tasks and check for overdue status to auto-elevate priority
+    const todayStr = new Date().toISOString().split('T')[0];
+    return tasks.map((task) => {
+      const dueDateStr = task.dueDate ? task.dueDate.toISOString().split('T')[0] : null;
+      const isOverdue = dueDateStr && dueDateStr < todayStr && task.status !== TaskStatus.COMPLETED;
+      if (isOverdue && task.priority !== 'HIGH') {
+        task.priority = 'HIGH';
+      }
+      return this.toResponseDto(task);
+    });
   }
 
   /**
@@ -66,7 +75,16 @@ export class DealTaskService {
       .addOrderBy('task.createdAt', 'DESC')
       .getMany();
 
-    return tasks.map((task) => this.toResponseDto(task));
+    // Map tasks and check for overdue status to auto-elevate priority
+    const todayStr = new Date().toISOString().split('T')[0];
+    return tasks.map((task) => {
+      const dueDateStr = task.dueDate ? task.dueDate.toISOString().split('T')[0] : null;
+      const isOverdue = dueDateStr && dueDateStr < todayStr && task.status !== TaskStatus.COMPLETED;
+      if (isOverdue && task.priority !== 'HIGH') {
+        task.priority = 'HIGH';
+      }
+      return this.toResponseDto(task);
+    });
   }
 
   /**
@@ -98,18 +116,25 @@ export class DealTaskService {
       throw new NotFoundException('Deal not found');
     }
 
+    // Check if task is overdue and automatically set to HIGH priority
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
+    const dueDateStr = dueDate ? dueDate.toISOString().split('T')[0] : null;
+    const isOverdue = dueDateStr && dueDateStr < todayStr;
+    const priority = isOverdue ? 'HIGH' : dto.priority;
+
     const task = this.taskRepository.create({
       dealId,
       title: dto.title,
       description: dto.description,
       status: TaskStatus.PENDING,
-      priority: dto.priority,
+      priority,
       source: dto.source || TaskSource.USER_CREATED,
       assigneeId: dto.assigneeId,
       assigneeName: dto.assigneeName,
       assignedBy: createdBy,
       assignedByName: createdByName,
-      dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+      dueDate,
     } as Partial<DealTask>);
 
     const saved = await this.taskRepository.save(task);

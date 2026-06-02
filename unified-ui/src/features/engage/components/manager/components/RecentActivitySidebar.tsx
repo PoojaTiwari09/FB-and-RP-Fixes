@@ -56,28 +56,28 @@ const iconBgMap = {
 export default function RecentActivitySidebar({ activities = [] }: RecentActivitySidebarProps) {
   return (
     <div
-      className="rounded-lg p-4"
+      className="rounded-lg p-3"
       style={{
         border: '1px solid #E5E7EB',
         backgroundColor: '#FFFFFF',
       }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold" style={{ color: '#111827' }}>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs font-bold uppercase tracking-wide" style={{ color: '#6B7280' }}>
           Recent Activity
         </h3>
-        <span className="text-xs font-medium" style={{ color: '#9CA3AF' }}>
+        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#F3F4F6', color: '#9CA3AF' }}>
           {activities.length}
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {activities.length === 0 ? (
-          <p className="text-xs" style={{ color: '#9CA3AF' }}>
+          <p className="text-[11px]" style={{ color: '#9CA3AF' }}>
             No recent activity yet.
           </p>
         ) : (
-          activities.map((activity) => {
+          activities.slice(0, 5).map((activity) => {
             const rawType = activity.activityType.toLowerCase();
             const activityType = rawType.includes('email')
               ? 'email'
@@ -92,31 +92,31 @@ export default function RecentActivitySidebar({ activities = [] }: RecentActivit
             return (
               <div
                 key={activity.id}
-                className="flex items-start gap-3 pb-3"
+                className="flex items-start gap-2 pb-2"
                 style={{ borderBottom: '1px solid #F3F4F6' }}
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ backgroundColor: iconBg }}
                 >
-                  <Icon className="w-4 h-4" style={{ color: iconColor }} />
+                  <Icon className="w-3 h-3" style={{ color: iconColor }} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-sm font-semibold truncate" style={{ color: '#111827' }}>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-[11px] font-semibold truncate" style={{ color: '#111827' }}>
                       {activity.contactName}
                     </span>
-                    <span style={{ color: '#D1D5DB' }}>•</span>
-                    <span className="text-xs truncate" style={{ color: '#9CA3AF' }}>
+                    <span style={{ color: '#E5E7EB', fontSize: '8px' }}>•</span>
+                    <span className="text-[10px] truncate" style={{ color: '#9CA3AF' }}>
                       {activity.companyName}
                     </span>
                   </div>
-                  <p className="text-xs mb-1 line-clamp-2 leading-relaxed" style={{ color: '#6B7280' }}>
+                  <p className="text-[10px] mb-0.5 line-clamp-1 leading-tight" style={{ color: '#6B7280' }}>
                     {activity.description}
                   </p>
-                  <div className="flex items-center gap-1 text-xs" style={{ color: '#9CA3AF' }}>
-                    <Clock className="w-3 h-3 text-gray-400" />
+                  <div className="flex items-center gap-0.5 text-[9px]" style={{ color: '#9CA3AF' }}>
+                    <Clock className="w-2.5 h-2.5 text-gray-400" />
                     <span>{activity.timeAgo}</span>
                   </div>
                 </div>

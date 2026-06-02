@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from 'react';
 import { useEngage } from './hooks/useEngage';
 import CompactHeader from './components/CompactHeader';
 import CompactFilters from './components/CompactFilters';
@@ -77,6 +77,7 @@ export default function EngageManagerView() {
     handleClearFilters,
     toggleGroup,
     openTakeAction,
+    logActivity,
     
     // Toasts
     toasts,
@@ -87,6 +88,25 @@ export default function EngageManagerView() {
     isEmpty,
     emptyStateReason,
   } = useEngage();
+
+  // Activity tracking side-effects
+  useEffect(() => {
+    if (activeStatusTab) {
+      logActivity(`Switched to ${activeStatusTab} tab`, 'Status', 'Navigation', 'system');
+    }
+  }, [activeStatusTab, logActivity]);
+
+  useEffect(() => {
+    if (activeChannel !== 'all') {
+      logActivity(`Filtered by ${activeChannel} channel`, 'Channel', 'Filter', activeChannel);
+    }
+  }, [activeChannel, logActivity]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      logActivity(`Searched for "${searchQuery}"`, 'Search', 'Filter', 'system');
+    }
+  }, [searchQuery, logActivity]);
 
   const isReadOnly = selectedUserId !== 'me';
 
@@ -100,7 +120,10 @@ export default function EngageManagerView() {
       <div className="shrink-0">
       <CompactHeader
         headerAlert={summary.headerAlert}
-        onCreateClick={() => setIsCreateModalOpen(true)}
+        onCreateClick={() => {
+          logActivity('Opened Create To-Do modal', 'Action', 'Manager', 'system');
+          setIsCreateModalOpen(true);
+        }}
         isLoading={isLoading}
         isViewOnly={isReadOnly}
       />
@@ -110,15 +133,30 @@ export default function EngageManagerView() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         groupBy={groupBy}
-        onGroupByChange={setGroupBy}
+        onGroupByChange={(val) => {
+          logActivity(`Changed grouping to ${val}`, 'View', 'Manager', 'system');
+          setGroupBy(val);
+        }}
         sortBy={sortBy}
-        onSortByChange={setSortBy}
+        onSortByChange={(val) => {
+          logActivity(`Changed sorting to ${val}`, 'View', 'Manager', 'system');
+          setSortBy(val);
+        }}
         selectedUserId={selectedUserId}
-        onUserChange={setSelectedUserId}
+        onUserChange={(val) => {
+          logActivity(`Viewing workspace for ${val}`, 'User', 'Navigation', 'system');
+          setSelectedUserId(val);
+        }}
         isManagerView={true}
         filterCount={filterCount}
-        onFilterClick={() => setIsFilterDrawerOpen(true)}
-        onClearFilters={handleClearFilters}
+        onFilterClick={() => {
+          logActivity('Opened Filter drawer', 'Action', 'Manager', 'system');
+          setIsFilterDrawerOpen(true);
+        }}
+        onClearFilters={() => {
+          logActivity('Cleared all filters', 'Action', 'Manager', 'system');
+          handleClearFilters();
+        }}
       />
 
       {/* Status Tabs and Channels Selection */}
@@ -147,9 +185,16 @@ export default function EngageManagerView() {
             <TaskList
               groups={groups}
               collapsedGroups={collapsedGroups}
-              toggleGroup={toggleGroup}
-              onTakeAction={openTakeAction}
+              toggleGroup={(val) => {
+                logActivity(`${collapsedGroups.has(val) ? 'Expanded' : 'Collapsed'} group ${val}`, 'List', 'View', 'system');
+                toggleGroup(val);
+              }}
+              onTakeAction={(task) => {
+                logActivity(`Opened task: ${task.title}`, task.contactName, task.companyName, task.channel);
+                openTakeAction(task);
+              }}
               onReassign={(task) => {
+                logActivity(`Started reassigning task: ${task.title}`, task.contactName, task.companyName, 'system');
                 setFocusedTask(task);
                 setIsReassignModalOpen(true);
               }}
@@ -165,7 +210,7 @@ export default function EngageManagerView() {
           </div>
         </div>
 
-        <div className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-white px-4 py-6 hidden lg:block">
+        <div className="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white px-3 py-4 hidden lg:block">
           <RecentActivitySidebar activities={recentActivity} />
         </div>
       </div>
@@ -174,14 +219,20 @@ export default function EngageManagerView() {
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}
-        onApply={handleApplyFilters}
+        onApply={(filters) => {
+          logActivity('Applied filters', 'Action', 'Manager', 'system');
+          handleApplyFilters(filters);
+        }}
         initialFilters={appliedFilters}
       />
 
       <CreateToDoModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={handleCreateTask}
+        onSave={(task) => {
+          logActivity(`Created new task: ${task.title}`, 'Task', 'Manager', 'system');
+          handleCreateTask(task);
+        }}
       />
 
       {/* Generalized Reassign Modal */}
@@ -199,9 +250,10 @@ export default function EngageManagerView() {
             name: focusedTask.assigneeName,
             role: focusedTask.assigneeRole,
           }}
-          onReassign={(newAssigneeId, scope, reason) =>
-            handleReassignTask(focusedTask.id, newAssigneeId, scope, reason)
-          }
+          onReassign={(newAssigneeId, scope, reason) => {
+            logActivity(`Reassigned task ${focusedTask.title} to ${newAssigneeId}`, focusedTask.contactName, focusedTask.companyName, 'system');
+            handleReassignTask(focusedTask.id, newAssigneeId, scope, reason);
+          }}
         />
       )}
 

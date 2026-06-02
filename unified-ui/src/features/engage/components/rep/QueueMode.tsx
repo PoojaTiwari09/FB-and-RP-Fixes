@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Task } from './types/engage.types';
 import { MOCK_TASK_DETAILS } from './mocks/engage.mock';
+import EmailTaskScreen from './EmailTaskScreen';
+import LinkedInTaskScreen from './LinkedInTaskScreen';
 
 interface QueueModeProps {
   tasks: Task[];
@@ -16,12 +18,10 @@ export default function QueueMode({ tasks, onClose, onQueueComplete }: QueueMode
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   const currentTask = tasks[currentIndex];
-  const detail = currentTask ? MOCK_TASK_DETAILS[currentTask.taskId] : undefined;
 
-  const handleMarkComplete = () => {
-    if (!currentTask) return;
-    const updated = [...completedIds, currentTask.taskId];
-    setCompletedIds(updated);
+  const handleNext = (taskId?: string, wasCompleted = false) => {
+    const updated = wasCompleted && taskId ? [...completedIds, taskId] : completedIds;
+    if (wasCompleted) setCompletedIds(updated);
 
     if (currentIndex < tasks.length - 1) {
       setCurrentIndex((i) => i + 1);
@@ -30,12 +30,52 @@ export default function QueueMode({ tasks, onClose, onQueueComplete }: QueueMode
     }
   };
 
-  const handleSkip = () => {
-    if (currentIndex < tasks.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    }
+  const handleMarkComplete = () => {
+    if (!currentTask) return;
+    handleNext(currentTask.taskId, true);
   };
 
+  const handleSkip = () => {
+    handleNext();
+  };
+
+  const handleNavigate = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  if (!currentTask) return null;
+
+  // Render specialized screens for Email and LinkedIn
+  if (currentTask.channelType === 'EMAIL') {
+    return (
+      <EmailTaskScreen
+        task={currentTask}
+        allTasks={tasks}
+        currentIndex={currentIndex}
+        onClose={onClose}
+        onNavigate={handleNavigate}
+        onSuccess={() => handleMarkComplete()}
+        inQueue={true}
+      />
+    );
+  }
+
+  if (currentTask.channelType === 'LINKEDIN') {
+    return (
+      <LinkedInTaskScreen
+        task={currentTask}
+        allTasks={tasks}
+        currentIndex={currentIndex}
+        onClose={onClose}
+        onNavigate={handleNavigate}
+        onMarkComplete={() => handleMarkComplete()}
+        inQueue={true}
+      />
+    );
+  }
+
+  // Fallback UI for CALL or OTHER (original QueueMode UI)
+  const detail = currentTask ? MOCK_TASK_DETAILS[currentTask.taskId] : undefined;
   const formattedDue = currentTask
     ? new Date(currentTask.dueDateTime).toLocaleString('en-US', {
         year: 'numeric',
@@ -45,8 +85,6 @@ export default function QueueMode({ tasks, onClose, onQueueComplete }: QueueMode
         minute: '2-digit',
       })
     : '';
-
-  if (!currentTask) return null;
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

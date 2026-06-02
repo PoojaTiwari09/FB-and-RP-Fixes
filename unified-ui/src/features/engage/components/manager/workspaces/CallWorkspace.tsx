@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, Phone, Mail, MessageSquare, Building2, DollarSign, Calendar, Clock, Sparkles, Check, Pencil } from 'lucide-react';
+import { X, Building2, DollarSign, Calendar, Sparkles, Pencil } from 'lucide-react';
 import type { Task } from '../types/engage.types';
 
 function LinkedinIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -115,12 +115,41 @@ export default function CallWorkspace({
 
   return (
     <>
-      {/* Backdrop */}
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/20 transition-opacity animate-fade-in" />
+      {/* Backdrop - Semi-transparent overlay, closes on click */}
+      <div 
+        onClick={onClose} 
+        className="fixed inset-0 z-40 bg-black/15 transition-opacity animate-fade-in cursor-pointer" 
+        style={{ animation: 'fadeIn 0.2s ease-in-out' }}
+      />
       
-      {/* Sidebar Panel */}
-      <div className="fixed top-0 right-0 z-50 h-full w-[400px] bg-white border-l border-gray-200 shadow-2xl flex flex-col transform transition-transform animate-slide-in sidebar-font-override">
+      {/* Sidebar Panel - Overlays Recent Activity sidebar completely */}
+      <div 
+        className="fixed top-0 right-0 z-50 h-full w-72 bg-white border-l border-gray-200 shadow-lg flex flex-col sidebar-font-override" 
+        style={{
+          right: '0px',
+          top: '0px',
+          animation: 'slideInRight 0.3s ease-out forwards',
+        }}
+      >
         <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 0.15;
+            }
+          }
           .sidebar-font-override, .sidebar-font-override * {
             font-family: "Source Sans 3", sans-serif !important;
             font-weight: 400 !important;
@@ -166,15 +195,15 @@ export default function CallWorkspace({
           .sidebar-font-override .message-button:hover svg {
             color: #FFFFFF !important;
           }
-        `}} />
+        ` }} />
         
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-5 border-b border-gray-100 shrink-0">
-          <div className="flex flex-col gap-1 pr-6">
-            <h2 className="text-lg font-bold text-gray-900 leading-tight serif-title" style={{ fontFamily: headingFont }}>
+        <div className="flex items-start justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+          <div className="flex flex-col gap-0.5 pr-4">
+            <h2 className="text-base font-bold text-gray-900 leading-tight serif-title" style={{ fontFamily: headingFont }}>
               {task.title || 'Call Task'}
             </h2>
-            <span className="text-xs text-gray-500 font-semibold" style={{ fontFamily: interFont }}>
+            <span className="text-[11px] text-gray-500 font-semibold" style={{ fontFamily: interFont }}>
               {task.contactName || 'Contact'} · {task.companyName || 'Company'}
             </span>
           </div>
@@ -185,86 +214,56 @@ export default function CallWorkspace({
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 divide-y divide-gray-100/50">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 divide-y divide-gray-100/50">
           
-          {/* Section 1: Quick Actions */}
-          <div className="space-y-3">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
-              QUICK ACTIONS
-            </label>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 bg-[#F15A24] hover:bg-[#EA580C] text-white rounded-lg text-xs font-semibold shadow-sm transition-all sidebar-button schedule-call-button whitespace-nowrap"
-                style={{ fontFamily: interFont }}
-              >
-                <Phone className="w-3.5 h-3.5 text-white" />
-                <span>Schedule Call</span>
-              </button>
-              <button
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold shadow-sm bg-white transition-all sidebar-button email-button whitespace-nowrap"
-                style={{ fontFamily: interFont }}
-              >
-                <Mail className="w-3.5 h-3.5 text-white" />
-                <span>Email</span>
-              </button>
-              <button
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold shadow-sm bg-white transition-all sidebar-button message-button whitespace-nowrap"
-                style={{ fontFamily: interFont }}
-              >
-                <LinkedinIcon className="w-3.5 h-3.5 text-white" />
-                <span>Message</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Section 2: Contact Details */}
-          <div className="space-y-3 pt-5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
+          {/* Section 1: Contact Details */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
               CONTACT DETAILS
             </label>
-            <div className="space-y-3 text-sm font-normal text-gray-750">
-              <div className="flex items-center gap-3">
-                <Building2 className="w-4 h-4 text-gray-400" />
+            <div className="space-y-2 text-xs font-normal text-gray-700">
+              <div className="flex items-center gap-2.5">
+                <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <span style={{ fontFamily: interFont }}>{task.companyName || 'Company'}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-2.5">
+                <DollarSign className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <span style={{ fontFamily: interFont }}>{displayArr}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-2.5">
+                <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <span style={{ fontFamily: interFont }}>{formattedDate}</span>
               </div>
             </div>
           </div>
 
-          {/* Section 3: AI Insight */}
-          <div className="space-y-3 pt-5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
+          {/* Section 2: AI Insight */}
+          <div className="space-y-2 pt-4">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
               AI INSIGHT
             </label>
-            <div className="p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl">
-              <div className="w-full h-8 bg-blue-50/80 rounded-lg flex items-center px-3 gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span className="text-xs font-semibold text-blue-800 truncate" style={{ fontFamily: interFont }}>
+            <div className="p-2.5 bg-blue-50/50 border border-blue-100/50 rounded-lg">
+              <div className="w-full h-6 bg-blue-50/80 rounded-md flex items-center px-2.5 gap-2">
+                <Sparkles className="w-3 h-3 text-blue-600 shrink-0" />
+                <span className="text-[10px] font-semibold text-blue-800 truncate" style={{ fontFamily: interFont }}>
                   {task.aiSignal || "Deal momentum is high — decision maker active"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Section 4: Recommended Next Steps */}
-          <div className="space-y-3 pt-5">
-            <div className="p-4 bg-[#EFF6FF] rounded-xl space-y-3 border border-blue-100/55">
-              <span className="text-xs font-bold text-blue-850 uppercase tracking-wider block mb-2 serif-header" style={{ fontFamily: headingFont }}>
+          {/* Section 3: Recommended Next Steps */}
+          <div className="space-y-2 pt-4">
+            <div className="p-3 bg-[#EFF6FF] rounded-lg space-y-2 border border-blue-100/55">
+              <span className="text-[10px] font-bold text-blue-850 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
                 RECOMMENDED NEXT STEPS
               </span>
               {nextSteps.map((step, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0 text-white font-bold text-[11px] mt-0.5">
+                <div key={idx} className="flex items-start gap-2">
+                  <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center shrink-0 text-white font-bold text-[9px] mt-0.5">
                     {idx + 1}
                   </div>
-                  <span className="text-sm font-normal text-blue-900 leading-snug" style={{ fontFamily: interFont }}>
+                  <span className="text-[11px] font-normal text-blue-900 leading-tight" style={{ fontFamily: interFont }}>
                     {cleanStep(step)}
                   </span>
                 </div>
@@ -272,22 +271,22 @@ export default function CallWorkspace({
             </div>
           </div>
 
-          {/* Section 5: Recent Activity */}
-          <div className="space-y-3 pt-5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
+          {/* Section 4: Recent Activity */}
+          <div className="space-y-2 pt-4">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
               RECENT ACTIVITY
             </label>
-            <div className="pl-1 pt-1">
-              {activities.map((item, idx) => (
-                <div key={idx} className="relative pl-6 pb-6 last:pb-2">
-                  {idx < activities.length - 1 && (
-                    <div className="absolute left-[3.5px] top-1.5 bottom-0 w-[1px] bg-gray-200" />
+            <div className="pl-1 pt-1 space-y-2">
+              {activities.slice(0, 3).map((item, idx) => (
+                <div key={idx} className="relative pl-5 pb-2">
+                  {idx < Math.min(2, activities.length - 1) && (
+                    <div className="absolute left-[5px] top-2 bottom-0 w-[1px] bg-gray-200" />
                   )}
-                  <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-blue-600 border border-white" />
-                  <span className="text-[11px] text-gray-400 font-normal block mb-0.5" style={{ fontFamily: interFont }}>
+                  <div className="absolute left-0 top-1 w-2.5 h-2.5 rounded-full bg-blue-600 border border-white" />
+                  <span className="text-[9px] text-gray-400 font-normal block mb-0.5" style={{ fontFamily: interFont }}>
                     {item.date || 'Date'}
                   </span>
-                  <p className="text-sm font-normal text-gray-800" style={{ fontFamily: interFont }}>
+                  <p className="text-[10px] font-normal text-gray-800 line-clamp-2" style={{ fontFamily: interFont }}>
                     {cleanActivityDescription(item.description, item.activityType)}
                   </p>
                 </div>
@@ -295,28 +294,28 @@ export default function CallWorkspace({
             </div>
           </div>
 
-          {/* Section 6: Notes */}
-          <div className="space-y-3 pt-5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block" style={{ fontFamily: headingFont }}>
+          {/* Section 5: Notes */}
+          <div className="space-y-2 pt-4">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
               NOTES
             </label>
             <textarea
               disabled={isViewOnly}
-              placeholder="Add notes about this task..."
+              placeholder="Add notes..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm min-h-[100px] focus:outline-none focus:ring-1 focus:ring-[#4F46E5] focus:border-[#4F46E5] text-gray-900 bg-white"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[11px] min-h-[80px] focus:outline-none focus:ring-1 focus:ring-[#4F46E5] focus:border-[#4F46E5] text-gray-900 bg-white"
               style={{ fontFamily: interFont }}
             />
             {!isViewOnly && (
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   onClick={handleSaveNotes}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg text-xs font-semibold shadow-sm transition-all sidebar-button"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg text-[10px] font-semibold shadow-sm transition-all sidebar-button"
                   style={{ fontFamily: interFont }}
                 >
-                  <Pencil className="w-3.5 h-3.5 text-white" />
-                  <span>Save Note</span>
+                  <Pencil className="w-3 h-3 text-white" />
+                  <span>Save</span>
                 </button>
               </div>
             )}

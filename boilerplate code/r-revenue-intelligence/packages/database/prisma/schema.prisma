@@ -1782,3 +1782,75 @@ model M02TrackerDetection {
   @@schema("public")
 }
 
+model ManagerAccount {
+  id               String    @id
+  tenantId         String    @map("tenant_id")
+  name             String
+  ownerId          String?   @map("owner_id")
+  ownerName        String?   @map("owner_name")
+  ownerInitials    String?   @map("owner_initials")
+  exitARR          Int       @default(0) @map("exit_arr")
+  contactsCount    Int       @default(0) @map("contacts_count")
+  lastActivity     String?   @map("last_activity")
+  managerNote      String?   @map("manager_note")
+  openDeals        Int       @default(0) @map("open_deals")
+  renewalDate      String?   @map("renewal_date")
+  activity         Json?     @map("activity")
+  recentActivities Json?     @map("recent_activities")
+  overview         Json?     @map("overview")
+  activityFeed     Json?     @map("activity_feed")
+  briefContent     String?   @db.Text @map("brief_content")
+  todos            Json?     @map("todos")
+  notes            String?   @db.Text @map("notes")
+  notesUpdatedAt   DateTime? @map("notes_updated_at")
+  crmFields        Json?     @map("crm_fields")
+  aiChatHistory    Json?     @map("ai_chat_history")
+
+  @@index([tenantId])
+  @@map("manager_accounts")
+  @@schema("public")
+}
+
+model ManagerAccountsConfig {
+  id          String @id
+  tenantId    String @map("tenant_id")
+  alertBanner Json?  @map("alert_banner")
+  kpiSummary  Json?  @map("kpi_summary")
+  viewers     Json?  @map("viewers")
+
+  @@index([tenantId])
+  @@map("manager_accounts_config")
+  @@schema("public")
+}
+
+model ManagerCoachingConfig {
+  id              String @id
+  tenantId        String @map("tenant_id")
+  filters         Json?  @map("filters")
+  activity        Json?  @map("activity")
+  interaction     Json?  @map("interaction")
+  responsiveness  Json?  @map("responsiveness")
+  scorecards      Json?  @map("scorecards")
+  aiInsights      Json?  @map("ai_insights")
+  teamVsBenchmark Json?  @map("team_vs_benchmark")
+
+  @@index([tenantId])
+  @@map("manager_coaching_config")
+  @@schema("public")
+}
+
+model ManagerCoachingRep {
+  id                 String @id
+  tenantId           String @map("tenant_id")
+  header             Json?  @map("header")
+  kpis               Json?  @map("kpis")
+  trend              Json?  @map("trend")
+  recentCalls        Json?  @map("recent_calls")
+  observedPatterns   Json?  @map("observed_patterns")
+  recommendedActions Json?  @map("recommended_actions")
+  coachingHistory    Json?  @map("coaching_history")
+
+  @@index([tenantId])
+  @@map("manager_coaching_reps")
+  @@schema("public")
+}

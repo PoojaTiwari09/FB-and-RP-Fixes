@@ -10,7 +10,7 @@ import {
   endSession,
   connectToSession,
 } from '@training/services/trainingSession.service';
-import { sendChatMessage, analyzeScorecardStatus } from '@training/services/ai/groq.service';
+import { analyzeScorecardStatus } from '@training/services/ai/groq.service';
 import * as speechService from '@training/services/ai/speech.service';
 import { synthesizeSpeech } from '@training/services/ai/elevenLabs.service';
 import { AI_CONFIG } from '@training/services/ai/config';
@@ -275,7 +275,44 @@ export function useTrainingSession(trainingId: string, sessionId: string): UseTr
         setSectionStatuses((prev) => ({ ...prev, ...response.scorecardUpdate }));
       }
 
-      // TTS playback — ElevenLabs synthesizes the AI reply
+      // TTS playback: prefer backend-provided ElevenLabs audio, then client-side TTS
+      if (response.audioUrl && response.audioUrl.startsWith('data:')) {
+        // Backend returned base64 ElevenLabs audio — play it directly
+        const audio = new Audio(response.audioUrl);
+        let stopped = false;
+        ttsStopRef.current = () => {
+          stopped = true;
+          audio.pause();
+          setIsAISpeaking(false);
+        };
+        audio.onended = () => { if (!stopped) setIsAISpeaking(false); };
+        audio.onerror = () => {
+          if (!stopped) {
+            // Fallback to client-side TTS
+            const voiceId = selectedVoiceIdRef.current;
+            if (response.aiReplyText && voiceId) {
+              const { stop } = synthesizeSpeech(response.aiReplyText, voiceId, () => setIsAISpeaking(false));
+              ttsStopRef.current = stop;
+            } else {
+              setIsAISpeaking(false);
+            }
+          }
+        };
+        audio.play().catch(() => {
+          if (!stopped) {
+            const voiceId = selectedVoiceIdRef.current;
+            if (response.aiReplyText && voiceId) {
+              const { stop } = synthesizeSpeech(response.aiReplyText, voiceId, () => setIsAISpeaking(false));
+              ttsStopRef.current = stop;
+            } else {
+              setIsAISpeaking(false);
+            }
+          }
+        });
+        return; // isAISpeaking stays true until audio ends
+      }
+
+      // No backend audio — use client-side TTS (ElevenLabs or browser fallback)
       const voiceId = selectedVoiceIdRef.current;
       if (response.aiReplyText && voiceId) {
         const { stop } = synthesizeSpeech(

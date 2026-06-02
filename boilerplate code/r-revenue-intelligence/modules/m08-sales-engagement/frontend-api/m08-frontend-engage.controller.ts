@@ -19,7 +19,7 @@ export class M08FrontendEngageController {
   }
 
   @Get('activity/recent')
-  recent(@Query('limit') limit?: string, @Req() req: any) {
+  recent(@Req() req: any, @Query('limit') limit?: string) {
     const n = parseInt(limit || '10', 10);
     return this.svc.getRecentActivity(req.tenantId, Number.isFinite(n) ? n : 10);
   }

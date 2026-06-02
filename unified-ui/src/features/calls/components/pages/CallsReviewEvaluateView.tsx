@@ -46,7 +46,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'op_1',
     section: 'opening',
-    text: 'Did the rep properly introduce themselves and set the agenda? *',
+    text: 'Did I properly introduce myself and set the agenda? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 92,
@@ -72,7 +72,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'op_3',
     section: 'opening',
-    text: 'Did the rep confirm the allocated time? *',
+    text: 'Did I confirm the allocated time? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 95,
@@ -86,7 +86,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_1',
     section: 'discovery',
-    text: 'Did the rep ask about current pain points? *',
+    text: 'Did I ask about current pain points? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 89,
@@ -99,7 +99,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_2',
     section: 'discovery',
-    text: 'How thoroughly did the rep explore business impact? *',
+    text: 'How thoroughly did I explore business impact? *',
     type: 'dropdown',
     options: ['Excellent', 'Good', 'Fair', 'Poor'],
     aiSuggestion: {
@@ -113,7 +113,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_3',
     section: 'discovery',
-    text: 'Did the rep identify the decision-making process? *',
+    text: 'Did I identify the decision-making process? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 65,
@@ -124,7 +124,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_4',
     section: 'discovery',
-    text: 'Did the rep confirm budget and authority? *',
+    text: 'Did I confirm budget and authority? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 58,
@@ -138,7 +138,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'fit_1',
     section: 'product_fit',
-    text: 'Did the rep connect features to customer pain points? *',
+    text: 'Did I connect features to customer pain points? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 85,
@@ -163,7 +163,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'obj_1',
     section: 'objection_handling',
-    text: 'Did the rep address objections effectively? *',
+    text: 'Did I address objections effectively? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 70,
@@ -174,7 +174,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'obj_2',
     section: 'objection_handling',
-    text: 'How well did the rep summarize next steps? *',
+    text: 'How well did I summarize next steps? *',
     type: 'scale',
     aiSuggestion: {
       confidence: 75,
@@ -254,7 +254,7 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
   };
 
   // Build transcript lines from AssemblyAI utterances
-  const SPEAKER_LABELS: Record<string, string> = { A: 'Sales Rep', B: 'Customer' };
+  const SPEAKER_LABELS: Record<string, string> = { A: 'Me', B: 'Customer' };
   const transcriptLines = (insights?.utterances ?? []).map((u, i) => ({
     id: i + 1,
     time: formatTime(Math.floor(u.start / 1000)),
@@ -673,7 +673,7 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
                     <div className="bg-white border border-gray-100 rounded p-3 space-y-2">
                       <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Talk Ratio</h4>
                       <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                        <span>Rep {insights.talkRatio.rep}%</span>
+                        <span>Me {insights.talkRatio.rep}%</span>
                         <span>Customer {insights.talkRatio.customer}%</span>
                       </div>
                       <div className="flex gap-1.5">

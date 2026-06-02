@@ -10,12 +10,12 @@ interface CallsTableProps {
 
 const getDealTypeBadgeStyle = (dealType: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    'New Business': { bg: '#DBEAFE', color: '#1E40AF' },
-    'Renewal': { bg: '#D1FAE5', color: '#065F46' },
-    'Expansion': { bg: '#E9D5FF', color: '#6B21A8' },
-    'Cross-Sell': { bg: '#FED7AA', color: '#C2410C' },
+    meeting: { bg: '#DBEAFE', color: '#1E40AF' },
+    inbound: { bg: '#D1FAE5', color: '#065F46' },
+    outbound: { bg: '#E9D5FF', color: '#6B21A8' },
   };
-  return styles[dealType] || { bg: '#F3F4F6', color: '#6B7280' };
+  const normalized = dealType.toLowerCase();
+  return styles[normalized] || { bg: '#F3F4F6', color: '#6B7280' };
 };
 
 export default function CallsTable({ calls, onRowClick }: CallsTableProps) {
@@ -131,7 +131,7 @@ export default function CallsTable({ calls, onRowClick }: CallsTableProps) {
                   {call.owner.avatarInitials}
                 </div>
                 <span className="text-sm" style={{ color: '#6B7280' }}>
-                  {ownerDisplay}
+                  {call.owner.ownerName === 'Sarah Chen' || call.owner.ownerName === 'Alex Rodriguez' ? 'Me' : call.owner.ownerName}
                 </span>
               </div>
 

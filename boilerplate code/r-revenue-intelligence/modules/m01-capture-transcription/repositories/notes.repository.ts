@@ -27,9 +27,13 @@ export class NotesRepository {
   }
 
   // ── List notes for a call ─────────────────────────────────────────────
-  async findByCallId(callId: string, tenantId: string) {
+  async findByCallId(callId: string, tenantId: string, authorId?: string) {
+    const where: any = { callId, tenantId };
+    if (authorId) {
+      where.authorId = authorId;
+    }
     return this.prisma.callNote.findMany({
-      where:   { callId, tenantId },
+      where,
       orderBy: { createdAt: 'desc' },
     });
   }

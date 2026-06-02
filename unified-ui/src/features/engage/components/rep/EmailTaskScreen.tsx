@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, ChevronDown, Mail, Paperclip, Sparkles } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { X, ChevronLeft, ChevronRight, ChevronDown, Mail, Paperclip, Sparkles, Check, RotateCcw } from 'lucide-react';
 import type { ContactDetails, Task, TaskDetail } from './types/engage.types';
 import {
   getContactDetails,
@@ -19,6 +19,7 @@ interface EmailTaskScreenProps {
   currentIndex: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
+  onSuccess?: (taskId: string) => void;
   inQueue?: boolean;
 }
 
@@ -81,12 +82,50 @@ Alex`;
   return { subject, body, contactEmail };
 }
 
+function RephraseDiff({ original, rephrased }: { original: string; rephrased: string }) {
+  const words2 = rephrased.split(/(\s+)/);
+
+  // Normalize words for comparison
+  const normalize = (w: string) => w.toLowerCase().replace(/[^\w]/g, '');
+  const originalWordsSet = new Set(
+    original
+      .split(/\s+/)
+      .map(normalize)
+      .filter((w) => w.length > 0),
+  );
+
+  return (
+    <div className="font-sans">
+      {words2.map((word, i) => {
+        if (!word.trim()) return <span key={i}>{word}</span>;
+
+        const cleanWord = normalize(word);
+        const isNew = cleanWord && !originalWordsSet.has(cleanWord);
+
+        return (
+          <span
+            key={i}
+            className={
+              isNew
+                ? 'bg-purple-50 text-purple-700 font-semibold px-0.5 rounded border-b-2 border-purple-200'
+                : 'text-gray-700'
+            }
+          >
+            {word}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function EmailTaskScreen({
   task,
   allTasks,
   currentIndex,
   onClose,
   onNavigate,
+  onSuccess,
   inQueue = false,
 }: EmailTaskScreenProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('email');
@@ -99,6 +138,16 @@ export default function EmailTaskScreen({
   const [rephrasing, setRephrasing] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [tone, setTone] = useState('formal');
+  const [rephrasePreview, setRephrasePreview] = useState<{
+    original: string;
+    rephrased: string;
+    isSelection: boolean;
+    selectionStart?: number;
+    selectionEnd?: number;
+  } | null>(null);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -129,7 +178,7 @@ export default function EmailTaskScreen({
           setTo(resolvedDraft.contactEmail);
           setFromLabel('alex.chen@company.com (Gmail)');
           setSubject(resolvedDraft.subject);
-          setBody(resolvedDraft.body);
+          setBody((resolvedDraft as any).body || '');
         }
 
         setContact(contactData || fallbackContact(task, contactEmail));
@@ -165,7 +214,11 @@ export default function EmailTaskScreen({
       setSendSuccess(true);
       setTimeout(() => {
         setSendSuccess(false);
-        onClose();
+        if (onSuccess) {
+          onSuccess(task.taskId);
+        } else {
+          onClose();
+        }
       }, 1200);
     } catch (err) {
       console.error('Failed to send email:', err);
@@ -192,20 +245,64 @@ export default function EmailTaskScreen({
 
   const handleRephrase = async () => {
     if (!body.trim()) return;
+
+    let textToRephrase = body;
+    let isSelection = false;
+    let selectionStart = 0;
+    let selectionEnd = 0;
+
+    if (textareaRef.current) {
+      const start = textareaRef.current.selectionStart;
+      const end = textareaRef.current.selectionEnd;
+      if (start !== end) {
+        textToRephrase = body.substring(start, end);
+        isSelection = true;
+        selectionStart = start;
+        selectionEnd = end;
+      }
+    }
+
     setRephrasing(true);
     try {
       const { rephrasedBody } = await rephraseEmail(task.taskId, {
         subject,
-        body,
+        body: textToRephrase,
         contactName: task.contactName,
         company: task.company,
+        tone,
       });
-      setBody(rephrasedBody);
+
+      setRephrasePreview({
+        original: textToRephrase,
+        rephrased: rephrasedBody,
+        isSelection,
+        selectionStart,
+        selectionEnd,
+      });
     } catch (err) {
       console.error('Failed to rephrase email:', err);
     } finally {
       setRephrasing(false);
     }
+  };
+
+  const handleAcceptRephrase = () => {
+    if (!rephrasePreview) return;
+
+    if (rephrasePreview.isSelection) {
+      const newBody =
+        body.substring(0, rephrasePreview.selectionStart ?? 0) +
+        rephrasePreview.rephrased +
+        body.substring(rephrasePreview.selectionEnd ?? 0);
+      setBody(newBody);
+    } else {
+      setBody(rephrasePreview.rephrased);
+    }
+    setRephrasePreview(null);
+  };
+
+  const handleCancelRephrase = () => {
+    setRephrasePreview(null);
   };
 
   const dueLabel = task.dueDateTime?.startsWith('Due:')
@@ -336,28 +433,73 @@ export default function EmailTaskScreen({
               </div>
 
               {/* Toolbar */}
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button className="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer transition-colors">
                   Use Template
                 </button>
+                <div className="flex items-center gap-1 bg-white border border-purple-200 rounded-lg px-2 py-1">
+                  <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mr-1">Tone</span>
+                  {(['casual', 'formal', 'demanding'] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTone(t)}
+                      className={`px-2 py-0.5 text-[11px] font-medium rounded transition-colors capitalize ${
+                        tone === t
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={handleRephrase}
                   disabled={rephrasing}
-                  className="flex items-center gap-1.5 text-xs font-medium text-purple-600 border border-purple-200 rounded-lg px-3 py-1.5 hover:bg-purple-50 disabled:opacity-50 cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-purple-600 border border-purple-200 rounded-lg px-3 py-1.5 hover:bg-purple-50 disabled:opacity-50 cursor-pointer transition-colors ml-auto"
                 >
                   <Sparkles size={12} /> {rephrasing ? 'Rephrasing…' : 'AI Rephrase'}
                 </button>
               </div>
 
               {/* Message */}
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Message</label>
                 <textarea
+                  ref={textareaRef}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   rows={12}
                   className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-800"
                 />
+
+                {rephrasePreview && (
+                  <div className="absolute inset-0 bg-white/95 rounded-lg border border-purple-200 z-10 flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-purple-50/50">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-purple-600" />
+                        <span className="text-xs font-bold text-purple-900">Review AI Rephrase ({tone})</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleCancelRephrase}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                        >
+                          <RotateCcw size={12} /> Discard
+                        </button>
+                        <button
+                          onClick={handleAcceptRephrase}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded transition-colors shadow-sm"
+                        >
+                          <Check size={12} /> Accept Changes
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                      <RephraseDiff original={rephrasePreview.original} rephrased={rephrasePreview.rephrased} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Attachment */}

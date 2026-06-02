@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type {
   Contact,
   PreCallBrief,
@@ -29,6 +30,34 @@ export default function SmartCallPage() {
   const [preCallBrief,    setPreCallBrief]    = useState<PreCallBrief | null>(null);
   const [session,         setSession]         = useState<SessionStartResponse | null>(null);
   const [callSummary,     setCallSummary]     = useState<CallSummary | null>(null);
+
+  const searchParams = useSearchParams();
+  const queryContactId = searchParams.get('contactId');
+
+  useEffect(() => {
+    if (queryContactId) {
+      // Auto-load pre-call brief for queryContactId
+      const autoLoad = async () => {
+        try {
+          const brief = await fetchPreCallBrief(queryContactId);
+          setPreCallBrief(brief);
+          setSelectedContact({
+            contactId: brief.contactId,
+            contactName: brief.contactName,
+            jobTitle: brief.dealStage || '',
+            company: brief.contactCompany || '',
+            avatarUrl: null,
+            lastInteractionLabel: '',
+            phone: '',
+          });
+          setScreen('pre-call');
+        } catch (err) {
+          console.error('Failed to auto-load contact for smart call:', err);
+        }
+      };
+      autoLoad();
+    }
+  }, [queryContactId]);
 
   // ── Step 1: Contact selected → fetch pre-call brief → pre-call screen ──
   const handleContactSelect = useCallback(async (contact: Contact) => {

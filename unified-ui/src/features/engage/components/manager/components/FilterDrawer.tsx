@@ -173,58 +173,62 @@ export default function FilterDrawer({ isOpen, onClose, onApply, initialFilters 
 
           <hr className="border-gray-100" />
 
-          {/* To-Do Type */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">To-Do Type</h3>
-            <div className="flex flex-col gap-2">
-              {(['flow', 'manual', 'recommended'] as const).map((type) => {
-                const labels = { flow: 'Flow', manual: 'Manual', recommended: 'Recommended' };
-                return (
-                  <label key={type} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
+          {/* To-Do Type - Hidden */}
+          {false && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">To-Do Type</h3>
+              <div className="flex flex-col gap-2">
+                {(['flow', 'manual', 'recommended'] as const).map((type) => {
+                  const labels = { flow: 'Flow', manual: 'Manual', recommended: 'Recommended' };
+                  return (
+                    <label key={type} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={todoTypes.has(type)}
+                        onChange={() => handleTodoTypeToggle(type)}
+                        className="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span>{labels[type]}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {false && <hr className="border-gray-100" />}
+
+          {/* Flow Name - Hidden */}
+          {false && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Flow Name</h3>
+              <div className="relative">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search flows..."
+                  value={flowSearch}
+                  onChange={(e) => setFlowSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+              <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
+                {filteredFlows.map((flow) => (
+                  <label key={flow} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={todoTypes.has(type)}
-                      onChange={() => handleTodoTypeToggle(type)}
+                      checked={flowNames.has(flow)}
+                      onChange={() => handleFlowToggle(flow)}
                       className="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
                     />
-                    <span>{labels[type]}</span>
+                    <span>{flow}</span>
                   </label>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <hr className="border-gray-100" />
-
-          {/* Flow Name */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Flow Name</h3>
-            <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search flows..."
-                value={flowSearch}
-                onChange={(e) => setFlowSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
-              {filteredFlows.map((flow) => (
-                <label key={flow} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={flowNames.has(flow)}
-                    onChange={() => handleFlowToggle(flow)}
-                    className="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <span>{flow}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <hr className="border-gray-100" />
+          {false && <hr className="border-gray-100" />}
 
           {/* Linked Entity Type */}
           <div className="space-y-3">

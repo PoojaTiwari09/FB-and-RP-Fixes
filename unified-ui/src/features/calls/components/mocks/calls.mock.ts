@@ -35,7 +35,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_a1b2c3d4e5f6',
       callTitle: 'Q3 Budget Review',
-      dealType: 'New Business',
+      dealType: 'Meeting',
       account: 'Acme Corp',
       owner: { ownerId: 'usr_001', ownerName: 'Alex Rodriguez', avatarInitials: 'AR' },
       dateTime: '2026-05-03T16:00:00-05:00',
@@ -47,7 +47,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_b2c3d4e5f6g7',
       callTitle: 'Contract Terms Discussion',
-      dealType: 'Renewal',
+      dealType: 'Inbound',
       account: 'Globex Inc',
       owner: { ownerId: 'usr_001', ownerName: 'Alex Rodriguez', avatarInitials: 'AR' },
       dateTime: '2026-05-01T21:15:00-05:00',
@@ -59,7 +59,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_c3d4e5f6g7h8',
       callTitle: 'Product Demo — Enterprise Tier',
-      dealType: 'New Business',
+      dealType: 'Outbound',
       account: 'Initech Solutions',
       owner: { ownerId: 'usr_002', ownerName: 'Maria Santos', avatarInitials: 'MS' },
       dateTime: '2026-04-29T14:30:00-05:00',
@@ -71,7 +71,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_d4e5f6g7h8i9',
       callTitle: 'Onboarding Kickoff',
-      dealType: 'Expansion',
+      dealType: 'Meeting',
       account: 'Umbrella Corp',
       owner: { ownerId: 'usr_003', ownerName: 'James Nguyen', avatarInitials: 'JN' },
       dateTime: '2026-04-28T10:00:00-05:00',
@@ -83,7 +83,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_e5f6g7h8i9j0',
       callTitle: 'Security Compliance Review',
-      dealType: 'Renewal',
+      dealType: 'Inbound',
       account: 'Cyberdyne Systems',
       owner: { ownerId: 'usr_004', ownerName: 'Priya Mehta', avatarInitials: 'PM' },
       dateTime: '2026-04-27T09:00:00-05:00',
@@ -95,7 +95,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_f6g7h8i9j0k1',
       callTitle: 'Initial Discovery Call',
-      dealType: 'New Business',
+      dealType: 'Outbound',
       account: 'Hooli Inc',
       owner: { ownerId: 'usr_002', ownerName: 'Maria Santos', avatarInitials: 'MS' },
       dateTime: '2026-04-25T15:45:00-05:00',
@@ -107,7 +107,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_g7h8i9j0k1l2',
       callTitle: 'Technical Integration Workshop',
-      dealType: 'New Business',
+      dealType: 'Meeting',
       account: 'Pied Piper',
       owner: { ownerId: 'usr_005', ownerName: 'Daniel Park', avatarInitials: 'DP' },
       dateTime: '2026-04-24T11:00:00-05:00',
@@ -119,7 +119,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_h8i9j0k1l2m3',
       callTitle: 'Pricing Negotiation Final Round',
-      dealType: 'Renewal',
+      dealType: 'Inbound',
       account: 'Dunder Mifflin',
       owner: { ownerId: 'usr_001', ownerName: 'Alex Rodriguez', avatarInitials: 'AR' },
       dateTime: '2026-04-22T16:00:00-05:00',
@@ -131,7 +131,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_i9j0k1l2m3n4',
       callTitle: 'Executive Stakeholder Alignment',
-      dealType: 'Expansion',
+      dealType: 'Outbound',
       account: 'Massive Dynamic',
       owner: { ownerId: 'usr_003', ownerName: 'James Nguyen', avatarInitials: 'JN' },
       dateTime: '2026-04-21T13:30:00-05:00',
@@ -143,7 +143,7 @@ export const MOCK_CALLS_LIST: CallsListResponse & { calls: (import('../types/cal
     {
       callId: 'call_j0k1l2m3n4o5',
       callTitle: 'Support Escalation Follow-up',
-      dealType: 'Renewal',
+      dealType: 'Inbound',
       account: 'Acme Corp',
       owner: { ownerId: 'usr_004', ownerName: 'Priya Mehta', avatarInitials: 'PM' },
       dateTime: '2026-04-20T10:15:00-05:00',

@@ -8,7 +8,6 @@ import {
 } from '@training/types/trainingSession.types';
 import { ENV } from '@shared/config/env';
 import type { QuestionTag } from '@shared/types/shared.types';
-import { sendChatMessage } from '@training/services/ai/groq.service';
 
 /**
  * Adapts raw API response to our typed SessionContext shape.
@@ -75,7 +74,10 @@ export async function fetchSessionData(trainingId: string, sessionId: string): P
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const raw = (await res.json()) as Record<string, unknown>;
 
-  const context = adaptSessionContext(raw, trainingId);
+  // The backend wraps contactPersona/meetingContext inside a "context" object.
+  // adaptSessionContext expects a flat shape, so we unwrap it first.
+  const contextPayload = (raw['context'] ?? raw) as Record<string, unknown>;
+  const context = adaptSessionContext(contextPayload, trainingId);
   const rawMessages = (raw['messages'] ?? []) as Record<string, unknown>[];
 
   return {
@@ -96,41 +98,42 @@ export async function fetchSessionContext(trainingId: string, sessionId: string)
 }
 
 /**
- * Send a message — calls Groq directly in real mode.
- * The hook passes the full transcript + session context so Groq can maintain persona.
- *
- * @param transcript - Full conversation so far (for Groq history)
- * @param ctx        - Session context (persona, meeting context)
+ * Send a message — routes through the M09 backend.
+ * The backend uses its server-side LLM (Groq or contextual mock) + ElevenLabs TTS.
+ * This avoids exposing API keys in the browser and works without a client-side Groq key.
  */
 export async function sendSessionMessage(
   trainingId: string,
   sessionId: string,
   messageText: string,
-  messageIndex: number,
+  _messageIndex: number,
   inputType: InputType = 'text',
-  transcript: TranscriptMessage[] = [],
-  ctx: SessionContext | null = null
+  _transcript: TranscriptMessage[] = [],
+  _ctx: SessionContext | null = null
 ): Promise<SendMessageResponse> {
-  if (!ctx) throw new Error('Session context required for Groq call');
-
-  const fullHistory: TranscriptMessage[] = [
-    ...transcript,
+  const res = await fetch(
+    `${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/messages`,
     {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: messageText,
-      timestampSeconds: 0,
-    },
-  ];
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: messageText, inputType }),
+    }
+  );
 
-  const aiReplyText = await sendChatMessage(fullHistory, ctx);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => res.statusText);
+    throw new Error(`API error: ${res.status} ${errText}`);
+  }
+
+  const data = (await res.json()) as Record<string, unknown>;
+  const aiResponse = (data['aiResponse'] ?? {}) as Record<string, unknown>;
 
   return {
-    aiReplyText,
-    aiReplyId: `ai-${Date.now()}`,
-    aiReplyTimestamp: 0,
-    audioUrl: '',
-    scorecardUpdate: null,
+    aiReplyText: String(aiResponse['text'] ?? ''),
+    aiReplyId: String(aiResponse['id'] ?? `ai-${Date.now()}`),
+    aiReplyTimestamp: Number(aiResponse['timestampSeconds'] ?? 0),
+    audioUrl: String(aiResponse['audioUrl'] ?? ''),
+    scorecardUpdate: (data['scorecardUpdate'] as Record<string, string> | null) ?? null,
   };
 }
 

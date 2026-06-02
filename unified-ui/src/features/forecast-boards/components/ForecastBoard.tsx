@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import type { ForecastBoardPayload } from '../../api';
+import type { ForecastBoardPayload } from '../api';
 import PipelineCoverageCard from './PipelineCoverageCard';
 
 function formatCr(val: number) {

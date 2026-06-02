@@ -110,19 +110,6 @@ export default function BulkActionBar({
               >
                 Skip Step
               </button>
-              <div className="border-t border-gray-100 my-1" />
-              <button
-                onClick={() => { setMoreOpen(false); onRemoveFromFlow(); }}
-                className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer transition-colors text-left"
-              >
-                Remove from Flow
-              </button>
-              <button
-                onClick={() => { setMoreOpen(false); onPauseFlow(); }}
-                className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer transition-colors text-left"
-              >
-                Pause Flow
-              </button>
             </div>
           )}
         </div>

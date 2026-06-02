@@ -312,63 +312,67 @@ export default function CompactFilters({
 
           {/* Group By, Sort By, Assignee */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-            {/* Group By Dropdown */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium whitespace-nowrap text-gray-500">
-                Group By
-              </label>
-              <div className="relative">
-                <select
-                  value={groupBy}
-                  onChange={(e) => onGroupByChange(e.target.value as GroupByOption)}
-                  className="appearance-none inline-flex items-center gap-1.5 pl-3 pr-8 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer border border-gray-200 bg-white text-gray-900 outline-none"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  }}
-                >
-                  {(Object.keys(groupByLabels) as GroupByOption[]).map((key) => (
-                    <option key={key} value={key}>
-                      {groupByLabels[key]}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-gray-400"
-                />
+            {/* Group By Dropdown - Hidden */}
+            {false && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium whitespace-nowrap text-gray-500">
+                  Group By
+                </label>
+                <div className="relative">
+                  <select
+                    value={groupBy}
+                    onChange={(e) => onGroupByChange(e.target.value as GroupByOption)}
+                    className="appearance-none inline-flex items-center gap-1.5 pl-3 pr-8 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer border border-gray-200 bg-white text-gray-900 outline-none"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#F9FAFB';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#FFFFFF';
+                    }}
+                  >
+                    {(Object.keys(groupByLabels) as GroupByOption[]).map((key) => (
+                      <option key={key} value={key}>
+                        {groupByLabels[key]}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-gray-400"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Sort By Dropdown */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium whitespace-nowrap text-gray-500">
-                Sort By
-              </label>
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => onSortByChange(e.target.value as SortOption)}
-                  className="appearance-none inline-flex items-center gap-1.5 pl-3 pr-8 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer border border-gray-200 bg-white text-gray-900 outline-none"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  }}
-                >
-                  {(Object.keys(sortLabels) as SortOption[]).map((key) => (
-                    <option key={key} value={key}>
-                      {sortLabels[key]}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-gray-400"
-                />
+            {/* Sort By Dropdown - Hidden */}
+            {false && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium whitespace-nowrap text-gray-500">
+                  Sort By
+                </label>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => onSortByChange(e.target.value as SortOption)}
+                    className="appearance-none inline-flex items-center gap-1.5 pl-3 pr-8 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer border border-gray-200 bg-white text-gray-900 outline-none"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#F9FAFB';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#FFFFFF';
+                    }}
+                  >
+                    {(Object.keys(sortLabels) as SortOption[]).map((key) => (
+                      <option key={key} value={key}>
+                        {sortLabels[key]}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-gray-400"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Assignee Selector */}
             {isManagerView && (

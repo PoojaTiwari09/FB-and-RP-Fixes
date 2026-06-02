@@ -42,12 +42,12 @@ const DEMO_REP_OWNER = process.env.NEXT_PUBLIC_DEMO_REP_OWNER_NAME ?? 'Sarah Che
 
 const getDealTypeBadgeStyle = (dealType: string) => {
   const styles: Record<string, { bg: string; color: string }> = {
-    'New Business': { bg: '#DBEAFE', color: '#1E40AF' },
-    'Renewal': { bg: '#D1FAE5', color: '#065F46' },
-    'Expansion': { bg: '#E9D5FF', color: '#6B21A8' },
-    'Cross-Sell': { bg: '#FED7AA', color: '#C2410C' },
+    meeting: { bg: '#DBEAFE', color: '#1E40AF' },
+    inbound: { bg: '#D1FAE5', color: '#065F46' },
+    outbound: { bg: '#E9D5FF', color: '#6B21A8' },
   };
-  return styles[dealType] || { bg: '#F3F4F6', color: '#6B7280' };
+  const normalized = dealType.toLowerCase();
+  return styles[normalized] || { bg: '#F3F4F6', color: '#6B7280' };
 };
 
 // ─── Call Detail Panel ────────────────────────────────────────────────────────
@@ -629,37 +629,40 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
             </div>
             
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setRegenerateOpen(true)}
-                disabled={isRegenerating}
-                className="inline-flex items-center justify-center gap-2 h-9 px-4 py-2 border rounded-md text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
-                style={{
-                  borderColor: '#D1D5DB',
-                  backgroundColor: '#FFFFFF',
-                  color: '#374151',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isRegenerating) e.currentTarget.style.backgroundColor = '#F9FAFB';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFFFFF';
-                }}
-              >
-                {isRegenerating ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                    </svg>
-                    Regenerating...
-                  </>
-                ) : (
-                  <>
-                    <RotateCw className="w-4 h-4" />
-                    Regenerate
-                  </>
-                )}
-              </button>
+              {/* Hide Regenerate for Sales Rep */}
+              {false && (
+                <button
+                  onClick={() => setRegenerateOpen(true)}
+                  disabled={isRegenerating}
+                  className="inline-flex items-center justify-center gap-2 h-9 px-4 py-2 border rounded-md text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
+                  style={{
+                    borderColor: '#D1D5DB',
+                    backgroundColor: '#FFFFFF',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isRegenerating) e.currentTarget.style.backgroundColor = '#F9FAFB';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FFFFFF';
+                  }}
+                >
+                  {isRegenerating ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                      </svg>
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCw className="w-4 h-4" />
+                      Regenerate
+                    </>
+                  )}
+                </button>
+              )}
 
               <button
                   onClick={handleBriefShareClick}
@@ -837,7 +840,7 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
                               color: com.assigneeType === 'rep' ? '#3B82F6' : '#6D28D9',
                             }}
                           >
-                            {com.assigneeType === 'rep' ? 'Rep' : 'Customer'}
+                            {com.assigneeType === 'rep' ? 'Me' : 'Customer'}
                           </span>
                           <span className="text-xs" style={{ color: '#9CA3AF' }}>{com.dueDate}</span>
                         </div>
@@ -1098,7 +1101,7 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
                             {entry.timestamp}
                           </span>
                           <span className="text-sm font-bold" style={{ color: '#111827' }}>
-                            {entry.speakerName}
+                            {entry.speakerName === 'Sales Rep' || entry.speakerName === 'Rep' ? 'Me' : entry.speakerName}
                           </span>
                           {isLowConfidence && !isJustEdited && !localTranscriptEdits[entry.entryId] && (
                             <span className="text-xs font-semibold inline-flex items-center gap-1" style={{ color: '#D97706' }}>
@@ -1225,7 +1228,7 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
               </h3>
               <div className="space-y-3.5">
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span style={{ color: '#6B7280' }}>Rep</span>
+                  <span style={{ color: '#6B7280' }}>Me</span>
                   <span style={{ color: '#111827' }}>
                     {talkRatio?.rep?.percentage ?? 50}%
                   </span>
@@ -1356,7 +1359,7 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
                                 {initialStr}
                               </div>
                               <span className="font-semibold text-gray-700">
-                                {n.userId === 'usr_001' ? 'Sarah Chen' : 'Rep'}
+                                {n.userId === 'usr_001' ? 'Sarah Chen' : 'Me'}
                               </span>
                             </div>
                             <span className="text-[10px] text-gray-400 font-medium">
@@ -1624,7 +1627,7 @@ export default function CallsListRepView() {
                 className="absolute left-0 top-full mt-1 w-56 rounded-md shadow-lg z-50 bg-white border border-gray-200"
               >
                 <div className="py-1">
-                  {['New Business', 'Renewal', 'Expansion', 'Cross-Sell'].map((dealType) => (
+                  {['Meeting', 'Inbound', 'Outbound'].map((dealType) => (
                     <button
                       key={dealType}
                       onClick={() => toggleDealType(dealType)}

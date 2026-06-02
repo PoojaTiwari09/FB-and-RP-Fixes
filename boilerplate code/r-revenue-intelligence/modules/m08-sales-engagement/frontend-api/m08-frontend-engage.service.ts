@@ -52,14 +52,23 @@ export class M08FrontendEngageService {
         dueDate: t.dueDate,
         dueTime: t.dueTime || '',
         createdAt: t.createdAt,
+        snoozedUntil: t.snoozedUntil || null,
       };
     });
 
-    // Properly sort tasks: Priority First, then Due Date Ascending, then Due Time Ascending, then CreatedAt Descending
+    // Properly sort tasks: Priority First (with overdue within HIGH), then Due Date Ascending, then Due Time Ascending, then CreatedAt Descending
     mappedTasks.sort((a, b) => {
       const priorityOrder: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
       const pDiff = (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
       if (pDiff !== 0) return pDiff;
+
+      // Within HIGH priority, sort overdue tasks first
+      if (a.priority === 'HIGH') {
+        const aOverdue = a.isOverdue ? 1 : 0;
+        const bOverdue = b.isOverdue ? 1 : 0;
+        const overdueDiff = bOverdue - aOverdue;
+        if (overdueDiff !== 0) return overdueDiff;
+      }
 
       if (a.dueDate && b.dueDate) {
         const dDiff = a.dueDate.localeCompare(b.dueDate);
@@ -87,16 +96,27 @@ export class M08FrontendEngageService {
     });
 
     const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
 
-    const totalTasksToday = tasks.filter((t) => t.status !== 'COMPLETED').length;
-    const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length;
-    const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
-    const upcomingCount = tasks.filter((t) => t.status === 'PENDING').length;
-    const atRiskCount = tasks.filter((t) => t.isAtRisk && t.status !== 'COMPLETED').length;
-    const dueTodayCount = tasks.filter((t) => t.status !== 'COMPLETED').length;
+    // A task is snoozed if its snoozedUntil exists and is in the future
+    const activeTasks = tasks.filter((t) => {
+      const isSnoozed = t.snoozedUntil && new Date(t.snoozedUntil) > now;
+      return !isSnoozed;
+    });
+
+    const snoozedCount = tasks.filter((t) => {
+      return t.snoozedUntil && new Date(t.snoozedUntil) > now;
+    }).length;
+
+    const totalTasksToday = activeTasks.filter((t) => t.status !== 'COMPLETED').length;
+    const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length; // completed count can include all completed
+    const inProgressCount = activeTasks.filter((t) => t.status === 'IN_PROGRESS').length;
+    const upcomingCount = activeTasks.filter((t) => t.status === 'PENDING').length;
+    const atRiskCount = activeTasks.filter((t) => t.isAtRisk && t.status !== 'COMPLETED').length;
+    const dueTodayCount = activeTasks.filter((t) => t.status !== 'COMPLETED').length;
     
     // Dynamically calculate high priority count including overdue tasks
-    const highPriorityCount = tasks.filter((t) => {
+    const highPriorityCount = activeTasks.filter((t) => {
       const isCompleted = t.status === 'COMPLETED';
       if (isCompleted) return false;
       const isOverdue = t.isOverdue || (t.dueDate && t.dueDate < todayStr);
@@ -115,6 +135,7 @@ export class M08FrontendEngageService {
       dueTodayCount,
       highPriorityCount,
       progressPercent,
+      snoozedCount,
     };
   }
 
@@ -155,6 +176,7 @@ export class M08FrontendEngageService {
       recommendedNextSteps: t.recommendedNextSteps || [],
       recentActivity: (t.recentActivity as any) || [],
       existingNotes: latestEngageTaskNote(t.notes) || '',
+      snoozedUntil: t.snoozedUntil || null,
     };
   }
 
@@ -300,6 +322,7 @@ export class M08FrontendEngageService {
     const taskId = `task_${Date.now()}`;
     const todayStr = new Date().toISOString().split('T')[0];
     const dueDate = body.dueDate || todayStr;
+    // Automatically set to HIGH priority if due date is in the past
     const isOverdue = dueDate < todayStr;
     const priority = (isOverdue ? 'HIGH' : (body.priority || 'NORMAL')).toUpperCase();
 

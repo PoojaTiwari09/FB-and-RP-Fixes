@@ -199,7 +199,7 @@ export default function CallsReviewDetailView({ reviewId }: CallsReviewDetailVie
                 <p className="text-xs text-gray-400 mb-3">Talk Ratio</p>
                 {/* Labels + percentages row */}
                 <div className="flex items-center justify-between mb-1.5 text-xs text-gray-600">
-                  <span>Rep</span>
+                  <span>Me</span>
                   <span>{repPct}%</span>
                   <span>Customer</span>
                   <span>{custPct}%</span>

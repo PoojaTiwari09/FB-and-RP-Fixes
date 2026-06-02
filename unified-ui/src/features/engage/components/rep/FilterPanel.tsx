@@ -1,46 +1,66 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
-import { MOCK_FILTER_OPTIONS } from './mocks/engage.mock';
+import { X, Search, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FilterState {
-  dueDate: string;
-  todoTypes: string[];
-  flowIds: string[];
-  entityType: string;
+  dueDate: 'today' | 'tomorrow' | 'this-week' | 'overdue' | 'custom' | null;
+  entityTypes: Set<'account' | 'deal' | 'lead'>;
+  localTime: 'morning' | 'business_hours' | 'custom' | null;
 }
 
 interface FilterPanelProps {
   onClose: () => void;
   onApply: (filters: FilterState) => void;
+  initialFilters?: FilterState | null;
 }
 
-export default function FilterPanel({ onClose, onApply }: FilterPanelProps) {
-  const [dueDate, setDueDate] = useState('');
-  const [todoTypes, setTodoTypes] = useState<string[]>([]);
-  const [flowIds, setFlowIds] = useState<string[]>([]);
-  const [entityType, setEntityType] = useState('');
+export default function FilterPanel({ onClose, onApply, initialFilters }: FilterPanelProps) {
+  const [dueDate, setDueDate] = useState<'today' | 'tomorrow' | 'this-week' | 'overdue' | 'custom' | null>(
+    initialFilters?.dueDate || null
+  );
+  
+  const [entityTypes, setEntityTypes] = useState<Set<'account' | 'deal' | 'lead'>>(
+    new Set(initialFilters?.entityTypes || [])
+  );
+  
+  const [localTime, setLocalTime] = useState<'morning' | 'business_hours' | 'custom' | null>(
+    initialFilters?.localTime || null
+  );
 
-  const toggleTodoType = (type: string) =>
-    setTodoTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
+  // CRM Accordion States
+  const [crmOpen, setCrmOpen] = useState<Record<string, boolean>>({
+    account: false,
+    contact: false,
+    lead: false,
+    opportunity: false,
+  });
 
-  const toggleFlow = (id: string) =>
-    setFlowIds((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
+  const toggleCrmCategory = (cat: string) => {
+    setCrmOpen((prev) => ({ ...prev, [cat]: !prev[cat] }));
+  };
+
+  const handleEntityTypeToggle = (val: 'account' | 'deal' | 'lead') => {
+    setEntityTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(val)) next.delete(val);
+      else next.add(val);
+      return next;
+    });
+  };
 
   const handleReset = () => {
-    setDueDate('');
-    setTodoTypes([]);
-    setFlowIds([]);
-    setEntityType('');
+    setDueDate(null);
+    setEntityTypes(new Set());
+    setLocalTime(null);
   };
 
   const handleApply = () => {
-    onApply({ dueDate, todoTypes, flowIds, entityType });
+    onApply({
+      dueDate,
+      entityTypes,
+      localTime,
+    });
     onClose();
   };
 
@@ -48,134 +68,142 @@ export default function FilterPanel({ onClose, onApply }: FilterPanelProps) {
     <>
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
 
-      <div className="fixed top-0 right-0 h-full w-80 bg-white z-50 flex flex-col shadow-xl">
+      <div className="fixed top-0 right-0 h-full w-[380px] bg-white z-50 flex flex-col shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-900">Filters</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
-          >
-            <X size={16} />
-          </button>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-150">
+          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleReset}
+              className="text-xs font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              Clear All
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Due Date */}
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs font-semibold text-gray-700 mb-3">Due Date</p>
-            <div className="space-y-2.5">
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Due Date</h3>
+            <div className="flex flex-col gap-2.5">
               {[
                 { value: 'today', label: 'Today' },
                 { value: 'tomorrow', label: 'Tomorrow' },
-                { value: 'this_week', label: 'This week' },
-                { value: 'next_week', label: 'Next week' },
+                { value: 'this-week', label: 'This Week' },
+                { value: 'overdue', label: 'Overdue' },
+                { value: 'custom', label: 'Custom Range' },
               ].map((opt) => (
-                <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer">
+                <label key={opt.value} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
                   <input
                     type="radio"
                     name="dueDate"
-                    value={opt.value}
                     checked={dueDate === opt.value}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="accent-purple-600"
+                    onChange={() => setDueDate(opt.value as any)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
                   />
-                  <span className="text-sm text-gray-700">{opt.label}</span>
+                  <span>{opt.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* To-Do Type */}
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs font-semibold text-gray-700 mb-3">To-Do Type</p>
-            <div className="space-y-2.5">
-              {['FLOW', 'MANUAL', 'RECOMMENDED'].map((type) => (
-                <label key={type} className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={todoTypes.includes(type)}
-                    onChange={() => toggleTodoType(type)}
-                    className="accent-purple-600"
-                  />
-                  <span className="text-sm text-gray-700">
-                    {type.charAt(0) + type.slice(1).toLowerCase()}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Flow Name */}
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs font-semibold text-gray-700 mb-3">Flow Name</p>
-            <div className="space-y-2.5">
-              {MOCK_FILTER_OPTIONS.flowNames.map((flow) => (
-                <label key={flow.flowId} className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={flowIds.includes(flow.flowId)}
-                    onChange={() => toggleFlow(flow.flowId)}
-                    className="accent-purple-600"
-                  />
-                  <span className="text-sm text-gray-700">{flow.flowName}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <hr className="border-gray-100" />
 
           {/* Linked Entity Type */}
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs font-semibold text-gray-700 mb-3">Linked Entity Type</p>
-            <div className="space-y-2.5">
-              {['CONTACT', 'ACCOUNT', 'DEAL', 'LEAD'].map((type) => (
-                <label key={type} className="flex items-center gap-2.5 cursor-pointer">
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Linked Entity Type</h3>
+            <div className="flex flex-col gap-2.5">
+              {(['account', 'deal', 'lead'] as const).map((type) => {
+                const labels = { account: 'Account', deal: 'Deal', lead: 'Lead' };
+                return (
+                  <label key={type} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={entityTypes.has(type)}
+                      onChange={() => handleEntityTypeToggle(type)}
+                      className="w-4 h-4 rounded text-purple-600 border-gray-300 focus:ring-purple-500"
+                    />
+                    <span>{labels[type]}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* Prospect Local Time */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Prospect Local Time</h3>
+            <div className="flex flex-col gap-2.5">
+              {[
+                { val: 'morning', label: 'Morning (6–12)' },
+                { val: 'business_hours', label: 'Business Hours (9–6)' },
+                { val: 'custom', label: 'Custom Range' },
+              ].map((opt) => (
+                <label key={opt.val} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
                   <input
                     type="radio"
-                    name="entityType"
-                    value={type}
-                    checked={entityType === type}
-                    onChange={(e) => setEntityType(e.target.value)}
-                    className="accent-purple-600"
+                    name="localTime"
+                    checked={localTime === opt.val}
+                    onChange={() => setLocalTime(opt.val as any)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
                   />
-                  <span className="text-sm text-gray-700">
-                    {type.charAt(0) + type.slice(1).toLowerCase()}
-                  </span>
+                  <span>{opt.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Prospect Local Time */}
-          <div className="px-5 py-4">
-            <p className="text-xs font-semibold text-gray-700 mb-3">Prospect Local Time</p>
-            <div className="flex items-center gap-3">
-              <input
-                type="time"
-                defaultValue="08:00"
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-              />
-              <span className="text-xs text-gray-400 flex-shrink-0">to</span>
-              <input
-                type="time"
-                defaultValue="18:00"
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800"
-              />
+          <hr className="border-gray-100" />
+
+          {/* CRM Entity Fields Accordions */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">CRM Entity Fields</h3>
+            <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-200">
+              {['Account', 'Contact', 'Lead', 'Opportunity'].map((cat) => {
+                const key = cat.toLowerCase();
+                const isOpen = crmOpen[key];
+                return (
+                  <div key={cat} className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => toggleCrmCategory(key)}
+                      className="flex items-center justify-between px-4 py-3 bg-gray-50/50 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
+                    >
+                      <span>{cat}</span>
+                      {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    {isOpen && (
+                      <div className="px-4 py-3 bg-white text-xs text-gray-400 italic">
+                        CRM fields for {cat} will appear here
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 px-5 py-4 border-t border-gray-200">
+        <div className="px-6 py-5 border-t border-gray-150 flex items-center justify-between bg-gray-50/50">
           <button
             onClick={handleReset}
-            className="flex-1 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg py-2 hover:bg-gray-50 cursor-pointer transition-colors"
+            className="px-4 py-2 border border-gray-200 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
           >
-            Reset
+            Clear All
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg py-2 cursor-pointer transition-colors"
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
           >
             Apply Filters
           </button>

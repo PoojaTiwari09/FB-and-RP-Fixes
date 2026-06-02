@@ -74,11 +74,32 @@ export function useEngage(initialAssigneeId?: string) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
+  // Session-based activity logging
+  const logActivity = useCallback((description: string, contactName: string = 'System', companyName: string = 'Engage', type: string = 'system') => {
+    const role = isManager ? 'manager' : 'rep';
+    const key = `recent_activity_${role}`;
+    
+    const newActivity = {
+      id: Math.random().toString(36).substr(2, 9),
+      contactName,
+      companyName,
+      activityType: type,
+      description,
+      timeAgo: 'Just now',
+      timestamp: Date.now()
+    };
+
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    const updated = [newActivity, ...existing].slice(0, 10);
+    localStorage.setItem(key, JSON.stringify(updated));
+    setRecentActivity(updated);
+  }, [isManager]);
+
   // Fetch data from service — always tries real API, falls back to mock on failure
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [tasksData, summaryData, activityData] = await Promise.all([
+      const [tasksData, summaryData] = await Promise.all([
         engageService.fetchTasks({
           assigneeId: selectedUserId,
           date: todayStr,
@@ -90,15 +111,18 @@ export function useEngage(initialAssigneeId?: string) {
           filters: appliedFilters,
         }),
         engageService.fetchSummary(selectedUserId, todayStr),
-        engageService.fetchRecentActivity(),
       ]);
+
+      // Load session-specific activities instead of global ones
+      const role = isManager ? 'manager' : 'rep';
+      const sessionActivities = JSON.parse(localStorage.getItem(`recent_activity_${role}`) || '[]');
 
       startTransition(() => {
         setGroups(tasksData.groups);
         setTabCounts(tasksData.tabCounts);
         setStatusPills(tasksData.statusPills);
         setSummary(summaryData);
-        setRecentActivity(activityData || []);
+        setRecentActivity(sessionActivities);
         const flatTasks: Task[] = [];
         tasksData.groups.forEach(g => flatTasks.push(...g.tasks));
         setTasks(flatTasks);
@@ -108,7 +132,7 @@ export function useEngage(initialAssigneeId?: string) {
       showToast('error', 'Failed to retrieve engagement tasks');
       setIsLoading(false);
     }
-  }, [selectedUserId, activeStatusTab, activeChannel, searchQuery, groupBy, sortBy, appliedFilters, todayStr, showToast]);
+  }, [selectedUserId, activeStatusTab, activeChannel, searchQuery, groupBy, sortBy, appliedFilters, todayStr, showToast, isManager]);
 
   // Keep selected user ID in sync if resolved initial ID changes
   useEffect(() => {
@@ -400,6 +424,7 @@ export function useEngage(initialAssigneeId?: string) {
     handleRemoveFilter,
     toggleGroup,
     openTakeAction,
+    logActivity,
     
     // Toasts
     toasts,

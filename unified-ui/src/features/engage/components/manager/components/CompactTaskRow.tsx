@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, Mail, Clock, Flame, UserPlus, Timer, CheckCircle2 } from 'lucide-react';
+import { Phone, Mail, Clock, UserPlus, Timer, CheckCircle2 } from 'lucide-react';
 import type { Task } from '../types/engage.types';
 
 function LinkedinIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -148,7 +148,14 @@ export default function CompactTaskRow({
           {task.workflowName && (
             <>
               <span className="text-gray-300 opacity-60">•</span>
-              <span className="truncate opacity-85" title={task.workflowName}>
+              <span 
+                className="truncate opacity-85 cursor-pointer hover:text-blue-600 transition-colors" 
+                title={task.workflowName}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick();
+                }}
+              >
                 {task.workflowName}
                 {task.workflowStep && ` (Step ${task.workflowStep})`}
               </span>
@@ -223,28 +230,30 @@ export default function CompactTaskRow({
       {/* RIGHT ZONE - Action Buttons */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {onReassignClick && !isCompleted && (
-          <button
-            className="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all border border-gray-250 bg-white text-gray-600 px-3 py-1.5 hover:bg-[#111827] hover:text-white hover:border-[#111827]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onReassignClick(task);
-            }}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            Reassign
-          </button>
-        )}
-
-        {!isViewOnly && !isCompleted && (
-          <button
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap border border-gray-250 bg-white text-gray-600 px-3.5 py-1.5 transition-all group-hover:bg-[#111827] group-hover:text-white group-hover:border-[#111827]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick();
-            }}
-          >
-            Take Action
-          </button>
+          <>
+            <button
+              className="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all border border-gray-250 bg-white text-gray-600 px-3 py-1.5 hover:bg-[#111827] hover:text-white hover:border-[#111827]"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReassignClick(task);
+              }}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Reassign
+            </button>
+            
+            {!isViewOnly && (
+              <button
+                className="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all border border-blue-200 bg-blue-50 text-blue-700 px-3 py-1.5 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick();
+                }}
+              >
+                View Details
+              </button>
+            )}
+          </>
         )}
 
         {isCompleted && (

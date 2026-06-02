@@ -49,19 +49,278 @@ export class LlmService {
     return this.providerReason;
   }
 
-  private buildMockBuyerResponse(userMessage: string, history: any[]): string {
-    const turnNumber = Math.floor(history.length / 2) + 1;
-    const normalized = userMessage.trim() || 'your proposal';
+  /**
+   * Intelligent mock buyer response engine.
+   * Deeply parses the system prompt to extract persona name, role, scenario context,
+   * difficulty level, and custom instructions. Generates highly contextual responses
+   * that reference the specific training scenario and stay fully in character.
+   */
+  private buildMockBuyerResponse(userMessage: string, history: any[], systemPrompt?: string): string {
+    const turn = Math.floor(history.length / 2) + 1;
+    const msg = (userMessage || '').toLowerCase().trim();
+    const msgRaw = (userMessage || '').trim();
+    const sp = systemPrompt || '';
 
-    if (turnNumber === 1) {
-      return `I hear you, but I need a clearer reason to change right now. How would ${normalized} improve ROI without disrupting our current workflow?`;
+    // ── Deep-parse the system prompt ────────────────────────────────────
+    const personaMatch = sp.match(/You are roleplaying as ([^,\n]+)/);
+    const personaName = personaMatch?.[1]?.trim() || 'the prospect';
+    const firstName = personaName.split(/[\s(]/)[0] || personaName;
+
+    const personaTypeMatch = sp.match(/roleplaying as [^,]+,\s*a\s+([^.\n]+)/);
+    const personaType = personaTypeMatch?.[1]?.trim() || 'decision maker';
+
+    const scenarioMatch = sp.match(/SCENARIO:\s*([\s\S]*?)(?:\nPERSONA INSTRUCTIONS:|\nTONE:)/);
+    const scenarioCtx = scenarioMatch?.[1]?.trim() || '';
+
+    const customMatch = sp.match(/PERSONA INSTRUCTIONS:\s*([^\n]+)/);
+    const customInstructions = customMatch?.[1]?.trim() || '';
+
+    const toneMatch = sp.match(/TONE:\s*([^\n]+)/);
+    const tone = toneMatch?.[1]?.trim() || 'professional';
+
+    // Difficulty detection
+    const isAdvanced = tone.includes('challenging') || tone.includes('direct') || sp.includes('very hard to impress');
+    const isBeginner = tone.includes('friendly') || tone.includes('patient') || sp.includes('generally open');
+    // Otherwise intermediate
+
+    // Scenario topic extraction (what is the scenario about?)
+    const scenarioLower = scenarioCtx.toLowerCase();
+    const topicKeywords: Record<string, string[]> = {
+      'cloud migration': ['cloud', 'migration', 'infrastructure', 'on-premise', 'on-prem'],
+      'pricing': ['pricing', 'price', 'cost', 'budget'],
+      'software adoption': ['software', 'adoption', 'implementation', 'platform'],
+      'sales tool': ['sales', 'crm', 'pipeline', 'revenue'],
+      'security': ['security', 'compliance', 'data protection'],
+      'automation': ['automation', 'automate', 'efficiency'],
+    };
+    let scenarioTopic = 'your solution';
+    for (const [topic, keywords] of Object.entries(topicKeywords)) {
+      if (keywords.some(k => scenarioLower.includes(k))) {
+        scenarioTopic = topic;
+        break;
+      }
     }
 
-    if (normalized.includes('?')) {
-      return `Fair question. I still need proof on pricing, rollout effort, and the timeline before I can commit.`;
+    // ── Track conversation history ──────────────────────────────────────
+    const prevReplies = history.filter((m: any) => m.role === 'assistant').map((m: any) => (m.content || '').toLowerCase());
+    const alreadyMentioned = (keyword: string) => prevReplies.some(r => r.includes(keyword));
+
+    // Seeded variety — hash from message content for much better entropy
+    let hashVal = 0;
+    for (let i = 0; i < msgRaw.length; i++) hashVal = ((hashVal << 5) - hashVal + msgRaw.charCodeAt(i)) | 0;
+    const seed = Math.abs((turn * 31 + hashVal * 7 + prevReplies.length * 17 + msg.length * 53) % 127);
+    const pick = <T>(arr: T[]): T => arr[seed % arr.length];
+
+    // ── Keyword detection ───────────────────────────────────────────────
+    const isGreeting = msg.length < 30 && (/^(hi+|hey+|hello|good\s*(morning|afternoon|evening)|howdy|what'?s up)\b/.test(msg) || msg === 'hi' || msg === 'hey');
+    const isVague = msg.length < 20 && !msg.includes('?') && !/roi|price|cost|timeline|team|demo|pilot|workflow|budget|security/.test(msg);
+    const mentionsPersonaName = msg.includes(firstName.toLowerCase());
+    const isQuestion = msgRaw.includes('?') || /^(what|how|can|why|tell|where|when|who|do you|would you|could you|is there)\b/.test(msg);
+    const mentionsROI = /\broi\b|return on investment|return/.test(msg);
+    const mentionsPricing = /price|cost|budget|invest|afford|expensive/.test(msg);
+    const mentionsTimeline = /timeline|how long|when|time|deadline|quarter/.test(msg);
+    const mentionsWorkflow = /workflow|process|current|existing|today|right now/.test(msg);
+    const mentionsTeam = /team|people|employee|staff|user|adoption|onboard/.test(msg);
+    const mentionsDemo = /demo|trial|pilot|try|proof of concept|poc/.test(msg);
+    const mentionsSecurity = /security|compliance|gdpr|data|privacy|soc/.test(msg);
+    const mentionsCompetitor = /competitor|versus|vs |alternative|other vendor|incumbent/.test(msg);
+    const mentionsClose = /next step|move forward|sign|start|ready|proceed|go ahead/.test(msg);
+    const mentionsSave = /save|efficien|automat|faster|produc|streamline/.test(msg);
+
+    // ── GREETING: Steer toward scenario ─────────────────────────────────
+    if (isGreeting && turn <= 2) {
+      if (isAdvanced) {
+        return pick([
+          `Let's skip the small talk. I've got 10 minutes. I was told you have something relevant to ${scenarioTopic} — convince me why I should care.`,
+          `Hi. I'll be direct — I've seen a dozen pitches about ${scenarioTopic} this quarter alone. What's different about yours? You've got 10 minutes.`,
+        ]);
+      }
+      if (isBeginner) {
+        return pick([
+          `Hi there! Thanks for taking the time. I've been curious about ${scenarioTopic} options — we've been thinking about it internally. What exactly does your approach look like?`,
+          `Hey, nice to meet you. So I've been looking into ${scenarioTopic} solutions lately. Walk me through what you're proposing.`,
+        ]);
+      }
+      // Intermediate
+      return pick([
+        `Hi. Look, I'll be upfront — I'm skeptical about ${scenarioTopic}. We've looked at this before and it didn't go anywhere. But I'm here, so let's see what you've got. What specifically are you proposing?`,
+        `Hey. I appreciate the outreach. We've been evaluating ${scenarioTopic} options but I haven't been impressed so far. What's your pitch?`,
+        `Hello. Before we get too far — what exactly are you solving? Be specific about ${scenarioTopic}. I hear a lot of generalities and I'm tired of it.`,
+        `Hi there. I've got about 15 minutes. I know this is about ${scenarioTopic} — but before you pitch me, what do you actually know about our current setup?`,
+      ]);
     }
 
-    return `That helps, but I am not fully convinced yet. Show me one concrete business outcome and a realistic next step.`;
+    // ── VAGUE/SHORT MESSAGE: Push for substance ─────────────────────────
+    if (isVague && turn <= 3 && !mentionsPersonaName) {
+      return pick([
+        `I need you to be more specific. What exactly are you proposing regarding ${scenarioTopic}? Give me the core idea in one sentence.`,
+        `Okay, but what does that actually mean for my business? I need specifics about ${scenarioTopic}, not generalities.`,
+        `I hear you, but I can't evaluate what you're saying without more detail. What's the concrete proposition around ${scenarioTopic}?`,
+      ]);
+    }
+
+    // ── USER MENTIONS PERSONA NAME: Stay in character ───────────────────
+    if (mentionsPersonaName) {
+      return pick([
+        `Yes, I'm ${firstName}. But let's focus on what matters — why should I change our approach to ${scenarioTopic}? I need a real business case, not a relationship pitch.`,
+        `That's me. Look, I have serious concerns about ${scenarioTopic}. Instead of talking about me, tell me what problem you're actually solving and why I should care.`,
+        `I appreciate the personal touch, but what I really need to hear is how this addresses my ${scenarioTopic} concerns. What hard evidence do you have?`,
+      ]);
+    }
+
+    // ── LATE CONVERSATION: Closing dynamics ─────────────────────────────
+    if (turn >= 7 && mentionsClose) {
+      if (isAdvanced) {
+        return `You've addressed some concerns. But I need a formal proposal with hard numbers on ${scenarioTopic} for my CFO. Can you have that to me by end of week?`;
+      }
+      return pick([
+        `Okay, you've made reasonable points about ${scenarioTopic}. I'd want to see a written proposal and loop in my ${personaType === 'competitive' ? 'VP of Engineering' : 'operations lead'}. What's the next step from your side?`,
+        `I'm cautiously interested. Send me a one-pager on the ${scenarioTopic} approach and I'll set up a follow-up with my team.`,
+      ]);
+    }
+
+    if (turn >= 9) {
+      return `I need to wrap up. You've given me things to think about on ${scenarioTopic}, but I haven't heard enough concrete proof to move forward yet. Send me something in writing — numbers, case studies, implementation plan.`;
+    }
+
+    // ── ROI ─────────────────────────────────────────────────────────────
+    if (mentionsROI) {
+      if (alreadyMentioned('roi')) {
+        return `We've already talked about ROI. What I need now is a concrete example — a company like ours that made the switch to ${scenarioTopic} and saw measurable results within 12 months.`;
+      }
+      return pick([
+        `ROI on ${scenarioTopic}? I've seen the pitch decks before. What's the actual payback period? And what's the baseline metric you're measuring against? I need proof, not projections.`,
+        `Every vendor claims ROI. What makes yours different? ${customInstructions ? `Specifically, ${customInstructions.toLowerCase().replace('respond with', 'I want to understand')}` : `Show me real data from a company our size.`}`,
+        `If ROI is your hook, what's the typical breakeven point? My board won't approve anything on ${scenarioTopic} with a runway longer than 18 months.`,
+      ]);
+    }
+
+    // ── PRICING ─────────────────────────────────────────────────────────
+    if (mentionsPricing) {
+      if (alreadyMentioned('pric') || alreadyMentioned('cost') || alreadyMentioned('budget')) {
+        return `We've touched on pricing. What I need now is the total cost of ownership over 3 years, including migration, training, and ongoing support for ${scenarioTopic}. Give me a ballpark.`;
+      }
+      return pick([
+        `Pricing is critical for us right now — we're mid-budget cycle. What does the total cost of ownership look like for ${scenarioTopic}? Not just licensing, but implementation, training, migration — the full picture.`,
+        `${customInstructions ? customInstructions : `What's the pricing model? Subscription, seat-based, usage-based? I need to know before I can even think about taking this to finance.`}`,
+        `Before we go further on pricing — is there flexibility? Because our budget for ${scenarioTopic} this year is already mostly allocated.`,
+      ]);
+    }
+
+    // ── TIMELINE ────────────────────────────────────────────────────────
+    if (mentionsTimeline) {
+      if (alreadyMentioned('timeline') || alreadyMentioned('how long')) {
+        return `You mentioned timeline before but I'm still not clear. How long from signing to my team actually using this day-to-day? Give me the honest answer, not the best-case.`;
+      }
+      return pick([
+        `Timeline is a real concern for us. What does a realistic implementation look like for ${scenarioTopic}? Not your best case — your typical deployment with a company our size.`,
+        `How long before we'd actually see impact? If ${scenarioTopic} takes 9 months to set up and 6 to calibrate, that's not feasible right now. We have deliverables this quarter.`,
+        `We have a major initiative next quarter. I can't have my team distracted by a ${scenarioTopic} migration. What's the minimum viable rollout timeline?`,
+      ]);
+    }
+
+    // ── WORKFLOW / CURRENT STATE ────────────────────────────────────────
+    if (mentionsWorkflow) {
+      if (alreadyMentioned('workflow') || alreadyMentioned('current process')) {
+        return `I appreciate you asking about our workflow, but the real question is change management. My team has been doing things a certain way for years. How do you handle the human side of ${scenarioTopic}?`;
+      }
+      return pick([
+        `Our current workflow isn't perfect, but it's predictable. I'm skeptical about ${scenarioTopic} — any change introduces risk. How do you minimize disruption?`,
+        `My ops team will resist any process change — that's just reality. What does user adoption typically look like for ${scenarioTopic}? Do you have data on ramp-up time?`,
+        `The thing is, our current process works. Maybe not optimally, but switching to ${scenarioTopic} is a big bet. How do you convince me the upside outweighs the disruption?`,
+      ]);
+    }
+
+    // ── TEAM / ADOPTION ─────────────────────────────────────────────────
+    if (mentionsTeam) {
+      return pick([
+        `Getting my team on board is half the battle. They're resistant to new tools. What does onboarding for ${scenarioTopic} actually look like — and what's the typical time-to-proficiency?`,
+        `Adoption is my biggest worry. I've seen ${scenarioTopic} investments fail not because of the technology, but because nobody uses it after month three. What's your retention rate?`,
+        `Who would own this internally? My team is already stretched thin on existing initiatives. I can't add ${scenarioTopic} without headcount or clear time savings.`,
+      ]);
+    }
+
+    // ── DEMO / PILOT ────────────────────────────────────────────────────
+    if (mentionsDemo) {
+      return pick([
+        `A pilot could work, but I'd need to define success criteria upfront for ${scenarioTopic}. What does a typical pilot look like and what's the commitment on our end?`,
+        `I'm open to a demo, but I want to see it with our actual data and use case, not a generic walkthrough. Can you do that for ${scenarioTopic}?`,
+      ]);
+    }
+
+    // ── SECURITY ────────────────────────────────────────────────────────
+    if (mentionsSecurity) {
+      return `Security and compliance are non-negotiable for us, especially with ${scenarioTopic}. Are you SOC 2 certified? What does data residency look like? Who has access to our data?`;
+    }
+
+    // ── COMPETITOR ──────────────────────────────────────────────────────
+    if (mentionsCompetitor) {
+      return pick([
+        `We've been evaluating other ${scenarioTopic} solutions too. Honestly, I haven't found a clear winner. What's the one thing you do that nobody else does?`,
+        `How do you stack up against the incumbents in ${scenarioTopic}? We're already using a tool in this space — what's the migration path?`,
+      ]);
+    }
+
+    // ── CLOSING ─────────────────────────────────────────────────────────
+    if (mentionsClose) {
+      return pick([
+        `I'm not ready to commit to next steps on ${scenarioTopic} yet. I still have open questions about implementation risk and internal buy-in.`,
+        `Before we talk next steps, I'd want to validate this ${scenarioTopic} approach with my team. Can you send me something I can share internally?`,
+      ]);
+    }
+
+    // ── EFFICIENCY / SAVINGS ────────────────────────────────────────────
+    if (mentionsSave) {
+      return pick([
+        `Efficiency gains sound great on paper, but I need to see how that translates to ${scenarioTopic} specifically. What's the measurable impact — hours saved, error reduction, throughput?`,
+        `If you're claiming we'll be more efficient with ${scenarioTopic}, I need a concrete comparison. What does the before-and-after look like for companies our size?`,
+      ]);
+    }
+
+    // ── QUESTIONS FROM REP ──────────────────────────────────────────────
+    if (isQuestion) {
+      const openTopics: string[] = [];
+      if (!alreadyMentioned('pric') && !alreadyMentioned('cost')) openTopics.push('total cost');
+      if (!alreadyMentioned('timeline')) openTopics.push('realistic timeline');
+      if (!alreadyMentioned('roi')) openTopics.push('measurable ROI');
+      if (!alreadyMentioned('team') && !alreadyMentioned('adoption')) openTopics.push('team adoption');
+      const nextConcern = openTopics[0] || 'internal alignment';
+
+      return pick([
+        `Good question. Honestly, the thing holding me back most on ${scenarioTopic} right now is ${nextConcern}. Can you address that specifically?`,
+        `That's fair to ask. Here's where I'm at — I'm cautious about ${scenarioTopic} and haven't been convinced yet. What I need is concrete evidence, not promises. What do you have?`,
+        `I appreciate you asking. My real concern isn't the technology — it's the risk. If ${scenarioTopic} goes wrong after we commit, what's the fallback plan?`,
+        `You're asking the right things. I'm intrigued but cautious about ${scenarioTopic}. Give me one reason this time will be different from past initiatives that looked good on paper.`,
+      ]);
+    }
+
+    // ── DIFFICULTY-ADJUSTED DEFAULT RESPONSES ───────────────────────────
+    if (isAdvanced) {
+      return pick([
+        `That's not enough. Everyone pitching ${scenarioTopic} says the same thing. Give me something concrete — a number, a customer reference, a guarantee. Something I can bring to my board.`,
+        `I hear what you're saying, but I'm not convinced about ${scenarioTopic}. You're telling me what you think I want to hear. Dig deeper — what's the real risk if we DON'T do this?`,
+        `Look, I don't have time for vague promises about ${scenarioTopic}. If you can't quantify the impact, I can't justify the investment. What's the one metric that proves this works?`,
+      ]);
+    }
+
+    if (isBeginner) {
+      return pick([
+        `That actually makes sense for ${scenarioTopic}. I hadn't thought about it from that angle. What would getting started actually look like?`,
+        `Okay, you're addressing my main concern about ${scenarioTopic}. I'd want my operations lead in the next conversation though — can we include her?`,
+        `I can see the logic there. My hesitation is more about timing than fit for ${scenarioTopic}. Is there flexibility on when we'd need to commit?`,
+      ]);
+    }
+
+    // ── INTERMEDIATE DEFAULT ────────────────────────────────────────────
+    const defaults = [
+      `Interesting point about ${scenarioTopic}. But I'm going to push back — how does that apply specifically to a company our size and in our industry?`,
+      `I've heard similar pitches about ${scenarioTopic}. What I haven't heard is why this solves MY specific problem and not just the generic version of it.`,
+      `Okay, I'll grant you that point. But let's talk about what happens when ${scenarioTopic} goes wrong — what does your support model look like post-implementation?`,
+      `That's reasonable, but my CFO is going to ask three things about ${scenarioTopic}: cost, risk, and time to value. Address all three and we have a conversation worth having.`,
+      `I'm following you, but I need more specificity on ${scenarioTopic}. Walk me through a concrete example — not a generic case study, but something close to our situation.`,
+      `Fair enough. My concern about ${scenarioTopic} hasn't changed though. We're mid-cycle on a big initiative and adding another moving part is high risk. How do you de-risk this?`,
+    ];
+    return defaults[seed % defaults.length];
   }
 
   private buildMockEvaluation(): any {
@@ -197,7 +456,8 @@ export class LlmService {
 
   async generateBuyerResponse(systemPrompt: string, history: any[], userMessage: string): Promise<string> {
     if (this.aiMockMode) {
-      return this.buildMockBuyerResponse(userMessage, history);
+      // Pass systemPrompt so mock engine can extract persona/difficulty context
+      return this.buildMockBuyerResponse(userMessage, history, systemPrompt);
     }
 
     try {
@@ -290,7 +550,9 @@ export class LlmService {
   }
 
   async generateSpeech(text: string, voiceId: string): Promise<string | null> {
-    if (this.aiMockMode || !this.elevenLabsApiKey) {
+    // ElevenLabs TTS is independent of LLM mock mode — use it whenever the key is present.
+    // This allows real voice output even when GROQ_API_KEY is unset (mock text responses).
+    if (!this.elevenLabsApiKey) {
       return null;
     }
 

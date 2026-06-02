@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Phone, Mail, MessageSquare, Building2, DollarSign, Calendar, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Phone, Mail, MessageSquare, Building2, DollarSign, Calendar, Pencil, Sparkles } from 'lucide-react';
 import type { Task, TaskDetail, TaskNote } from './types/engage.types';
 import { getTaskDetail, fetchTaskNotes, saveNotes } from './services/engage.service';
+import { useRole } from '@shared/hooks/useRole';
 
 interface TakeActionDrawerProps {
   task: Task;
@@ -13,6 +15,8 @@ interface TakeActionDrawerProps {
 }
 
 export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: TakeActionDrawerProps) {
+  const router = useRouter();
+  const { isManager } = useRole();
   const [detail, setDetail] = useState<TaskDetail | null>(null);
   const [note, setNote] = useState('');
   const [savedNotes, setSavedNotes] = useState<TaskNote[]>([]);
@@ -101,9 +105,23 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
             Quick Actions
           </p>
-          <button className="w-full flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors mb-2">
-            <Phone size={12} /> Quick Call
-          </button>
+          {!isManager ? (
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <button className="flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                <Phone size={12} /> Quick Call
+              </button>
+              <button
+                onClick={() => router.push(`/smart-call?contactId=${task.contactId}`)}
+                className="flex items-center justify-center gap-1.5 bg-purple-600 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-purple-700 cursor-pointer transition-colors"
+              >
+                <Sparkles size={12} /> Smart Call
+              </button>
+            </div>
+          ) : (
+            <button className="w-full flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors mb-2">
+              <Phone size={12} /> Quick Call
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => onEmail(task)}

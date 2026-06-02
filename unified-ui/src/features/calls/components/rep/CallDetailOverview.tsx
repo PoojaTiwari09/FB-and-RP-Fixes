@@ -431,7 +431,7 @@ function AIInsightsPanel({ insights, loading }: { insights: AIInsights | null; l
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm mb-1">
-            <span style={{ color: '#6B7280' }}>Rep</span>
+            <span style={{ color: '#6B7280' }}>Me</span>
             <span className="font-medium" style={{ color: '#111827' }}>{insights.talkRatio.rep}%</span>
           </div>
           <div className="w-full rounded-full h-2" style={{ backgroundColor: '#E5E7EB' }}>

@@ -131,10 +131,74 @@ export async function analyzeScorecardStatus(
   sections: PlaybookSection[]
 ): Promise<Record<string, 'not-started' | 'in-progress' | 'completed'>> {
   if (transcript.length < 2 || sections.length === 0) {
-    // Not enough conversation yet — return defaults
     const defaults: Record<string, 'not-started' | 'in-progress' | 'completed'> = {};
     sections.forEach((s) => { defaults[s.id] = 'not-started'; });
     return defaults;
+  }
+
+  // ── Keyword-based fallback (works without Groq API key) ───────────────
+  // This runs ALWAYS as the primary analysis when no Groq key is set,
+  // and as a fallback if the Groq call fails.
+  const repMessages = transcript.filter(m => m.sender === 'user').map(m => m.text.toLowerCase());
+  const allRepText = repMessages.join(' ');
+
+  function analyzeSection(section: PlaybookSection): 'not-started' | 'in-progress' | 'completed' {
+    const title = section.title.toLowerCase();
+    const questionTexts = section.questions.map(q => q.text.toLowerCase());
+
+    // Opening & Rapport
+    if (title.includes('opening') || title.includes('rapport')) {
+      const hasIntro = repMessages.some(m => m.includes('hi') || m.includes('hello') || m.includes('my name') || m.includes('appreciate') || m.includes('thank'));
+      const hasCredibility = repMessages.some(m => m.includes('we help') || m.includes('our company') || m.includes('we work with') || m.includes('experience'));
+      if (hasIntro && hasCredibility) return 'completed';
+      if (hasIntro || hasCredibility) return 'in-progress';
+      return repMessages.length > 0 ? 'in-progress' : 'not-started';
+    }
+
+    // Discovery
+    if (title.includes('discovery')) {
+      const discoveryKeywords = ['challenge', 'pain', 'problem', 'struggle', 'what does', 'how do you', 'tell me about', 'current', 'today', 'success look like', 'goal', 'objective', 'priority'];
+      const hits = discoveryKeywords.filter(k => allRepText.includes(k));
+      if (hits.length >= 3) return 'completed';
+      if (hits.length >= 1) return 'in-progress';
+      // Also check if any message contains a question mark (discovery behavior)
+      const questionsAsked = repMessages.filter(m => m.includes('?')).length;
+      if (questionsAsked >= 2) return 'in-progress';
+      return 'not-started';
+    }
+
+    // Objection Handling
+    if (title.includes('objection')) {
+      const objectionKeywords = ['roi', 'return', 'value', 'cost', 'price', 'budget', 'timeline', 'risk', 'concern', 'worried', 'adoption', 'change management', 'guarantee', 'proof', 'case study', 'customer', 'result'];
+      const hits = objectionKeywords.filter(k => allRepText.includes(k));
+      if (hits.length >= 4) return 'completed';
+      if (hits.length >= 2) return 'in-progress';
+      return 'not-started';
+    }
+
+    // Closing & Next Steps
+    if (title.includes('closing') || title.includes('next step')) {
+      const closingKeywords = ['next step', 'follow up', 'proposal', 'schedule', 'demo', 'trial', 'pilot', 'move forward', 'decision', 'stakeholder', 'who else', 'involve'];
+      const hits = closingKeywords.filter(k => allRepText.includes(k));
+      if (hits.length >= 2) return 'completed';
+      if (hits.length >= 1) return 'in-progress';
+      return 'not-started';
+    }
+
+    // Generic: check if any of the section's question keywords appear
+    const allQuestionText = questionTexts.join(' ');
+    const words = allQuestionText.split(/\s+/).filter(w => w.length > 4);
+    const matched = words.filter(w => allRepText.includes(w));
+    if (matched.length >= Math.ceil(words.length * 0.4)) return 'completed';
+    if (matched.length >= 1) return 'in-progress';
+    return 'not-started';
+  }
+
+  // If no Groq key, use keyword analysis directly
+  if (!AI_CONFIG.GROQ_API_KEY) {
+    const result: Record<string, 'not-started' | 'in-progress' | 'completed'> = {};
+    sections.forEach((s) => { result[s.id] = analyzeSection(s); });
+    return result;
   }
 
   // Only use the last 6 messages to keep this fast and cheap
@@ -186,9 +250,9 @@ Return ONLY a valid JSON object mapping section IDs to status values. Example:
     });
     return result;
   } catch {
-    // If Groq fails, return unchanged defaults (don't break the session)
+    // Groq failed — fall back to keyword analysis
     const fallback: Record<string, 'not-started' | 'in-progress' | 'completed'> = {};
-    sections.forEach((s) => { fallback[s.id] = 'not-started'; });
+    sections.forEach((s) => { fallback[s.id] = analyzeSection(s); });
     return fallback;
   }
 }

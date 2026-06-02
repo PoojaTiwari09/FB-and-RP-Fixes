@@ -1,7 +1,7 @@
 import type { AssemblyInsights } from '@calls/services/assemblyai.service';
 import type { TranscriptEntry, AIInsights } from '@calls/data/mockData';
 
-const SPEAKER_LABELS: Record<string, string> = { A: 'Sales Rep', B: 'Customer' };
+const SPEAKER_LABELS: Record<string, string> = { A: 'Me', B: 'Customer' };
 
 function formatMs(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -27,7 +27,7 @@ export function assemblyInsightsToTranscriptEntries(insights: AssemblyInsights):
     .map((text) => text.trim())
     .filter((text) => text.length > 10)
     .map((text, i) => ({
-      speaker: i % 2 === 0 ? 'Sales Rep' : 'Customer',
+      speaker: i % 2 === 0 ? 'Me' : 'Customer',
       role: i % 2 === 0 ? 'Rep' : 'Customer',
       timestamp: formatMs(i * 15000),
       text,

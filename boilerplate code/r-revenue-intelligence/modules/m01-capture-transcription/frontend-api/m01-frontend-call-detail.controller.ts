@@ -157,9 +157,12 @@ export class M01FrontendCallDetailController {
   @Get('notes')
   async getNotes(
     @Param('callId') callId: string,
-    @Req() req: Record<string, string>,
+    @Req() req: Record<string, any>,
   ) {
-    const notes = await this.notesRepo.findByCallId(callId, req.tenantId || 'tenant_001');
+    // Privacy: Only show notes created by the current user (Rep)
+    // Managers will not see these personal notes
+    const currentUserId = req.user?.id || 'usr_001'; 
+    const notes = await this.notesRepo.findByCallId(callId, req.tenantId || 'tenant_001', currentUserId);
     return {
       data: notes.map((n) => ({
         noteId: n.id,

@@ -47,7 +47,11 @@ export default function TaskCard({ task, onTakeAction, onReassign, isReadOnly = 
 
   const IconComponent = getChannelIcon(task.channel);
 
-  const getPriorityStyle = (priority: string) => {
+  const getPriorityStyle = (priority: string, isOverdue: boolean) => {
+    // Overdue tasks get red border regardless of priority
+    if (isOverdue) {
+      return 'border-l-4 border-l-[#EF4444]';
+    }
     switch (priority) {
       case 'high':
         return 'border-l-4 border-l-[#EF4444]';
@@ -62,7 +66,8 @@ export default function TaskCard({ task, onTakeAction, onReassign, isReadOnly = 
   return (
     <div
       className={`bg-white rounded-xl border border-gray-200/90 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between p-5 gap-4 relative overflow-hidden ${getPriorityStyle(
-        task.priority
+        task.priority,
+        task.isOverdue
       )} ${isCompleted ? 'opacity-60' : ''}`}
     >
       {/* Left side details */}
@@ -74,7 +79,7 @@ export default function TaskCard({ task, onTakeAction, onReassign, isReadOnly = 
 
         {/* Core content */}
         <div className="space-y-1">
-          {/* Header row: Contact Name */}
+          {/* Header row: Contact Name - clickable to open sidebar */}
           <h3
             onClick={() => !isReadOnly && onTakeAction(task)}
             className={`text-[15px] font-bold text-gray-900 leading-snug cursor-pointer hover:text-blue-600 transition-colors ${
@@ -90,7 +95,12 @@ export default function TaskCard({ task, onTakeAction, onReassign, isReadOnly = 
             {task.workflowName && (
               <>
                 <span className="mx-1.5 text-gray-300">·</span>
-                <span>{task.workflowName} (Step {task.workflowStep})</span>
+                <span 
+                  onClick={() => !isReadOnly && onTakeAction(task)}
+                  className="cursor-pointer hover:text-blue-600 transition-colors"
+                >
+                  {task.workflowName} (Step {task.workflowStep})
+                </span>
               </>
             )}
             {task.scheduledTime && (
@@ -138,7 +148,10 @@ export default function TaskCard({ task, onTakeAction, onReassign, isReadOnly = 
           <>
             {/* Reassign Button */}
             <button
-              onClick={() => onReassign(task)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onReassign(task);
+              }}
               disabled={isReadOnly}
               className={`inline-flex items-center gap-1 px-4.5 py-2 border border-gray-200 bg-white hover:bg-[#0F172A] hover:text-white hover:border-[#0F172A] text-gray-700 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm ${
                 isReadOnly ? 'cursor-not-allowed opacity-50' : ''
@@ -147,17 +160,19 @@ export default function TaskCard({ task, onTakeAction, onReassign, isReadOnly = 
               <UserPlus className="w-3.5 h-3.5" />
               <span>Reassign</span>
             </button>
-
-            {/* Take Action Button */}
-            <button
-              onClick={() => onTakeAction(task)}
-              disabled={isReadOnly}
-              className={`inline-flex items-center justify-center px-4.5 py-2 border border-gray-200 bg-white hover:bg-[#0F172A] hover:text-white hover:border-[#0F172A] text-gray-700 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm ${
-                isReadOnly ? 'cursor-not-allowed opacity-50 bg-gray-150' : ''
-              }`}
-            >
-              <span>Take Action</span>
-            </button>
+            
+            {/* View Details Button */}
+            {!isReadOnly && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTakeAction(task);
+                }}
+                className="inline-flex items-center gap-1.5 px-4.5 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm hover:bg-blue-600 hover:text-white hover:border-blue-600"
+              >
+                <span>View Details</span>
+              </button>
+            )}
           </>
         )}
       </div>

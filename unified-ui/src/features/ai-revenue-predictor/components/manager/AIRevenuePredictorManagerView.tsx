@@ -208,8 +208,8 @@ export default function AIRevenuePredictorManagerView() {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <p className="text-sm font-semibold text-gray-800">AI prediction breakdown</p>
-              {board.baselineNote && (
-                <p className="text-xs text-gray-500 mt-1">{String(board.baselineNote)}</p>
+              {typeof board.baselineNote === 'string' && board.baselineNote && (
+                <p className="text-xs text-gray-500 mt-1">{board.baselineNote}</p>
               )}
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -227,7 +227,7 @@ export default function AIRevenuePredictorManagerView() {
                   {b.label}
                 </button>
               ))}
-              {math && (
+              {!!math && (
                 <button
                   type="button"
                   onClick={() => setMathOpen(true)}
@@ -300,7 +300,7 @@ export default function AIRevenuePredictorManagerView() {
         )}
       </div>
 
-      {math && (
+      {!!math && (
         <MathDrawer
           isOpen={mathOpen}
           onClose={() => setMathOpen(false)}

@@ -1,50 +1,66 @@
+'use client';
+
+import { useState } from 'react';
 import PageHeader from '@shared/components/PageHeader/PageHeader';
 import RoleBadge from '@shared/components/RoleBadge/RoleBadge';
+import CoachingFilterBar from './coaching/CoachingFilterBar';
+import CoachingTabs, { type TabId } from './coaching/CoachingTabs';
+import AiInsightsPanel from './coaching/AiInsightsPanel';
+import {
+  useCoachingFilters,
+  useAiInsights,
+  useTeamVsBenchmark,
+} from '@revenue/hooks/useCoachingData';
+import type { CoachingParams } from '@revenue/types/coaching.types';
 
 export default function CoachingInsightsManagerView() {
+  const [params, setParams] = useState<CoachingParams>({
+    period: 'Last 30 days',
+    teamId: undefined,
+  });
+  const [activeTab, setActiveTab] = useState<TabId>('interaction');
+
+  const filters   = useCoachingFilters();
+  const aiInsights = useAiInsights(params);
+  const benchmark  = useTeamVsBenchmark(params);
+
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 min-h-0 bg-gray-50">
+      {/* Page Header */}
       <PageHeader
         title="Coaching Insights"
-        subtitle="AI-generated coaching recommendations based on team call patterns and deal outcomes."
         badge={<RoleBadge role="sales_manager" />}
+        subtitle="AI-generated coaching recommendations based on team call patterns and deal outcomes."
       />
-      <div className="flex-1 p-6 space-y-4">
-        {[
-          {
-            rep: 'Jordan Kim',
-            insight: 'Pricing objections handled without ROI anchoring in 4 of last 5 calls.',
-            priority: 'High',
-          },
-          {
-            rep: 'Sam Lee',
-            insight: 'Discovery calls average only 18 min — consider deepening qualification.',
-            priority: 'Medium',
-          },
-          {
-            rep: 'Alex Chen',
-            insight: 'Excellent next-step clarity. Recommend as peer coach for close techniques.',
-            priority: 'Positive',
-          },
-        ].map((item) => (
-          <div key={item.rep} className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-gray-800">{item.rep}</p>
-              <span
-                className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  item.priority === 'High'
-                    ? 'bg-red-50 text-red-600'
-                    : item.priority === 'Medium'
-                    ? 'bg-yellow-50 text-yellow-700'
-                    : 'bg-green-50 text-green-700'
-                }`}
-              >
-                {item.priority}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">{item.insight}</p>
-          </div>
-        ))}
+
+      {/* Filter Bar */}
+      <CoachingFilterBar
+        filters={filters.data}
+        params={params}
+        onChange={setParams}
+        isLoading={filters.isLoading}
+      />
+
+      {/* Main content: 2-column layout */}
+      <div className="flex flex-1 min-h-0 gap-0">
+        {/* Left: Tabs */}
+        <div className="flex flex-col flex-1 min-h-0 min-w-0">
+          <CoachingTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            params={params}
+          />
+        </div>
+
+        {/* Right: AI Insights Panel */}
+        <div className="w-80 shrink-0 border-l border-gray-200 bg-white overflow-y-auto">
+          <AiInsightsPanel
+            insights={aiInsights.data}
+            benchmark={benchmark.data}
+            isLoadingInsights={aiInsights.isLoading}
+            isLoadingBenchmark={benchmark.isLoading}
+          />
+        </div>
       </div>
     </div>
   );

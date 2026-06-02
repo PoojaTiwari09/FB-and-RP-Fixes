@@ -19,6 +19,7 @@ import {
 import { AuthController } from './controllers/auth.controller';
 import { M09FrontendTrainingsController } from './frontend-api/m09-frontend-trainings.controller';
 import { M09FrontendManagerController } from './frontend-api/m09-frontend-manager.controller';
+import { M09FrontendRevenueManagerController } from './frontend-api/m09-frontend-revenue-manager.controller';
 import { M09FrontendTrainingsService } from './frontend-api/m09-frontend-trainings.service';
 import { M09FrontendAuthGuard } from './frontend-api/m09-frontend-auth.guard';
 
@@ -64,6 +65,7 @@ import { M09Worker } from './workers/m09.worker';
     TestController,
     M09FrontendTrainingsController,
     M09FrontendManagerController,
+    M09FrontendRevenueManagerController,
   ],
   providers: [
     Reflector,

@@ -7,7 +7,7 @@ export type TodoType = 'FLOW' | 'MANUAL' | 'RECOMMENDED';
 export type LinkedEntityType = 'CONTACT' | 'ACCOUNT' | 'DEAL' | 'LEAD';
 export type GroupBy = 'NONE' | 'FLOW' | 'STEP_NUMBER';
 export type SortBy = 'DUE_DATE' | 'RECENT_ACTIVITY' | 'PRIORITY';
-export type TabStatus = 'TODAY' | 'IN_PROGRESS' | 'UPCOMING' | 'COMPLETED';
+export type TabStatus = 'TODAY' | 'IN_PROGRESS' | 'UPCOMING' | 'COMPLETED' | 'SNOOZED';
 export type CrmFieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'DROPDOWN' | 'BOOLEAN';
 export type SignalSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
 export type SignalType = 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
@@ -40,6 +40,7 @@ export interface Task {
   status: TaskStatus;
   isOverdue: boolean;
   isAtRisk: boolean;
+  snoozedUntil?: string; // ISO date string
 }
 
 export interface TaskSummary {
@@ -51,6 +52,7 @@ export interface TaskSummary {
   dueTodayCount: number;
   highPriorityCount: number;
   progressPercent: number;
+  snoozedCount?: number;
 }
 
 export interface TaskDetailActivity {

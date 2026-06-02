@@ -41,10 +41,12 @@ export class M08FrontendEngageManagerService {
 
     const normalizedTasks = tasks.map((t) => {
       const isCompleted = isCompletedStatus(t.status);
+      // Check if task is overdue - any task with past due date that's not completed
       let isOverdue = t.isOverdue;
       if (!isCompleted && t.dueDate && t.dueDate < todayStrRaw) {
         isOverdue = true;
       }
+      // Automatically elevate overdue tasks to HIGH priority
       const priority = isOverdue ? 'HIGH' : t.priority;
       return {
         ...t,
@@ -104,19 +106,40 @@ export class M08FrontendEngageManagerService {
     const sortBy = query.sortBy || 'due_date';
     if (sortBy === 'priority') {
       const order: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
-      sorted.sort(
-        (a, b) =>
-          (order[String(a.priority).toUpperCase()] ?? 1) - (order[String(b.priority).toUpperCase()] ?? 1),
-      );
+      sorted.sort((a, b) => {
+        const pDiff = (order[String(a.priority).toUpperCase()] ?? 1) - (order[String(b.priority).toUpperCase()] ?? 1);
+        if (pDiff !== 0) return pDiff;
+        
+        // Within HIGH priority, sort overdue tasks first, then by due date
+        if (String(a.priority).toUpperCase() === 'HIGH') {
+          const aOverdue = a.isOverdue ? 1 : 0;
+          const bOverdue = b.isOverdue ? 1 : 0;
+          const overdueDiff = bOverdue - aOverdue;
+          if (overdueDiff !== 0) return overdueDiff;
+          
+          return String(a.dueDate).localeCompare(String(b.dueDate));
+        }
+        
+        return String(a.dueDate).localeCompare(String(b.dueDate));
+      });
     } else if (sortBy === 'recent_activity') {
       sorted.sort((a, b) =>
         String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')),
       );
     } else {
+      // Default sorting: priority first, then within HIGH priority sort overdue first
       sorted.sort((a, b) => {
         const priorityOrder: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
         const pDiff = (priorityOrder[String(a.priority).toUpperCase()] ?? 1) - (priorityOrder[String(b.priority).toUpperCase()] ?? 1);
         if (pDiff !== 0) return pDiff;
+
+        // Within HIGH priority, sort overdue tasks first by how overdue they are
+        if (String(a.priority).toUpperCase() === 'HIGH') {
+          const aOverdue = a.isOverdue ? 1 : 0;
+          const bOverdue = b.isOverdue ? 1 : 0;
+          const overdueDiff = bOverdue - aOverdue;
+          if (overdueDiff !== 0) return overdueDiff;
+        }
 
         const dDiff = String(a.dueDate).localeCompare(String(b.dueDate));
         if (dDiff !== 0) return dDiff;

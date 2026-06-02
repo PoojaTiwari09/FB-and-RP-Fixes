@@ -290,7 +290,7 @@ export default function RepForecastView() {
         </div>
       </div>
 
-      {math && (
+      {!!math && (
         <MathDrawer
           isOpen={isMathOpen}
           onClose={() => setIsMathOpen(false)}

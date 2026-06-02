@@ -22,33 +22,87 @@ export function mapTrainingListItem(scenario: any, assignment?: any) {
 }
 
 export function mapTrainingSetup(scenario: any) {
-  const raw = scenario.context_text?.replace(/\[SCENARIO_METADATA:.*?\]/s, '').trim() || '';
+  const rawCtx = scenario.context_text?.replace(/\[SCENARIO_METADATA:.*?\]/s, '').trim() || '';
+  
+  // Try extracting metadata JSON if present
+  let metadata: any = {};
+  const jsonMatch = scenario.context_text?.match(/\[SCENARIO_METADATA:\s*({.*?})\]/s);
+  if (jsonMatch) {
+    try { metadata = JSON.parse(jsonMatch[1]); } catch {}
+  }
+
+  // Build scenario-aware descriptions
+  const personaName = scenario.persona_name || 'Training Prospect';
+  const personaType = scenario.persona_type || 'Decision Maker';
+  const difficulty = scenario.difficulty || 'intermediate';
+  const contextSummary = rawCtx.slice(0, 400) || `${personaName} is a ${personaType} evaluating your solution.`;
+
+  // Map difficulty to communication style
+  const commStyles: Record<string, string> = {
+    beginner: 'Open and curious. Willing to listen but needs clear explanations. Responds well to patient, structured conversations.',
+    easy: 'Open and curious. Willing to listen but needs clear explanations. Responds well to patient, structured conversations.',
+    intermediate: 'Professional and skeptical. Asks pointed questions and expects data-backed answers. Won\'t commit without proof.',
+    medium: 'Professional and skeptical. Asks pointed questions and expects data-backed answers. Won\'t commit without proof.',
+    advanced: 'Direct and challenging. Time-pressured, has seen many pitches, and pushes back hard. Only responds to concrete evidence.',
+    hard: 'Direct and challenging. Time-pressured, has seen many pitches, and pushes back hard. Only responds to concrete evidence.',
+  };
+
+  // Detect scenario topic for tailored playbook
+  const ctxLower = rawCtx.toLowerCase();
+  let topic = 'your solution';
+  if (ctxLower.includes('cloud') || ctxLower.includes('migration')) topic = 'cloud migration';
+  else if (ctxLower.includes('sales') || ctxLower.includes('crm')) topic = 'sales platform';
+  else if (ctxLower.includes('security') || ctxLower.includes('compliance')) topic = 'security solution';
+  else if (ctxLower.includes('automat')) topic = 'automation platform';
+
   return {
     id: scenario.id,
-    title: scenario.persona_name || 'Training',
+    title: personaName,
     contactPersona: {
-      name: scenario.persona_name,
-      jobTitle: scenario.persona_type || 'Decision Maker',
-      company: 'Prospect Corp',
-      motivations: raw.slice(0, 400) || 'Growth and efficiency.',
-      communicationStyle: scenario.difficulty || 'professional',
+      name: personaName,
+      jobTitle: personaType,
+      company: metadata.company || 'Prospect Corp',
+      motivations: metadata.objectives || contextSummary,
+      communicationStyle: commStyles[difficulty] || commStyles.intermediate,
     },
     meetingContext: {
-      scenario: 'Discovery Call - Initial Meeting',
-      objective: 'Understand pain points and qualify the opportunity.',
-      backgroundForTrainee: raw.slice(0, 600) || 'Review persona and practice discovery questions.',
+      scenario: metadata.scenario_name || `Discovery Call — ${topic} Evaluation`,
+      objective: metadata.goals || `Understand ${personaName}'s pain points around ${topic}, handle objections effectively, and secure a clear next step.`,
+      backgroundForTrainee: rawCtx.slice(0, 600) || `${personaName} is a ${personaType} who is evaluating ${topic} solutions. Prepare discovery questions, anticipate objections around ROI, timeline, and adoption risk.`,
     },
     playbookSections: [
       {
         id: 'pb_01',
+        title: 'Opening & Rapport',
+        questions: [
+          { id: 'q1', text: 'Introduce yourself and establish credibility quickly.', tags: ['high-impact'], whyItMatters: 'First impressions set the tone.' },
+          { id: 'q2', text: `What do you know about the prospect's current ${topic} situation?`, tags: [], whyItMatters: 'Shows preparation and earns trust.' },
+        ],
+      },
+      {
+        id: 'pb_02',
         title: 'Discovery',
         questions: [
-          {
-            id: 'q1',
-            text: 'What challenges are you facing today?',
-            tags: ['high-impact'],
-            whyItMatters: 'Opens discovery.',
-          },
+          { id: 'q3', text: `What challenges are you currently facing with ${topic}?`, tags: ['high-impact'], whyItMatters: 'Opens discovery and uncovers pain.' },
+          { id: 'q4', text: 'What does your current process look like today?', tags: [], whyItMatters: 'Establishes baseline for improvement.' },
+          { id: 'q5', text: 'What would success look like for you in 12 months?', tags: ['high-impact'], whyItMatters: 'Aligns on desired outcomes.' },
+        ],
+      },
+      {
+        id: 'pb_03',
+        title: 'Objection Handling',
+        questions: [
+          { id: 'q6', text: 'Address ROI and business value concerns with specifics.', tags: ['high-impact'], whyItMatters: 'ROI is the #1 buyer concern.' },
+          { id: 'q7', text: 'Handle timeline and implementation risk objections.', tags: [], whyItMatters: 'Reduces perceived risk.' },
+          { id: 'q8', text: 'Address team adoption and change management worries.', tags: ['missed-last-attempt'], whyItMatters: 'Adoption kills most deals.' },
+        ],
+      },
+      {
+        id: 'pb_04',
+        title: 'Closing & Next Steps',
+        questions: [
+          { id: 'q9', text: 'Propose a clear, specific next step.', tags: ['high-impact'], whyItMatters: 'Every meeting needs a next step.' },
+          { id: 'q10', text: 'Confirm who else needs to be involved in the decision.', tags: [], whyItMatters: 'Identifies the buying committee.' },
         ],
       },
     ],
