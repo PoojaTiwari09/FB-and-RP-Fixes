@@ -1,11 +1,21 @@
 /**
  * AI_CONFIG — single source of truth for all AI service settings.
  * Never inline these values in components or service logic.
- * All keys come from NEXT_PUBLIC_ env vars (set in ).
+ * All keys come from NEXT_PUBLIC_ env vars (set in .env).
+ * 
+ * Backend approach: GROQ_API_KEY (server-side, private)
+ * Client fallback: NEXT_PUBLIC_GROQ_API_KEY (client-side, public)
  */
 export const AI_CONFIG = {
   // ── Groq ────────────────────────────────────────────────────────────────
-  GROQ_API_KEY: process.env.NEXT_PUBLIC_GROQ_API_KEY ?? '',
+  // Server-side Groq key (not exposed to browser)
+  GROQ_API_KEY: process.env.GROQ_API_KEY ?? '',
+  // Client-side Groq key for fallback (public, safe to expose)
+  NEXT_PUBLIC_GROQ_API_KEY: process.env.NEXT_PUBLIC_GROQ_API_KEY ?? '',
+  // For backward compatibility, try both
+  get GROQ_API_KEY_FOR_CLIENT(): string {
+    return process.env.NEXT_PUBLIC_GROQ_API_KEY ?? '';
+  },
   GROQ_CHAT_URL: 'https://api.groq.com/openai/v1/chat/completions',
   /** llama-3.3-70b-versatile — current fast model on Groq */
   GROQ_MODEL: 'llama-3.3-70b-versatile',

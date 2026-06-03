@@ -142,3 +142,10 @@ export function stopListening(): void {
     try { r.stop(); } catch { /* already stopped */ }
   }
 }
+
+/**
+ * Update the accumulated text manually (e.g. if user types in the input while mic is active)
+ */
+export function updateAccumulatedText(text: string): void {
+  accumulatedText = text;
+}

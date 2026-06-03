@@ -63,7 +63,8 @@ INSTRUCTIONS:
 // ── Groq API call ──────────────────────────────────────────────────────────
 
 async function callGroq(messages: GroqMessage[], maxTokens = 2048): Promise<string> {
-  if (!AI_CONFIG.GROQ_API_KEY) {
+  const apiKey = AI_CONFIG.GROQ_API_KEY_FOR_CLIENT;
+  if (!apiKey) {
     throw new Error('[GroqService] NEXT_PUBLIC_GROQ_API_KEY is not set');
   }
 
@@ -71,7 +72,7 @@ async function callGroq(messages: GroqMessage[], maxTokens = 2048): Promise<stri
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${AI_CONFIG.GROQ_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: AI_CONFIG.GROQ_MODEL,

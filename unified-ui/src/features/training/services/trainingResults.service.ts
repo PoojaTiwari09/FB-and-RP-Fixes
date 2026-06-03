@@ -119,13 +119,23 @@ export async function fetchTrainingResults(
 ): Promise<TrainingResultsPage> {
   // Try backend first (for when a real backend exists)
   try {
-    const res = await fetch(
-      `${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/results`,
-      { next: { revalidate: 60 } }
-    );
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const raw = await res.json();
-    return adaptTrainingResults(raw as Record<string, unknown>, trainingId);
+    let raw;
+    let attempts = 0;
+    while (attempts < 10) {
+      const res = await fetch(
+        `${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/results`,
+        { cache: 'no-store' }
+      );
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      raw = await res.json();
+      if (raw.resultsReady) {
+        return adaptTrainingResults(raw as Record<string, unknown>, trainingId);
+      }
+      // Wait before polling again
+      await new Promise(r => setTimeout(r, 2000));
+      attempts++;
+    }
+    console.warn('[TrainingResultsService] Backend evaluation timed out, falling back to Groq');
   } catch (backendError) {
     // Backend unavailable — use Groq to evaluate the transcript
     console.info('[TrainingResultsService] Backend unavailable — evaluating via Groq', backendError);

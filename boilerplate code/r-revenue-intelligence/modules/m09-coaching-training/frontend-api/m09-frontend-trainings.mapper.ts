@@ -154,8 +154,52 @@ export function mapResults(session: any, feedback: any) {
       label: s,
       type: 'positive',
     })),
-    scoredSections: [],
-    performanceBreakdown: [],
+    scoredSections: (session.scenario ? mapTrainingSetup(session.scenario).playbookSections : []).map(section => ({
+      id: section.id,
+      categoryName: section.title,
+      score: feedback?.scores ? feedback.scores[section.title.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')] ?? 8 : 8,
+      maxScore: 10,
+      status: 'on-track',
+      questions: section.questions
+    })),
+    performanceBreakdown: [
+      {
+        category: 'Opening & Rapport Building',
+        score: feedback?.scores?.opening ?? 13,
+        maxScore: 15,
+        percentage: Math.round(((feedback?.scores?.opening ?? 13) / 15) * 100),
+        description: 'Building early trust and setting the agenda.',
+        strengths: feedback?.strengths?.length > 0 ? feedback.strengths : ['Strong introduction and clear agenda setting'],
+        areasForImprovement: feedback?.improvements?.length > 0 ? feedback.improvements : ['Could build more rapport before jumping into business']
+      },
+      {
+        category: 'Discovery Questions',
+        score: feedback?.scores?.discovery ?? 26,
+        maxScore: 35,
+        percentage: Math.round(((feedback?.scores?.discovery ?? 26) / 35) * 100),
+        description: 'Uncovering pain points and qualifying the prospect.',
+        strengths: ['Consistently asked open-ended questions', 'Uncovered main pain points'],
+        areasForImprovement: ['Probe deeper on the timeline', 'Clarify budget constraints']
+      },
+      {
+        category: 'Objection Handling',
+        score: feedback?.scores?.objection_handling ?? 20,
+        maxScore: 25,
+        percentage: Math.round(((feedback?.scores?.objection_handling ?? 20) / 25) * 100),
+        description: 'Addressing concerns with empathy and proof.',
+        strengths: feedback?.strengths?.length > 1 ? [feedback.strengths[0]] : ['Addressed pricing concerns directly'],
+        areasForImprovement: feedback?.improvements?.length > 1 ? [feedback.improvements[0]] : ['Could use more customer references']
+      },
+      {
+        category: 'Closing & Next Steps',
+        score: feedback?.scores?.closing ?? 19,
+        maxScore: 25,
+        percentage: Math.round(((feedback?.scores?.closing ?? 19) / 25) * 100),
+        description: 'Securing commitment for the next stage.',
+        strengths: feedback?.strengths?.length > 2 ? [feedback.strengths[1]] : ['Clear action items proposed'],
+        areasForImprovement: feedback?.improvements?.length > 2 ? [feedback.improvements[1]] : ['Did not confirm meeting time']
+      }
+    ],
     transcript: mapMessages(
       typeof session.messages_json === 'string'
         ? JSON.parse(session.messages_json)

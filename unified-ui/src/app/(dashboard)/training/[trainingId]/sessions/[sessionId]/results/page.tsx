@@ -76,7 +76,7 @@ export default function TrainingResultsPage({ params }: TrainingResultsPageProps
 
   if (isEvaluating || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+      <div className="h-full overflow-y-auto bg-gray-50 flex flex-col items-center justify-center gap-4">
         <div className="flex gap-2 items-center">
           <svg className="animate-spin h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -90,7 +90,7 @@ export default function TrainingResultsPage({ params }: TrainingResultsPageProps
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full overflow-y-auto bg-gray-50">
       <div className="max-w-4xl mx-auto px-8 py-8">
         <ResultsHeader trainingTitle={data.trainingTitle} />
         <OverallScoreCard data={data} />

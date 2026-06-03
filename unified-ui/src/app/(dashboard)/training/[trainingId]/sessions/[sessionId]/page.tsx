@@ -22,7 +22,7 @@ export default function TrainingSessionPage({ params }: TrainingSessionPageProps
   // Loading state
   if (session.isLoading) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-full bg-gray-50">
         <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
           <div className="skeleton h-5 w-48" />
           <div className="flex gap-3">
@@ -52,7 +52,7 @@ export default function TrainingSessionPage({ params }: TrainingSessionPageProps
   // Error state
   if (session.error || !session.context) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 px-4">
+      <div className="flex flex-col items-center justify-center h-full bg-gray-50 px-4">
         <AlertCircle className="text-red-500 w-12 h-12 mb-4" />
         <h2 className="text-xl font-bold text-gray-900 mb-2">Session could not be started</h2>
         <p className="text-gray-600 mb-6">{session.error || "Failed to load session context."}</p>
@@ -67,7 +67,7 @@ export default function TrainingSessionPage({ params }: TrainingSessionPageProps
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-white">
+    <div className="flex flex-col h-full overflow-hidden bg-white">
       <SessionHeader
         trainingTitle={session.context.trainingTitle}
         elapsedSeconds={session.elapsedSeconds}
