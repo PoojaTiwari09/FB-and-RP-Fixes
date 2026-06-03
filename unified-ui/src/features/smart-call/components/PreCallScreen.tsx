@@ -40,7 +40,7 @@ const AI_FEATURES = [
 
 export default function PreCallScreen({ brief, onStart, onBack }: Props) {
   return (
-    <div className="flex flex-col flex-1 bg-gray-50">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-gray-50">
       {/* Back bar */}
       <div className="px-6 py-3 bg-white border-b border-gray-100">
         <button

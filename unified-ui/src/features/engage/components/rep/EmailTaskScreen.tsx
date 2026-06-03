@@ -138,6 +138,7 @@ export default function EmailTaskScreen({
   const [body, setBody] = useState('');
   const [contact, setContact] = useState<ContactDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     getEmailTemplates()
@@ -167,6 +168,7 @@ export default function EmailTaskScreen({
     setLoading(true);
     setSendSuccess(false);
     setDraftSaved(false);
+    setErrorMsg(null);
 
     Promise.all([
       getEmailDraft(task.taskId),
@@ -216,6 +218,7 @@ export default function EmailTaskScreen({
   }, [task.taskId, task.contactId, task.contactName, task.company]);
 
   const handleSend = async () => {
+    setErrorMsg(null);
     try {
       await sendEmail(task.taskId, {
         to,
@@ -233,8 +236,9 @@ export default function EmailTaskScreen({
           onClose();
         }
       }, 1200);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send email:', err);
+      setErrorMsg(err.message || 'Failed to send email. Please check your SMTP settings in .env');
     }
   };
 
@@ -405,6 +409,17 @@ export default function EmailTaskScreen({
             </div>
           ) : activeTab === 'email' ? (
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+              {errorMsg && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-xs font-semibold flex items-center justify-between shadow-sm animate-fade-in">
+                  <span>{errorMsg}</span>
+                  <button
+                    onClick={() => setErrorMsg(null)}
+                    className="text-red-500 hover:text-red-800 font-bold ml-2 text-base leading-none cursor-pointer"
+                  >
+                    &times;
+                  </button>
+                </div>
+              )}
               {/* To */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">To</label>

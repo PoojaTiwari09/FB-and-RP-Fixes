@@ -4,7 +4,6 @@ import {
   resolveDurationSeconds,
   uniqueSpeakersFromUtterances,
 } from '../lib/call-duration.util';
-import { buildReviewFromTranscript } from './m01-transcript-review.util';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -31,9 +30,6 @@ export function formatDurationClock(seconds: number): string {
 function computeAiReviewerScore(record: any): number {
   if (record.overallScore != null) return Math.round(Number(record.overallScore));
   if (record.aiScore != null) return Math.round(Number(record.aiScore));
-
-  const fromReview = buildReviewFromTranscript(record);
-  if (fromReview) return fromReview.overallScore;
 
   const tr = record.transcript;
   if (tr?.talkRatio) {
@@ -148,8 +144,16 @@ export function resolveOwner(record: any) {
 }
 
 /** AI Call Reviewer (Sales Rep) list row — `Ai_Call_Reviewer_SalesRep.pdf` */
-export function mapAiReviewerCallRow(record: any) {
-  const score = computeAiReviewerScore(record);
+export function mapAiReviewerCallRow(record: any, review?: any) {
+  const isCompleted = review?.status === 'Completed';
+  const score = isCompleted && review?.overallScore != null ? review.overallScore : computeAiReviewerScore(record);
+  const status = isCompleted && review?.status ? review.status : deriveReviewStatus(record, score);
+
+  let displayStatus = status;
+  if (status === 'Completed') displayStatus = 'Reviewed';
+  else if (status === 'In Progress') displayStatus = 'Feedback Pending';
+  else if (status === 'Pending') displayStatus = 'Not Reviewed';
+
   return {
     id: record.id,
     callName: record.title,
@@ -161,8 +165,8 @@ export function mapAiReviewerCallRow(record: any) {
     type: mapCallTypeLabel(record),
     stage: mapDealStage(record),
     score,
-    status: deriveReviewStatus(record, score),
-    tags: deriveAiReviewerTags(record),
+    status: displayStatus,
+    tags: (isCompleted && review?.feedback?.tags && review.feedback.tags.length > 0) ? review.feedback.tags : deriveAiReviewerTags(record),
   };
 }
 

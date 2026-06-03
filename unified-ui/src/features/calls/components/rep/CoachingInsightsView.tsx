@@ -240,7 +240,7 @@ export default function CoachingInsightsView() {
   };
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Page Header */}
       <div className="px-6 py-5 bg-white border-b border-gray-200">
         <Link

@@ -47,54 +47,16 @@ export class M02FrontendCallReviewsService {
     private readonly m02: M02ConversationIntelligenceService,
   ) {}
 
-  private buildReviewSeed(tenantId: string, c: any, index: number) {
-    const callTypes = ['Discovery', 'Demo', 'Negotiation', 'Training'];
-    const statuses = ['Pending', 'In Progress', 'Completed', 'Completed'];
-    const priorities = ['High', 'Medium', 'High', 'Medium'];
-    return {
-      tenantId,
-      reviewId: `rv_${String(index + 1).padStart(3, '0')}`,
-      callTitle: c.title,
-      scorecardName:
-        index === 2 ? 'Negotiation Scorecard' : index === 3 ? 'Demo Call Scorecard' : 'Discovery Call Scorecard',
-      scorecardId: index === 2 ? 'sc_03' : index === 1 ? 'sc_02' : 'sc_01',
-      customer: c.accountId || 'Unknown Account',
-      dateTime: (c.callDate instanceof Date ? c.callDate : new Date(c.callDate ?? Date.now())).toISOString(),
-      callType: callTypes[index] ?? c.callType ?? 'Discovery',
-      duration: formatMmSs(c.durationSeconds ?? 1800),
-      priority: priorities[index] ?? 'Medium',
-      status: statuses[index] ?? 'Pending',
-      aiFlags: index === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
-      dueDate: new Date(Date.now() + (7 - index) * 86400000).toISOString(),
-      salesRep: c.callOwner || 'Rep',
-      reviewer: 'Alex Martinez',
-      reviewMode: 'AI-Assisted',
-      scorecardVersion: 'v2.3',
-      talkRatio: { rep: 45, customer: 55 },
-      sentimentSummary: 'Positive with budget caution',
-      sentimentScore: 65 + index * 3,
-      risksDetected: index === 2 ? ['Contract timeline', 'Budget negotiation'] : ['Budget timeline unclear'],
-      keyHighlights: ['Customer asked about integration', 'Competitor mentioned'],
-      aiSummary: c.transcript?.summary || 'AI summary pending.',
-      quickStats: { topics: 4, actionItems: 3 },
-      dealLinked: `${c.accountId || 'Account'} — Q2 Initiative`,
-      hasReview: true,
-      questions: [],
-      feedback: {},
-    };
-  }
-
   private async ensureSeeded(tenantId: string) {
-    const DEMO_CALL_IDS = [
-      '11111111-1111-1111-1111-000000000001',
-      '11111111-1111-1111-1111-000000000002',
-      '11111111-1111-1111-1111-000000000003',
-      '11111111-1111-1111-1111-000000000004',
-    ];
+    const count = await this.prisma.callReview.count({
+      where: { tenantId },
+    });
+    if (count > 0) return;
 
     const calls = await this.prisma.callRecord.findMany({
-      where: { tenantId, id: { in: DEMO_CALL_IDS }, transcriptStatus: 'completed' },
-      orderBy: { id: 'asc' },
+      where: { tenantId },
+      take: 8,
+      orderBy: { callDate: 'desc' },
       include: { transcript: true },
     });
 
@@ -116,20 +78,40 @@ export class M02FrontendCallReviewsService {
 
     for (let i = 0; i < seedCalls.length; i++) {
       const c = seedCalls[i];
-      const payload = this.buildReviewSeed(tenantId, c, i);
+      const reviewId = `rv_${String(i + 1).padStart(3, '0')}`;
       await this.prisma.callReview.upsert({
-        where: { reviewId: payload.reviewId },
-        update: {
-          callTitle: payload.callTitle,
-          customer: payload.customer,
-          dateTime: payload.dateTime,
-          salesRep: payload.salesRep,
-          duration: payload.duration,
-          aiSummary: payload.aiSummary,
-          callType: payload.callType,
-          priority: payload.priority,
+        where: { reviewId },
+        update: {},
+        create: {
+          tenantId,
+          reviewId,
+          callTitle: c.title,
+          scorecardName: 'Discovery Call Scorecard',
+          scorecardId: 'sc_01',
+          customer: c.accountId || 'Acme Corp',
+          dateTime: (c.callDate instanceof Date ? c.callDate : new Date()).toISOString(),
+          callType: i % 2 === 0 ? 'Discovery' : 'Demo',
+          duration: formatMmSs(c.durationSeconds ?? 1800),
+          priority: i === 0 ? 'High' : 'Medium',
+          status: i === 0 ? 'Pending' : i === 1 ? 'In Progress' : 'Completed',
+          aiFlags: i === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+          salesRep: c.callOwner || 'Sarah Chen',
+          reviewer: 'Alex Martinez',
+          reviewMode: 'AI-Assisted',
+          scorecardVersion: 'v2.3',
+          talkRatio: { rep: 45, customer: 55 },
+          sentimentSummary: 'Positive with budget caution',
+          sentimentScore: 65,
+          risksDetected: ['Budget timeline unclear'],
+          keyHighlights: ['Customer asked about integration', 'Competitor mentioned'],
+          aiSummary: c.transcript?.summary || 'AI summary pending.',
+          quickStats: { topics: 4, actionItems: 3 },
+          dealLinked: 'Acme Corp — Q2 Initiative',
+          hasReview: true,
+          questions: [],
+          feedback: {},
         },
-        create: payload,
       });
     }
   }
@@ -175,17 +157,11 @@ export class M02FrontendCallReviewsService {
     }
 
     const totalCount = await this.prisma.callReview.count({ where });
-    const orderBy =
-      q.sort === 'oldest'
-        ? { createdAt: 'asc' as const }
-        : q.sort === 'dueDate'
-          ? { dueDate: 'asc' as const }
-          : { createdAt: 'desc' as const };
     const reviews = await this.prisma.callReview.findMany({
       where,
       skip: (q.page - 1) * q.size,
       take: q.size,
-      orderBy,
+      orderBy: { createdAt: 'desc' },
     });
 
     return {
@@ -308,8 +284,10 @@ export class M02FrontendCallReviewsService {
       questionsJson.push(dto);
     }
 
+    const { score } = calculateCallReviewScore(questionsJson);
     const updateData: any = {
       questions: questionsJson,
+      overallScore: score,
     };
 
     if (review.status === 'Pending') {
@@ -320,10 +298,44 @@ export class M02FrontendCallReviewsService {
       where: { reviewId },
       data: updateData,
     });
-    return { success: true, savedAt: new Date().toISOString() };
+    return { success: true, savedAt: new Date().toISOString(), score };
   }
 
-  saveDraft(reviewId: string) {
+  async saveAnswersBatch(tenantId: string, reviewId: string, answers: any) {
+    const review = await this.getReview(tenantId, reviewId);
+    const { score } = calculateCallReviewScore(answers);
+    const updateData: any = {
+      questions: answers,
+      overallScore: score,
+    };
+    if (review.status === 'Pending') {
+      updateData.status = 'In Progress';
+    }
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: updateData,
+    });
+    return { success: true, savedAt: new Date().toISOString(), score };
+  }
+
+  async saveDraft(tenantId: string, reviewId: string, body: any) {
+    const review = await this.getReview(tenantId, reviewId);
+    const updateData: any = {};
+    if (body?.answers) {
+      updateData.questions = body.answers;
+      const { score } = calculateCallReviewScore(body.answers);
+      updateData.overallScore = score;
+    }
+    if (body?.coaching) {
+      updateData.feedback = body.coaching;
+    }
+    if (review.status === 'Pending') {
+      updateData.status = 'In Progress';
+    }
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: updateData,
+    });
     return { success: true, savedAt: new Date().toISOString() };
   }
 
@@ -360,44 +372,50 @@ export class M02FrontendCallReviewsService {
     const review = await this.getReview(tenantId, reviewId);
     const questionsJson = review.questions as any;
     const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
+    const { score, sections } = calculateCallReviewScore(review.questions);
     return {
       isReadyForSubmission: answered >= 8,
-      overallScore: review.overallScore || 88,
+      overallScore: review.overallScore || score,
       overallTotal: 100,
-      overallPercent: review.overallScore || 88,
-      passingStatus: (review.overallScore || 88) >= 75 ? 'Passing' : 'Failed',
+      overallPercent: review.overallScore || score,
+      passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
       passThreshold: 75,
       scorecardName: review.scorecardName,
       scorecardVersion: review.scorecardVersion,
       repName: review.salesRep,
-      sectionScores: [
-        { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
-        { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
-      ],
+      sectionScores: sections,
       aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
     };
   }
 
-  async submitReview(tenantId: string, reviewId: string) {
+  async submitReview(tenantId: string, reviewId: string, body?: any) {
     const review = await this.getReview(tenantId, reviewId);
-    const feedback = review.feedback as any;
+    const updateData: any = {
+      status: 'Completed',
+    };
+    if (body?.answers) {
+      updateData.questions = body.answers;
+    }
+    if (body?.coaching) {
+      updateData.feedback = body.coaching;
+    }
+    const finalAnswers = body?.answers || review.questions;
+    const { score } = calculateCallReviewScore(finalAnswers);
+    updateData.overallScore = score;
 
     await this.prisma.callReview.update({
       where: { reviewId },
-      data: {
-        status: 'Completed',
-        overallScore: 88,
-      },
+      data: updateData,
     });
+
+    const feedback = body?.coaching || review.feedback || {};
 
     return {
       success: true,
       reviewId,
       submittedAt: new Date().toISOString(),
-      finalScore: 88,
-      finalPercent: 88,
+      finalScore: score,
+      finalPercent: score,
       visibility: feedback?.shareWithRep ? 'Shared with Rep' : 'Not Shared',
     };
   }
@@ -409,13 +427,14 @@ export class M02FrontendCallReviewsService {
     if (!review) throw new NotFoundException('Review not found');
 
     const feedback = review.feedback as any;
+    const { score } = calculateCallReviewScore(review.questions);
     return {
       callTitle: review.callTitle,
       salesRep: review.salesRep,
-      finalScore: review.overallScore || 88,
+      finalScore: review.overallScore || score,
       finalTotal: 100,
-      finalPercent: review.overallScore || 88,
-      passingStatus: (review.overallScore || 88) >= 75 ? 'Passing' : 'Failed',
+      finalPercent: review.overallScore || score,
+      passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
       submittedAt: review.updatedAt.toISOString(),
       visibility: feedback?.shareWithRep ? 'Shared with Rep' : 'Not Shared',
     };
@@ -424,16 +443,14 @@ export class M02FrontendCallReviewsService {
   async getSubmittedView(tenantId: string, reviewId: string) {
     const review = await this.getReview(tenantId, reviewId);
     const submittedData = await this.getSubmitted(reviewId);
+    const { sections } = calculateCallReviewScore(review.questions);
     return {
       ...submittedData,
       reviewerName: review.reviewer,
       scorecardName: review.scorecardName,
       scorecardVersion: review.scorecardVersion,
       aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
-      sections: [
-        { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
-      ],
+      sections,
       coaching: review.feedback || {},
       auditTrail: [
         { event: 'Review Created', user: 'System', at: review.createdAt.toISOString() },
@@ -513,4 +530,96 @@ export class M02FrontendCallReviewsService {
       ],
     };
   }
+}
+
+function calculateCallReviewScore(answers: any): { score: number; sections: any[] } {
+  let totalMax = 0;
+  let totalEarned = 0;
+
+  const sections: Record<string, { title: string; earned: number; max: number }> = {
+    opening: { title: 'Opening', earned: 0, max: 0 },
+    discovery: { title: 'Discovery', earned: 0, max: 0 },
+    product_fit: { title: 'Product Fit', earned: 0, max: 0 },
+    objection_handling: { title: 'Objection Handling', earned: 0, max: 0 },
+  };
+
+  if (!answers || typeof answers !== 'object') {
+    return {
+      score: 88,
+      sections: [
+        { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
+        { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
+        { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
+        { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
+      ]
+    };
+  }
+
+  // Check if answers is an array or key-value object
+  const entries = Array.isArray(answers) 
+    ? answers.map(q => [q.questionId, q])
+    : Object.entries(answers);
+
+  for (const [qId, ans] of entries as [string, any][]) {
+    if (!ans) continue;
+    const isNa = ans.isNa || ans.isNa === 'true' || ans.isNa === true || ans.na || ans.na === 'true' || ans.na === true;
+    if (isNa) continue;
+
+    let sectionKey = 'opening';
+    if (qId.startsWith('disc_') || qId === 'q_04' || qId === 'q_05' || qId === 'q_06' || qId === 'q_07') {
+      sectionKey = 'discovery';
+    } else if (qId.startsWith('fit_')) {
+      sectionKey = 'product_fit';
+    } else if (qId.startsWith('obj_')) {
+      sectionKey = 'objection_handling';
+    }
+
+    const maxVal = 10;
+    let earnedVal = 0;
+
+    const val = ans.value !== undefined ? ans.value : ans.answer;
+    if (val === true || val === 'true' || val === 'Yes' || val === 'yes' || val === 'Good' || val === 'Excellent') {
+      earnedVal = 10;
+    } else if (val === '4' || val === 4 || val === '5' || val === 5) {
+      earnedVal = 8;
+    } else if (val === '3' || val === 3) {
+      earnedVal = 6;
+    } else if (val === '2' || val === 2) {
+      earnedVal = 4;
+    } else if (val === '1' || val === 1) {
+      earnedVal = 2;
+    } else if (val === false || val === 'false' || val === 'No' || val === 'no' || val === 'Poor' || val === 'Fair') {
+      earnedVal = 0;
+    } else if (typeof val === 'number') {
+      earnedVal = Math.min(10, Math.max(0, Math.round((val / 5) * 10)));
+    }
+
+    sections[sectionKey].max += maxVal;
+    sections[sectionKey].earned += earnedVal;
+    totalMax += maxVal;
+    totalEarned += earnedVal;
+  }
+
+  if (totalMax === 0) {
+    return {
+      score: 88,
+      sections: [
+        { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
+        { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
+        { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
+        { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
+      ]
+    };
+  }
+
+  const score = Math.round((totalEarned / totalMax) * 100);
+  return {
+    score,
+    sections: Object.entries(sections).map(([key, value]) => ({
+      sectionName: value.title,
+      scored: value.earned,
+      total: value.max,
+      percent: value.max > 0 ? Math.round((value.earned / value.max) * 100) : 0,
+    })),
+  };
 }

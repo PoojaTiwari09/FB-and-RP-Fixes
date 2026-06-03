@@ -11,11 +11,12 @@ interface CompactHeaderProps {
 
 function RelantoLogo() {
   return (
-    <img
-      src="/Relanto_Standard@4x.png"
-      alt="Relanto Logo"
-      className="h-[22px] w-auto object-contain flex-shrink-0"
-    />
+    <span
+      className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-bold tracking-wide"
+      style={{ backgroundColor: '#F5F3FF', color: '#7C3AED', border: '1px solid #EDE9FE' }}
+    >
+      Relanto
+    </span>
   );
 }
 

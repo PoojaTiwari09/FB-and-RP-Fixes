@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class M08FrontendEngageService {
@@ -264,24 +263,6 @@ export class M08FrontendEngageService {
     return { status: 'success', data: updated };
   }
 
-  async getTaskNotes(tenantId: string, taskId: string) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!t) return [];
-
-    // Parse notes – may be JSON array or plain text
-    const raw = t.notes || '';
-    if (!raw.trim()) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-      return [{ noteId: `note_${Date.now()}`, content: raw, author: 'Alex Morgan', timestamp: t.updatedAt.toISOString() }];
-    } catch {
-      return [{ noteId: `note_${Date.now()}`, content: raw, author: 'Alex Morgan', timestamp: t.updatedAt.toISOString() }];
-    }
-  }
-
   async saveNotes(tenantId: string, taskId: string, notes: string) {
     const updated = await this.prisma.engageTask.update({
       where: { taskId },
@@ -291,55 +272,7 @@ export class M08FrontendEngageService {
   }
 
   async sendEmail(tenantId: string, taskId: string, body: any) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!t) {
-      throw new NotFoundException(`Task ${taskId} not found`);
-    }
-
-    // Actually send via SMTP if configured
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpFrom = process.env.SMTP_FROM || smtpUser;
-
-    let emailResult: { sent: boolean; detail?: string } = { sent: false, detail: 'SMTP not configured' };
-
-    if (smtpHost && smtpUser && smtpPass) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: {
-            user: smtpUser,
-            pass: smtpPass,
-          },
-        });
-
-        await transporter.sendMail({
-          from: smtpFrom,
-          to: body.to,
-          subject: body.subject || 'Outreach',
-          text: body.body || '',
-          html: body.bodyHtml || undefined,
-        });
-
-        emailResult = { sent: true, detail: `Sent via ${smtpHost}` };
-        console.log(`[M08 Engage] Email sent to ${body.to} via ${smtpHost}`);
-      } catch (err: any) {
-        console.warn(`[M08 Engage] SMTP error during sendMail: ${err.message}`);
-        throw new Error(`Failed to send email via SMTP: ${err.message}`);
-      }
-    } else {
-      console.log(`[M08 Engage] Simulated email to ${body.to} (SMTP_HOST not set)`);
-      emailResult = { sent: true, detail: 'simulated (SMTP not configured)' };
-    }
-
-    // Only update task to COMPLETED if sending succeeded
-    await this.prisma.engageTask.update({
+    const t = await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
     });
@@ -357,7 +290,7 @@ export class M08FrontendEngageService {
       },
     });
 
-    return { status: 'success', data: { ok: true, email: emailResult } };
+    return { status: 'success', data: { ok: true } };
   }
 
   async saveDraft(tenantId: string, taskId: string, body: any) {

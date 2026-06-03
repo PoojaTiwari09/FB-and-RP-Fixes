@@ -56,7 +56,13 @@ export class M01FrontendCallsService {
         { sortBy: 'callDate', order: 'desc', limit: q.size, offset },
         extra,
       );
-      const calls = records.map((r: any) => mapAiReviewerCallRow(r));
+
+      const callReviews = await this.prisma.callReview.findMany({
+        where: { tenantId },
+      });
+      const reviewMap = new Map(callReviews.map((cr) => [cr.callTitle, cr]));
+
+      const calls = records.map((r: any) => mapAiReviewerCallRow(r, reviewMap.get(r.title)));
       return {
         data: {
           calls,
@@ -76,105 +82,67 @@ export class M01FrontendCallsService {
 
     const offset = (q.page - 1) * q.size;
 
-    // We'll build an array of AND conditions for maximum flexibility and correctness
-    const andConditions: any[] = [{ tenantId }];
+    const extra: Record<string, unknown> = {};
 
-    // 1. Calls List UI default filters: only show review-ready rows
+    // Calls List UI: only show review-ready rows (recording + completed transcript).
     const isCallsList =
       !rawQuery.view &&
       rawQuery.format !== 'ai-reviewer' &&
       rawQuery.view !== 'ai-reviewer';
-    
     if (isCallsList && (!q.status || q.status === 'all')) {
-      andConditions.push({ transcriptStatus: 'completed' });
-      andConditions.push({ audioUrl: { not: null } });
-      andConditions.push({ transcript: { isNot: null } });
+      extra.transcriptStatus = 'completed';
+      extra.audioUrl = { not: null };
+      extra.transcript = { isNot: null };
     }
 
-    // 2. Status Filter
     if (q.status && q.status !== 'all') {
-      if (q.status === 'processing') {
-        andConditions.push({ transcriptStatus: { in: ['processing', 'pending'] } });
-      } else {
-        andConditions.push({ transcriptStatus: q.status });
-      }
+      extra.transcriptStatus =
+        q.status === 'processing' ? { in: ['processing', 'pending'] } : q.status;
     }
-
-    // 3. Deal Type (mapped to callType in DB)
-    if (q.dealType) {
-      const types = q.dealType.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-      if (types.length > 0) {
-        andConditions.push({ callType: { in: types } });
-      }
-    }
-
-    // 4. Owner Filter (mapped to callOwner name in DB)
-    if (q.ownerId) {
-      const owners = q.ownerId.split(',').map(o => o.trim()).filter(Boolean);
-      if (owners.length > 0) {
-        andConditions.push({ callOwner: { in: owners } });
-      }
-    }
-
-    // 5. Account Filter (matches accountId OR title)
+    if (q.dealType) extra.callType = q.dealType;
+    if (q.ownerId) extra.callOwner = q.ownerId;
     if (q.account) {
-      const accounts = q.account.split(',').map(a => a.trim()).filter(Boolean);
-      if (accounts.length > 0) {
-        andConditions.push({
-          OR: [
-            { accountId: { in: accounts } },
-            { title: { in: accounts } },
-          ],
-        });
-      }
+      extra.OR = [
+        { accountId: { contains: q.account, mode: 'insensitive' } },
+        { title: { contains: q.account, mode: 'insensitive' } },
+      ];
     }
-
-    // 6. Participants Filter
     if (q.participantId) {
-      const participants = q.participantId.split(',').map(p => p.trim()).filter(Boolean);
-      if (participants.length > 0) {
-        andConditions.push({ participants: { hasSome: participants } });
-      }
+      extra.participants = { has: q.participantId };
     }
-
-    // 7. Search Query
     if (q.search?.trim()) {
       const needle = q.search.trim();
-      andConditions.push({
-        OR: [
-          { title: { contains: needle, mode: 'insensitive' } },
-          { callOwner: { contains: needle, mode: 'insensitive' } },
-          { accountId: { contains: needle, mode: 'insensitive' } },
-        ],
-      });
+      extra.OR = [
+        ...(extra.OR as any[] || []),
+        { title: { contains: needle, mode: 'insensitive' } },
+        { callOwner: { contains: needle, mode: 'insensitive' } },
+        { accountId: { contains: needle, mode: 'insensitive' } },
+      ];
     }
-
-    // 8. Duration Filter
     if (q.duration && q.duration !== 'all') {
-      if (q.duration === 'lt2') andConditions.push({ durationSeconds: { lt: 120 } });
-      else if (q.duration === '2to10') andConditions.push({ durationSeconds: { gte: 120, lte: 600 } });
-      else if (q.duration === 'gt10') andConditions.push({ durationSeconds: { gt: 600 } });
+      if (q.duration === 'lt2') extra.durationSeconds = { lt: 120 };
+      else if (q.duration === '2to10') extra.durationSeconds = { gte: 120, lte: 600 };
+      else if (q.duration === 'gt10') extra.durationSeconds = { gt: 600 };
     }
-
-    // 9. Date Range Filter
     if (q.dateRange && q.dateRange !== 'all' && q.dateRange !== 'custom') {
       const days = q.dateRange === 'last7days' ? 7 : 30;
-      andConditions.push({ callDate: { gte: new Date(Date.now() - days * 86400000) } });
+      extra.callDate = { gte: new Date(Date.now() - days * 86400000) };
     } else if (q.dateRange === 'custom' && (q.startDate || q.endDate)) {
-      andConditions.push({
-        callDate: {
-          ...(q.startDate ? { gte: new Date(q.startDate) } : {}),
-          ...(q.endDate ? { lte: new Date(q.endDate) } : {}),
-        },
-      });
+      extra.callDate = {
+        ...(q.startDate ? { gte: new Date(q.startDate) } : {}),
+        ...(q.endDate ? { lte: new Date(q.endDate) } : {}),
+      };
     }
 
-    // Construct final where clause
-    const extra: Record<string, any> = { AND: andConditions };
+    let listStatus: string | undefined;
+    if (q.status && q.status !== 'all' && q.status !== 'processing') {
+      listStatus = q.status;
+    }
 
     const { records, total } = await this.callRepo.findAll(
       tenantId,
       {
+        status: listStatus as any,
         sortBy: 'callDate',
         order: 'desc',
         limit: q.size,
@@ -194,7 +162,10 @@ export class M01FrontendCallsService {
   async getCall(callId: string, tenantId: string, rawQuery: Record<string, string> = {}) {
     const record = await this.calls.getCallDetail(callId, tenantId);
     if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
-      const row = mapAiReviewerCallRow(record);
+      const matchingReview = await this.prisma.callReview.findFirst({
+        where: { callTitle: record.title, tenantId },
+      });
+      const row = mapAiReviewerCallRow(record, matchingReview);
       const participants = Array.isArray(record.participants)
         ? record.participants.map((p: string, i: number) => ({
             name: p,

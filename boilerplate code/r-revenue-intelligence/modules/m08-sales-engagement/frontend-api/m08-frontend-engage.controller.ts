@@ -61,11 +61,6 @@ export class M08FrontendEngageController {
     return this.svc.createTask(req.tenantId, body);
   }
 
-  @Get('tasks/:taskId/notes')
-  getTaskNotes(@Param('taskId') taskId: string, @Req() req: any) {
-    return this.svc.getTaskNotes(req.tenantId, taskId);
-  }
-
   @Post('tasks/:taskId/notes')
   saveNotes(@Param('taskId') taskId: string, @Body() body: { notes: string }, @Req() req: any) {
     return this.svc.saveNotes(req.tenantId, taskId, body.notes);

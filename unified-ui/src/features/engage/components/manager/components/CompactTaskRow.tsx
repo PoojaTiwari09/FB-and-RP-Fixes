@@ -228,13 +228,13 @@ export default function CompactTaskRow({
 
         {!isCompleted && (
           <button
-            className="inline-flex items-center justify-center rounded-md text-xs font-semibold whitespace-nowrap border border-gray-250 bg-white text-gray-600 px-2.5 py-1.5 transition-all group-hover:bg-[#111827] group-hover:text-white group-hover:border-[#111827]"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap border border-gray-250 bg-white text-gray-600 px-3.5 py-1.5 transition-all group-hover:bg-[#111827] group-hover:text-white group-hover:border-[#111827]"
             onClick={(e) => {
               e.stopPropagation();
               onClick();
             }}
           >
-            View Details
+            {isViewOnly ? 'View Details' : 'Take Action'}
           </button>
         )}
 

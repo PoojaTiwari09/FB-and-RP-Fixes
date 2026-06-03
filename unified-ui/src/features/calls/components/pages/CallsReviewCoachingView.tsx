@@ -7,6 +7,7 @@ import {
   Save,
 } from 'lucide-react';
 import CallsToast from '@calls/components/ui/CallsToast';
+import { fetchCallReviewDetail, saveCoachingFeedback } from '@calls/services/calls-reviews.service';
 
 interface CallsReviewCoachingViewProps {
   reviewId: string;
@@ -41,30 +42,49 @@ export default function CallsReviewCoachingView({ reviewId }: CallsReviewCoachin
 
   // Load from local storage draft or default fallback mock
   useEffect(() => {
-    const saved = localStorage.getItem(`coaching_draft_v3_${reviewId}`);
-    if (saved) {
+    async function loadCoaching() {
       try {
-        const parsed = JSON.parse(saved);
-        setStrengths(parsed.strengths && parsed.strengths.length > 0 ? parsed.strengths : ['']);
-        setImprovements(parsed.improvements && parsed.improvements.length > 0 ? parsed.improvements : ['']);
-        setCoachingNotes(parsed.coachingNotes || '');
-        setRecommendedActions(parsed.recommendedActions && parsed.recommendedActions.length > 0 ? parsed.recommendedActions : ['']);
-        setInternalNotes(parsed.internalNotes || '');
-        setTags(parsed.tags || []);
-        setShareWithRep(parsed.shareWithRep !== undefined ? parsed.shareWithRep : true);
+        const detail = await fetchCallReviewDetail(reviewId);
+        if (detail && detail.feedback && Object.keys(detail.feedback).length > 0) {
+          const parsed = detail.feedback;
+          setStrengths(parsed.strengths && parsed.strengths.length > 0 ? parsed.strengths : ['']);
+          setImprovements(parsed.improvements && parsed.improvements.length > 0 ? parsed.improvements : ['']);
+          setCoachingNotes(parsed.coachingNotes || '');
+          setRecommendedActions(parsed.recommendedActions && parsed.recommendedActions.length > 0 ? parsed.recommendedActions : ['']);
+          setInternalNotes(parsed.internalNotes || '');
+          setTags(parsed.tags || []);
+          setShareWithRep(parsed.shareWithRep !== undefined ? parsed.shareWithRep : true);
+          return;
+        }
       } catch (e) {
-        console.error('Failed to parse coaching draft', e);
+        console.error('Failed to load coaching detail from server', e);
       }
-    } else {
-      // Initialize with empty elements so placeholders are displayed
-      setStrengths(['']);
-      setImprovements(['']);
-      setCoachingNotes('');
-      setRecommendedActions(['']);
-      setInternalNotes('');
-      setTags([]);
-      setShareWithRep(true);
+
+      const saved = localStorage.getItem(`coaching_draft_v3_${reviewId}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setStrengths(parsed.strengths && parsed.strengths.length > 0 ? parsed.strengths : ['']);
+          setImprovements(parsed.improvements && parsed.improvements.length > 0 ? parsed.improvements : ['']);
+          setCoachingNotes(parsed.coachingNotes || '');
+          setRecommendedActions(parsed.recommendedActions && parsed.recommendedActions.length > 0 ? parsed.recommendedActions : ['']);
+          setInternalNotes(parsed.internalNotes || '');
+          setTags(parsed.tags || []);
+          setShareWithRep(parsed.shareWithRep !== undefined ? parsed.shareWithRep : true);
+        } catch (e) {
+          console.error('Failed to parse coaching draft', e);
+        }
+      } else {
+        setStrengths(['']);
+        setImprovements(['']);
+        setCoachingNotes('');
+        setRecommendedActions(['']);
+        setInternalNotes('');
+        setTags([]);
+        setShareWithRep(true);
+      }
     }
+    loadCoaching();
   }, [reviewId]);
 
   // Helper dynamic row mutations
@@ -95,8 +115,8 @@ export default function CallsReviewCoachingView({ reviewId }: CallsReviewCoachin
     );
   };
 
-  // Save Draft to Local Storage
-  const handleSaveDraft = () => {
+  // Save Draft to Local Storage & Backend
+  const handleSaveDraft = async () => {
     const cleanStrengths = strengths.filter((s) => s.trim() !== '');
     const cleanImprovements = improvements.filter((i) => i.trim() !== '');
     const cleanActions = recommendedActions.filter((a) => a.trim() !== '');
@@ -112,11 +132,16 @@ export default function CallsReviewCoachingView({ reviewId }: CallsReviewCoachin
     };
 
     localStorage.setItem(`coaching_draft_v3_${reviewId}`, JSON.stringify(draft));
-    setToast({ msg: 'Coaching draft saved successfully.', type: 'success' });
+    try {
+      await saveCoachingFeedback(reviewId, draft);
+      setToast({ msg: 'Coaching draft saved successfully.', type: 'success' });
+    } catch (e) {
+      setToast({ msg: 'Saved locally, but failed to sync to server.', type: 'info' });
+    }
   };
 
   // Navigate to Summary Screen
-  const handleContinueSummary = () => {
+  const handleContinueSummary = async () => {
     const cleanStrengths = strengths.filter((s) => s.trim() !== '');
     const cleanImprovements = improvements.filter((i) => i.trim() !== '');
     const cleanActions = recommendedActions.filter((a) => a.trim() !== '');
@@ -132,17 +157,22 @@ export default function CallsReviewCoachingView({ reviewId }: CallsReviewCoachin
     };
 
     localStorage.setItem(`coaching_draft_v3_${reviewId}`, JSON.stringify(draft));
+    try {
+      await saveCoachingFeedback(reviewId, draft);
+    } catch (e) {
+      console.error('Failed to sync coaching draft to server', e);
+    }
     router.push(`/calls/reviews/${reviewId}/summary`);
   };
 
   return (
-    <div className="calls-font-scope bg-[#f8fafc] flex flex-col flex-1 min-h-0 h-full overflow-hidden text-gray-800">
+    <div className="calls-font-scope bg-[#f8fafc] min-h-screen text-gray-800 flex flex-col">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}
 
       {/* ═══════════════ HEADER AREA (WHITE BG) ═══════════════ */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 py-7 px-8 text-left w-full">
+      <div className="bg-white border-b border-gray-200 py-7 px-8 text-left w-full">
         <div className="space-y-3 flex flex-col items-start text-left w-full">
           <div className="w-full text-left">
             <button
@@ -185,7 +215,7 @@ export default function CallsReviewCoachingView({ reviewId }: CallsReviewCoachin
       </div>
 
       {/* ═══════════════ CONTENT AREA (GRAY BG, COLOR DIFF) ═══════════════ */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-[#f8fafc] py-8 px-6 pb-12">
+      <div className="flex-1 bg-[#f8fafc] py-8 px-6">
         <div className="max-w-4xl mx-auto space-y-6">
 
           {/* ─── Strengths Card ─── */}

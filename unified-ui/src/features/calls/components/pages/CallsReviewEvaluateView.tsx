@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import CallsToast from '@calls/components/ui/CallsToast';
 import { useAssemblyAI } from '@calls/hooks/useAssemblyAI';
+import { fetchCallReviewDetail, saveCallReviewDraft } from '@calls/services/calls-reviews.service';
 
 interface CallsReviewEvaluateViewProps {
   reviewId: string;
@@ -46,7 +47,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'op_1',
     section: 'opening',
-    text: 'Did I properly introduce myself and set the agenda? *',
+    text: 'Did the rep properly introduce themselves and set the agenda? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 92,
@@ -72,7 +73,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'op_3',
     section: 'opening',
-    text: 'Did I confirm the allocated time? *',
+    text: 'Did the rep confirm the allocated time? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 95,
@@ -86,7 +87,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_1',
     section: 'discovery',
-    text: 'Did I ask about current pain points? *',
+    text: 'Did the rep ask about current pain points? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 89,
@@ -99,7 +100,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_2',
     section: 'discovery',
-    text: 'How thoroughly did I explore business impact? *',
+    text: 'How thoroughly did the rep explore business impact? *',
     type: 'dropdown',
     options: ['Excellent', 'Good', 'Fair', 'Poor'],
     aiSuggestion: {
@@ -113,7 +114,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_3',
     section: 'discovery',
-    text: 'Did I identify the decision-making process? *',
+    text: 'Did the rep identify the decision-making process? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 65,
@@ -124,7 +125,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'disc_4',
     section: 'discovery',
-    text: 'Did I confirm budget and authority? *',
+    text: 'Did the rep confirm budget and authority? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 58,
@@ -138,7 +139,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'fit_1',
     section: 'product_fit',
-    text: 'Did I connect features to customer pain points? *',
+    text: 'Did the rep connect features to customer pain points? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 85,
@@ -163,7 +164,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'obj_1',
     section: 'objection_handling',
-    text: 'Did I address objections effectively? *',
+    text: 'Did the rep address objections effectively? *',
     type: 'boolean',
     aiSuggestion: {
       confidence: 70,
@@ -174,7 +175,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     id: 'obj_2',
     section: 'objection_handling',
-    text: 'How well did I summarize next steps? *',
+    text: 'How well did the rep summarize next steps? *',
     type: 'scale',
     aiSuggestion: {
       confidence: 75,
@@ -228,6 +229,59 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
     return initial;
   });
 
+  useEffect(() => {
+    async function loadDraft() {
+      try {
+        const detail = await fetchCallReviewDetail(reviewId);
+        if (detail && detail.questions) {
+          const qMap: any = {};
+          if (Array.isArray(detail.questions)) {
+            detail.questions.forEach((q: any) => {
+              qMap[q.questionId] = {
+                value: q.value !== undefined ? q.value : q.answer,
+                comment: q.comment || q.coachingComment || '',
+                isNa: q.isNa || false,
+                isAccepted: q.isAccepted || q.aiAccepted || false,
+              };
+            });
+          } else {
+            Object.entries(detail.questions).forEach(([k, v]: [string, any]) => {
+              qMap[k] = {
+                value: v.value !== undefined ? v.value : v.answer,
+                comment: v.comment || v.coachingComment || '',
+                isNa: v.isNa || false,
+                isAccepted: v.isAccepted || v.aiAccepted || false,
+              };
+            });
+          }
+          if (Object.keys(qMap).length > 0) {
+            setAnswers((prev) => ({
+              ...prev,
+              ...qMap,
+            }));
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load review draft from backend', e);
+      }
+
+      const saved = localStorage.getItem(`review_draft_${reviewId}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setAnswers((prev) => ({
+            ...prev,
+            ...parsed,
+          }));
+        } catch (e) {
+          console.error('Failed to parse local draft', e);
+        }
+      }
+    }
+    loadDraft();
+  }, [reviewId]);
+
   // Refs for transcript auto-scrolling
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const activeLineRef = useRef<HTMLDivElement>(null);
@@ -254,7 +308,7 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
   };
 
   // Build transcript lines from AssemblyAI utterances
-  const SPEAKER_LABELS: Record<string, string> = { A: 'Me', B: 'Customer' };
+  const SPEAKER_LABELS: Record<string, string> = { A: 'Sales Rep', B: 'Customer' };
   const transcriptLines = (insights?.utterances ?? []).map((u, i) => ({
     id: i + 1,
     time: formatTime(Math.floor(u.start / 1000)),
@@ -330,15 +384,25 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
     }
   };
 
-  // Save Draft to Local Storage
-  const handleSaveDraft = () => {
+  // Save Draft to Local Storage & Backend
+  const handleSaveDraft = async () => {
     localStorage.setItem(`review_draft_${reviewId}`, JSON.stringify(answers));
-    setToast({ msg: 'Draft evaluation saved successfully.', type: 'success' });
+    try {
+      await saveCallReviewDraft(reviewId, { answers });
+      setToast({ msg: 'Draft evaluation saved successfully.', type: 'success' });
+    } catch (e) {
+      setToast({ msg: 'Saved locally, but failed to sync to server.', type: 'info' });
+    }
   };
 
   // Continue to Coaching Validation
-  const handleContinueCoaching = () => {
+  const handleContinueCoaching = async () => {
     localStorage.setItem(`review_draft_${reviewId}`, JSON.stringify(answers));
+    try {
+      await saveCallReviewDraft(reviewId, { answers });
+    } catch (e) {
+      console.error('Failed to sync draft to server', e);
+    }
     router.push(`/calls/reviews/${reviewId}/coaching`);
   };
 
@@ -673,7 +737,7 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
                     <div className="bg-white border border-gray-100 rounded p-3 space-y-2">
                       <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Talk Ratio</h4>
                       <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                        <span>Me {insights.talkRatio.rep}%</span>
+                        <span>Rep {insights.talkRatio.rep}%</span>
                         <span>Customer {insights.talkRatio.customer}%</span>
                       </div>
                       <div className="flex gap-1.5">

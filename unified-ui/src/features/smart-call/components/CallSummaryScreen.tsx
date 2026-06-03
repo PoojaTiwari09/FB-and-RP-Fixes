@@ -118,7 +118,7 @@ function DimensionBar({ label, score, max }: { label: string; score: number; max
 export default function CallSummaryScreen({ summary, onBack, onPracticeAgain }: Props) {
   const [showTranscript, setShowTranscript] = useState(false);
   return (
-    <div className="flex flex-col flex-1 overflow-y-auto bg-gray-50">
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto bg-gray-50">
 
       {/* ── Page Header ────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">

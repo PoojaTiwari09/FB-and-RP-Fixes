@@ -12,6 +12,7 @@ import type {
   RecentActivity,
   AccountOverviewData,
   ActivityFeedResponse,
+  ActivityFeedParams,
   AccountBriefs,
   TodosResponse,
   NotesData,
