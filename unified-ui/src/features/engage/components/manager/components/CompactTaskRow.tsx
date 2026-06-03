@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, Mail, Clock, UserPlus, Timer, CheckCircle2 } from 'lucide-react';
+import { Phone, Mail, Clock, Flame, UserPlus, Timer, CheckCircle2 } from 'lucide-react';
 import type { Task } from '../types/engage.types';
 
 function LinkedinIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -148,14 +148,7 @@ export default function CompactTaskRow({
           {task.workflowName && (
             <>
               <span className="text-gray-300 opacity-60">•</span>
-              <span 
-                className="truncate opacity-85 cursor-pointer hover:text-blue-600 transition-colors" 
-                title={task.workflowName}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick();
-                }}
-              >
+              <span className="truncate opacity-85" title={task.workflowName}>
                 {task.workflowName}
                 {task.workflowStep && ` (Step ${task.workflowStep})`}
               </span>
@@ -172,17 +165,8 @@ export default function CompactTaskRow({
           )}
         </div>
 
-        {/* Line 3: Metadata - Assignee, Engagement, Due Date, Status */}
+        {/* Line 3: Metadata - Engagement, Due Date, Status */}
         <div className="flex items-center gap-2.5 flex-wrap text-gray-500" style={{ fontSize: '11.5px' }}>
-          {task.assigneeName && (
-            <>
-              <span className="inline-flex items-center gap-1 font-medium" style={{ color: '#374151' }}>
-                Assignee: {task.assigneeName}
-              </span>
-              <span className="text-gray-300">•</span>
-            </>
-          )}
-
           {task.interactionCount > 0 && (
             <span
               className="inline-flex items-center gap-1 hidden sm:inline-flex"
@@ -230,30 +214,28 @@ export default function CompactTaskRow({
       {/* RIGHT ZONE - Action Buttons */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {onReassignClick && !isCompleted && (
-          <>
-            <button
-              className="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all border border-gray-250 bg-white text-gray-600 px-3 py-1.5 hover:bg-[#111827] hover:text-white hover:border-[#111827]"
-              onClick={(e) => {
-                e.stopPropagation();
-                onReassignClick(task);
-              }}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Reassign
-            </button>
-            
-            {!isViewOnly && (
-              <button
-                className="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all border border-blue-200 bg-blue-50 text-blue-700 px-3 py-1.5 hover:bg-blue-600 hover:text-white hover:border-blue-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick();
-                }}
-              >
-                View Details
-              </button>
-            )}
-          </>
+          <button
+            className="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all border border-gray-250 bg-white text-gray-600 px-3 py-1.5 hover:bg-[#111827] hover:text-white hover:border-[#111827]"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReassignClick(task);
+            }}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Reassign
+          </button>
+        )}
+
+        {!isCompleted && (
+          <button
+            className="inline-flex items-center justify-center rounded-md text-xs font-semibold whitespace-nowrap border border-gray-250 bg-white text-gray-600 px-2.5 py-1.5 transition-all group-hover:bg-[#111827] group-hover:text-white group-hover:border-[#111827]"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+          >
+            View Details
+          </button>
         )}
 
         {isCompleted && (

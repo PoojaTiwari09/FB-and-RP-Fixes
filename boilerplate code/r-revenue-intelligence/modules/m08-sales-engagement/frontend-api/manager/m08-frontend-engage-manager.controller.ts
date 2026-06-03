@@ -109,9 +109,9 @@ export class M08FrontendEngageManagerController {
   reassign(
     @Req() req: any,
     @Param('taskId') taskId: string,
-    @Body() body: { newAssigneeId: string; scope?: string; reason?: string },
+    @Body() body: { newAssigneeId: string },
   ) {
-    return this.svc.reassignTask(req.tenantId, taskId, body);
+    return this.svc.reassignTask(req.tenantId, taskId, body.newAssigneeId);
   }
 
   @Post('api/tasks/:taskId/mark-complete')
@@ -161,4 +161,14 @@ export class M08FrontendEngageManagerController {
   rephrase(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
     return this.svc.rephraseEmail(req.tenantId, taskId, body);
   }
+
+  @Patch('api/tasks/:taskId')
+  updateTask(
+    @Req() req: any,
+    @Param('taskId') taskId: string,
+    @Body() body: any,
+  ) {
+    return this.svc.updateTask(req.tenantId, taskId, body);
+  }
 }
+

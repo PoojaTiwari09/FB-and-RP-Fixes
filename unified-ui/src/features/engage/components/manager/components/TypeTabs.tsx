@@ -56,6 +56,7 @@ export default function TypeTabs({
     { id: 'inProgress', label: 'In-Progress', countKey: 'inProgress' },
     { id: 'upcoming', label: 'Upcoming', countKey: 'upcoming' },
     { id: 'completed', label: 'Completed', countKey: 'completed' },
+    { id: 'snoozed', label: 'Snoozed', countKey: 'snoozed' },
   ];
 
   return (

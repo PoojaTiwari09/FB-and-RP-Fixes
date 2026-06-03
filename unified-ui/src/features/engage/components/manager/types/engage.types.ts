@@ -60,4 +60,4 @@ export interface FilterState {
 export type TaskType = 'all' | 'email' | 'call' | 'linkedin' | 'custom';
 export type GroupByOption = 'none' | 'flow' | 'step_number';
 export type SortOption = 'due_date' | 'recent_activity' | 'priority';
-export type StatusTab = 'today' | 'inProgress' | 'upcoming' | 'completed';
+export type StatusTab = 'today' | 'inProgress' | 'upcoming' | 'completed' | 'snoozed';

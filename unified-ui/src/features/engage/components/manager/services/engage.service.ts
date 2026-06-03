@@ -226,38 +226,15 @@ export async function saveEmailDraft(
 
 export async function rephraseEmail(
   taskId: string,
-  body: { currentBody: string; subject?: string; contactName?: string; companyName?: string; tone?: string },
+  body: { currentBody: string; tone?: string }
 ): Promise<string> {
-  const res = await fetch('/api/engage/rephrase', {
-    method: 'POST',
+  const endpoint = `/api/tasks/${taskId}/ai-rephrase`;
+  const res = await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      taskId,
-      subject: body.subject,
-      body: body.currentBody,
-      contactName: body.contactName,
-      company: body.companyName,
-      tone: body.tone,
-    }),
+    body: JSON.stringify(body),
   });
-
-  const text = await res.text();
-  if (!res.ok) {
-    let message = `Rephrase failed (${res.status})`;
-    try {
-      const err = JSON.parse(text) as { error?: string };
-      if (err.error) message = err.error;
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-
-  const payload = JSON.parse(text) as {
-    rephrasedBody?: string;
-    data?: { rephrasedBody?: string };
-  };
-  return payload.rephrasedBody || payload.data?.rephrasedBody || '';
+  const payload = await res.json();
+  return payload.data.rephrasedBody;
 }
 
 export async function fetchEmailTemplates(): Promise<{ id: string; name: string; subject: string; body: string }[]> {
@@ -282,14 +259,11 @@ export async function markTaskComplete(taskId: string, notes?: string): Promise<
   });
 }
 
-export async function snoozeTask(taskId: string, durationDays: number): Promise<void> {
+export async function snoozeTask(taskId: string, snoozedUntil: string): Promise<void> {
   const endpoint = `/api/tasks/${taskId}`;
-  const date = new Date();
-  date.setDate(date.getDate() + durationDays);
-  const formattedDate = date.toISOString().split('T')[0];
   await apiFetch('PATCH', endpoint, {
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dueDate: formattedDate }),
+    body: JSON.stringify({ snoozedUntil }),
   });
 }
 

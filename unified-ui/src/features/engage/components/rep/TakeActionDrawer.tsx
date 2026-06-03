@@ -23,11 +23,14 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
   const [aiLoading, setAiLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
 
+  const [showCallPlatformOptions, setShowCallPlatformOptions] = useState(false);
+
   useEffect(() => {
     let active = true;
     setAiLoading(true);
     setNote('');
     setSavedNotes([]);
+    setShowCallPlatformOptions(false); // Reset when task changes
 
     Promise.all([getTaskDetail(task.taskId), fetchTaskNotes(task.taskId)])
       .then(([data, notes]) => {
@@ -78,7 +81,7 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
     : null;
 
   return (
-    <div className="w-[360px] shrink-0 h-full border-l border-gray-200 bg-white flex flex-col overflow-hidden" style={{ boxShadow: '-4px 0 16px rgba(0,0,0,0.08)' }}>
+    <div className="w-72 shrink-0 h-full border-l border-gray-200 bg-white flex flex-col overflow-hidden" style={{ boxShadow: '-4px 0 16px rgba(0,0,0,0.08)' }}>
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-gray-200">
         <div className="flex items-start justify-between gap-2">
@@ -107,20 +110,98 @@ export default function TakeActionDrawer({ task, onClose, onEmail, onMessage }: 
           </p>
           {!isManager ? (
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <button className="flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
-                <Phone size={12} /> Quick Call
-              </button>
-              <button
-                onClick={() => router.push(`/smart-call?contactId=${task.contactId}`)}
-                className="flex items-center justify-center gap-1.5 bg-purple-600 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-purple-700 cursor-pointer transition-colors"
-              >
-                <Sparkles size={12} /> Smart Call
-              </button>
+              {showCallPlatformOptions ? (
+                <>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        window.open('https://zoom.us/start/videomeeting', '_blank');
+                        setShowCallPlatformOptions(false);
+                      }}
+                      className="flex-1 flex items-center justify-center bg-[#0B5CFF] hover:bg-[#004BD6] text-white text-[11px] font-bold py-2 rounded-xl cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Zoom
+                    </button>
+                    <button
+                      onClick={() => {
+                        window.open('https://meet.google.com/new', '_blank');
+                        setShowCallPlatformOptions(false);
+                      }}
+                      className="flex-1 flex items-center justify-center bg-[#00897B] hover:bg-[#006E63] text-white text-[11px] font-bold py-2 rounded-xl cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Meet
+                    </button>
+                    <button
+                      onClick={() => setShowCallPlatformOptions(false)}
+                      className="px-2 flex items-center justify-center bg-[#E5E7EB] hover:bg-[#D1D5DB] text-gray-600 rounded-xl cursor-pointer transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/smart-call?contactId=${task.contactId}`)}
+                    className="flex items-center justify-center gap-1.5 bg-purple-600 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-purple-700 cursor-pointer transition-colors whitespace-nowrap"
+                  >
+                    <Sparkles size={12} /> Smart Call
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowCallPlatformOptions(true)}
+                    className="flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors whitespace-nowrap"
+                  >
+                    <Phone size={12} /> Quick Call
+                  </button>
+                  <button
+                    onClick={() => router.push(`/smart-call?contactId=${task.contactId}`)}
+                    className="flex items-center justify-center gap-1.5 bg-purple-600 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-purple-700 cursor-pointer transition-colors whitespace-nowrap"
+                  >
+                    <Sparkles size={12} /> Smart Call
+                  </button>
+                </>
+              )}
             </div>
           ) : (
-            <button className="w-full flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors mb-2">
-              <Phone size={12} /> Quick Call
-            </button>
+            <>
+              {showCallPlatformOptions ? (
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        window.open('https://zoom.us/start/videomeeting', '_blank');
+                        setShowCallPlatformOptions(false);
+                      }}
+                      className="flex-1 flex items-center justify-center bg-[#0B5CFF] hover:bg-[#004BD6] text-white text-[11px] font-bold py-2 rounded-xl cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Zoom
+                    </button>
+                    <button
+                      onClick={() => {
+                        window.open('https://meet.google.com/new', '_blank');
+                        setShowCallPlatformOptions(false);
+                      }}
+                      className="flex-1 flex items-center justify-center bg-[#00897B] hover:bg-[#006E63] text-white text-[11px] font-bold py-2 rounded-xl cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Meet
+                    </button>
+                    <button
+                      onClick={() => setShowCallPlatformOptions(false)}
+                      className="px-2 flex items-center justify-center bg-[#E5E7EB] hover:bg-[#D1D5DB] text-gray-600 rounded-xl cursor-pointer transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowCallPlatformOptions(true)}
+                  className="w-full flex items-center justify-center gap-1.5 bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors mb-2"
+                >
+                  <Phone size={12} /> Quick Call
+                </button>
+              )}
+            </>
           )}
           <div className="grid grid-cols-2 gap-2">
             <button

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect } from 'react';
+
+import { useState } from 'react';
 import { useEngage } from './hooks/useEngage';
 import CompactHeader from './components/CompactHeader';
 import CompactFilters from './components/CompactFilters';
@@ -12,6 +13,7 @@ import FilterDrawer from './components/FilterDrawer';
 import CreateToDoModal from './components/CreateToDoModal';
 import Toast from './components/Toast';
 import ReassignTaskModal from './components/ReassignTaskModal';
+import SnoozeModal from '../rep/SnoozeModal';
 
 // Manager specific workspace components
 import CallWorkspace from './workspaces/CallWorkspace';
@@ -26,7 +28,6 @@ export default function EngageManagerView() {
     tabCounts,
     statusPills,
     summary,
-    recentActivity,
     
     // States
     selectedUserId,
@@ -77,7 +78,6 @@ export default function EngageManagerView() {
     handleClearFilters,
     toggleGroup,
     openTakeAction,
-    logActivity,
     
     // Toasts
     toasts,
@@ -89,41 +89,19 @@ export default function EngageManagerView() {
     emptyStateReason,
   } = useEngage();
 
-  // Activity tracking side-effects
-  useEffect(() => {
-    if (activeStatusTab) {
-      logActivity(`Switched to ${activeStatusTab} tab`, 'Status', 'Navigation', 'system');
-    }
-  }, [activeStatusTab, logActivity]);
-
-  useEffect(() => {
-    if (activeChannel !== 'all') {
-      logActivity(`Filtered by ${activeChannel} channel`, 'Channel', 'Filter', activeChannel);
-    }
-  }, [activeChannel, logActivity]);
-
-  useEffect(() => {
-    if (searchQuery) {
-      logActivity(`Searched for "${searchQuery}"`, 'Search', 'Filter', 'system');
-    }
-  }, [searchQuery, logActivity]);
-
   const isReadOnly = selectedUserId !== 'me';
+  const [snoozeModalOpen, setSnoozeModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden" style={{ backgroundColor: '#F9FAFB' }}>
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden" style={{ backgroundColor: '#F9FAFB' }}>
       
       {/* Warning Banner for manager looking at teammate workspaces */}
       {isReadOnly && <ViewOnlyBanner selectedUserId={selectedUserId} />}
 
       {/* Header */}
-      <div className="shrink-0">
       <CompactHeader
         headerAlert={summary.headerAlert}
-        onCreateClick={() => {
-          logActivity('Opened Create To-Do modal', 'Action', 'Manager', 'system');
-          setIsCreateModalOpen(true);
-        }}
+        onCreateClick={() => setIsCreateModalOpen(true)}
         isLoading={isLoading}
         isViewOnly={isReadOnly}
       />
@@ -133,30 +111,15 @@ export default function EngageManagerView() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         groupBy={groupBy}
-        onGroupByChange={(val) => {
-          logActivity(`Changed grouping to ${val}`, 'View', 'Manager', 'system');
-          setGroupBy(val);
-        }}
+        onGroupByChange={setGroupBy}
         sortBy={sortBy}
-        onSortByChange={(val) => {
-          logActivity(`Changed sorting to ${val}`, 'View', 'Manager', 'system');
-          setSortBy(val);
-        }}
+        onSortByChange={setSortBy}
         selectedUserId={selectedUserId}
-        onUserChange={(val) => {
-          logActivity(`Viewing workspace for ${val}`, 'User', 'Navigation', 'system');
-          setSelectedUserId(val);
-        }}
+        onUserChange={setSelectedUserId}
         isManagerView={true}
         filterCount={filterCount}
-        onFilterClick={() => {
-          logActivity('Opened Filter drawer', 'Action', 'Manager', 'system');
-          setIsFilterDrawerOpen(true);
-        }}
-        onClearFilters={() => {
-          logActivity('Cleared all filters', 'Action', 'Manager', 'system');
-          handleClearFilters();
-        }}
+        onFilterClick={() => setIsFilterDrawerOpen(true)}
+        onClearFilters={handleClearFilters}
       />
 
       {/* Status Tabs and Channels Selection */}
@@ -168,50 +131,75 @@ export default function EngageManagerView() {
         onChannelChange={setActiveChannel}
         statusPills={statusPills}
       />
-      </div>
 
-      {/* Grid Content: scrollable task list + activity sidebar */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="flex-1 min-w-0 overflow-y-auto px-6 py-6">
-          <div className="max-w-[1200px] mx-auto w-full space-y-6">
-            {activeStatusTab === 'today' && !isEmpty && (
-              <CompactProgress
-                completedCount={summary.completedToday}
-                totalCount={summary.totalToday}
-                remainingHighPriority={summary.highPriorityRemaining}
-              />
-            )}
-
-            <TaskList
-              groups={groups}
-              collapsedGroups={collapsedGroups}
-              toggleGroup={(val) => {
-                logActivity(`${collapsedGroups.has(val) ? 'Expanded' : 'Collapsed'} group ${val}`, 'List', 'View', 'system');
-                toggleGroup(val);
-              }}
-              onTakeAction={(task) => {
-                logActivity(`Opened task: ${task.title}`, task.contactName, task.companyName, task.channel);
-                openTakeAction(task);
-              }}
-              onReassign={(task) => {
-                logActivity(`Started reassigning task: ${task.title}`, task.contactName, task.companyName, 'system');
-                setFocusedTask(task);
-                setIsReassignModalOpen(true);
-              }}
-              isEmpty={isEmpty}
-              emptyStateReason={emptyStateReason}
-              activeChannel={activeChannel}
-              activeStatusTab={activeStatusTab}
-              onClearFilters={handleClearFilters}
-              isReadOnly={isReadOnly}
-              isLoading={isLoading}
-              groupBy={groupBy}
+      {/* Content Layout */}
+      <div className="flex-1 flex min-h-0 overflow-hidden max-w-[1800px] mx-auto px-6 py-6 w-full gap-6">
+        
+        {/* Left Column: Tasks */}
+        <div className="flex-1 h-full min-h-0 overflow-y-auto pr-2">
+          {/* Progress - Only on Today tab */}
+          {activeStatusTab === 'today' && !isEmpty && (
+            <CompactProgress
+              completedCount={summary.completedToday}
+              totalCount={summary.totalToday}
+              remainingHighPriority={summary.highPriorityRemaining}
             />
-          </div>
+          )}
+
+          {/* Task Lists */}
+          <TaskList
+            groups={groups}
+            collapsedGroups={collapsedGroups}
+            toggleGroup={toggleGroup}
+            onTakeAction={openTakeAction}
+            onReassign={(task) => {
+              setFocusedTask(task);
+              setIsReassignModalOpen(true);
+            }}
+            isEmpty={isEmpty}
+            emptyStateReason={emptyStateReason}
+            activeChannel={activeChannel}
+            activeStatusTab={activeStatusTab}
+            onClearFilters={handleClearFilters}
+            isReadOnly={isReadOnly}
+            isLoading={isLoading}
+            groupBy={groupBy}
+          />
         </div>
 
-        <div className="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white px-3 py-4 hidden lg:block">
-          <RecentActivitySidebar activities={recentActivity} />
+        {/* Right Column: Recent Activity */}
+        <div className="w-72 flex-shrink-0 h-full min-h-0 flex flex-col overflow-y-auto">
+          {isTakeActionDrawerOpen && focusedTask ? (
+            focusedTask.channel === 'call' || focusedTask.channel === 'email' || focusedTask.channel === 'linkedin' ? (
+              <CallWorkspace
+                isOpen={isTakeActionDrawerOpen}
+                onClose={() => {
+                  setIsTakeActionDrawerOpen(false);
+                  setFocusedTask(null);
+                }}
+                task={focusedTask}
+                onSaveNotes={handleSaveNotes}
+                onMarkComplete={handleMarkComplete}
+                onSnooze={() => setSnoozeModalOpen(true)}
+                isViewOnly={isReadOnly}
+              />
+            ) : (
+              <CustomWorkspace
+                isOpen={isTakeActionDrawerOpen}
+                onClose={() => {
+                  setIsTakeActionDrawerOpen(false);
+                  setFocusedTask(null);
+                }}
+                task={focusedTask}
+                onSaveNotes={handleSaveNotes}
+                onMarkComplete={handleMarkComplete}
+                onSnooze={() => setSnoozeModalOpen(true)}
+                isViewOnly={isReadOnly}
+              />
+            )
+          ) : (
+            <RecentActivitySidebar />
+          )}
         </div>
       </div>
 
@@ -219,20 +207,14 @@ export default function EngageManagerView() {
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}
-        onApply={(filters) => {
-          logActivity('Applied filters', 'Action', 'Manager', 'system');
-          handleApplyFilters(filters);
-        }}
+        onApply={handleApplyFilters}
         initialFilters={appliedFilters}
       />
 
       <CreateToDoModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={(task) => {
-          logActivity(`Created new task: ${task.title}`, 'Task', 'Manager', 'system');
-          handleCreateTask(task);
-        }}
+        onSave={handleCreateTask}
       />
 
       {/* Generalized Reassign Modal */}
@@ -250,45 +232,13 @@ export default function EngageManagerView() {
             name: focusedTask.assigneeName,
             role: focusedTask.assigneeRole,
           }}
-          onReassign={(newAssigneeId, scope, reason) => {
-            logActivity(`Reassigned task ${focusedTask.title} to ${newAssigneeId}`, focusedTask.contactName, focusedTask.companyName, 'system');
-            handleReassignTask(focusedTask.id, newAssigneeId, scope, reason);
-          }}
+          onReassign={(newAssigneeId, scope, reason) =>
+            handleReassignTask(focusedTask.id, newAssigneeId, scope, reason)
+          }
         />
       )}
 
-      {/* Call & Custom/Manual Workspaces */}
-      {isTakeActionDrawerOpen && focusedTask && (
-        <>
-          {focusedTask.channel === 'call' || focusedTask.channel === 'email' || focusedTask.channel === 'linkedin' ? (
-            <CallWorkspace
-              isOpen={isTakeActionDrawerOpen}
-              onClose={() => {
-                setIsTakeActionDrawerOpen(false);
-                setFocusedTask(null);
-              }}
-              task={focusedTask}
-              onSaveNotes={handleSaveNotes}
-              onMarkComplete={handleMarkComplete}
-              onSnooze={handleSnoozeTask}
-              isViewOnly={isReadOnly}
-            />
-          ) : (
-            <CustomWorkspace
-              isOpen={isTakeActionDrawerOpen}
-              onClose={() => {
-                setIsTakeActionDrawerOpen(false);
-                setFocusedTask(null);
-              }}
-              task={focusedTask}
-              onSaveNotes={handleSaveNotes}
-              onMarkComplete={handleMarkComplete}
-              onSnooze={handleSnoozeTask}
-              isViewOnly={isReadOnly}
-            />
-          )}
-        </>
-      )}
+
 
       {/* Email Workspace Review */}
       {activeComposerTask && (
@@ -366,6 +316,19 @@ export default function EngageManagerView() {
 
       {/* Toast Alert Notifications */}
       <Toast toasts={toasts} onRemove={removeToast} />
+
+      {snoozeModalOpen && (
+        <SnoozeModal
+          selectedCount={1}
+          onClose={() => setSnoozeModalOpen(false)}
+          onSave={(snoozedUntil) => {
+            if (focusedTask) {
+              handleSnoozeTask(focusedTask.id, snoozedUntil);
+            }
+            setSnoozeModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

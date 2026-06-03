@@ -10,6 +10,7 @@ import {
   rephraseEmail,
   saveDraft,
   sendEmail,
+  getEmailTemplates,
 } from './services/engage.service';
 import ContactSidebar from './ContactSidebar';
 
@@ -130,11 +131,23 @@ export default function EmailTaskScreen({
 }: EmailTaskScreenProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('email');
   const [to, setTo] = useState('');
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [showTemplatesDropdown, setShowTemplatesDropdown] = useState(false);
   const [fromLabel, setFromLabel] = useState('alex.chen@company.com (Gmail)');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [contact, setContact] = useState<ContactDetails | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getEmailTemplates()
+      .then((data) => {
+        setTemplates(data || []);
+      })
+      .catch((err) => {
+        console.error('Failed to load email templates:', err);
+      });
+  }, []);
   const [rephrasing, setRephrasing] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -434,9 +447,37 @@ export default function EmailTaskScreen({
 
               {/* Toolbar */}
               <div className="flex items-center gap-2">
-                <button className="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer transition-colors">
-                  Use Template
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowTemplatesDropdown(!showTemplatesDropdown)}
+                    className="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    Use Template
+                    <ChevronDown size={12} className="text-gray-400" />
+                  </button>
+                  {showTemplatesDropdown && (
+                    <div className="absolute left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-25 py-1.5 max-h-60 overflow-y-auto">
+                      {templates.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-gray-500">No templates found</div>
+                      ) : (
+                        templates.map((tpl) => (
+                          <button
+                            key={tpl.templateId}
+                            onClick={() => {
+                              setSubject(tpl.subject || '');
+                              setBody(htmlToPlainText(tpl.bodyHtml || ''));
+                              setShowTemplatesDropdown(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-purple-50 hover:text-purple-700 transition-colors text-gray-700 truncate block font-medium"
+                            title={tpl.templateName}
+                          >
+                            {tpl.templateName}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-1 bg-white border border-purple-200 rounded-lg px-2 py-1">
                   <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mr-1">Tone</span>
                   {(['casual', 'formal', 'demanding'] as const).map((t) => (

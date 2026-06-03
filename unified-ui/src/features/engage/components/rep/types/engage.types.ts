@@ -40,7 +40,7 @@ export interface Task {
   status: TaskStatus;
   isOverdue: boolean;
   isAtRisk: boolean;
-  snoozedUntil?: string; // ISO date string
+  snoozedUntil?: string | null;
 }
 
 export interface TaskSummary {
@@ -73,15 +73,6 @@ export interface TaskDetail {
   recommendedNextSteps: string[];
   recentActivity: TaskDetailActivity[];
   existingNotes?: string;
-}
-
-export interface TaskNote {
-  noteId: string;
-  taskId: string;
-  note: string;
-  authorName: string;
-  timestamp: string;
-  createdAt: string;
 }
 
 // ─── Recent Activity ──────────────────────────────────────────────────────────

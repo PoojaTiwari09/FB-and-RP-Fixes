@@ -1,19 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import {
-  appendEngageTaskNote,
-  latestEngageTaskNote,
-  parseEngageTaskNotes,
-} from './m08-task-notes.util';
-import { buildAutoEmailDraft } from './m08-email-draft.util';
-import { rephraseEmailWithGroq } from './m08-groq-rephrase.util';
-import {
-  buildTaskTitle,
-  resolveDueDateTime,
-  resolveSequenceName,
-  resolveSequenceStep,
-} from './m08-task-format.util';
-import { resolveTeamMember, mapTaskAssignee } from './m08-team-members.util';
 
 @Injectable()
 export class M08FrontendEngageService {
@@ -22,72 +8,27 @@ export class M08FrontendEngageService {
   async getTasks(tenantId: string) {
     const dbTasks = await this.prisma.engageTask.findMany({
       where: { tenantId },
+      orderBy: { createdAt: 'desc' },
     });
 
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    const mappedTasks = dbTasks.map((t) => {
-      const isCompleted = t.status.toUpperCase() === 'COMPLETED';
-      let isOverdue = t.isOverdue;
-      if (!isCompleted && t.dueDate && t.dueDate < todayStr) {
-        isOverdue = true;
-      }
-      const priority = (isOverdue ? 'HIGH' : t.priority).toUpperCase();
-
-      return {
-        taskId: t.taskId,
-        contactId: t.contactId || '',
-        contactName: t.contactName,
-        company: t.companyName,
-        channelType: t.channel.toUpperCase(),
-        sequenceName: resolveSequenceName(t),
-        sequenceStep: resolveSequenceStep(t),
-        scheduledTime: t.scheduledTime || '',
-        dueDateTime: resolveDueDateTime(t),
-        interactionCount: t.interactionCount,
-        priority,
-        status: t.status.toUpperCase(),
-        isOverdue,
-        isAtRisk: t.isAtRisk,
-        dueDate: t.dueDate,
-        dueTime: t.dueTime || '',
-        createdAt: t.createdAt,
-        snoozedUntil: t.snoozedUntil || null,
-      };
-    });
-
-    // Properly sort tasks: Priority First (with overdue within HIGH), then Due Date Ascending, then Due Time Ascending, then CreatedAt Descending
-    mappedTasks.sort((a, b) => {
-      const priorityOrder: Record<string, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
-      const pDiff = (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
-      if (pDiff !== 0) return pDiff;
-
-      // Within HIGH priority, sort overdue tasks first
-      if (a.priority === 'HIGH') {
-        const aOverdue = a.isOverdue ? 1 : 0;
-        const bOverdue = b.isOverdue ? 1 : 0;
-        const overdueDiff = bOverdue - aOverdue;
-        if (overdueDiff !== 0) return overdueDiff;
-      }
-
-      if (a.dueDate && b.dueDate) {
-        const dDiff = a.dueDate.localeCompare(b.dueDate);
-        if (dDiff !== 0) return dDiff;
-      } else if (a.dueDate) {
-        return -1;
-      } else if (b.dueDate) {
-        return 1;
-      }
-
-      if (a.dueTime && b.dueTime) {
-        const tDiff = a.dueTime.localeCompare(b.dueTime);
-        if (tDiff !== 0) return tDiff;
-      }
-
-      return b.createdAt.getTime() - a.createdAt.getTime();
-    });
-
-    return mappedTasks.map(({ dueDate, dueTime, createdAt, ...rest }) => rest);
+    // Map DB fields to frontend format expected by the rep engage components
+    return dbTasks.map((t) => ({
+      taskId: t.taskId,
+      contactId: t.contactId || '',
+      contactName: t.contactName,
+      company: t.companyName,
+      channelType: t.channel.toUpperCase(),
+      sequenceName: t.sequenceName || '',
+      sequenceStep: t.sequenceStep || '',
+      scheduledTime: t.scheduledTime || '',
+      dueDateTime: t.dueDateTime || '',
+      interactionCount: t.interactionCount,
+      priority: t.priority.toUpperCase(),
+      status: t.status.toUpperCase(),
+      isOverdue: t.isOverdue,
+      isAtRisk: t.isAtRisk,
+      snoozedUntil: t.snoozedUntil,
+    }));
   }
 
   async getTaskSummary(tenantId: string) {
@@ -95,33 +36,22 @@ export class M08FrontendEngageService {
       where: { tenantId },
     });
 
-    const todayStr = new Date().toISOString().split('T')[0];
     const now = new Date();
+    const isCurrentlySnoozed = (t: any) => {
+      if (!t.snoozedUntil) return false;
+      return new Date(t.snoozedUntil) > now;
+    };
 
-    // A task is snoozed if its snoozedUntil exists and is in the future
-    const activeTasks = tasks.filter((t) => {
-      const isSnoozed = t.snoozedUntil && new Date(t.snoozedUntil) > now;
-      return !isSnoozed;
-    });
-
-    const snoozedCount = tasks.filter((t) => {
-      return t.snoozedUntil && new Date(t.snoozedUntil) > now;
-    }).length;
+    const activeTasks = tasks.filter((t) => !isCurrentlySnoozed(t));
+    const snoozedCount = tasks.filter((t) => isCurrentlySnoozed(t)).length;
 
     const totalTasksToday = activeTasks.filter((t) => t.status !== 'COMPLETED').length;
-    const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length; // completed count can include all completed
+    const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length;
     const inProgressCount = activeTasks.filter((t) => t.status === 'IN_PROGRESS').length;
     const upcomingCount = activeTasks.filter((t) => t.status === 'PENDING').length;
     const atRiskCount = activeTasks.filter((t) => t.isAtRisk && t.status !== 'COMPLETED').length;
     const dueTodayCount = activeTasks.filter((t) => t.status !== 'COMPLETED').length;
-    
-    // Dynamically calculate high priority count including overdue tasks
-    const highPriorityCount = activeTasks.filter((t) => {
-      const isCompleted = t.status === 'COMPLETED';
-      if (isCompleted) return false;
-      const isOverdue = t.isOverdue || (t.dueDate && t.dueDate < todayStr);
-      return isOverdue || t.priority === 'HIGH';
-    }).length;
+    const highPriorityCount = activeTasks.filter((t) => t.priority === 'HIGH' && t.status !== 'COMPLETED').length;
 
     const total = completedCount + upcomingCount + inProgressCount;
     const progressPercent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
@@ -159,41 +89,27 @@ export class M08FrontendEngageService {
   }
 
   async getTaskDetail(tenantId: string, taskId: string) {
+    console.log('[M08 Service] getTaskDetail: tenantId =', tenantId, 'taskId =', taskId);
     const t = await this.prisma.engageTask.findFirst({
       where: { tenantId, taskId },
     });
+    console.log('[M08 Service] getTaskDetail: found task =', t);
     if (!t) return null;
 
     return {
       taskId: t.taskId,
-      taskTitle: buildTaskTitle(t),
+      taskTitle: t.title,
       contactId: t.contactId || '',
       contactName: t.contactName,
       company: t.companyName,
       arrValue: t.arr || '',
-      scheduledDateTime: resolveDueDateTime(t),
+      scheduledDateTime: t.dueDateTime || '',
       aiInsight: t.aiInsight || '',
       recommendedNextSteps: t.recommendedNextSteps || [],
       recentActivity: (t.recentActivity as any) || [],
-      existingNotes: latestEngageTaskNote(t.notes) || '',
-      snoozedUntil: t.snoozedUntil || null,
+      existingNotes: t.notes || '',
+      snoozedUntil: t.snoozedUntil,
     };
-  }
-
-  async getNotes(tenantId: string, taskId: string) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!t) return [];
-
-    return parseEngageTaskNotes(t.notes).map((n) => ({
-      noteId: n.noteId,
-      taskId: t.taskId,
-      note: n.note,
-      authorName: n.authorName,
-      timestamp: n.createdAt,
-      createdAt: n.createdAt,
-    }));
   }
 
   async getContactDetails(tenantId: string, contactId: string) {
@@ -217,37 +133,20 @@ export class M08FrontendEngageService {
   }
 
   async getEmailDraft(tenantId: string, taskId: string) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!t) return null;
-
     const d = await this.prisma.emailDraft.findFirst({
       where: { tenantId, taskId },
     });
+    if (!d) return null;
 
-    if (d) {
-      return {
-        taskId: d.taskId,
-        contactName: d.contactName || t.contactName,
-        contactEmail: d.contactEmail || '',
-        fromEmail: d.fromEmail || 'alex.chen@company.com',
-        fromLabel: d.fromLabel || 'alex.chen@company.com (Gmail)',
-        subject: d.subject,
-        bodyHtml: d.bodyHtml,
-        sequenceName: t.sequenceName || '',
-        sequenceStep: t.sequenceStep || '',
-        dueDateTime: t.dueDateTime || '',
-      };
-    }
-
-    const contact = t.contactId
-      ? await this.prisma.engageContact.findFirst({
-          where: { tenantId, contactId: t.contactId },
-        })
-      : null;
-
-    return buildAutoEmailDraft(t, contact);
+    return {
+      taskId: d.taskId,
+      contactName: d.contactName || '',
+      contactEmail: d.contactEmail || '',
+      fromEmail: d.fromEmail || '',
+      fromLabel: d.fromLabel || '',
+      subject: d.subject,
+      bodyHtml: d.bodyHtml,
+    };
   }
 
   async getLinkedInDraft(tenantId: string, taskId: string) {
@@ -320,12 +219,6 @@ export class M08FrontendEngageService {
 
   async createTask(tenantId: string, body: any) {
     const taskId = `task_${Date.now()}`;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dueDate = body.dueDate || todayStr;
-    // Automatically set to HIGH priority if due date is in the past
-    const isOverdue = dueDate < todayStr;
-    const priority = (isOverdue ? 'HIGH' : (body.priority || 'NORMAL')).toUpperCase();
-
     const newTask = await this.prisma.engageTask.create({
       data: {
         tenantId,
@@ -335,18 +228,18 @@ export class M08FrontendEngageService {
         companyName: body.companyName || 'New Company',
         channel: (body.channel || 'custom').toUpperCase(),
         status: 'PENDING',
-        dueDate,
+        dueDate: body.dueDate || new Date().toISOString().split('T')[0],
         dueTime: body.dueTime || null,
         scheduledTime: body.dueTime || null,
         dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
-        priority,
+        priority: (body.priority || 'NORMAL').toUpperCase(),
         assigneeId: body.assigneeId || 'me',
         assigneeName: body.assigneeName || 'Alex Morgan',
         assigneeRole: body.assigneeRole || 'Account Executive',
         todoType: body.todoType || 'manual',
         entityType: body.entityType || 'lead',
         interactionCount: 0,
-        isOverdue,
+        isOverdue: false,
         isAtRisk: false,
         recommendedNextSteps: body.recommendedNextSteps || [],
       },
@@ -371,30 +264,11 @@ export class M08FrontendEngageService {
   }
 
   async saveNotes(tenantId: string, taskId: string, notes: string) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!t) throw new NotFoundException('Task not found');
-
-    const serialized = appendEngageTaskNote(t.notes, notes);
-    const saved = parseEngageTaskNotes(serialized)[0];
-
-    await this.prisma.engageTask.update({
+    const updated = await this.prisma.engageTask.update({
       where: { taskId },
-      data: { notes: serialized },
+      data: { notes },
     });
-
-    return {
-      status: 'success',
-      data: {
-        noteId: saved.noteId,
-        taskId,
-        note: saved.note,
-        authorName: saved.authorName,
-        timestamp: saved.createdAt,
-        createdAt: saved.createdAt,
-      },
-    };
+    return { status: 'success', data: updated };
   }
 
   async sendEmail(tenantId: string, taskId: string, body: any) {
@@ -446,32 +320,17 @@ export class M08FrontendEngageService {
   }
 
   async rephraseEmail(tenantId: string, taskId: string, body: any) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
+    const text = body.bodyHtml || body.body || '';
+    const rephrasedBody = text
+      ? `${text}\n\n[AI Rephrased: Clearer, more concise call-to-action added.]`
+      : 'Hi Sarah,\n\nFollowing up on our Q2 renewal. Let me know if you would like to run through the ROI projections.\n\nBest,\nAlex';
 
-    try {
-      const rephrasedBody = await rephraseEmailWithGroq({
-        subject: body.subject,
-        body: body.body || body.currentBody,
-        bodyHtml: body.bodyHtml,
-        contactName: body.contactName || t?.contactName,
-        company: body.company || body.companyName || t?.companyName,
-        tone: body.tone,
-      });
-
-      return {
-        status: 'success',
-        data: { rephrasedBody },
-      };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Rephrase failed';
-      return {
-        status: 'error',
-        message,
-        data: { rephrasedBody: body.body || body.currentBody || '' },
-      };
-    }
+    return {
+      status: 'success',
+      data: {
+        rephrasedBody,
+      },
+    };
   }
 
   async markComplete(tenantId: string, taskId: string) {
@@ -499,18 +358,12 @@ export class M08FrontendEngageService {
   }
 
   async reassignTask(tenantId: string, taskId: string, newAssigneeId: string) {
-    const task = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!task) throw new NotFoundException('Task not found');
-
-    const member = resolveTeamMember(newAssigneeId);
     const updated = await this.prisma.engageTask.update({
-      where: { taskId: task.taskId },
+      where: { taskId },
       data: {
-        assigneeId: member.id,
-        assigneeName: member.name,
-        assigneeRole: member.role,
+        assigneeId: newAssigneeId,
+        assigneeName: newAssigneeId === 'me' ? 'Alex Morgan' : 'Sarah Chen',
+        assigneeRole: newAssigneeId === 'me' ? 'Account Executive' : 'Senior AE',
       },
     });
     return { status: 'success', data: updated };

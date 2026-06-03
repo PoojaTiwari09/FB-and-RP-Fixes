@@ -5,6 +5,7 @@ import {
   TranscriptMessage,
   SendMessageResponse,
   InputType,
+  ScorecardSectionStatus,
 } from '@training/types/trainingSession.types';
 import { ENV } from '@shared/config/env';
 import type { QuestionTag } from '@shared/types/shared.types';
@@ -133,7 +134,7 @@ export async function sendSessionMessage(
     aiReplyId: String(aiResponse['id'] ?? `ai-${Date.now()}`),
     aiReplyTimestamp: Number(aiResponse['timestampSeconds'] ?? 0),
     audioUrl: String(aiResponse['audioUrl'] ?? ''),
-    scorecardUpdate: (data['scorecardUpdate'] as Record<string, string> | null) ?? null,
+    scorecardUpdate: (data['scorecardUpdate'] as Record<string, ScorecardSectionStatus> | null) ?? null,
   };
 }
 

@@ -10,7 +10,7 @@ interface CustomWorkspaceProps {
   task: Task | null;
   onSaveNotes: (taskId: string, notes: string) => void;
   onMarkComplete: (taskId: string, notes?: string) => void;
-  onSnooze: (taskId: string, days: number) => void;
+  onSnooze: () => void;
   isViewOnly?: boolean;
 }
 
@@ -28,9 +28,7 @@ export default function CustomWorkspace({
   if (!isOpen || !task) return null;
 
   return (
-    <>
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/30 transition-opacity" />
-      <div className="fixed top-0 right-0 z-50 h-full w-[400px] bg-white border-l border-gray-200 shadow-2xl flex flex-col transform transition-transform">
+    <div className="w-full h-full min-h-0 bg-white border border-gray-200 rounded-lg flex flex-col">
         
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-gray-150 shrink-0">
@@ -72,10 +70,10 @@ export default function CustomWorkspace({
         {!isViewOnly && (
           <div className="px-6 py-5 border-t border-gray-150 flex items-center justify-between bg-gray-50 shrink-0">
             <button
-              onClick={() => onSnooze(task.id, 1)}
+              onClick={onSnooze}
               className="px-3 py-2 border border-gray-200 hover:bg-gray-100 rounded-lg text-xs font-semibold text-gray-700 transition-colors"
             >
-              Snooze 1d
+              Snooze
             </button>
             <div className="flex gap-2">
               <button
@@ -93,7 +91,6 @@ export default function CustomWorkspace({
             </div>
           </div>
         )}
-      </div>
-    </>
+    </div>
   );
 }

@@ -27,6 +27,7 @@ export function useEngage(initialAssigneeId?: string) {
     inProgress: 0,
     upcoming: 0,
     completed: 0,
+    snoozed: 0,
   });
   const [statusPills, setStatusPills] = useState({ atRisk: 0, dueToday: 0 });
   const [summary, setSummary] = useState({
@@ -61,9 +62,6 @@ export function useEngage(initialAssigneeId?: string) {
 
   // Toast Notifications State
   const [toasts, setToasts] = useState<{ id: string; type: 'success' | 'info' | 'warning' | 'error'; message: string }[]>([]);
-  const [recentActivity, setRecentActivity] = useState<
-    { id: string; contactName: string; companyName: string; activityType: string; description: string; timeAgo: string }[]
-  >([]);
 
   const showToast = useCallback((type: 'success' | 'info' | 'warning' | 'error', message: string) => {
     const id = Date.now().toString();
@@ -73,27 +71,6 @@ export function useEngage(initialAssigneeId?: string) {
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
-
-  // Session-based activity logging
-  const logActivity = useCallback((description: string, contactName: string = 'System', companyName: string = 'Engage', type: string = 'system') => {
-    const role = isManager ? 'manager' : 'rep';
-    const key = `recent_activity_${role}`;
-    
-    const newActivity = {
-      id: Math.random().toString(36).substr(2, 9),
-      contactName,
-      companyName,
-      activityType: type,
-      description,
-      timeAgo: 'Just now',
-      timestamp: Date.now()
-    };
-
-    const existing = JSON.parse(localStorage.getItem(key) || '[]');
-    const updated = [newActivity, ...existing].slice(0, 10);
-    localStorage.setItem(key, JSON.stringify(updated));
-    setRecentActivity(updated);
-  }, [isManager]);
 
   // Fetch data from service — always tries real API, falls back to mock on failure
   const loadData = useCallback(async () => {
@@ -113,16 +90,17 @@ export function useEngage(initialAssigneeId?: string) {
         engageService.fetchSummary(selectedUserId, todayStr),
       ]);
 
-      // Load session-specific activities instead of global ones
-      const role = isManager ? 'manager' : 'rep';
-      const sessionActivities = JSON.parse(localStorage.getItem(`recent_activity_${role}`) || '[]');
-
       startTransition(() => {
         setGroups(tasksData.groups);
-        setTabCounts(tasksData.tabCounts);
+        setTabCounts({
+          today: tasksData.tabCounts.today || 0,
+          inProgress: tasksData.tabCounts.inProgress || 0,
+          upcoming: tasksData.tabCounts.upcoming || 0,
+          completed: tasksData.tabCounts.completed || 0,
+          snoozed: (tasksData.tabCounts as any).snooze || 0,
+        });
         setStatusPills(tasksData.statusPills);
         setSummary(summaryData);
-        setRecentActivity(sessionActivities);
         const flatTasks: Task[] = [];
         tasksData.groups.forEach(g => flatTasks.push(...g.tasks));
         setTasks(flatTasks);
@@ -132,7 +110,7 @@ export function useEngage(initialAssigneeId?: string) {
       showToast('error', 'Failed to retrieve engagement tasks');
       setIsLoading(false);
     }
-  }, [selectedUserId, activeStatusTab, activeChannel, searchQuery, groupBy, sortBy, appliedFilters, todayStr, showToast, isManager]);
+  }, [selectedUserId, activeStatusTab, activeChannel, searchQuery, groupBy, sortBy, appliedFilters, todayStr, showToast]);
 
   // Keep selected user ID in sync if resolved initial ID changes
   useEffect(() => {
@@ -177,12 +155,11 @@ export function useEngage(initialAssigneeId?: string) {
       showToast('success', `Task${scopeText} reassigned to ${res.assigneeName}`);
       setIsReassignModalOpen(false);
       setFocusedTask(null);
-      setSelectedUserId(newAssigneeId);
       loadData();
     } catch (e) {
       showToast('error', 'Reassignment failed');
     }
-  }, [loadData, showToast, setSelectedUserId]);
+  }, [loadData, showToast]);
 
   const handleSaveNotes = useCallback(async (taskId: string, notes: string) => {
     try {
@@ -263,10 +240,10 @@ export function useEngage(initialAssigneeId?: string) {
     }
   }, [loadData, showToast]);
 
-  const handleSnoozeTask = useCallback(async (taskId: string, durationDays: number) => {
+  const handleSnoozeTask = useCallback(async (taskId: string, snoozedUntil: string) => {
     try {
-      await engageService.snoozeTask(taskId, durationDays);
-      showToast('success', `Task snoozed for ${durationDays} days`);
+      await engageService.snoozeTask(taskId, snoozedUntil);
+      showToast('success', 'Task snoozed successfully');
       setIsTakeActionDrawerOpen(false);
       setFocusedTask(null);
       loadData();
@@ -335,13 +312,9 @@ export function useEngage(initialAssigneeId?: string) {
 
   const openTakeAction = useCallback(async (task: Task) => {
     setFocusedTask(task);
-    if (task.channel === 'email') {
-      setActiveComposerTask(task);
-    } else if (task.channel === 'linkedin') {
-      setActiveLinkedInComposerTask(task);
-    } else {
-      setIsTakeActionDrawerOpen(true);
-    }
+    setActiveComposerTask(null);
+    setActiveLinkedInComposerTask(null);
+    setIsTakeActionDrawerOpen(true);
   }, []);
 
   // Filter Count
@@ -372,7 +345,6 @@ export function useEngage(initialAssigneeId?: string) {
     tabCounts,
     statusPills,
     summary,
-    recentActivity,
     
     // States
     selectedUserId,
@@ -424,7 +396,6 @@ export function useEngage(initialAssigneeId?: string) {
     handleRemoveFilter,
     toggleGroup,
     openTakeAction,
-    logActivity,
     
     // Toasts
     toasts,
