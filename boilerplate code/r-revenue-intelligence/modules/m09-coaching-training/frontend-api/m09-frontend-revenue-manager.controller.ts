@@ -127,11 +127,24 @@ export class M09FrontendRevenueManagerController {
 
   // ─── Account Drawer Activity Feed ─────────────────────────────
   @Get('revenue/accounts/:accountId/activity')
-  async getAccountActivity(@Param('accountId') accountId: string) {
+  async getAccountActivity(
+    @Param('accountId') accountId: string,
+    @Query('type') type?: string,
+  ) {
     const acc = await this.prisma.managerAccount.findUnique({
       where: { id: accountId },
     });
-    return acc?.activityFeed || { items: [], total: 0, page: 1, totalPages: 0 };
+    const feed = (acc?.activityFeed as any) || { items: [], total: 0, page: 1, totalPages: 0 };
+    const items = feed.items || [];
+    const filteredItems = type && type !== 'all'
+      ? items.filter((item: any) => item.type?.toLowerCase() === type.toLowerCase())
+      : items;
+    return {
+      items: filteredItems,
+      total: filteredItems.length,
+      page: 1,
+      totalPages: 1,
+    };
   }
 
   // ─── Account Drawer Briefs ────────────────────────────────────
@@ -140,7 +153,83 @@ export class M09FrontendRevenueManagerController {
     const acc = await this.prisma.managerAccount.findUnique({
       where: { id: accountId },
     });
-    return { briefContent: acc?.briefContent || '' };
+    if (!acc) {
+      return { briefContent: 'Account not found.' };
+    }
+    const systemPrompt = `You are a helpful sales coaching assistant. Generate a professional and structured account brief (summary, highlights, recommended actions) in clean markdown format for a sales representative based on the provided account metadata. Keep it professional, structured, and easy to read.`;
+    const userMessage = `Generate an account brief for the following account:
+Account Name: ${acc.name}
+Exit ARR: $${acc.exitARR.toLocaleString()}
+Contacts Count: ${acc.contactsCount}
+Open Deals: $${acc.openDeals.toLocaleString()}
+Renewal Date: ${acc.renewalDate}
+Last Activity: ${acc.lastActivity}
+Manager Note: ${acc.managerNote || 'None'}
+Activities: ${JSON.stringify(acc.activity)}`;
+
+    let briefContent = '';
+    try {
+      briefContent = await this.callGroq(systemPrompt, userMessage);
+    } catch (e) {
+      console.error('[Briefs] Groq call failed, using fallback:', e);
+    }
+    if (!briefContent) {
+      briefContent = `**Account Summary**\n\n${acc.name} is a key account with $${acc.exitARR.toLocaleString()} ARR. They have ${acc.contactsCount} contacts and $${acc.openDeals.toLocaleString()} open deals.\n\n**Key Highlights**\n- Last activity: ${acc.lastActivity}\n- Renewal date: ${acc.renewalDate}\n- Manager note: ${acc.managerNote || 'None'}\n\n**Recommended Actions**\n- Follow up on open deals\n- Plan renewal review meeting`;
+    }
+    return { briefContent };
+  }
+
+  // Helper method to call Groq API
+  private async callGroq(systemPrompt: string, userMessage: string): Promise<string> {
+    const key = process.env.GROQ_API_KEY;
+    if (!key) {
+      return '';
+    }
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.warn(`[Groq] API error ${res.status}: ${text}`);
+        return '';
+      }
+      const data = await res.json() as any;
+      return data.choices?.[0]?.message?.content?.trim() || '';
+    } catch (err) {
+      console.warn('[Groq] Fetch failed:', err);
+      return '';
+    }
+  }
+
+  private getLocalChatFallback(msg: string, accountName: string): string {
+    const msgLower = msg.toLowerCase();
+    if (msgLower.includes('budget') || msgLower.includes('cost') || msgLower.includes('price')) {
+      return `For the account ${accountName}, budget constraints were noted. The customer mentioned that high implementation costs might delay sign-off. Emphasize our ROI calculator and flexible quarterly terms in your next proposal.`;
+    }
+    if (msgLower.includes('competitor') || msgLower.includes('compete') || msgLower.includes('vendor')) {
+      return `Our signals indicate ${accountName} is actively evaluating competing products for their enterprise needs. Make sure to schedule a deep-dive call showcasing our unique security integrations and multi-tenant scaling capabilities.`;
+    }
+    if (msgLower.includes('renewal') || msgLower.includes('date') || msgLower.includes('when')) {
+      return `The renewal for ${accountName} is scheduled for Dec 16, 2024. The current sentiment is positive, but we need to resolve the pending legal reviews to ensure there are no last-minute delays.`;
+    }
+    if (msgLower.includes('contact') || msgLower.includes('who') || msgLower.includes('champion')) {
+      return `The main contact at ${accountName} is Marcus Lee (VP Engineering), who is highly supportive. However, we also need to win over the Finance Director to secure final approval.`;
+    }
+    return `Based on recent updates for ${accountName}, they are currently in negotiation stage for a deal valued at $180,000. Key next step: follow up on the proposal sent yesterday and schedule a review session.`;
   }
 
   // ─── Account Drawer Todos ─────────────────────────────────────
@@ -212,11 +301,26 @@ export class M09FrontendRevenueManagerController {
     @Param('accountId') accountId: string,
     @Body('message') message: string,
   ) {
-    const reply = `Based on recent activity, this account has shown strong engagement with your renewal proposal. The champion last responded and flagged budget as a key concern. I recommend scheduling a call to address the ROI model directly. (DB-Persisted response to: "${message}")`;
     const acc = await this.prisma.managerAccount.findUnique({
       where: { id: accountId },
     });
-    const history = (acc?.aiChatHistory as any[]) || [];
+    if (!acc) {
+      return { reply: 'Account not found.' };
+    }
+    const systemPrompt = `You are a helpful sales assistant. Answer the user's question about the account "${acc.name}" dynamically based on their query. Keep it concise (2-4 sentences) and professional.`;
+    
+    let reply = '';
+    try {
+      reply = await this.callGroq(systemPrompt, message);
+    } catch (e) {
+      console.error('[AI Chat] Groq call failed, using fallback:', e);
+    }
+
+    if (!reply) {
+      reply = this.getLocalChatFallback(message, acc.name);
+    }
+
+    const history = (acc.aiChatHistory as any[]) || [];
     history.push({ role: 'user', message });
     history.push({ role: 'assistant', reply });
     await this.prisma.managerAccount.update({

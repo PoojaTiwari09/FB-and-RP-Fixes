@@ -320,3 +320,11 @@ export interface QueueStartResponse {
   status: 'RUNNING';
   message: string;
 }
+
+export interface TaskNote {
+  noteId: string;
+  note: string;
+  authorName: string;
+  createdAt: string;
+  timestamp?: string;
+}

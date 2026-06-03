@@ -374,9 +374,16 @@ export class M06ForecastingPredictionService {
         isClosedLost: false,
         closeDate: { gte: period.startDate, lte: period.endDate }
       };
-      // If fetching for a specific rep, only show their deals
+      // If fetching for a specific rep, only show their deals (support both DB id and repId)
       if (repUserId) {
-        liveDealsQuery.repUserId = repUserId;
+        const user = await this.prisma.forecastUser.findFirst({
+          where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] }
+        });
+        if (user) {
+          liveDealsQuery.repUserId = { in: [user.id, user.repId].filter(Boolean) as string[] };
+        } else {
+          liveDealsQuery.repUserId = repUserId;
+        }
       }
 
       let realDeals = await this.prisma.crmDeal.findMany({ where: liveDealsQuery });
@@ -418,14 +425,22 @@ export class M06ForecastingPredictionService {
       predictionResponse.aiPrediction.explainability.pipelineByStage = newPipelineByStage;
 
       // Compute Closed Won from real DB data for this rep (not from stale team snapshot)
-      let closedWonDeals = await this.prisma.crmDeal.findMany({
-        where: {
-          tenantId,
-          isClosedWon: true,
-          ...(repUserId ? { repUserId } : {}),
-          closeDate: { gte: period.startDate, lte: period.endDate }
+      const closedWonQuery: any = {
+        tenantId,
+        isClosedWon: true,
+        closeDate: { gte: period.startDate, lte: period.endDate }
+      };
+      if (repUserId) {
+        const user = await this.prisma.forecastUser.findFirst({
+          where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] }
+        });
+        if (user) {
+          closedWonQuery.repUserId = { in: [user.id, user.repId].filter(Boolean) as string[] };
+        } else {
+          closedWonQuery.repUserId = repUserId;
         }
-      });
+      }
+      let closedWonDeals = await this.prisma.crmDeal.findMany({ where: closedWonQuery });
       closedWonDeals = closedWonDeals.filter(d => !d.dealName.startsWith('Historical Deal'));
       const closedWon = closedWonDeals.reduce((s, d) => s + d.amount, 0);
       const closedWonDealsMapped = closedWonDeals.map(d => ({

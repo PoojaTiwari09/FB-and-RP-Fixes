@@ -55,10 +55,23 @@ export class ForecastBoardsController {
     @Headers(UserHeader.toLowerCase()) userId: string,
     @Headers('x-user-role') role: string,
     @Param('boardId') boardId: string,
-    @Body() body: { columnId: string; repUserId: string; value: number; note?: string }
+    @Body() body: { columnId: string; repUserId: string; value: number; note?: string; dealId?: string; status?: string }
   ) {
     if (!tenantId) throw new ForbiddenException('Tenant ID required');
     return this.boardsService.submitForecast(tenantId, boardId, body, userId, role);
+  }
+
+  @Post(':boardId/approve-change')
+  @ApiBody({ schema: { type: 'object' } })
+  async approveChangeRequest(
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+    @Headers(UserHeader.toLowerCase()) userId: string,
+    @Headers('x-user-role') role: string,
+    @Param('boardId') boardId: string,
+    @Body() body: { repUserId: string; dealId: string; columnId: string }
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    return this.boardsService.approveChangeRequest(tenantId, boardId, body, userId, role);
   }
 
   @Get(':boardId/reps/:repUserId/deals/:columnId')

@@ -8,24 +8,8 @@ import { M06_LEGACY_API_BASE, fetchForecastBoard, type ForecastBoardPayload } fr
 const API = M06_LEGACY_API_BASE;
 const TENANT = 'demo-tenant-01';
 
-const MOCK_BOARD = {
-  period: { id: 'q2-fy26-demo', name: 'Q2 FY26', startDate: '2026-04-01T00:00:00Z', endDate: '2026-06-30T23:59:59Z', status: 'open' },
-  teamAiProjection: 142600000,
-  baselineNote: 'Demo mode — using mock data. Start the backend API for live data.',
-  breakdown: { closedWon: 42000000, weightedPipeline: 85000000, expectedDeals: 15600000 },
-  aiSnapshot: { explainability: { deals: [], closedWonDetails: { total: 42000000, deals: [] }, pipelineByStage: [], expectedDeals: { rate: 0.124, addressablePipeline: 126600000, contribution: 15600000 } } },
-  team: [
-    { repId: 'rep-01', name: 'Rahul Kumar',  initials: 'RK', quota: 50000000, aiProjection: 48500000, commit: 47000000, status: 'submitted',    riskLevel: 'On Track', submission: { id: 's1', commitForecast: 47000000, bestCaseForecast: 52000000, notes: 'Strong pipeline in enterprise segment.', status: 'submitted', createdAt: '2026-05-20T09:00:00Z', submittedAt: '2026-05-22T11:00:00Z' }, auditLogs: [{ action: 'Forecast submitted', actorRole: 'Sales Rep', createdAt: '2026-05-22T11:00:00Z' }, { action: 'Draft saved', actorRole: 'Sales Rep', createdAt: '2026-05-20T09:00:00Z' }] },
-    { repId: 'rep-02', name: 'Priya Mehta',  initials: 'PM', quota: 45000000, aiProjection: 38000000, commit: 44000000, status: 'approved',    riskLevel: 'At Risk',  submission: { id: 's2', commitForecast: 44000000, bestCaseForecast: 48000000, notes: 'Optimistic — two large deals may slip.', status: 'approved', createdAt: '2026-05-18T08:00:00Z', submittedAt: '2026-05-19T10:00:00Z', approvedAt: '2026-05-21T14:00:00Z', managerOverride: 41000000 }, auditLogs: [{ action: 'Manager approved', actorRole: 'Manager', createdAt: '2026-05-21T14:00:00Z' }, { action: 'Forecast submitted', actorRole: 'Sales Rep', createdAt: '2026-05-19T10:00:00Z' }] },
-    { repId: 'rep-03', name: 'Arjun Singh',  initials: 'AS', quota: 40000000, aiProjection: 31000000, commit: 28000000, status: 'draft',       riskLevel: 'Critical', submission: { id: 's3', commitForecast: 28000000, bestCaseForecast: 35000000, notes: '', status: 'draft', createdAt: '2026-05-25T07:00:00Z' }, auditLogs: [{ action: 'Draft saved', actorRole: 'Sales Rep', createdAt: '2026-05-25T07:00:00Z' }] },
-    { repId: 'rep-04', name: 'Neha Kapoor',  initials: 'NK', quota: 42000000, aiProjection: 40500000, commit: 41000000, status: 'resubmitted', riskLevel: 'On Track', submission: { id: 's4', commitForecast: 41000000, bestCaseForecast: 46000000, notes: 'Revised after manager feedback.', status: 'resubmitted', createdAt: '2026-05-17T06:00:00Z', submittedAt: '2026-05-23T09:00:00Z', reopenedAt: '2026-05-22T15:00:00Z' }, auditLogs: [{ action: 'Resubmitted', actorRole: 'Sales Rep', createdAt: '2026-05-23T09:00:00Z' }, { action: 'Reopened by manager', actorRole: 'Manager', createdAt: '2026-05-22T15:00:00Z' }, { action: 'Forecast submitted', actorRole: 'Sales Rep', createdAt: '2026-05-20T08:00:00Z' }] },
-  ],
-};
-
-const MOCK_AT_RISK: any[] = [
-  { id: 'deal-1', dealName: 'GlobalTech Enterprise Suite', repName: 'Arjun Singh', amount: 18500000, stage: 'Proposal', riskReason: 'No activity in 21 days — deal stalling', closeDate: '2026-06-15T00:00:00Z' },
-  { id: 'deal-2', dealName: 'FinServ CRM Expansion',      repName: 'Priya Mehta',  amount: 12000000, stage: 'Negotiation', riskReason: 'Close date passed without update', closeDate: '2026-05-30T00:00:00Z' },
-];
+// Mock data removed — all data is fetched from the M06 backend API.
+// Run seed-m06.ps1 to populate the database if needed.
 
 const BASELINES = [
   { label: 'Current baseline', value: '' },
@@ -266,10 +250,7 @@ export default function ManagerDashboard({ user, onLogout }:{ user:any; onLogout
       setError('');
     } catch {
       clearTimeout(timeout);
-      // Fall back to mock data silently
-      setBoard(MOCK_BOARD);
-      setAtRiskDeals(MOCK_AT_RISK);
-      setError('');
+      setError('Team board unavailable. Ensure the backend API is running and the database is seeded (run .\\seed-m06.ps1).');
     }
   };
 

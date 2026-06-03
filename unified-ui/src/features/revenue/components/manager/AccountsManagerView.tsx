@@ -78,7 +78,7 @@ export default function AccountsManagerView() {
   }, []);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-gray-50">
+    <div className="flex flex-col flex-1 min-h-0 bg-gray-50 overflow-y-auto">
       {/* Page Header */}
       <PageHeader
         title="Accounts"
@@ -109,9 +109,6 @@ export default function AccountsManagerView() {
           value={period}
           onChange={(p) => { setPeriod(p); setPage(1); }}
         />
-        <button className="flex items-center gap-1.5 px-3 py-1 text-sm border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 font-medium ml-2">
-          <Plus className="w-3.5 h-3.5" /> Add filter
-        </button>
       </div>
 
       {/* Alert Banner */}

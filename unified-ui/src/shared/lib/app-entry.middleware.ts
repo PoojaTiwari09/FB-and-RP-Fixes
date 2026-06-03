@@ -25,7 +25,6 @@ const REP_ONLY_PREFIXES = [
   '/training',
   '/topics',
   '/trackers',
-  '/forecast-boards',
   '/calls/ai-reviewer',
   '/calls/coaching-insights',
   '/smart-call',

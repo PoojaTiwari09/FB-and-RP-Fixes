@@ -47,93 +47,143 @@ export const mockViewers = (): ViewersResponse => ({
 });
 
 const ALL_ACCOUNTS: AccountRow[] = [
-    {
-      accountId: 'acc-001',
-      accountName: 'Technology Pacific',
-      owner: { id: 'rep-001', name: 'Unassigned', initials: 'U' },
-      exitARR: 180000,
-      contactsCount: 5,
-      activity: [
-        { type: 'Call',    timestamp: '2024-12-15T10:00:00Z', label: 'Call' },
-        { type: 'Email',   timestamp: '2024-12-14T09:00:00Z', label: 'Email' },
-        { type: 'Meeting', timestamp: '2024-12-13T14:00:00Z', label: 'Meeting' },
-      ],
-      lastActivity: 'Yesterday',
-      managerNote: 'Please contact...',
-      openDeals: 20000,
-      renewalDate: '2024-12-16',
-    },
-    {
-      accountId: 'acc-002',
-      accountName: 'Parker Smith',
-      owner: { id: 'rep-001', name: 'Unassigned', initials: 'U' },
-      exitARR: 100000,
-      contactsCount: 3,
-      activity: [
-        { type: 'Email', timestamp: '2024-12-15T08:00:00Z', label: 'Email' },
-        { type: 'Call',  timestamp: '2024-12-14T11:00:00Z', label: 'Call' },
-      ],
-      lastActivity: '20 min ago',
-      managerNote: null,
-      openDeals: 300000,
-      renewalDate: '2024-12-16',
-    },
-    {
-      accountId: 'acc-003',
-      accountName: 'Southern Provider',
-      owner: { id: 'rep-002', name: 'Unassigned', initials: 'U' },
-      exitARR: 100000,
-      contactsCount: 2,
-      activity: [
-        { type: 'Meeting', timestamp: '2024-12-11T10:00:00Z', label: 'Meeting' },
-        { type: 'Note',    timestamp: '2024-12-10T09:00:00Z', label: 'Note' },
-      ],
-      lastActivity: '5 days ago',
-      managerNote: null,
-      openDeals: 275000,
-      renewalDate: '2024-12-16',
-    },
-    {
-      accountId: 'acc-004',
-      accountName: 'Fusion Connect',
-      owner: { id: 'rep-002', name: 'Unassigned', initials: 'U' },
-      exitARR: 100000,
-      contactsCount: 1,
-      activity: [
-        { type: 'Call', timestamp: '2024-12-13T15:00:00Z', label: 'Call' },
-      ],
-      lastActivity: '3 days ago',
-      managerNote: null,
-      openDeals: 25000,
-      renewalDate: '2024-12-16',
-    },
-    {
-      accountId: 'acc-005',
-      accountName: 'CyberByte Systems',
-      owner: { id: 'rep-003', name: 'Unassigned', initials: 'U' },
-      exitARR: 100000,
-      contactsCount: 0,
-      activity: [],
-      lastActivity: '66 days ago',
-      managerNote: null,
-      openDeals: 300000,
-      renewalDate: '2024-12-16',
-    },
-    {
-      accountId: 'acc-006',
-      accountName: 'Legend Homes',
-      owner: { id: 'rep-003', name: 'Unassigned', initials: 'U' },
-      exitARR: 100000,
-      contactsCount: 0,
-      activity: [
-        { type: 'Email', timestamp: '2024-12-15T07:00:00Z', label: 'Email' },
-      ],
-      lastActivity: '1 day ago',
-      managerNote: null,
-      openDeals: 0,
-      renewalDate: '2024-12-16',
-    },
+  {
+    accountId: 'acc-001',
+    accountName: 'Technology Pacific',
+    owner: { id: 'rep-001', name: 'Sarah Chen', initials: 'SC' },
+    exitARR: 180000,
+    contactsCount: 5,
+    activity: [
+      { type: 'Call',    timestamp: '2024-12-15T10:00:00Z', label: 'Call' },
+      { type: 'Email',   timestamp: '2024-12-14T09:00:00Z', label: 'Email' },
+      { type: 'Meeting', timestamp: '2024-12-13T14:00:00Z', label: 'Meeting' },
+    ],
+    lastActivity: 'Yesterday',
+    managerNote: 'Please contact...',
+    openDeals: 20000,
+    renewalDate: '2024-12-16',
+  },
+  {
+    accountId: 'acc-002',
+    accountName: 'Parker Smith',
+    owner: { id: 'rep-001', name: 'Sarah Chen', initials: 'SC' },
+    exitARR: 100000,
+    contactsCount: 3,
+    activity: [
+      { type: 'Email', timestamp: '2024-12-15T08:00:00Z', label: 'Email' },
+      { type: 'Call',  timestamp: '2024-12-14T11:00:00Z', label: 'Call' },
+    ],
+    lastActivity: '20 min ago',
+    managerNote: null,
+    openDeals: 300000,
+    renewalDate: '2024-12-16',
+  },
+  {
+    accountId: 'acc-003',
+    accountName: 'Southern Provider',
+    owner: { id: 'rep-002', name: 'Jordan Kim', initials: 'JK' },
+    exitARR: 100000,
+    contactsCount: 2,
+    activity: [
+      { type: 'Meeting', timestamp: '2024-12-11T10:00:00Z', label: 'Meeting' },
+      { type: 'Note',    timestamp: '2024-12-10T09:00:00Z', label: 'Note' },
+    ],
+    lastActivity: '5 days ago',
+    managerNote: null,
+    openDeals: 275000,
+    renewalDate: '2024-12-16',
+  },
+  {
+    accountId: 'acc-004',
+    accountName: 'Fusion Connect',
+    owner: { id: 'rep-002', name: 'Jordan Kim', initials: 'JK' },
+    exitARR: 100000,
+    contactsCount: 1,
+    activity: [
+      { type: 'Call', timestamp: '2024-12-13T15:00:00Z', label: 'Call' },
+    ],
+    lastActivity: '3 days ago',
+    managerNote: null,
+    openDeals: 25000,
+    renewalDate: '2024-12-16',
+  },
+  {
+    accountId: 'acc-005',
+    accountName: 'CyberByte Systems',
+    owner: { id: 'rep-003', name: 'Alex Rivera', initials: 'AR' },
+    exitARR: 100000,
+    contactsCount: 0,
+    activity: [],
+    lastActivity: '66 days ago',
+    managerNote: null,
+    openDeals: 300000,
+    renewalDate: '2024-12-16',
+  },
+  {
+    accountId: 'acc-006',
+    accountName: 'Legend Homes',
+    owner: { id: 'rep-003', name: 'Alex Rivera', initials: 'AR' },
+    exitARR: 100000,
+    contactsCount: 0,
+    activity: [
+      { type: 'Email', timestamp: '2024-12-15T07:00:00Z', label: 'Email' },
+    ],
+    lastActivity: '1 day ago',
+    managerNote: null,
+    openDeals: 0,
+    renewalDate: '2024-12-16',
+  },
 ];
+
+// Helper to query Groq model or fall back to dynamic keywords response
+async function getGroqResponse(systemPrompt: string, userMessage: string): Promise<string> {
+  const localKey = typeof window !== 'undefined' ? localStorage.getItem('smart_call_groq_api_key') : '';
+  const key = localKey || process.env.NEXT_PUBLIC_GROQ_API_KEY;
+
+  if (!key) {
+    const msgLower = userMessage.toLowerCase();
+    if (msgLower.includes('budget') || msgLower.includes('cost') || msgLower.includes('price')) {
+      return `For this account, budget constraints were noted. The customer mentioned that high implementation costs might delay sign-off. Emphasize our ROI calculator and flexible quarterly terms in your next proposal.`;
+    }
+    if (msgLower.includes('competitor') || msgLower.includes('compete') || msgLower.includes('vendor')) {
+      return `Our signals indicate the client is actively evaluating competing products for their enterprise needs. Make sure to schedule a deep-dive call showcasing our unique security integrations and multi-tenant scaling capabilities.`;
+    }
+    if (msgLower.includes('renewal') || msgLower.includes('date') || msgLower.includes('when')) {
+      return `The renewal is scheduled for Dec 16, 2024. The current sentiment is positive, but we need to resolve the pending legal reviews to ensure there are no last-minute delays.`;
+    }
+    if (msgLower.includes('contact') || msgLower.includes('who') || msgLower.includes('champion')) {
+      return `The main contact is Marcus Lee (VP Engineering), who is highly supportive. However, we also need to win over the Finance Director to secure final approval.`;
+    }
+    return `Based on recent updates for this account, they are currently in negotiation stage for a deal valued at $180,000. Key next step: follow up on the proposal sent yesterday and schedule a review session.`;
+  }
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`API error ${response.status}`);
+    }
+    const data = await response.json();
+    return data.choices[0]?.message?.content?.trim() || 'No response from AI.';
+  } catch (err) {
+    console.error('Failed calling Groq:', err);
+    return `Error calling Groq API: ${err instanceof Error ? err.message : String(err)}`;
+  }
+}
 
 export const mockAccountsList = (params?: AccountListParams): AccountListResponse => {
   let list = [...ALL_ACCOUNTS];
@@ -147,6 +197,34 @@ export const mockAccountsList = (params?: AccountListParams): AccountListRespons
     list = list.filter(a => a.activity.length === 0);
   }
 
+  // Filter by Viewing (rep IDs or team IDs)
+  if (params?.viewing && params.viewing.length > 0) {
+    const selectedReps = new Set<string>();
+    params.viewing.forEach(v => {
+      if (v === 'team-west') {
+        selectedReps.add('rep-001');
+        selectedReps.add('rep-002');
+      } else if (v === 'team-east') {
+        selectedReps.add('rep-003');
+      } else {
+        selectedReps.add(v);
+      }
+    });
+    list = list.filter(a => selectedReps.has(a.owner.id));
+  }
+
+  // Filter by Period
+  if (params?.period) {
+    const p = params.period;
+    if (p === 'Last 7 days') {
+      list = list.filter(a => ['Yesterday', '20 min ago', '1 day ago', '3 days ago', '5 days ago'].includes(a.lastActivity));
+    } else if (p === 'Last 30 days' || p === 'This month') {
+      list = list.filter(a => a.lastActivity !== '66 days ago');
+    } else if (p === 'This quarter') {
+      list = list.filter(a => a.accountId !== 'acc-006');
+    }
+  }
+
   if (params?.sortBy) {
     const asc = params.sortOrder === 'asc' ? 1 : -1;
     list.sort((a, b) => {
@@ -156,7 +234,7 @@ export const mockAccountsList = (params?: AccountListParams): AccountListRespons
         return valA.localeCompare(valB) * asc;
       }
       if (typeof valA === 'number' && typeof valB === 'number') {
-        return (valA - valB) * asc;
+        return ((valA as number) - (valB as number)) * asc;
       }
       return 0;
     });
@@ -186,21 +264,48 @@ export const mockAccountOverview = (_accountId: string): AccountOverviewData => 
   ],
 });
 
-export const mockAccountActivity = (_accountId: string): ActivityFeedResponse => ({
-  items: [
-    { type: 'Call',    datetime: '2024-12-15T10:00:00Z', with: 'John Doe',   subject: 'Q4 Business Review',    createdBy: 'Sarah Chen' },
-    { type: 'Email',   datetime: '2024-12-14T09:00:00Z', with: 'Jane Smith', subject: 'Proposal Follow-up',    createdBy: 'Jordan Kim' },
-    { type: 'Meeting', datetime: '2024-12-13T14:00:00Z', with: 'Team',       subject: 'QBR Planning Session',  createdBy: 'Alex Rivera' },
-    { type: 'Note',    datetime: '2024-12-12T11:00:00Z', with: '-',          subject: 'Internal CRM note added', createdBy: 'Sarah Chen' },
-  ],
-  total: 4,
-  page: 1,
-  totalPages: 1,
-});
+export const mockAccountActivity = (
+  _accountId: string,
+  params?: ActivityFeedParams
+): ActivityFeedResponse => {
+  const allItems = [
+    { type: 'Call' as const,    datetime: '2024-12-15T10:00:00Z', with: 'John Doe',   subject: 'Q4 Business Review',    createdBy: 'Sarah Chen' },
+    { type: 'Email' as const,   datetime: '2024-12-14T09:00:00Z', with: 'Jane Smith', subject: 'Proposal Follow-up',    createdBy: 'Jordan Kim' },
+    { type: 'Meeting' as const, datetime: '2024-12-13T14:00:00Z', with: 'Team',       subject: 'QBR Planning Session',  createdBy: 'Alex Rivera' },
+    { type: 'Note' as const,    datetime: '2024-12-12T11:00:00Z', with: '-',          subject: 'Internal CRM note added', createdBy: 'Sarah Chen' },
+  ];
 
-export const mockAccountBriefs = (_accountId: string): AccountBriefs => ({
-  briefContent: `**Account Summary**\n\nTechnology Pacific is a mid-market software company with 450 employees. They are currently evaluating our enterprise plan for a Q1 expansion.\n\n**Key Highlights**\n- Active renewal conversation since October\n- Champion: Marcus Lee (VP Engineering)\n- Key risk: competing vendor evaluation in progress\n\n**Recommended Actions**\n- Schedule executive sponsor meeting\n- Send ROI analysis before Dec 20`,
-});
+  const filtered = params?.type && params.type !== 'all'
+    ? allItems.filter(item => item.type === params.type)
+    : allItems;
+
+  return {
+    items: filtered,
+    total: filtered.length,
+    page: 1,
+    totalPages: 1,
+  };
+};
+
+export const mockAccountBriefs = async (accountId: string): Promise<AccountBriefs> => {
+  const account = ALL_ACCOUNTS.find(a => a.accountId === accountId);
+  if (!account) {
+    return { briefContent: 'Account not found.' };
+  }
+  const systemPrompt = `You are a helpful sales coaching assistant. Generate a professional and structured account brief (summary, highlights, recommended actions) in clean markdown format for a sales representative based on the provided account metadata. Keep it professional, structured, and easy to read.`;
+  const userMessage = `Generate an account brief for the following account:
+Account Name: ${account.accountName}
+Exit ARR: $${account.exitARR.toLocaleString()}
+Contacts Count: ${account.contactsCount}
+Open Deals: $${account.openDeals.toLocaleString()}
+Renewal Date: ${account.renewalDate}
+Last Activity: ${account.lastActivity}
+Manager Note: ${account.managerNote || 'None'}
+Activities: ${JSON.stringify(account.activity)}`;
+
+  const briefContent = await getGroqResponse(systemPrompt, userMessage);
+  return { briefContent };
+};
 
 export const mockAccountTodos = (_accountId: string): TodosResponse => ({
   todos: [
@@ -226,6 +331,8 @@ export const mockAccountCrm = (_accountId: string): CrmData => ({
   ],
 });
 
-export const mockAiChat = (_message: string): AiChatResponse => ({
-  reply: 'Based on recent activity, this account has shown strong engagement with your renewal proposal. The champion Marcus Lee last responded 2 days ago and flagged budget as a key concern. I recommend scheduling a call to address the ROI model directly.',
-});
+export const mockAiChat = async (message: string, accountName?: string): Promise<AiChatResponse> => {
+  const systemPrompt = `You are a helpful sales assistant. Answer the user's question about the account "${accountName || 'this account'}" dynamically based on their query. Keep it concise (2-4 sentences) and professional.`;
+  const reply = await getGroqResponse(systemPrompt, message);
+  return { reply };
+};

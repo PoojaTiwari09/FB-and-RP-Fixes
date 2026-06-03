@@ -97,6 +97,7 @@ const managerNavItems: NavItem[] = [
   { label: 'Deal Drivers', icon: <AlertTriangle size={18} />, href: '/deal-drivers' },
   { label: 'AI Deep Researcher', icon: <Search size={18} />, href: '/ai-deep-researcher' },
   { label: 'AI Revenue Predictor', icon: <TrendingUp size={18} />, href: '/ai-revenue-predictor' },
+  { label: 'Forecast Boards', icon: <Grid3X3 size={18} />, href: '/forecast-boards' },
   { label: 'Data Cloud', icon: <Database size={18} />, href: '/data-cloud' },
 ];
 

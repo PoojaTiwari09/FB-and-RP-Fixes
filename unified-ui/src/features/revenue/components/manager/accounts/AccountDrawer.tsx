@@ -208,44 +208,80 @@ function NotesTab({ accountId }: { accountId: string }) {
   const { data, isLoading, saveNotes } = useAccountNotes(accountId);
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [savedNotes, setSavedNotes] = useState<Array<{ text: string; date: string }>>([]);
 
   useEffect(() => {
-    if (data?.notes !== undefined) setValue(data.notes);
-  }, [data?.notes]);
+    if (data?.notes) {
+      try {
+        const parsed = JSON.parse(data.notes);
+        if (Array.isArray(parsed)) {
+          setSavedNotes(parsed);
+          return;
+        }
+      } catch (e) {
+        // Not a JSON array, treat as single old note
+      }
+      setSavedNotes([{ text: data.notes, date: data.updatedAt || new Date().toISOString() }]);
+    } else {
+      setSavedNotes([]);
+    }
+  }, [data?.notes, data?.updatedAt]);
 
   async function handleSave() {
+    if (!value.trim()) return;
     setSaving(true);
-    await saveNotes(value);
+    const newNote = {
+      text: value,
+      date: new Date().toISOString()
+    };
+    const updated = [newNote, ...savedNotes];
+    setSavedNotes(updated);
+    await saveNotes(JSON.stringify(updated));
+    setValue('');
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
   }
 
   if (isLoading) return <div className="p-4"><div className="skeleton h-32 w-full rounded"/></div>;
 
   return (
-    <div className="px-4 py-4 flex flex-col gap-3">
-      <textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        rows={8}
-        className="w-full rounded-lg border border-gray-200 p-3 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition"
-        placeholder="Add manager notes…"
-      />
-      <div className="flex items-center justify-between">
-        {data?.updatedAt && (
-          <span className="text-xs text-gray-400">
-            Last saved: {new Date(data.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
+    <div className="px-4 py-4 flex flex-col gap-4">
+      {/* Notes Box Section */}
+      <div className="flex flex-col gap-2">
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          rows={4}
+          className="w-full rounded-lg border border-gray-200 p-3 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition"
+          placeholder="Type a new manager note or update here…"
+        />
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={saving || !value.trim()}
+            className="px-3.5 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save Note'}
+          </button>
+        </div>
+      </div>
+
+      {/* Saved Notes Section */}
+      <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
+        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saved Notes</h4>
+        {savedNotes.length === 0 ? (
+          <p className="text-xs text-gray-400 italic">No notes saved yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {savedNotes.map((note, idx) => (
+              <div key={idx} className="rounded-xl border border-gray-150 bg-gray-50/50 p-3 shadow-sm hover:border-gray-300 transition-colors">
+                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{note.text}</p>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">
+                  Saved on {new Date(note.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            ))}
+          </div>
         )}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="ml-auto px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-60 transition-colors"
-        >
-          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Notes'}
-        </button>
       </div>
     </div>
   );
@@ -289,7 +325,7 @@ function AiChatInput({ accountId, accountName }: { accountId: string; accountNam
       const res = await api.sendAiChat(accountId, { message: msg, sessionId: sessionId.current });
       setReply(res.reply);
     } catch {
-      const res = mock.mockAiChat(msg);
+      const res = await mock.mockAiChat(msg, accountName);
       setReply(res.reply);
     }
     setMsg('');

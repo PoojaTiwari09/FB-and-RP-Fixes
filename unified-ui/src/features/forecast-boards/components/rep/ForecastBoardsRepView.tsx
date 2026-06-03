@@ -1,5 +1,5 @@
-import RepForecastView from './RepForecastView';
+import SourceForecastBoardsRepView from '../../source-components/rep/SourceForecastBoardsRepView';
 
 export default function ForecastBoardsRepView() {
-  return <RepForecastView />;
+  return <SourceForecastBoardsRepView />;
 }

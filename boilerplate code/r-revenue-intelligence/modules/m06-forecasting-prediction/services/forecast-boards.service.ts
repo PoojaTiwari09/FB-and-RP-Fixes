@@ -361,6 +361,63 @@ export class ForecastBoardsService {
         const pipeline = repDeals.filter((deal) => !deal.isClosedWon && !deal.isClosedLost).reduce((sum, deal) => sum + deal.amount, 0);
         const closed = repDeals.filter((deal) => deal.isClosedWon).reduce((sum, deal) => sum + deal.amount, 0);
         const submission = ids.map((id) => latestSubmission.get(id)).find(Boolean);
+        
+        let dealForecasts: Record<string, { bestCase: number | null; commit: number | null }> = {};
+        if (submission && submission.committedDealIds) {
+          try {
+            const parsed = typeof submission.committedDealIds === 'string'
+              ? JSON.parse(submission.committedDealIds)
+              : submission.committedDealIds;
+            if (parsed && (parsed as any).dealForecasts) {
+              dealForecasts = (parsed as any).dealForecasts;
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        const mappedDeals = repDeals.map((deal) => {
+          const mapped = this.mapDeal(deal);
+          const savedForecast = dealForecasts[deal.id];
+          
+          let requestedBestCase = null;
+          let requestedCommit = null;
+          let requestedBestCaseNote = null;
+          let requestedCommitNote = null;
+          
+          if (submission && submission.committedDealIds) {
+            try {
+              const parsed = typeof submission.committedDealIds === 'string'
+                ? JSON.parse(submission.committedDealIds)
+                : submission.committedDealIds;
+              if (parsed && parsed.requestedChanges && parsed.requestedChanges[deal.id]) {
+                const req = parsed.requestedChanges[deal.id];
+                if (req.bestCase) {
+                  requestedBestCase = req.bestCase.value;
+                  requestedBestCaseNote = req.bestCase.note;
+                }
+                if (req.commit) {
+                  requestedCommit = req.commit.value;
+                  requestedCommitNote = req.commit.note;
+                }
+              }
+            } catch (e) {
+              // ignore
+            }
+          }
+
+          return {
+            ...mapped,
+            bestCase: savedForecast ? savedForecast.bestCase : null,
+            commit: savedForecast ? savedForecast.commit : null,
+            submissionStatus: submission?.status ?? 'not_started',
+            requestedBestCase,
+            requestedCommit,
+            requestedBestCaseNote,
+            requestedCommitNote,
+          };
+        });
+
         const quotaRecord = ids.map((id) => quotaByRep.get(id)).find(Boolean);
         const quota = quotaRecord?.amount ?? null;
         const attainmentPct = quota && quota > 0 ? (closed / quota) * 100 : null;
@@ -384,7 +441,7 @@ export class ForecastBoardsService {
             target: quota,
             targetAttainment: attainmentPct,
           },
-          deals: repDeals.map((deal) => this.mapDeal(deal)),
+          deals: mappedDeals,
         };
       })
       .filter((row) => includeInactive || !row.isInactive);
@@ -436,23 +493,71 @@ export class ForecastBoardsService {
   async submitForecast(
     tenantId: string,
     boardId: string,
-    data: { columnId: string; repUserId: string; value: number; note?: string },
+    data: { columnId?: string; repUserId: string; value?: number; note?: string; dealId?: string; status?: string },
     actorId?: string,
     role?: string,
   ): Promise<any> {
-    if (!data.columnId || !data.repUserId || data.value == null || data.value < 0) {
-      throw new BadRequestException('columnId, repUserId, and non-negative value are required');
-    }
+    const board = await this.loadBoard(tenantId, boardId);
+    const period = await this.loadPeriod(tenantId, this.periodId(board));
+    if (period?.isLocked) throw new BadRequestException('Period is locked - submissions not allowed');
+    
     const normalizedRole = role?.toLowerCase();
     if (normalizedRole === 'sales_rep' && actorId && actorId !== data.repUserId) {
       throw new ForbiddenException('Sales reps can submit only their own forecast');
     }
-
-    const board = await this.loadBoard(tenantId, boardId);
-    const period = await this.loadPeriod(tenantId, this.periodId(board));
-    if (period?.isLocked) throw new BadRequestException('Period is locked - submissions not allowed');
     if (role && board.exclusions.some((exclusion) => exclusion.isActive && exclusion.repUserId === data.repUserId)) {
       throw new ForbiddenException('Rep is excluded from this board');
+    }
+
+    const latest = await this.prisma.forecastSubmission.findFirst({
+      where: { tenantId, periodId: this.periodId(board), repUserId: data.repUserId },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    // 1. Check if this is an explicit transition from Draft to Submitted (Submit for Approval request)
+    if (data.status === 'submitted' && !data.dealId && !data.columnId) {
+      if (!latest) {
+        throw new BadRequestException('No draft submission found to submit');
+      }
+      const submission = await this.prisma.forecastSubmission.create({
+        data: {
+          tenantId,
+          periodId: this.periodId(board),
+          repUserId: data.repUserId,
+          lob: latest.lob,
+          version: latest.version + 1,
+          commitForecast: latest.commitForecast,
+          bestCaseForecast: latest.bestCaseForecast,
+          notes: data.note ?? latest.notes,
+          status: 'submitted',
+          submittedAt: new Date(),
+          committedDealIds: latest.committedDealIds as any,
+        },
+      });
+
+      await this.prisma.forecastAuditLog.create({
+        data: {
+          tenantId,
+          forecastSubmissionId: submission.id,
+          action: 'BOARD_SUBMIT',
+          actorId: actorId || data.repUserId,
+          actorRole: role || 'sales_rep',
+          metadata: { boardId, periodId: this.periodId(board), repUserId: data.repUserId, note: data.note },
+        },
+      });
+
+      this.eventPublisher?.publish('forecast.submitted', {
+        tenantId,
+        correlationId: crypto.randomUUID(),
+        payload: { submissionId: submission.id, periodId: submission.periodId, userId: data.repUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob },
+      });
+
+      return { ...submission, submission, timestamp: submission.updatedAt };
+    }
+
+    // 2. Otherwise, this is a normal cell-level submit/save
+    if (!data.columnId || data.value == null || data.value < 0) {
+      throw new BadRequestException('columnId and non-negative value are required');
     }
 
     const column = board.columns.find((item) => item.id === data.columnId);
@@ -460,13 +565,70 @@ export class ForecastBoardsService {
     const field = this.submissionField(column);
     if (!field) throw new BadRequestException('Only Commit and Best Case columns can be submitted');
 
-    const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId: data.repUserId },
-      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-    });
-    if (role && latest && !['draft', 'reopened'].includes(latest.status)) {
-      throw new ForbiddenException('Submission is locked until a manager reopens it');
+    if (normalizedRole === 'sales_rep' && latest && !['draft', 'reopened'].includes(latest.status)) {
+      if (data.status !== 'change_request') {
+        throw new ForbiddenException('Submission is locked until a manager reopens it');
+      }
     }
+
+    let dealForecasts: Record<string, { bestCase: number | null; commit: number | null }> = {};
+    let requestedChanges: Record<string, {
+      bestCase?: { value: number; note: string } | null;
+      commit?: { value: number; note: string } | null;
+    }> = {};
+
+    if (latest && latest.committedDealIds) {
+      try {
+        const parsed = typeof latest.committedDealIds === 'string'
+          ? JSON.parse(latest.committedDealIds)
+          : latest.committedDealIds;
+        if (parsed) {
+          if (parsed.dealForecasts) dealForecasts = parsed.dealForecasts;
+          if (parsed.requestedChanges) requestedChanges = parsed.requestedChanges;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const fieldKey = field === 'commitForecast' ? 'commit' : 'bestCase';
+    const isChangeRequest = data.status === 'change_request';
+
+    if (data.dealId) {
+      if (isChangeRequest) {
+        if (!requestedChanges[data.dealId]) {
+          requestedChanges[data.dealId] = {};
+        }
+        requestedChanges[data.dealId][fieldKey] = {
+          value: data.value,
+          note: data.note || '',
+        };
+      } else {
+        if (!dealForecasts[data.dealId]) {
+          dealForecasts[data.dealId] = { bestCase: null, commit: null };
+        }
+        dealForecasts[data.dealId][fieldKey] = data.value;
+      }
+    }
+
+    // Compute totals
+    let commitForecast = latest?.commitForecast ?? 0;
+    let bestCaseForecast = latest?.bestCaseForecast ?? null;
+
+    if (!isChangeRequest) {
+      if (data.dealId) {
+        commitForecast = Object.values(dealForecasts).reduce((sum, d) => sum + (d.commit ?? 0), 0);
+        bestCaseForecast = Object.values(dealForecasts).reduce((sum, d) => sum + (d.bestCase ?? 0), 0);
+      } else {
+        if (field === 'commitForecast') {
+          commitForecast = data.value;
+        } else {
+          bestCaseForecast = data.value;
+        }
+      }
+    }
+
+    const nextStatus = isChangeRequest && latest ? latest.status : (data.status || (data.dealId ? (normalizedRole === 'sales_rep' ? 'draft' : 'submitted') : 'submitted'));
 
     const submission = await this.prisma.forecastSubmission.create({
       data: {
@@ -475,11 +637,12 @@ export class ForecastBoardsService {
         repUserId: data.repUserId,
         lob: latest?.lob ?? 'Enterprise',
         version: (latest?.version ?? 0) + 1,
-        commitForecast: field === 'commitForecast' ? data.value : latest?.commitForecast ?? 0,
-        bestCaseForecast: field === 'bestCaseForecast' ? data.value : latest?.bestCaseForecast ?? null,
+        commitForecast,
+        bestCaseForecast,
         notes: data.note ?? latest?.notes,
-        status: 'submitted',
-        submittedAt: new Date(),
+        status: nextStatus,
+        submittedAt: nextStatus === 'submitted' ? new Date() : latest?.submittedAt,
+        committedDealIds: { dealForecasts, requestedChanges },
       },
     });
 
@@ -490,7 +653,7 @@ export class ForecastBoardsService {
         action: 'BOARD_SUBMIT',
         actorId: actorId || data.repUserId,
         actorRole: role || 'sales_rep',
-        metadata: { boardId, columnId: data.columnId, columnLabel: column.label, value: data.value, periodId: this.periodId(board), repUserId: data.repUserId },
+        metadata: { boardId, columnId: data.columnId, columnLabel: column.label, value: data.value, periodId: this.periodId(board), repUserId: data.repUserId, dealId: data.dealId },
       },
     });
 
@@ -501,6 +664,105 @@ export class ForecastBoardsService {
     });
 
     return { ...submission, submission, timestamp: submission.updatedAt };
+  }
+
+  async approveChangeRequest(
+    tenantId: string,
+    boardId: string,
+    data: { repUserId: string; dealId: string; columnId: string },
+    actorId?: string,
+    role?: string,
+  ) {
+    this.assertManager(role);
+    const board = await this.loadBoard(tenantId, boardId);
+
+    const latest = await this.prisma.forecastSubmission.findFirst({
+      where: { tenantId, periodId: this.periodId(board), repUserId: data.repUserId },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    if (!latest || !latest.committedDealIds) {
+      throw new BadRequestException('No submission or requests found');
+    }
+
+    let dealForecasts: Record<string, { bestCase: number | null; commit: number | null }> = {};
+    let requestedChanges: Record<string, {
+      bestCase?: { value: number; note: string } | null;
+      commit?: { value: number; note: string } | null;
+    }> = {};
+
+    try {
+      const parsed = typeof latest.committedDealIds === 'string'
+        ? JSON.parse(latest.committedDealIds)
+        : latest.committedDealIds;
+      if (parsed) {
+        if (parsed.dealForecasts) dealForecasts = parsed.dealForecasts;
+        if (parsed.requestedChanges) requestedChanges = parsed.requestedChanges;
+      }
+    } catch (e) {
+      throw new BadRequestException('Failed to parse committed deal forecasts');
+    }
+
+    const req = requestedChanges[data.dealId];
+    if (!req) {
+      throw new BadRequestException('No pending change request found for this deal');
+    }
+
+    const column = board.columns.find((c) => c.id === data.columnId);
+    if (!column) throw new BadRequestException('Invalid columnId');
+    const field = this.submissionField(column);
+    if (!field) throw new BadRequestException('Invalid column field');
+    const fieldKey = field === 'commitForecast' ? 'commit' : 'bestCase';
+
+    const change = req[fieldKey];
+    if (!change) {
+      throw new BadRequestException(`No pending change request found for field ${fieldKey}`);
+    }
+
+    // Apply the value
+    if (!dealForecasts[data.dealId]) {
+      dealForecasts[data.dealId] = { bestCase: null, commit: null };
+    }
+    dealForecasts[data.dealId][fieldKey] = change.value;
+
+    // Delete the request
+    delete req[fieldKey];
+    if (Object.keys(req).length === 0) {
+      delete requestedChanges[data.dealId];
+    }
+
+    // Recalculate totals
+    const commitForecast = Object.values(dealForecasts).reduce((sum, d) => sum + (d.commit ?? 0), 0);
+    const bestCaseForecast = Object.values(dealForecasts).reduce((sum, d) => sum + (d.bestCase ?? 0), 0);
+
+    const submission = await this.prisma.forecastSubmission.create({
+      data: {
+        tenantId,
+        periodId: this.periodId(board),
+        repUserId: data.repUserId,
+        lob: latest.lob,
+        version: latest.version + 1,
+        commitForecast,
+        bestCaseForecast,
+        notes: `Change approved by manager: ${change.note}`,
+        status: latest.status, // keep status same (e.g. submitted or approved)
+        submittedAt: latest.submittedAt,
+        committedDealIds: { dealForecasts, requestedChanges },
+      },
+    });
+
+    await this.prisma.forecastAuditLog.create({
+      data: {
+        tenantId,
+        forecastSubmissionId: submission.id,
+        action: 'CHANGE_APPROVED',
+        actorId: actorId || data.repUserId,
+        actorRole: role || 'manager',
+        metadata: { boardId, columnId: data.columnId, value: change.value, dealId: data.dealId, repUserId: data.repUserId },
+      },
+    });
+
+    return submission;
   }
 
   async getRepDeals(tenantId: string, boardId: string, repUserId: string, columnId: string, actorId?: string, role?: string) {

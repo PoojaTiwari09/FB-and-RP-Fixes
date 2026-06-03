@@ -34,7 +34,7 @@ interface HookState<T> {
 
 function useApiWithFallback<T>(
   fetcher: () => Promise<T>,
-  fallback: () => T,
+  fallback: () => T | Promise<T>,
   deps: unknown[],
 ) {
   const [state, setState] = useState<HookState<T>>({
@@ -56,8 +56,9 @@ function useApiWithFallback<T>(
       });
     } catch (err: any) {
       console.warn('API call failed, falling back to mock data:', err);
+      const fallbackData = await fallback();
       setState({
-        data: fallback(),
+        data: fallbackData,
         isLoading: false,
         error: null,
         isMockFallback: true,
@@ -104,7 +105,7 @@ export function useViewers() {
 export function useAccountsList(params: AccountListParams) {
   return useApiWithFallback<AccountListResponse>(
     () => api.getAccounts(params),
-    () => mock.mockAccountsList(),
+    () => mock.mockAccountsList(params),
     [JSON.stringify(params)],
   );
 }
@@ -145,7 +146,7 @@ export function useAccountActivity(
         : Promise.resolve({ items: [], total: 0, page: 1, totalPages: 0 }),
     () =>
       accountId
-        ? mock.mockAccountActivity(accountId)
+        ? mock.mockAccountActivity(accountId, params)
         : { items: [], total: 0, page: 1, totalPages: 0 },
     [accountId, JSON.stringify(params)],
   );

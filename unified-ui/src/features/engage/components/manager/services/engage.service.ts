@@ -226,7 +226,13 @@ export async function saveEmailDraft(
 
 export async function rephraseEmail(
   taskId: string,
-  body: { currentBody: string; tone?: string }
+  body: {
+    currentBody: string;
+    tone?: string;
+    subject?: string;
+    contactName?: string;
+    companyName?: string;
+  }
 ): Promise<string> {
   const endpoint = `/api/tasks/${taskId}/ai-rephrase`;
   const res = await apiFetch('POST', endpoint, {
