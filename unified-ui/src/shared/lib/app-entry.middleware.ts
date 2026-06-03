@@ -53,8 +53,8 @@ export function createAppMiddleware() {
       return NextResponse.redirect(new URL(HOME_PATH, request.url));
     }
 
-    const isManagerOnly = MANAGER_ONLY_PREFIXES.some((p) => pathname.startsWith(p));
-    const isRepOnly = REP_ONLY_PREFIXES.some((p) => pathname.startsWith(p));
+    const isManagerOnly = MANAGER_ONLY_PREFIXES.some((p) => pathname.startsWith(p)) || pathname.startsWith('/training/manage');
+    const isRepOnly = REP_ONLY_PREFIXES.some((p) => pathname.startsWith(p)) && !pathname.startsWith('/training/manage');
 
     if (isManagerOnly && role !== 'sales_manager') {
       const res = NextResponse.redirect(new URL(HOME_PATH, request.url));

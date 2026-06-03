@@ -310,7 +310,9 @@ export class M09Repository {
     if (mem) {
       const sc = this.store.scenarios.get(mem.scenario_id);
       if (sc?.org_id !== orgId) throw new NotFoundException('Session not found');
-      return this.parseSession(mem);
+      const parsed = this.parseSession(mem);
+      parsed.scenario = sc;
+      return parsed;
     }
 
     const delegate = this.sessionDelegate();

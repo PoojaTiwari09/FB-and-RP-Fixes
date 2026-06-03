@@ -50,7 +50,7 @@ export function useTrainingSession(trainingId: string, sessionId: string): UseTr
   const [isMicActive, setIsMicActive] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValueState] = useState('');
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('background');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +141,13 @@ export function useTrainingSession(trainingId: string, sessionId: string): UseTr
   const isMicActiveRef = useRef(false);
   useEffect(() => { isMicActiveRef.current = isMicActive; }, [isMicActive]);
 
+  const setInputValue = useCallback((value: string) => {
+    setInputValueState(value);
+    if (isMicActiveRef.current) {
+      speechService.updateAccumulatedText(value);
+    }
+  }, []);
+
   const toggleMic = useCallback(() => {
     if (micUnsupported) return;
 
@@ -154,7 +161,7 @@ export function useTrainingSession(trainingId: string, sessionId: string): UseTr
       speechService.startListening(
         (transcript) => {
           // Stream recognised text into the input field live
-          setInputValue(transcript);
+          setInputValueState(transcript);
         },
         () => {
           // Only fires on real error / explicit stop
@@ -230,7 +237,7 @@ export function useTrainingSession(trainingId: string, sessionId: string): UseTr
     };
 
     setTranscript((prev) => [...prev, userMsg]);
-    setInputValue('');
+    setInputValueState('');
     setIsAISpeaking(true);
 
     const newTurnCount = turnCount + 1;

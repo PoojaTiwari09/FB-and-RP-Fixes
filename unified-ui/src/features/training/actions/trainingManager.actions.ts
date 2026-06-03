@@ -39,5 +39,6 @@ export async function reassignTrainingAction(
 
   // Revalidate the rep dashboard so it fetches the new reassigned training
   revalidatePath('/training');
+  revalidatePath('/training/manage');
   return result;
 }

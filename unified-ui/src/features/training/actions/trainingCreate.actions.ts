@@ -38,5 +38,6 @@ export async function createTrainingAction(
 
   // Revalidate the dashboard so it fetches the new training
   revalidatePath('/training');
+  revalidatePath('/training/manage');
   return result;
 }
