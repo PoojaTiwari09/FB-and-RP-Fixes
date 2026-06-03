@@ -33,13 +33,13 @@ export class M01FrontendAiReviewerDetailController {
   @Get('review')
   async review(@Param('callId') callId: string, @Req() req: Record<string, string>) {
     const record = await this.svc.loadCall(callId, req.tenantId);
-    return this.svc.mapReview(record);
+    return this.svc.mapReview(record, req.tenantId);
   }
 
   @Get('feedback')
   async feedback(@Param('callId') callId: string, @Req() req: Record<string, string>) {
     const record = await this.svc.loadCall(callId, req.tenantId);
-    return this.svc.mapFeedback(record);
+    return this.svc.mapFeedback(record, req.tenantId);
   }
 
   @Post('feedback/acknowledge')

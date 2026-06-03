@@ -61,6 +61,9 @@ export interface CallReviewDetail {
   status: ReviewStatus;
   reviewer: string;
   quickStats: QuickStats;
+  questions?: any;
+  feedback?: any;
+  overallScore?: number;
 }
 
 export interface Scorecard {

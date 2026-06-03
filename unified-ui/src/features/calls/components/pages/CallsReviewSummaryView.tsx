@@ -7,6 +7,7 @@ import {
   Send,
 } from 'lucide-react';
 import CallsToast from '@calls/components/ui/CallsToast';
+import { submitCallReview } from '@calls/services/calls-reviews.service';
 
 interface CallsReviewSummaryViewProps {
   reviewId: string;
@@ -190,8 +191,8 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
     setIsSubmitting(true);
     setToast({ msg: 'Submitting review...', type: 'info' });
 
-    // Simulate final API call
-    setTimeout(() => {
+    try {
+      await submitCallReview(reviewId, { answers: scorecardAnswers, coaching: coachingDraft });
       setIsSubmitting(false);
       localStorage.setItem(`review_submitted_${reviewId}`, 'true');
       localStorage.setItem(`review_submitted_data_${reviewId}`, JSON.stringify({
@@ -202,17 +203,20 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
         submittedAt: new Date().toISOString(),
       }));
       router.push(`/calls/reviews/${reviewId}/submitted`);
-    }, 1500);
+    } catch (e) {
+      setIsSubmitting(false);
+      setToast({ msg: 'Failed to submit review to server.', type: 'error' });
+    }
   };
 
   return (
-    <div className="calls-font-scope bg-[#f8fafc] flex flex-col flex-1 min-h-0 h-full overflow-hidden text-gray-800">
+    <div className="calls-font-scope bg-[#f8fafc] min-h-screen text-gray-800 flex flex-col pb-16">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}
 
       {/* ═══════════════ HEADER AREA (WHITE BG) ═══════════════ */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 py-7 px-8 text-left w-full">
+      <div className="bg-white border-b border-gray-200 py-7 px-8 text-left w-full">
         <div className="space-y-3 flex flex-col items-start text-left w-full">
           <div className="w-full text-left">
             <button
@@ -255,7 +259,7 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
       </div>
 
       {/* ═══════════════ CONTENT AREA (GRAY BG, COLOR DIFF) ═══════════════ */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-[#f8fafc] py-8 px-6 pb-12">
+      <div className="flex-1 bg-[#f8fafc] py-8 px-6">
         <div className="max-w-4xl mx-auto space-y-6">
 
         {/* ─── Readiness Banner ─── */}
@@ -477,6 +481,6 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
 
       </div>
     </div>
-    </div>
+  </div>
   );
 }

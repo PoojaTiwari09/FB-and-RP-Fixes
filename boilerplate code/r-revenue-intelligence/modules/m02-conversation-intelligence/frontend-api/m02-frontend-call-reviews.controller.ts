@@ -96,13 +96,21 @@ export class M02FrontendCallReviewsController {
   }
 
   @Post(':reviewId/save-draft')
-  saveDraft(@Param('reviewId') reviewId: string) {
-    return this.svc.saveDraft(reviewId);
+  saveDraft(
+    @Param('reviewId') reviewId: string,
+    @Body() body: any,
+    @Req() req: Record<string, string>,
+  ) {
+    return this.svc.saveDraft(req.tenantId, reviewId, body);
   }
 
   @Post(':reviewId/submit')
-  submit(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.submitReview(req.tenantId, reviewId);
+  submit(
+    @Param('reviewId') reviewId: string,
+    @Body() body: any,
+    @Req() req: Record<string, string>,
+  ) {
+    return this.svc.submitReview(req.tenantId, reviewId, body);
   }
 
   @Post(':reviewId/export')

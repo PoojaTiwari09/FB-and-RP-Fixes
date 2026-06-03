@@ -586,7 +586,7 @@ export default function CallDetailOverview({ callId }: { callId: string }) {
   }, []);
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#F9FAFB' }}>
+    <div className="flex flex-col flex-1 min-h-0" style={{ backgroundColor: '#F9FAFB' }}>
       {/* Audio Player */}
       <AudioPlayer
         ref={audioPlayerRef}

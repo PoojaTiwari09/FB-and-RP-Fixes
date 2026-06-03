@@ -114,7 +114,12 @@ export default function CallWorkspace({
       ];
 
   return (
-    <div className="w-full h-full min-h-0 bg-white border border-gray-200 rounded-lg flex flex-col sidebar-font-override">
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/20 transition-opacity animate-fade-in" />
+      
+      {/* Sidebar Panel */}
+      <div className="fixed top-0 right-0 z-50 h-full w-[400px] bg-white border-l border-gray-200 shadow-2xl flex flex-col transform transition-transform animate-slide-in sidebar-font-override">
         <style dangerouslySetInnerHTML={{ __html: `
           .sidebar-font-override, .sidebar-font-override * {
             font-family: "Source Sans 3", sans-serif !important;
@@ -182,7 +187,35 @@ export default function CallWorkspace({
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 divide-y divide-gray-100/50">
           
-
+          {/* Section 1: Quick Actions */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block serif-header" style={{ fontFamily: headingFont }}>
+              QUICK ACTIONS
+            </label>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 bg-[#F15A24] hover:bg-[#EA580C] text-white rounded-lg text-xs font-semibold shadow-sm transition-all sidebar-button schedule-call-button whitespace-nowrap"
+                style={{ fontFamily: interFont }}
+              >
+                <Phone className="w-3.5 h-3.5 text-white" />
+                <span>Schedule Call</span>
+              </button>
+              <button
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold shadow-sm bg-white transition-all sidebar-button email-button whitespace-nowrap"
+                style={{ fontFamily: interFont }}
+              >
+                <Mail className="w-3.5 h-3.5 text-white" />
+                <span>Email</span>
+              </button>
+              <button
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold shadow-sm bg-white transition-all sidebar-button message-button whitespace-nowrap"
+                style={{ fontFamily: interFont }}
+              >
+                <LinkedinIcon className="w-3.5 h-3.5 text-white" />
+                <span>Message</span>
+              </button>
+            </div>
+          </div>
 
           {/* Section 2: Contact Details */}
           <div className="space-y-3 pt-5">
@@ -306,6 +339,7 @@ export default function CallWorkspace({
 
         </div>
 
-    </div>
+      </div>
+    </>
   );
 }

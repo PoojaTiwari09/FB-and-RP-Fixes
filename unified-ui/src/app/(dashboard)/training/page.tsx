@@ -8,7 +8,7 @@ export default async function TrainingDashboardPage() {
   const inProgress = data.trainings.filter((t) => t.status === 'in-progress').length;
 
   return (
-    <>
+    <div className="flex-1 overflow-y-auto">
       <div className="px-8 py-8 max-w-6xl w-full mx-auto">
           {/* Page Header */}
           <div className="mb-6">
@@ -26,7 +26,7 @@ export default async function TrainingDashboardPage() {
 
         {/* FAB */}
         <FloatingActionButton />
-    </>
+    </div>
   );
 }
 

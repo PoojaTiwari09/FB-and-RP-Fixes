@@ -9,7 +9,7 @@ export default function TopicsRepView() {
         subtitle="Conversation topics flagged across your calls — track trends and prepare responses."
         badge={<RoleBadge role="sales_rep" />}
       />
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 overflow-y-auto">
         <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
           {[
             { topic: 'Pricing', count: 8, trend: 'up' },

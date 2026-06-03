@@ -157,26 +157,6 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
             />
           </div>
 
-          {/* Assign To */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Assign To</label>
-            <div className="relative">
-              <select
-                value={assignTo}
-                onChange={(e) => setAssignTo(e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none cursor-pointer text-gray-800 bg-white"
-              >
-                <option value="">Assign to...</option>
-                <option value="me">Me (You)</option>
-                <option value="team-001">Alex Johnson</option>
-                <option value="team-002">Sam Williams</option>
-              </select>
-              <ChevronDown
-                size={14}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

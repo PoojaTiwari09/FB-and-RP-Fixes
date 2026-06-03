@@ -75,6 +75,14 @@ export interface TaskDetail {
   existingNotes?: string;
 }
 
+export interface TaskNote {
+  noteId: string;
+  note: string;
+  authorName: string;
+  createdAt: string;
+  timestamp?: string;
+}
+
 // ─── Recent Activity ──────────────────────────────────────────────────────────
 
 export interface RecentActivity {
@@ -319,12 +327,4 @@ export interface QueueStartResponse {
   currentTaskId: string;
   status: 'RUNNING';
   message: string;
-}
-
-export interface TaskNote {
-  noteId: string;
-  note: string;
-  authorName: string;
-  createdAt: string;
-  timestamp?: string;
 }

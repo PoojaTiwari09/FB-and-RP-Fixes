@@ -9,6 +9,7 @@ import {
   FileText,
 } from 'lucide-react';
 import CallsToast from '@calls/components/ui/CallsToast';
+import { fetchCallReviewDetail } from '@calls/services/calls-reviews.service';
 
 interface CallsReviewSubmittedViewProps {
   reviewId: string;
@@ -24,6 +25,21 @@ export default function CallsReviewSubmittedView({ reviewId }: CallsReviewSubmit
     const raw = localStorage.getItem(`review_submitted_data_${reviewId}`);
     if (raw) {
       setSubmittedData(JSON.parse(raw));
+    } else {
+      fetchCallReviewDetail(reviewId)
+        .then((detail) => {
+          if (detail) {
+            setSubmittedData({
+              overallScore: detail.overallScore,
+              overallPercent: detail.overallScore,
+              submittedAt: detail.dateTime,
+              coachingDraft: detail.feedback,
+              callTitle: detail.callTitle,
+              salesRep: detail.salesRep,
+            });
+          }
+        })
+        .catch((e) => console.error('Failed to fetch call review details', e));
     }
   }, [reviewId]);
 
@@ -53,7 +69,7 @@ export default function CallsReviewSubmittedView({ reviewId }: CallsReviewSubmit
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 h-full overflow-y-auto bg-[#f0f4f8] items-center justify-center p-6">
+    <div className="bg-[#f0f4f8] min-h-screen flex items-center justify-center p-6">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}
@@ -88,14 +104,14 @@ export default function CallsReviewSubmittedView({ reviewId }: CallsReviewSubmit
             <div className="space-y-1">
               <p className="text-xs text-gray-400 font-medium">Call Title</p>
               <p className="text-sm font-normal text-gray-900 leading-snug">
-                Discovery Call - Acme Corp Q2 Initiative
+                {submittedData?.callTitle || 'Discovery Call - Acme Corp Q2 Initiative'}
               </p>
             </div>
 
             {/* Sales Rep */}
             <div className="space-y-1">
               <p className="text-xs text-gray-400 font-medium">Sales Rep</p>
-              <p className="text-sm font-semibold text-gray-900">Sarah Chen</p>
+              <p className="text-sm font-semibold text-gray-900">{submittedData?.salesRep || 'Sarah Chen'}</p>
             </div>
 
             {/* Final Score */}

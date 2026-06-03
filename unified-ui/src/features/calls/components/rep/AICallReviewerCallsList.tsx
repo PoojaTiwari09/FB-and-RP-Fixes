@@ -204,7 +204,7 @@ export default function AICallReviewerCallsList() {
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-full bg-[#faf9fc]">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-[#faf9fc]">
       <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200 bg-white">
         <div>
           <h1 className="text-2xl font-serif font-semibold text-gray-900 tracking-tight">

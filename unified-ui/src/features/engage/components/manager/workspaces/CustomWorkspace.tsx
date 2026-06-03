@@ -28,7 +28,9 @@ export default function CustomWorkspace({
   if (!isOpen || !task) return null;
 
   return (
-    <div className="w-full h-full min-h-0 bg-white border border-gray-200 rounded-lg flex flex-col">
+    <>
+      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/30 transition-opacity" />
+      <div className="fixed top-0 right-0 z-50 h-full w-[400px] bg-white border-l border-gray-200 shadow-2xl flex flex-col transform transition-transform">
         
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-gray-150 shrink-0">
@@ -91,6 +93,7 @@ export default function CustomWorkspace({
             </div>
           </div>
         )}
-    </div>
+      </div>
+    </>
   );
 }

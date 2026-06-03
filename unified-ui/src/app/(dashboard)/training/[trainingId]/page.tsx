@@ -20,7 +20,7 @@ export default async function TrainingDetailPage({ params }: TrainingDetailPageP
   const data = await fetchTrainingSetup(trainingId, createdStr);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Scrollable content */}
       <div className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto px-8 py-8">

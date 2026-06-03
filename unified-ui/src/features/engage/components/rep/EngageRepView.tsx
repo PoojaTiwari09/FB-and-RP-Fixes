@@ -335,6 +335,7 @@ export default function EngageRepView() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [snoozeModalOpen, setSnoozeModalOpen] = useState(false);
   const [showToast,      setShowToast]      = useState(false);
+  const [toastMessage,   setToastMessage]   = useState('Tasks snoozed successfully');
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [summary, setSummary] = useState<TaskSummary | null>(null);
@@ -427,6 +428,7 @@ export default function EngageRepView() {
       setSelectedIds([]);
       setSnoozeModalOpen(false);
       await loadData();
+      setToastMessage('Tasks snoozed successfully');
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch (err) {
@@ -724,17 +726,18 @@ export default function EngageRepView() {
           </div>
 
           {/* Right panel */}
-          {drawerTask ? (
-            <TakeActionDrawer
-              task={drawerTask}
-              onClose={() => setDrawerTask(null)}
-              onEmail={setEmailTask}
-              onMessage={setLinkedInTask}
-            />
-          ) : (
-            <RecentActivityPanel activities={recentActivity} />
-          )}
+          {!drawerTask && <RecentActivityPanel activities={recentActivity} />}
         </div>
+
+        {/* TakeActionDrawer — fixed full height overlay on the right */}
+        {drawerTask && (
+          <TakeActionDrawer
+            task={drawerTask}
+            onClose={() => setDrawerTask(null)}
+            onEmail={setEmailTask}
+            onMessage={setLinkedInTask}
+          />
+        )}
 
       </div>
 
@@ -767,6 +770,9 @@ export default function EngageRepView() {
             try {
               await createTask(taskData);
               await loadData();
+              setToastMessage('Task created successfully');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 3000);
             } catch (err) {
               console.error('Failed to create task:', err);
             }
@@ -798,7 +804,7 @@ export default function EngageRepView() {
           className="fixed bottom-20 left-1/2 -translate-x-1/2 p-3 rounded-xl border flex items-center gap-2 shadow-lg animate-in slide-in-from-bottom duration-300 bg-[#ECFDF5] border-[#A7F3D0] text-[#047857] z-50"
         >
           <div className="w-2 h-2 rounded-full bg-[#10B981]" />
-          <p className="text-xs font-semibold">Tasks snoozed successfully</p>
+          <p className="text-xs font-semibold">{toastMessage}</p>
         </div>
       )}
     </>

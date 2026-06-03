@@ -147,20 +147,34 @@ export default function Sidebar() {
           isCollapsed ? 'px-0 justify-center' : 'px-5'
         }`}
       >
-        {!isCollapsed && (
-          <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-            Menu
-          </span>
+        {!isCollapsed ? (
+          <div className="flex items-center gap-2">
+            <span
+              className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-bold tracking-wide"
+              style={{ backgroundColor: '#F5F3FF', color: '#7C3AED', border: '1px solid #EDE9FE' }}
+            >
+              Relanto
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={handleToggleCollapse}
+            className="flex-shrink-0 w-8 h-8 rounded-md text-xs font-bold flex items-center justify-center hover:opacity-85 transition-opacity cursor-pointer"
+            style={{ backgroundColor: '#F5F3FF', color: '#7C3AED', border: '1px solid #EDE9FE' }}
+            title="Expand Sidebar"
+          >
+            R
+          </button>
         )}
-        <button
-          onClick={handleToggleCollapse}
-          className={`p-1 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100 transition-colors ${
-            isCollapsed ? 'mx-auto' : ''
-          }`}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+        {!isCollapsed && (
+          <button
+            onClick={handleToggleCollapse}
+            className="p-1 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-label="Collapse sidebar"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
       </div>
 
       {/* Nav */}

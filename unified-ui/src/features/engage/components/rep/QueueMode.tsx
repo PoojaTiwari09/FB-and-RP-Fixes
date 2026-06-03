@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Video } from 'lucide-react';
 import type { Task } from './types/engage.types';
 import { MOCK_TASK_DETAILS } from './mocks/engage.mock';
 import EmailTaskScreen from './EmailTaskScreen';
@@ -148,6 +148,27 @@ export default function QueueMode({ tasks, onClose, onQueueComplete }: QueueMode
             {currentTask.contactName} &middot; {currentTask.company}
           </p>
           <p className="text-xs text-gray-400 mb-8">Due: {formattedDue}</p>
+
+          {/* Video Call Platforms */}
+          <div className="mb-8 p-4 bg-gray-50 border border-gray-150 rounded-2xl">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+              Start Video Call
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => window.open('https://zoom.us/start/videomeeting', '_blank')}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#0B5CFF] hover:bg-[#004BD6] text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              >
+                <Video size={14} /> Zoom
+              </button>
+              <button
+                onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#00897B] hover:bg-[#006E63] text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              >
+                <Video size={14} /> Meet
+              </button>
+            </div>
+          </div>
 
           {/* Actions */}
           <div className="flex items-center justify-center gap-3">

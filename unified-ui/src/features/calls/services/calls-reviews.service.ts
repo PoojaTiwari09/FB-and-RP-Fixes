@@ -192,3 +192,51 @@ export async function fetchReviewHistory(params: {
   if (!res.ok) throw new Error(`Failed to fetch review history: ${res.status}`);
   return res.json() as Promise<ReviewHistoryResponse>;
 }
+
+export async function saveCallReviewDraft(
+  reviewId: string,
+  body: { answers?: any; coaching?: any }
+): Promise<{ success: boolean }> {
+  const res = await fetch(`${ENV.M02_API_BASE_URL}/api/call-reviews/${reviewId}/save-draft`, {
+    method: 'POST',
+    headers: {
+      ...getBridgeHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Failed to save draft: ${res.status}`);
+  return res.json() as Promise<{ success: boolean }>;
+}
+
+export async function submitCallReview(
+  reviewId: string,
+  body: { answers?: any; coaching?: any }
+): Promise<{ success: boolean; finalScore: number }> {
+  const res = await fetch(`${ENV.M02_API_BASE_URL}/api/call-reviews/${reviewId}/submit`, {
+    method: 'POST',
+    headers: {
+      ...getBridgeHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Failed to submit review: ${res.status}`);
+  return res.json() as Promise<{ success: boolean; finalScore: number }>;
+}
+
+export async function saveCoachingFeedback(
+  reviewId: string,
+  coaching: any
+): Promise<{ success: boolean }> {
+  const res = await fetch(`${ENV.M02_API_BASE_URL}/api/call-reviews/${reviewId}/coaching`, {
+    method: 'POST',
+    headers: {
+      ...getBridgeHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(coaching),
+  });
+  if (!res.ok) throw new Error(`Failed to save coaching: ${res.status}`);
+  return res.json() as Promise<{ success: boolean }>;
+}
