@@ -52,25 +52,13 @@ export default async function ManagerTrainingDashboardPage() {
           <ManagerTrainingTable trainings={completedSessions} />
         </section>
         
-        {/* Reassigned Sessions Table */}
-        {reassignedSessions.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Reassigned Sessions</h2>
-            <ManagerTrainingTable trainings={reassignedSessions} />
-          </section>
-        )}
-        <div className="space-y-8">
-          {/* Active/Pending Assignments */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Active Assignments</h2>
-            <ManagerActiveTable trainings={data.activeTrainings || []} />
-          </section>
-
-          {/* Completed Sessions Table */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Completed Sessions</h2>
-            <ManagerTrainingTable trainings={data.trainings} />
-          </section>
+          {/* Reassigned Sessions Table */}
+          {reassignedSessions.length > 0 && (
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Reassigned Sessions</h2>
+              <ManagerTrainingTable trainings={reassignedSessions} />
+            </section>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-# INTEGRATION 107 — Clone → Run (Windows)
+# INTEGRATION 112 — Clone → Run (Windows)
 
 Monorepo folder: **`r-revenue-intelligence-monorepo`**
 
@@ -7,7 +7,7 @@ Monorepo folder: **`r-revenue-intelligence-monorepo`**
 | UI | http://localhost:3000 |
 | API | http://localhost:3001 |
 | Postgres | `127.0.0.1:5433` |
-| Redis | `127.0.0.1:6379 |
+| Redis | `127.0.0.1:6379` |
 
 ---
 
@@ -237,6 +237,8 @@ Demo tenant ID (seeded in DB): `00000000-0000-0000-0000-000000000001`
 | **Missing .env** | `copy .env.example .env` then `.\scripts\sync-env.ps1` |
 | **Forecast API 404** | Ensure unified-api running; run `.\seed-m06.ps1` |
 | **HMR / stale chunk errors** | Hard reload (Ctrl+Shift+R) or restart UI dev server |
+| **Prisma client module not found** | Run `pnpm run db:generate` in `boilerplate code\r-revenue-intelligence` |
+| **Next.js Turbopack build parsing/token errors** | Check for duplicate/unclosed `div` tags in TSX pages (like `results/page.tsx` or `manage/page.tsx`). |
 
 Test forecast API (no auth headers needed — UI proxy injects tenant):
 
