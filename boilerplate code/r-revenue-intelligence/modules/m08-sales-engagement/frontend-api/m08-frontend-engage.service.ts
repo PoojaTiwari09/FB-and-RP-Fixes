@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class M08FrontendEngageService {
@@ -271,11 +272,63 @@ export class M08FrontendEngageService {
     return { status: 'success', data: updated };
   }
 
+  async getNotes(tenantId: string, taskId: string) {
+    const t = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!t || !t.notes) return [];
+
+    return [
+      {
+        noteId: `note_${t.taskId}`,
+        note: t.notes,
+        authorName: t.assigneeName || 'Alex Morgan',
+        createdAt: t.updatedAt?.toISOString() || new Date().toISOString(),
+      },
+    ];
+  }
+
   async sendEmail(tenantId: string, taskId: string, body: any) {
     const t = await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
     });
+
+    // --- SMTP email sending ---
+    const host = process.env.SMTP_HOST;
+    const port = Number(process.env.SMTP_PORT || 587);
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const from = process.env.SMTP_FROM || user;
+
+    if (!host || !user || !pass) {
+      throw new BadRequestException('SMTP configuration (SMTP_HOST, SMTP_USER, SMTP_PASS) is missing in .env');
+    }
+
+    const toEmail = body.to || body.contactEmail || '';
+    if (!toEmail) {
+      throw new BadRequestException('Recipient email address ("to") is required');
+    }
+
+    try {
+      const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+      });
+
+      await transporter.sendMail({
+        from: `"${(from || '').split('@')[0]}" <${from}>`,
+        to: toEmail,
+        subject: body.subject || 'Outreach',
+        text: body.body || body.text || '',
+        html: body.bodyHtml || body.body || body.html || '',
+      });
+    } catch (err: any) {
+      console.error('SMTP sending failed:', err);
+      throw new InternalServerErrorException(`SMTP sending failed: ${err.message || err}`);
+    }
 
     await this.prisma.engageActivity.create({
       data: {

@@ -63,6 +63,17 @@ export default function TrainingResultsPage({ params }: TrainingResultsPageProps
       // Cache the result in localStorage so it persists permanently for future reviews
       try {
         localStorage.setItem(`session-${sessionId}-results`, JSON.stringify(results));
+        
+        // Also save in cookie so server dashboards can load the score/rating
+        const match = document.cookie.match(new RegExp('(^| )completed_session_summaries=([^;]+)'));
+        const summaries = match ? JSON.parse(decodeURIComponent(match[2])) : {};
+        summaries[trainingId] = {
+          overallScore: results.overallScore,
+          lastSessionId: sessionId,
+          completedDate: new Date().toISOString(),
+          overallRating: results.tierLabel || 'Good'
+        };
+        document.cookie = `completed_session_summaries=${encodeURIComponent(JSON.stringify(summaries))}; path=/; max-age=31536000`;
       } catch {
         // ignore quota errors
       }

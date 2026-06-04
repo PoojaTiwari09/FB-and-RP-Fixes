@@ -166,7 +166,7 @@ export default function CallsReviewCoachingView({ reviewId }: CallsReviewCoachin
   };
 
   return (
-    <div className="calls-font-scope bg-[#f8fafc] min-h-screen text-gray-800 flex flex-col">
+    <div className="calls-font-scope bg-[#f8fafc] flex-1 min-h-0 overflow-y-auto text-gray-800 flex flex-col">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}

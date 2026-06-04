@@ -91,7 +91,7 @@ export default function CallsAnalyticsView() {
 
   if (loading || !summary) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#faf9fc]">
+      <div className="flex flex-col flex-1 min-h-0 overflow-y-auto bg-[#faf9fc]">
         <CallsTopNav />
         <div className="px-6 py-6 animate-pulse space-y-5">
           <div className="grid grid-cols-4 gap-4">
@@ -108,7 +108,7 @@ export default function CallsAnalyticsView() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#faf9fc]">
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto bg-[#faf9fc]">
       <CallsTopNav />
 
       <div className="px-6 py-5 space-y-5 flex-1">

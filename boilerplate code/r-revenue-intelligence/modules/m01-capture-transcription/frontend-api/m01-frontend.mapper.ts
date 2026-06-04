@@ -188,6 +188,9 @@ export function mapCallListItem(record: any) {
     duration: formatDurationClock(resolveDurationSeconds(record)),
     keyInsight: summary || '—',
     status: mapTranscriptStatus(record.transcriptStatus ?? 'pending'),
+    participants: Array.isArray(record.participants)
+      ? record.participants.map((p: string) => ({ name: p }))
+      : [],
   };
 }
 

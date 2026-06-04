@@ -210,7 +210,7 @@ export default function CallsReviewSummaryView({ reviewId }: CallsReviewSummaryV
   };
 
   return (
-    <div className="calls-font-scope bg-[#f8fafc] min-h-screen text-gray-800 flex flex-col pb-16">
+    <div className="calls-font-scope bg-[#f8fafc] flex-1 min-h-0 overflow-y-auto text-gray-800 flex flex-col pb-16">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}

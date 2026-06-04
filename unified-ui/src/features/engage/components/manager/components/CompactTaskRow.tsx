@@ -234,7 +234,7 @@ export default function CompactTaskRow({
               onClick();
             }}
           >
-            {isViewOnly ? 'View Details' : 'Take Action'}
+            View Details
           </button>
         )}
 

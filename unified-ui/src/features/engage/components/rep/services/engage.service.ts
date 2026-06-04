@@ -25,7 +25,16 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
     },
   });
   if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const errBody = await res.json();
+      if (errBody?.message) {
+        detail = typeof errBody.message === 'string' ? errBody.message : JSON.stringify(errBody.message);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(detail);
   }
   const text = await res.text();
   if (!text.trim()) {

@@ -505,7 +505,20 @@ export default function EngageRepView() {
                 {atRisk > 0 ? ` — ${atRisk} at risk of slipping` : ''}
               </p>
             </div>
-            <CreateTaskBtn onClick={() => setCreateTaskOpen(true)} />
+            <div className="flex items-center gap-3">
+              <select
+                value="sales_rep"
+                onChange={(e) => {
+                  document.cookie = `user_role=${e.target.value}; path=/`;
+                  window.location.reload();
+                }}
+                className="px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white text-gray-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="sales_rep">Sales Rep</option>
+                <option value="sales_manager">Sales Manager</option>
+              </select>
+              <CreateTaskBtn onClick={() => setCreateTaskOpen(true)} />
+            </div>
           </div>
 
           {/* Toolbar */}
@@ -524,18 +537,7 @@ export default function EngageRepView() {
                 onBlur={e =>  { e.currentTarget.style.border = `1px solid ${C.border}`;  e.currentTarget.style.boxShadow = 'none'; }}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm" style={{ color: C.grayText }}>Group By</span>
-              <PickerSelect
-                value={groupBy}
-                onChange={v => setGroupBy(v as 'None' | 'Flow' | 'Step')}
-                options={['None', 'Flow', 'Step']}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm" style={{ color: C.grayText }}>Sort By</span>
-              <PickerSelect value="Due Date" onChange={() => {}} options={['Due Date', 'Priority', 'Activity']} />
-            </div>
+
           </div>
 
           {/* ── Combined row: Tabs | Alerts | Channel chips ─────────── */}
@@ -726,7 +728,7 @@ export default function EngageRepView() {
           </div>
 
           {/* Right panel */}
-          {!drawerTask && <RecentActivityPanel activities={recentActivity} />}
+          <RecentActivityPanel activities={recentActivity} />
         </div>
 
         {/* TakeActionDrawer — fixed full height overlay on the right */}

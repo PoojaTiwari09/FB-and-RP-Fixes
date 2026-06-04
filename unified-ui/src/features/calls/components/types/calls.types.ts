@@ -38,6 +38,7 @@ export interface CallListItem {
   duration: string;
   keyInsight: string;
   status: CallStatus;
+  participants?: Participant[];
 }
 
 export interface CallsListResponse {

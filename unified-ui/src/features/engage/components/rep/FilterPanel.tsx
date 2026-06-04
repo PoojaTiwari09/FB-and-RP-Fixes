@@ -161,36 +161,6 @@ export default function FilterPanel({ onClose, onApply, initialFilters }: Filter
               ))}
             </div>
           </div>
-
-          <hr className="border-gray-100" />
-
-          {/* CRM Entity Fields Accordions */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">CRM Entity Fields</h3>
-            <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-200">
-              {['Account', 'Contact', 'Lead', 'Opportunity'].map((cat) => {
-                const key = cat.toLowerCase();
-                const isOpen = crmOpen[key];
-                return (
-                  <div key={cat} className="flex flex-col">
-                    <button
-                      type="button"
-                      onClick={() => toggleCrmCategory(key)}
-                      className="flex items-center justify-between px-4 py-3 bg-gray-50/50 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
-                    >
-                      <span>{cat}</span>
-                      {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                    {isOpen && (
-                      <div className="px-4 py-3 bg-white text-xs text-gray-400 italic">
-                        CRM fields for {cat} will appear here
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

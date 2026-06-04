@@ -161,8 +161,12 @@ export class M09FrontendTrainingsService {
 
   async getManagerDashboard(orgId: string) {
     const scenarios = await this.scenarios.findAll(orgId);
+    // Filter out custom manager-created scenarios so they do not leak into default lists
+    const systemScenarios = scenarios.filter((s: any) => !s.context_text?.trim().startsWith('{'));
+    const allSessions = await this.repo.findAllSessions('rep_01', orgId).catch(() => []);
+
     return {
-      activeTrainings: scenarios.slice(0, 3).map((s: any, i: number) => ({
+      activeTrainings: systemScenarios.slice(0, 3).map((s: any, i: number) => ({
         id: s.id,
         repId: 'rep_01',
         repName: 'Sarah Chen',
@@ -170,17 +174,21 @@ export class M09FrontendTrainingsService {
         assignedDate: new Date().toISOString(),
         dueDateIso: new Date(Date.now() + 14 * 86400000).toISOString(),
       })),
-      trainings: scenarios.slice(0, 5).map((s: any) => ({
-        id: s.id,
-        repId: 'rep_01',
-        repName: 'Sarah Chen',
-        trainingTitle: s.persona_name || 'Training',
-        completedDate: new Date().toISOString(),
-        overallScore: 82,
-        overallRating: 'Good',
-        lastSessionId: null,
-        isReassigned: false,
-      })),
+      trainings: systemScenarios.slice(0, 5).map((s: any) => {
+        const scenarioSessions = allSessions.filter((sess: any) => sess.scenario_id === s.id);
+        const lastSessionId = scenarioSessions.length > 0 ? scenarioSessions[0].id : `session_${s.id}`;
+        return {
+          id: s.id,
+          repId: 'rep_01',
+          repName: 'Sarah Chen',
+          trainingTitle: s.persona_name || 'Training',
+          completedDate: new Date().toISOString(),
+          overallScore: 82,
+          overallRating: 'Good',
+          lastSessionId,
+          isReassigned: false,
+        };
+      }),
     };
   }
 
@@ -188,7 +196,7 @@ export class M09FrontendTrainingsService {
     const dto = body as Record<string, any>;
     const created = await this.scenarios.create(
       {
-        persona_name: dto.trainingTitle || 'Custom Training',
+        persona_name: dto.persona?.name || 'Custom Persona',
         persona_type: dto.persona?.jobTitle || 'Decision Maker',
         difficulty: 'medium',
         context_text: JSON.stringify(dto),

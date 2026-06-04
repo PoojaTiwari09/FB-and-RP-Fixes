@@ -60,15 +60,114 @@ function adaptTrainingSetup(raw: Record<string, unknown>, trainingId: string): T
  * Voices are ALWAYS fetched from ElevenLabs (not from backend or mock static data).
  */
 export async function fetchTrainingSetup(trainingId: string, createdTrainingsStr?: string): Promise<TrainingSetupPage> {
-  const [res, liveVoices] = await Promise.all([
-    fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, { next: { revalidate: 60 } }),
-    getVoices(),
-  ]);
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const raw = await res.json();
-  const setup = adaptTrainingSetup(raw as Record<string, unknown>, trainingId);
-  // Override voices from backend with live ElevenLabs voices
-  return { ...setup, voices: liveVoices };
+  let raw: Record<string, unknown> | null = null;
+  let liveVoices: any[] = [];
+
+  try {
+    liveVoices = await getVoices();
+  } catch (e) {
+    console.error('ElevenLabs voices fetch failed:', e);
+  }
+
+  try {
+    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      raw = await res.json();
+    } else {
+      console.warn(`Backend returned non-OK status: ${res.status}`);
+    }
+  } catch (e) {
+    console.error(`Backend fetch failed for training ${trainingId}:`, e);
+  }
+
+  if (raw) {
+    const setup = adaptTrainingSetup(raw, trainingId);
+    return { ...setup, voices: liveVoices.length ? liveVoices : setup.voices };
+  }
+
+  // Fallback to cookie / created training
+  if (createdTrainingsStr) {
+    try {
+      const created: any[] = JSON.parse(createdTrainingsStr);
+      const found = created.find((t: any) => t.id === trainingId);
+      if (found) {
+        const p = found.persona || {};
+        return {
+          trainingId,
+          trainingTitle: found.trainingTitle || 'Custom Practice Session',
+          persona: {
+            name: p.name || 'Custom Persona',
+            jobTitle: p.jobTitle || p.job_title || p.title || 'Executive',
+            company: p.company || 'Acme Corp',
+            motivations: p.motivations || p.motivationsAndPriorities || 'Wants to improve efficiency and reduce costs.',
+            communicationStyle: p.communicationStyle || p.communication_style || 'Direct and data-oriented.',
+          },
+          meetingContext: {
+            scenario: 'Practice Call - Roleplay Session',
+            objective: 'Build rapport, identify pain points, and align on next steps.',
+            backgroundForTrainee: `You are practice calling ${p.name || 'Custom Persona'} at ${p.company || 'Acme Corp'}.`,
+          },
+          voices: liveVoices.length ? liveVoices : [
+            { id: 'voice-1', label: 'Voice 1', description: 'Professional Female', previewText: '' },
+            { id: 'voice-2', label: 'Voice 2', description: 'Professional Male', previewText: '' },
+          ],
+          playbookSections: [
+            {
+              id: 'sec-1',
+              title: 'Discovery & Need Identification',
+              questions: [
+                { id: 'q1', text: 'What are the main priorities for your team this quarter?', tags: ['high-impact'], whyItMatters: 'Reveals priority pain points.' },
+                { id: 'q2', text: 'How are you measuring success in this area currently?', tags: ['high-impact'], whyItMatters: 'Quantifies impact.' },
+                { id: 'q3', text: 'Who else would be key to involve in evaluating solutions?', tags: [], whyItMatters: null }
+              ]
+            },
+            {
+              id: 'sec-2',
+              title: 'Value Alignment & Next Steps',
+              questions: [
+                { id: 'q4', text: 'What is your timeline for implementing a new solution?', tags: ['missed-last-attempt'], whyItMatters: 'Establishes deal urgency.' },
+                { id: 'q5', text: 'Are there any potential obstacles to moving forward?', tags: [], whyItMatters: null }
+              ]
+            }
+          ]
+        };
+      }
+    } catch (e) {
+      console.error('Error parsing created_trainings cookie:', e);
+    }
+  }
+
+  // Final fallback to mock if no cookie or backend
+  return {
+    trainingId,
+    trainingTitle: 'Discovery Call Practice',
+    persona: {
+      name: 'Sarah Johnson',
+      jobTitle: 'VP of Sales Operations',
+      company: 'TechFlow Inc',
+      motivations: 'Looking to streamline sales processes and improve team productivity.',
+      communicationStyle: 'Direct and analytical. Prefers data-driven conversations.',
+    },
+    meetingContext: {
+      scenario: 'Discovery Call - Initial Meeting',
+      objective: 'Build rapport with Sarah and understand her team productivity issues.',
+      backgroundForTrainee: 'TechFlow Inc is exploring alternatives to Salesforce.',
+    },
+    voices: liveVoices.length ? liveVoices : [
+      { id: 'voice-1', label: 'Voice 1', description: 'Professional Female', previewText: '' },
+      { id: 'voice-2', label: 'Voice 2', description: 'Professional Male', previewText: '' },
+    ],
+    playbookSections: [
+      {
+        id: 'sec-1',
+        title: 'Discovery & Need Identification',
+        questions: [
+          { id: 'q1', text: 'What does your current workflow look like from lead to close?', tags: ['high-impact'], whyItMatters: 'Reveals inefficiencies.' },
+          { id: 'q2', text: 'Who else is involved in the decision-making process?', tags: ['high-impact'], whyItMatters: 'Identifies stakeholders early.' }
+        ]
+      }
+    ]
+  };
 }
 
 export interface CreateSessionResponse {

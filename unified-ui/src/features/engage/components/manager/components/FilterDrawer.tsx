@@ -230,28 +230,7 @@ export default function FilterDrawer({ isOpen, onClose, onApply, initialFilters 
 
           {false && <hr className="border-gray-100" />}
 
-          {/* Linked Entity Type */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Linked Entity Type</h3>
-            <div className="flex flex-col gap-2">
-              {(['account', 'deal', 'lead'] as const).map((type) => {
-                const labels = { account: 'Account', deal: 'Deal', lead: 'Lead' };
-                return (
-                  <label key={type} className="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={entityTypes.has(type)}
-                      onChange={() => handleEntityTypeToggle(type)}
-                      className="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                    <span>{labels[type]}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
 
-          <hr className="border-gray-100" />
 
           {/* Prospect Local Time */}
           <div className="space-y-3">
@@ -273,36 +252,6 @@ export default function FilterDrawer({ isOpen, onClose, onApply, initialFilters 
                   <span>{opt.label}</span>
                 </label>
               ))}
-            </div>
-          </div>
-
-          <hr className="border-gray-100" />
-
-          {/* CRM Entity Fields Accordions */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">CRM Entity Fields</h3>
-            <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-200">
-              {['Account', 'Contact', 'Lead', 'Opportunity'].map((cat) => {
-                const key = cat.toLowerCase();
-                const isOpen = crmOpen[key];
-                return (
-                  <div key={cat} className="flex flex-col">
-                    <button
-                      type="button"
-                      onClick={() => toggleCrmCategory(key)}
-                      className="flex items-center justify-between px-4 py-3 bg-gray-50/50 hover:bg-gray-50 text-sm font-semibold text-gray-800 transition-colors"
-                    >
-                      <span>{cat}</span>
-                      {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                    {isOpen && (
-                      <div className="px-4 py-3 bg-white text-xs text-gray-400 italic">
-                        CRM fields for {cat} will appear here
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>

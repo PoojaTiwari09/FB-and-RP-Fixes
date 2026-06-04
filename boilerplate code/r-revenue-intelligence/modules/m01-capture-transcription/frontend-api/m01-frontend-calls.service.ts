@@ -82,7 +82,8 @@ export class M01FrontendCallsService {
 
     const offset = (q.page - 1) * q.size;
 
-    const extra: Record<string, unknown> = {};
+    const extra: Record<string, any> = {};
+    const andClauses: any[] = [];
 
     // Calls List UI: only show review-ready rows (recording + completed transcript).
     const isCallsList =
@@ -90,48 +91,83 @@ export class M01FrontendCallsService {
       rawQuery.format !== 'ai-reviewer' &&
       rawQuery.view !== 'ai-reviewer';
     if (isCallsList && (!q.status || q.status === 'all')) {
-      extra.transcriptStatus = 'completed';
-      extra.audioUrl = { not: null };
-      extra.transcript = { isNot: null };
+      andClauses.push({ transcriptStatus: 'completed' });
+      andClauses.push({ audioUrl: { not: null } });
+      andClauses.push({ transcript: { isNot: null } });
     }
 
     if (q.status && q.status !== 'all') {
-      extra.transcriptStatus =
-        q.status === 'processing' ? { in: ['processing', 'pending'] } : q.status;
+      const statusClause = q.status === 'processing' ? { in: ['processing', 'pending'] } : q.status;
+      andClauses.push({ transcriptStatus: statusClause });
     }
-    if (q.dealType) extra.callType = q.dealType;
-    if (q.ownerId) extra.callOwner = q.ownerId;
+
+    if (q.dealType) {
+      const types = q.dealType.split(',').filter(Boolean).map((t) => t.toLowerCase());
+      if (types.length > 0) {
+        andClauses.push({ callType: { in: types } });
+      }
+    }
+
+    if (q.ownerId) {
+      andClauses.push({ callOwner: q.ownerId });
+    }
+
     if (q.account) {
-      extra.OR = [
-        { accountId: { contains: q.account, mode: 'insensitive' } },
-        { title: { contains: q.account, mode: 'insensitive' } },
-      ];
+      const accounts = q.account.split(',').filter(Boolean);
+      if (accounts.length > 0) {
+        andClauses.push({
+          OR: [
+            ...accounts.map((acc) => ({ accountId: { contains: acc, mode: 'insensitive' as const } })),
+            ...accounts.map((acc) => ({ title: { contains: acc, mode: 'insensitive' as const } })),
+          ],
+        });
+      }
     }
+
     if (q.participantId) {
-      extra.participants = { has: q.participantId };
+      const parts = q.participantId.split(',').filter(Boolean);
+      if (parts.length > 0) {
+        andClauses.push({
+          participants: { hasSome: parts },
+        });
+      }
     }
+
     if (q.search?.trim()) {
       const needle = q.search.trim();
-      extra.OR = [
-        ...(extra.OR as any[] || []),
-        { title: { contains: needle, mode: 'insensitive' } },
-        { callOwner: { contains: needle, mode: 'insensitive' } },
-        { accountId: { contains: needle, mode: 'insensitive' } },
-      ];
+      andClauses.push({
+        OR: [
+          { title: { contains: needle, mode: 'insensitive' as const } },
+          { callOwner: { contains: needle, mode: 'insensitive' as const } },
+          { accountId: { contains: needle, mode: 'insensitive' as const } },
+        ],
+      });
     }
+
     if (q.duration && q.duration !== 'all') {
-      if (q.duration === 'lt2') extra.durationSeconds = { lt: 120 };
-      else if (q.duration === '2to10') extra.durationSeconds = { gte: 120, lte: 600 };
-      else if (q.duration === 'gt10') extra.durationSeconds = { gt: 600 };
+      if (q.duration === 'lt2') {
+        andClauses.push({ durationSeconds: { lt: 120 } });
+      } else if (q.duration === '2to10') {
+        andClauses.push({ durationSeconds: { gte: 120, lte: 600 } });
+      } else if (q.duration === 'gt10') {
+        andClauses.push({ durationSeconds: { gt: 600 } });
+      }
     }
+
     if (q.dateRange && q.dateRange !== 'all' && q.dateRange !== 'custom') {
       const days = q.dateRange === 'last7days' ? 7 : 30;
-      extra.callDate = { gte: new Date(Date.now() - days * 86400000) };
+      andClauses.push({ callDate: { gte: new Date(Date.now() - days * 86400000) } });
     } else if (q.dateRange === 'custom' && (q.startDate || q.endDate)) {
-      extra.callDate = {
-        ...(q.startDate ? { gte: new Date(q.startDate) } : {}),
-        ...(q.endDate ? { lte: new Date(q.endDate) } : {}),
-      };
+      andClauses.push({
+        callDate: {
+          ...(q.startDate ? { gte: new Date(q.startDate) } : {}),
+          ...(q.endDate ? { lte: new Date(q.endDate) } : {}),
+        },
+      });
+    }
+
+    if (andClauses.length > 0) {
+      extra.AND = andClauses;
     }
 
     let listStatus: string | undefined;

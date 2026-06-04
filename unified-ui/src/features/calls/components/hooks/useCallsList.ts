@@ -72,8 +72,24 @@ export function useCallsList(): UseCallsListReturn {
     setError(null);
     try {
       const data = await fetchCallsList(filters);
-      setCalls(data.calls);
-      setTotalCount(data.totalCount);
+      
+      let filtered = data.calls || [];
+      if (filters.dealType && filters.dealType.length > 0) {
+        filtered = filtered.filter((c) =>
+          filters.dealType.some((dt) => c.dealType?.toLowerCase() === dt.toLowerCase())
+        );
+      }
+      if (filters.participantId && filters.participantId.length > 0) {
+        filtered = filtered.filter((c) =>
+          c.participants && c.participants.length > 0 &&
+          filters.participantId.some((pid) =>
+            c.participants!.some((cp) => cp.name?.toLowerCase() === pid.toLowerCase() || cp.name === pid)
+          )
+        );
+      }
+      
+      setCalls(filtered);
+      setTotalCount(filtered.length);
     } catch (err) {
       const hint =
         err instanceof Error && err.message.includes('400')

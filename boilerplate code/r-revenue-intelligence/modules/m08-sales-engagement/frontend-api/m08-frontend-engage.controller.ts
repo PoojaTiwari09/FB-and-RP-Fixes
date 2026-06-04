@@ -39,6 +39,11 @@ export class M08FrontendEngageController {
     return this.svc.getEmailDraft(req.tenantId, taskId);
   }
 
+  @Get('tasks/:taskId/notes')
+  getNotes(@Param('taskId') taskId: string, @Req() req: any) {
+    return this.svc.getNotes(req.tenantId, taskId);
+  }
+
   @Get('tasks/:taskId/linkedin-draft')
   linkedInDraft(@Param('taskId') taskId: string, @Req() req: any) {
     return this.svc.getLinkedInDraft(req.tenantId, taskId);

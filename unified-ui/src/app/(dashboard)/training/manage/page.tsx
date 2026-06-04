@@ -12,11 +12,36 @@ export default async function ManagerTrainingDashboardPage() {
   // 1. Process Created Trainings (Active Assignments)
   const createdStr = cookieStore.get('created_trainings')?.value;
   const createdTrainings: ManagerActiveTraining[] = createdStr ? JSON.parse(createdStr) : [];
+
+  const summariesStr = cookieStore.get('completed_session_summaries')?.value;
+  const completedSummaries: Record<string, { overallScore: number; lastSessionId: string; completedDate: string; overallRating: string }> = summariesStr
+    ? JSON.parse(decodeURIComponent(summariesStr))
+    : {};
+
+  // Separate custom trainings into active vs completed based on completedSummaries
+  const completedCustomTrainings = createdTrainings
+    .filter(t => completedSummaries[t.id])
+    .map(t => {
+      const summary = completedSummaries[t.id];
+      return {
+        id: t.id,
+        repId: t.repId,
+        repName: t.repName,
+        trainingTitle: t.trainingTitle,
+        completedDate: summary.completedDate,
+        overallScore: summary.overallScore,
+        overallRating: summary.overallRating,
+        lastSessionId: summary.lastSessionId,
+        isReassigned: false
+      };
+    });
+
+  const activeCustomTrainings = createdTrainings.filter(t => !completedSummaries[t.id]);
   
   // Merge backend active trainings with local dev-mode created trainings (avoid duplicates by ID)
   const existingActiveIds = new Set((data.activeTrainings || []).map(t => t.id));
   const activeTrainings = [...(data.activeTrainings || [])];
-  for (const t of createdTrainings) {
+  for (const t of activeCustomTrainings) {
     if (!existingActiveIds.has(t.id)) {
       activeTrainings.push(t);
     }
@@ -27,7 +52,10 @@ export default async function ManagerTrainingDashboardPage() {
   const reassignedIds: string[] = reassignedStr ? JSON.parse(reassignedStr) : [];
 
   // Separate completed vs reassigned
-  const completedSessions = data.trainings.filter(t => !reassignedIds.includes(t.id) && !t.isReassigned);
+  const completedSessions = [
+    ...data.trainings.filter(t => !reassignedIds.includes(t.id) && !t.isReassigned),
+    ...completedCustomTrainings
+  ];
   const reassignedSessions = data.trainings
     .filter(t => reassignedIds.includes(t.id) || t.isReassigned)
     .map(t => ({ ...t, isReassigned: true }));

@@ -589,9 +589,27 @@ export default function EmailTaskScreen({
           </div>
         </div>
 
-        {/* Right: Contact Sidebar */}
+      {/* Right: Contact Sidebar */}
         {contact && <ContactSidebar contact={contact} />}
       </div>
+      {sendSuccess && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg z-50 animate-bounce">
+          <Check size={16} className="text-emerald-600" />
+          Email sent successfully!
+        </div>
+      )}
+      {errorMsg && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-50 border border-red-300 text-red-800 px-5 py-3 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg z-50">
+          <X size={16} className="text-red-500" />
+          <span className="max-w-md truncate">{errorMsg}</span>
+          <button
+            onClick={() => setErrorMsg(null)}
+            className="text-red-400 hover:text-red-700 font-bold ml-2 text-lg leading-none cursor-pointer"
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 }

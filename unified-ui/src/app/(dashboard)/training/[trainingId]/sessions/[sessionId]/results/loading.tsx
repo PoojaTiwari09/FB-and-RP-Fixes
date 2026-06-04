@@ -1,6 +1,6 @@
 export default function TrainingResultsLoading() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full overflow-y-auto bg-gray-50">
       <div className="max-w-4xl mx-auto px-8 py-8">
         {/* Header skeleton */}
         <div className="flex items-start justify-between mb-8">

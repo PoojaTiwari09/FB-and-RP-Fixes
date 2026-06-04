@@ -25,6 +25,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Database,
+  User,
 } from 'lucide-react';
 import { useRole } from '@shared/hooks/useRole';
 
@@ -263,6 +264,40 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Role Switcher in Sidebar Footer */}
+      <div className="mt-auto border-t border-gray-100 p-3 bg-gray-50/50">
+        {isCollapsed ? (
+          <button
+            onClick={() => {
+              const nextRole = isManager ? 'sales_rep' : 'sales_manager';
+              document.cookie = `user_role=${nextRole}; path=/`;
+              window.location.reload();
+            }}
+            className="w-full flex items-center justify-center p-2 rounded-lg bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 transition-all duration-200 shadow-sm cursor-pointer"
+            title={`Switch to ${isManager ? 'Sales Rep' : 'Sales Manager'}`}
+          >
+            {isManager ? <User size={18} className="text-blue-600" /> : <GraduationCap size={18} className="text-indigo-600" />}
+          </button>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1">
+              Role Switcher
+            </label>
+            <select
+              value={isManager ? 'sales_manager' : 'sales_rep'}
+              onChange={(e) => {
+                document.cookie = `user_role=${e.target.value}; path=/`;
+                window.location.reload();
+              }}
+              className="w-full px-2 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+            >
+              <option value="sales_rep">Sales Rep</option>
+              <option value="sales_manager">Sales Manager</option>
+            </select>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

@@ -424,7 +424,7 @@ export default function CallsReviewEvaluateView({ reviewId }: CallsReviewEvaluat
   };
 
   return (
-    <div className="bg-[#f8fafc] h-screen max-h-screen text-gray-800 flex flex-col font-sans overflow-hidden">
+    <div className="bg-[#f8fafc] flex-1 min-h-0 h-full max-h-full text-gray-800 flex flex-col font-sans overflow-hidden">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}

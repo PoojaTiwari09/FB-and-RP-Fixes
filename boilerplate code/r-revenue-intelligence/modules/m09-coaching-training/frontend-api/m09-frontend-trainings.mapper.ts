@@ -26,16 +26,31 @@ export function mapTrainingSetup(scenario: any) {
   
   // Try extracting metadata JSON if present
   let metadata: any = {};
-  const jsonMatch = scenario.context_text?.match(/\[SCENARIO_METADATA:\s*({.*?})\]/s);
-  if (jsonMatch) {
-    try { metadata = JSON.parse(jsonMatch[1]); } catch {}
+  if (scenario.context_text) {
+    const trimmed = scenario.context_text.trim();
+    
+    // First try matching any JSON object at the start
+    const firstJsonMatch = trimmed.match(/^(\{.*?\})/s);
+    if (firstJsonMatch) {
+      try {
+        metadata = JSON.parse(firstJsonMatch[1]);
+      } catch {}
+    }
+    
+    // Also try matching SCENARIO_METADATA block and merge
+    const jsonMatch = scenario.context_text.match(/\[SCENARIO_METADATA:\s*({.*?})\]/s);
+    if (jsonMatch) {
+      try {
+        const meta = JSON.parse(jsonMatch[1]);
+        metadata = { ...metadata, ...meta };
+      } catch {}
+    }
   }
 
+  const personaObj = metadata.persona || {};
+
   // Build scenario-aware descriptions
-  const personaName = scenario.persona_name || 'Training Prospect';
-  const personaType = scenario.persona_type || 'Decision Maker';
   const difficulty = scenario.difficulty || 'intermediate';
-  const contextSummary = rawCtx.slice(0, 400) || `${personaName} is a ${personaType} evaluating your solution.`;
 
   // Map difficulty to communication style
   const commStyles: Record<string, string> = {
@@ -47,13 +62,23 @@ export function mapTrainingSetup(scenario: any) {
     hard: 'Direct and challenging. Time-pressured, has seen many pitches, and pushes back hard. Only responds to concrete evidence.',
   };
 
+  const personaName = personaObj.name || scenario.persona_name || 'Training Prospect';
+  const personaType = personaObj.jobTitle || personaObj.title || scenario.persona_type || 'Decision Maker';
+  const companyName = personaObj.company || metadata.company || 'Prospect Corp';
+  
+  const contextSummary = (rawCtx.startsWith('{') ? '' : rawCtx.slice(0, 400)) || `${personaName} is a ${personaType} evaluating your solution.`;
+  const motivationsText = personaObj.motivations || metadata.objectives || contextSummary;
+  const commStyleText = personaObj.communicationStyle || metadata.communication_style || commStyles[difficulty] || commStyles.intermediate;
+
   // Detect scenario topic for tailored playbook
-  const ctxLower = rawCtx.toLowerCase();
+  const ctxLower = rawCtx.startsWith('{') ? '' : rawCtx.toLowerCase();
   let topic = 'your solution';
   if (ctxLower.includes('cloud') || ctxLower.includes('migration')) topic = 'cloud migration';
   else if (ctxLower.includes('sales') || ctxLower.includes('crm')) topic = 'sales platform';
   else if (ctxLower.includes('security') || ctxLower.includes('compliance')) topic = 'security solution';
   else if (ctxLower.includes('automat')) topic = 'automation platform';
+
+  const backgroundText = (rawCtx.startsWith('{') ? '' : rawCtx.slice(0, 600)) || `${personaName} is a ${personaType} who is evaluating ${topic} solutions. Prepare discovery questions, anticipate objections around ROI, timeline, and adoption risk.`;
 
   return {
     id: scenario.id,
@@ -61,14 +86,14 @@ export function mapTrainingSetup(scenario: any) {
     contactPersona: {
       name: personaName,
       jobTitle: personaType,
-      company: metadata.company || 'Prospect Corp',
-      motivations: metadata.objectives || contextSummary,
-      communicationStyle: commStyles[difficulty] || commStyles.intermediate,
+      company: companyName,
+      motivations: motivationsText,
+      communicationStyle: commStyleText,
     },
     meetingContext: {
       scenario: metadata.scenario_name || `Discovery Call — ${topic} Evaluation`,
       objective: metadata.goals || `Understand ${personaName}'s pain points around ${topic}, handle objections effectively, and secure a clear next step.`,
-      backgroundForTrainee: rawCtx.slice(0, 600) || `${personaName} is a ${personaType} who is evaluating ${topic} solutions. Prepare discovery questions, anticipate objections around ROI, timeline, and adoption risk.`,
+      backgroundForTrainee: backgroundText,
     },
     playbookSections: [
       {

@@ -34,7 +34,7 @@ export default function CallsReviewDetailView({ reviewId }: CallsReviewDetailVie
 
   if (loading) {
     return (
-      <div className="bg-gray-50 min-h-screen px-6 py-6 animate-pulse">
+      <div className="bg-gray-50 flex-1 min-h-0 overflow-y-auto px-6 py-6 animate-pulse">
         <div className="h-4 bg-gray-200 rounded w-36 mb-6" />
         <div className="h-8 bg-gray-200 rounded w-64 mb-2" />
         <div className="h-4 bg-gray-200 rounded w-80 mb-8" />
@@ -78,7 +78,7 @@ export default function CallsReviewDetailView({ reviewId }: CallsReviewDetailVie
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 flex-1 min-h-0 overflow-y-auto">
       {toast && (
         <CallsToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
       )}

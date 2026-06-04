@@ -20,7 +20,7 @@ export default function CallsReviewsListView() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#faf9fc]">
+    <div className="flex flex-col flex-1 min-h-0 overflow-y-auto bg-[#faf9fc]">
       <CallsTopNav />
       <CallsSubTabs tabs={subTabs} />
       <div className="px-6 py-5">
