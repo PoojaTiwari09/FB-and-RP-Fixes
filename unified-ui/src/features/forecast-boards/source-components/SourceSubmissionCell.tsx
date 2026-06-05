@@ -19,64 +19,94 @@ export default function SourceSubmissionCell({ cell, isActive, isEditable, statu
   const formattedVal = isEmpty ? emptyLabel : formatCurrency(cell.value);
   const hasManagerFeedback = !!cell.managerAnnotation;
 
-  if (!isEditable) {
-    const titleText = requestedValue !== undefined && requestedValue !== null
-      ? `Pending Change Request: ${formatCurrency(requestedValue)}`
-      : (status ? `Status: ${status.replace('_', ' ')}` : undefined);
+  let borderStyle = 'border-gray-200 bg-gray-50';
+  let badge = null;
+  let tooltip = status ? `Status: ${status.replace('_', ' ')}` : '';
 
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        title={titleText}
-        className={`relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold min-w-[104px] border select-none text-center cursor-pointer transition-all duration-150 outline-none ${
-          isActive 
-            ? 'border-2 border-blue-600 bg-blue-50/10 text-blue-700' 
-            : 'border-gray-200 bg-gray-50 hover:border-blue-400'
-        } ${isEmpty ? 'text-gray-400 italic' : 'text-gray-600'}`}
-      >
-        {formattedVal}
-        {status === 'approved' && !hasManagerFeedback && (
-          <div className="absolute -top-1.5 -right-1.5 bg-green-100 text-green-700 rounded-full p-0.5 border border-green-200 shadow-sm" title="Approved">
-             <div className="text-[8px] leading-none px-0.5 font-extrabold">A</div>
-          </div>
-        )}
-        {requestedValue !== undefined && requestedValue !== null && (
-          <div className="absolute -top-1.5 -right-1.5 bg-blue-100 text-blue-700 rounded-full p-0.5 border border-blue-200 shadow-sm" title={`Pending Change Request: ${formatCurrency(requestedValue)}`}>
-             <div className="text-[8px] leading-none px-0.5 font-extrabold">P</div>
-          </div>
-        )}
-        {hasManagerFeedback && (
-          <div className="absolute -top-1.5 -right-1.5 bg-yellow-100 text-yellow-700 rounded-full p-0.5 border border-yellow-200 shadow-sm" title="Manager Feedback">
-             <MessageCircleWarning size={10} />
-          </div>
-        )}
-      </button>
+  const isPending = status === 'submitted' || status === 'pending';
+  const isApproved = status === 'approved';
+  const isReopened = status === 'reopened';
+  const isOverridden = status === 'overridden';
+
+  if (isApproved) {
+    borderStyle = isActive
+      ? 'border-2 border-green-600 bg-green-50/10 text-green-700'
+      : 'border-gray-200 bg-gray-50 hover:border-green-400 text-gray-700';
+    badge = (
+      <div className="absolute -top-1.5 -right-1.5 bg-green-100 text-green-700 rounded-full p-0.5 border border-green-200 shadow-sm" title="Approved">
+        <div className="text-[8px] leading-none px-0.5 font-extrabold">✅</div>
+      </div>
     );
+    tooltip = 'Approved — final';
+  } else if (isPending) {
+    borderStyle = isActive
+      ? 'border-2 border-amber-600 bg-amber-50/10 text-amber-700'
+      : 'border-gray-200 bg-gray-50 hover:border-amber-400 text-gray-500';
+    badge = (
+      <div className="absolute -top-1.5 -right-1.5 bg-amber-100 text-amber-700 rounded-full p-0.5 border border-amber-200 shadow-sm" title="Pending Approval">
+        <div className="text-[8px] leading-none px-0.5 font-extrabold">🕐</div>
+      </div>
+    );
+    tooltip = 'Pending Approval';
+  } else if (isReopened) {
+    borderStyle = isActive
+      ? 'border-2 border-purple-600 bg-purple-50/20 text-purple-700'
+      : 'border-2 border-purple-500 hover:border-purple-600 bg-white text-gray-900 shadow-xs';
+    badge = (
+      <div className="absolute -top-1.5 -right-1.5 bg-purple-100 text-purple-700 rounded-full p-0.5 border border-purple-200 shadow-sm" title="Reopened">
+        <div className="text-[8px] leading-none px-0.5 font-extrabold">🔄</div>
+      </div>
+    );
+    tooltip = 'Reopened — please enter your value';
+  } else if (isOverridden) {
+    borderStyle = isActive
+      ? 'border-2 border-yellow-600 bg-yellow-50/10 text-yellow-700'
+      : 'border-gray-200 bg-gray-50 hover:border-yellow-400 text-gray-700';
+    badge = (
+      <div className="absolute -top-1.5 -right-1.5 bg-yellow-100 text-yellow-700 rounded-full p-0.5 border border-yellow-200 shadow-sm" title="Overridden">
+        <div className="text-[8px] leading-none px-0.5 font-extrabold">🟡</div>
+      </div>
+    );
+    tooltip = 'Overridden — manager override, final';
+  } else {
+    if (isEditable) {
+      borderStyle = isActive
+        ? 'border-2 border-blue-600 bg-blue-50/20 text-blue-700'
+        : 'border-2 border-blue-500 hover:border-blue-600 bg-white text-gray-900 shadow-xs';
+      tooltip = 'Editable — enter your value';
+    } else {
+      borderStyle = isActive
+        ? 'border-2 border-blue-600 bg-blue-50/10 text-blue-700'
+        : 'border-gray-200 bg-gray-50 hover:border-blue-400';
+      tooltip = 'Read-only';
+    }
   }
 
-  const borderStyle = isActive
-    ? 'border-2 border-blue-600 bg-blue-50/20 text-blue-700'
-    : 'border-2 border-blue-500 hover:border-blue-600 bg-white text-gray-900 shadow-xs';
+  // Adjust for requested values / annotations override visuals
+  if (requestedValue !== undefined && requestedValue !== null) {
+    badge = (
+      <div className="absolute -top-1.5 -right-1.5 bg-blue-100 text-blue-700 rounded-full p-0.5 border border-blue-200 shadow-sm" title={`Pending Change Request: ${formatCurrency(requestedValue)}`}>
+        <div className="text-[8px] leading-none px-0.5 font-extrabold">P</div>
+      </div>
+    );
+    tooltip = `Pending Change Request: ${formatCurrency(requestedValue)}`;
+  } else if (hasManagerFeedback) {
+    badge = (
+      <div className="absolute -top-1.5 -right-1.5 bg-yellow-100 text-yellow-700 rounded-full p-0.5 border border-yellow-200 shadow-sm" title="Manager Feedback">
+        <MessageCircleWarning size={10} />
+      </div>
+    );
+  }
 
   return (
     <button
       type="button"
       onClick={onClick}
-      title={status ? `Status: ${status.replace('_', ' ')}` : undefined}
-      className={`relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold min-w-[104px] cursor-pointer transition-all duration-150 select-none ${borderStyle} ${isEmpty ? 'italic' : ''}`}
+      title={tooltip}
+      className={`relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold min-w-[104px] border select-none text-center cursor-pointer transition-all duration-150 outline-none ${borderStyle} ${isEmpty ? 'text-gray-400 italic' : ''}`}
     >
       {formattedVal}
-      {requestedValue !== undefined && requestedValue !== null && (
-        <div className="absolute -top-1.5 -right-1.5 bg-blue-100 text-blue-700 rounded-full p-0.5 border border-blue-200 shadow-sm" title={`Pending Change Request: ${formatCurrency(requestedValue)}`}>
-           <div className="text-[8px] leading-none px-0.5 font-extrabold">P</div>
-        </div>
-      )}
-      {hasManagerFeedback && (
-        <div className="absolute -top-1.5 -right-1.5 bg-yellow-100 text-yellow-700 rounded-full p-0.5 border border-yellow-200 shadow-sm" title="Manager Feedback">
-           <MessageCircleWarning size={10} />
-        </div>
-      )}
+      {badge}
     </button>
   );
 }

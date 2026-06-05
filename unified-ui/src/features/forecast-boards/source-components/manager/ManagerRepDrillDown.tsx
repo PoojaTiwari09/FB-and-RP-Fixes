@@ -249,14 +249,14 @@ export default function ManagerRepDrillDown({
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50/50">
                   <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">Deals</th>
-                  <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Lifetime Sales</th>
+                  <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Pipeline</th>
                   <th className="py-3 px-4 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
                     Best Case <SourceColumnInfoTooltip text="Sales Rep Best Case Forecast" />
                   </th>
                   <th className="py-3 px-4 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
                     Commit <SourceColumnInfoTooltip text="Sales Rep Commit Forecast" />
                   </th>
-                  <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Churn</th>
+                  <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Closed</th>
                   <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">Target</th>
                 </tr>
               </thead>
@@ -271,9 +271,9 @@ export default function ManagerRepDrillDown({
                       </div>
                     </td>
 
-                    {/* Lifetime sales */}
+                    {/* Pipeline */}
                     <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
-                      {formatCurrency(deal.amount)}
+                      {deal.isClosedWon || deal.isClosedLost ? '$0' : formatCurrency(deal.amount)}
                     </td>
 
                     {/* Best Case cell */}
@@ -289,7 +289,7 @@ export default function ManagerRepDrillDown({
                             managerAnnotation: deal.managerAnnotation ?? null,
                           }}
                           status={deal.submissionStatus}
-                          emptyLabel={deal.isClosedWon ? 'N/A' : 'Not started'}
+                          emptyLabel="$0"
                           isActive={activeColumnKey === 'bestCase' && activeDealId === deal.id}
                           isEditable={isEditable && !!bestCaseCol}
                           onClick={() => {
@@ -314,7 +314,7 @@ export default function ManagerRepDrillDown({
                             managerAnnotation: deal.managerAnnotation ?? null,
                           }}
                           status={deal.submissionStatus}
-                          emptyLabel={deal.isClosedWon ? 'N/A' : 'Not started'}
+                          emptyLabel="$0"
                           isActive={activeColumnKey === 'commit' && activeDealId === deal.id}
                           isEditable={isEditable && !!commitCol}
                           onClick={() => {
@@ -326,9 +326,9 @@ export default function ManagerRepDrillDown({
                       </div>
                     </td>
 
-                    {/* Churn */}
+                    {/* Closed */}
                     <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
-                      {formatCurrency(deal.churn)}
+                      {deal.isClosedWon ? formatCurrency(deal.amount) : '$0'}
                     </td>
 
                     {/* Target quota progress */}

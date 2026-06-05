@@ -759,16 +759,17 @@ model AiExtractionResult {
 // ─────────────────────────────────────────────────────────────
 
 model ForecastPeriod {
-  id            String   @id @default(uuid())
-  tenantId      String
-  name          String
-  startDate     DateTime
-  endDate       DateTime
-  revenueTarget Float
-  status        String
-  isLocked      Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  tenantId           String
+  name               String
+  startDate          DateTime
+  endDate            DateTime
+  revenueTarget      Float
+  status             String
+  isLocked           Boolean   @default(false)
+  submissionDeadline DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   snapshots     AiForecastSnapshot[]
   submissions   ForecastSubmission[]
@@ -821,12 +822,19 @@ model ForecastSubmission {
   overriddenAt     DateTime?
   committedDealIds Json?
   idempotencyKey   String?   @unique
+  dealId           String?
+  bestCaseState    String    @default("editable")
+  commitState      String    @default("editable")
+  approvedBestCase Float?
+  approvedCommit   Float?
+  overriddenBy     String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, periodId, repUserId])
+  @@index([tenantId, periodId, repUserId, dealId])
   @@map("forecast_submissions")
   @@schema("public")
 }
@@ -912,26 +920,60 @@ model HistoricalConversionRate {
   @@schema("public")
 }
 
+model ForecastNotification {
+  id           String   @id @default(uuid())
+  tenantId     String
+  repId        String
+  submissionId String
+  actionType   String   // 'approved' | 'reopened' | 'overridden'
+  dealName     String
+  finalValue   Float?
+  isSeen       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, repId, isSeen])
+  @@map("forecast_notifications")
+  @@schema("public")
+}
+
+model PipelineValuesCache {
+  id            String   @id @default(uuid())
+  tenantId      String
+  repId         String
+  dealId        String?
+  periodId      String
+  pipelineValue Float
+  computedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, periodId, repId, dealId])
+  @@map("pipeline_values_cache")
+  @@schema("public")
+}
+
 model CrmDeal {
-  id               String    @id @default(uuid())
-  tenantId         String
-  dealName         String
-  stage            String
-  amount           Float
-  closeDate        DateTime
-  probability      Float?
-  isClosedWon      Boolean   @default(false)
-  isClosedLost     Boolean   @default(false)
-  region           String?
-  lob              String?
-  repUserId        String?
-  hubspotId        String?
-  lastActivityDate DateTime?
-  riskReason       String?
-  source           String    @default("seed")
-  createdBy        String    @default("system")
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                      String    @id @default(uuid())
+  tenantId                String
+  dealName                String
+  stage                   String
+  amount                  Float
+  closeDate               DateTime
+  probability             Float?
+  isClosedWon             Boolean   @default(false)
+  isClosedLost            Boolean   @default(false)
+  region                  String?
+  lob                     String?
+  repUserId               String?
+  hubspotId               String?
+  lastActivityDate        DateTime?
+  riskReason              String?
+  source                  String    @default("seed")
+  createdBy               String    @default("system")
+  manualForecast          Float?
+  manualForecastUpdatedAt DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   @@index([tenantId, hubspotId])
   @@map("crm_deals")
@@ -957,16 +999,18 @@ model ForecastUser {
 }
 
 model Quota {
-  id        String   @id @default(uuid())
-  tenantId  String
-  periodId  String
-  repUserId String
-  amount    Float
-  aprTarget Float?
-  mayTarget Float?
-  junTarget Float?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  tenantId   String
+  periodId   String
+  repUserId  String
+  amount     Float
+  aprTarget  Float?
+  mayTarget  Float?
+  junTarget  Float?
+  managerId  String?
+  assignedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([tenantId, periodId, repUserId])
   @@map("quotas")

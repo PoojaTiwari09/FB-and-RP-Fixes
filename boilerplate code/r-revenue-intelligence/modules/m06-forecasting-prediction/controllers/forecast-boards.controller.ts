@@ -215,4 +215,46 @@ export class ForecastBoardsController {
     if (!tenantId) throw new ForbiddenException('Tenant ID required');
     return this.boardsService.getPendingApprovals(tenantId, boardId, managerId);
   }
+
+  @Post('targets/assign')
+  @ApiBody({ schema: { type: 'object' } })
+  async assignTargets(
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+    @Headers(UserHeader.toLowerCase()) userId: string,
+    @Headers('x-user-role') role: string,
+    @Body() body: { periodId: string; assignments: { repUserId: string; targetValue: number }[] }
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    return this.boardsService.assignTargets(tenantId, body, userId, role);
+  }
+
+  @Get('notifications/:repId')
+  async getNotifications(
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+    @Param('repId') repId: string
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    const data = await this.boardsService.getNotifications(tenantId, repId);
+    return { success: true, data };
+  }
+
+  @Patch('notifications/:id/seen')
+  async markNotificationSeen(
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+    @Param('id') id: string
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    const data = await this.boardsService.markNotificationSeen(tenantId, id);
+    return { success: true, data };
+  }
+
+  @Get('submissions/:submissionId/activity')
+  async getSubmissionActivity(
+    @Headers(TenantHeader.toLowerCase()) tenantId: string,
+    @Param('submissionId') submissionId: string
+  ) {
+    if (!tenantId) throw new ForbiddenException('Tenant ID required');
+    const data = await this.boardsService.getSubmissionActivity(tenantId, submissionId);
+    return { success: true, data };
+  }
 }

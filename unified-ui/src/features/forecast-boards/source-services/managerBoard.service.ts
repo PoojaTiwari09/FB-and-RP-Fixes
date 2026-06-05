@@ -61,3 +61,16 @@ export async function bulkUploadTargets(boardId: string, file: File): Promise<{ 
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function assignTargets(boardId: string, periodId: string, assignments: { repUserId: string; targetValue: number }[]): Promise<any> {
+  const res = await fetch(`${M06_API_BASE}/boards/targets/assign`, {
+    method: 'POST',
+    headers: {
+      ...headers(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ periodId, assignments }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

@@ -11,6 +11,7 @@ export interface ManagerRow {
   cells: Record<string, SubmissionCell>;
   targetAttainment: TargetAttainment;
   submissionStatus: SubmissionStatus;
+  aiPredictionScore?: number | null;
 }
 
 export interface ManagerBoardViewResponse {

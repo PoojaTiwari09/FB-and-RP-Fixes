@@ -104,7 +104,7 @@ export default function CallsReviewSubmittedView({ reviewId }: CallsReviewSubmit
             <div className="space-y-1">
               <p className="text-xs text-gray-400 font-medium">Call Title</p>
               <p className="text-sm font-normal text-gray-900 leading-snug">
-                {submittedData?.callTitle || 'Discovery Call - Acme Corp Q2 Initiative'}
+                {submittedData?.callTitle || 'Enterprise CRM Evaluation — Salesforce Solutions'}
               </p>
             </div>
 

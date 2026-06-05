@@ -195,7 +195,7 @@ export default function CallsReviewViewView({ reviewId }: CallsReviewViewViewPro
                 <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded">Submitted Review</span>
                 <span className="text-xs text-gray-400 font-mono">ID: {reviewId}</span>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 mt-1 font-serif">Discovery Call - Acme Corp Q2 Initiative</h1>
+              <h1 className="text-xl font-bold text-gray-900 mt-1 font-serif">Enterprise CRM Evaluation — Salesforce Solutions</h1>
               <p className="text-xs text-gray-500 font-medium font-sans">Sarah Chen • Discovery Call Scorecard v2.3</p>
             </div>
           </div>

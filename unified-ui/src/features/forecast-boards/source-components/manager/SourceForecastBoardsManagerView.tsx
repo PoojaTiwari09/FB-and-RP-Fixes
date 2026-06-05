@@ -9,7 +9,7 @@ import type {
   RepDrillDownResponse,
 } from '../../source-types';
 
-import { getManagerBoardView, getRepDrillDown, bulkUploadTargets } from '../../source-services/managerBoard.service';
+import { getManagerBoardView, getRepDrillDown, bulkUploadTargets, assignTargets } from '../../source-services/managerBoard.service';
 import { usePendingApprovals } from '../../source-hooks/usePendingApprovals';
 import { formatCurrency, getErrorMessage, formatPeriodId, parseCustomMonth } from '../../source-utils/format';
 import { getActiveBoardForPeriod } from '../../source-services/repBoard.service';
@@ -46,6 +46,10 @@ export default function SourceForecastBoardsManagerView() {
   const [data, setData] = useState<ManagerBoardViewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Checked reps and bulk target input
+  const [checkedReps, setCheckedReps] = useState<Record<string, boolean>>({});
+  const [bulkTargetValue, setBulkTargetValue] = useState('');
 
   // Immediate Search Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,48 +218,39 @@ export default function SourceForecastBoardsManagerView() {
   };
 
   // Save representative targets (quotas)
-  const handleSaveTargets = (e: React.FormEvent) => {
+  const handleSaveTargets = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data) return;
 
     const nextErrors: Record<string, string> = {};
+    const assignments: { repUserId: string; targetValue: number }[] = [];
+
     data.rows.forEach((row) => {
       const input = targetInputs[row.repUserId];
       if (input === undefined) return;
       const numericQuota = parseCurrencyInput(input);
       if (numericQuota === null || numericQuota <= 0) {
         nextErrors[row.repUserId] = 'Target must be greater than 0.';
+      } else {
+        assignments.push({ repUserId: row.repUserId, targetValue: numericQuota });
       }
     });
 
     setTargetErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        rows: prev.rows.map((row) => {
-          const newQuotaStr = targetInputs[row.repUserId];
-          if (newQuotaStr !== undefined) {
-            const numericQuota = parseCurrencyInput(newQuotaStr);
-            if (numericQuota !== null && numericQuota > 0) {
-              return {
-                ...row,
-                targetAttainment: {
-                  ...row.targetAttainment,
-                  quota: numericQuota,
-                },
-              };
-            }
-          }
-          return row;
-        }),
-      };
-    });
-    setShowSetTargets(false);
-    setTargetErrors({});
-    showToast('Representative targets updated successfully!');
+    try {
+      await assignTargets(boardId, data.period.id, assignments);
+      loadBoardData(boardId);
+      setShowSetTargets(false);
+      setTargetErrors({});
+      setCheckedReps({});
+      setBulkTargetValue('');
+      showToast('Representative targets updated successfully!');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save targets.');
+    }
   };
 
   // Handle Bulk Upload
@@ -430,13 +425,14 @@ export default function SourceForecastBoardsManagerView() {
                           Commit <SourceColumnInfoTooltip text="Sales Rep Commit Forecast" />
                         </th>
                         <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Closed</th>
+                        <th className="py-3 px-4 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">AI Prediction Score</th>
                         <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">Target</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {filteredRows.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-12 text-center text-xs text-gray-500">
+                          <td colSpan={7} className="py-12 text-center text-xs text-gray-500">
                             No team members found matching your filters.
                           </td>
                         </tr>
@@ -485,7 +481,7 @@ export default function SourceForecastBoardsManagerView() {
                                   <SourceSubmissionCell
                                     cell={row.cells['col-best-case'] ?? { value: null, submissionId: null, lastUpdatedAt: null, isAutoSubmit: false, note: null, managerAnnotation: null }}
                                     status={row.submissionStatus}
-                                    emptyLabel="Not started"
+                                    emptyLabel="$0"
                                     isActive={false}
                                     isEditable={editable}
                                     onClick={() => handleOpenDrilldown(row.repUserId)}
@@ -499,7 +495,7 @@ export default function SourceForecastBoardsManagerView() {
                                   <SourceSubmissionCell
                                     cell={row.cells['col-commit'] ?? { value: null, submissionId: null, lastUpdatedAt: null, isAutoSubmit: false, note: null, managerAnnotation: null }}
                                     status={row.submissionStatus}
-                                    emptyLabel="Not started"
+                                    emptyLabel="$0"
                                     isActive={false}
                                     isEditable={editable && !!commitCol && commitCol.submissionMode === 'Manual'}
                                     onClick={() => handleOpenDrilldown(row.repUserId)}
@@ -510,6 +506,11 @@ export default function SourceForecastBoardsManagerView() {
                               {/* Closed */}
                               <td className="py-3 px-4 text-right text-xs font-semibold text-gray-700">
                                 {formatCurrency(row.cells['col-closed']?.value)}
+                              </td>
+
+                              {/* AI Prediction Score */}
+                              <td className="py-3 px-4 text-center text-xs font-semibold text-gray-700">
+                                {row.aiPredictionScore ?? '-'}
                               </td>
 
                               {/* Target quota progress */}
@@ -577,6 +578,32 @@ export default function SourceForecastBoardsManagerView() {
             </div>
 
             <form onSubmit={handleSaveTargets} className="p-6 flex flex-col gap-4">
+              {/* Bulk target assign controls */}
+              <div className="flex items-center gap-2 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+                <input
+                  type="text"
+                  placeholder="Bulk target amount (e.g. 500000)"
+                  value={bulkTargetValue}
+                  onChange={(e) => setBulkTargetValue(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none bg-white focus:border-blue-500 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!bulkTargetValue) return;
+                    const nextInputs = { ...targetInputs };
+                    const repsToAssign = data.rows.filter(row => checkedReps[row.repUserId]);
+                    repsToAssign.forEach(row => {
+                      nextInputs[row.repUserId] = bulkTargetValue;
+                    });
+                    setTargetInputs(nextInputs);
+                  }}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                >
+                  Assign Selected
+                </button>
+              </div>
+
               {/* Search bar inside Set Team Targets modal */}
               <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus-within:border-blue-500 transition-colors">
                 <Search size={14} className="text-gray-400 shrink-0" />
@@ -599,6 +626,12 @@ export default function SourceForecastBoardsManagerView() {
                       <div key={row.repUserId} className="flex flex-col gap-1.5 border-b border-gray-50 pb-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={!!checkedReps[row.repUserId]}
+                              onChange={(e) => setCheckedReps({ ...checkedReps, [row.repUserId]: e.target.checked })}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 mr-1 cursor-pointer"
+                            />
                             <div className="h-7 w-7 rounded-full bg-violet-100 border border-violet-200 text-violet-700 flex items-center justify-center font-bold text-[10px] shrink-0">
                               {row.avatarInitials}
                             </div>

@@ -10,6 +10,7 @@ import SourceSubmissionPanel from '../SourceSubmissionPanel';
 import SourceColumnInfoTooltip from '../SourceColumnInfoTooltip';
 import { formatCurrency, formatPeriodId, parseCustomMonth } from '../../source-utils/format';
 import { getActiveBoardForPeriod, submitForecast } from '../../source-services/repBoard.service';
+import SourceNotificationBell from '../SourceNotificationBell';
 import { Search, Send, AlertTriangle } from 'lucide-react';
 
 const BOARD_ID = 'board-q2';
@@ -157,15 +158,8 @@ export default function SourceForecastBoardsRepView() {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {['draft', 'not_started', 'reopened'].includes(repRow.submissionStatus) && (
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm cursor-pointer"
-            >
-              Submit for Approval
-            </button>
-          )}
+        <div className="flex items-center gap-4">
+          <SourceNotificationBell repUserId={repRow.repUserId} />
           <SourceBoardPeriodSelector periodName={displayPeriodName} onChange={setSelectedPeriodName} />
         </div>
       </div>
@@ -208,7 +202,7 @@ export default function SourceForecastBoardsRepView() {
                       Commit
                     </th>
                     <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Closed</th>
-                    <th className="py-3 px-4 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">AI Score</th>
+                    <th className="py-3 px-4 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">AI Prediction Score</th>
                     <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                       Target <SourceColumnInfoTooltip text="Quota attainment %" />
                     </th>
@@ -252,7 +246,7 @@ export default function SourceForecastBoardsRepView() {
                                   managerAnnotation: deal.managerAnnotation ?? repRow.cells['col-best-case']?.managerAnnotation ?? null,
                                 }}
                                 status={deal.submissionStatus}
-                                emptyLabel={deal.isClosedWon ? 'N/A' : 'Not started'}
+                                emptyLabel="$0"
                                 isActive={activePanel?.dealId === deal.id && activePanel?.columnKey === 'bestCase'}
                                 isEditable={canEditDeal && !!bestCaseCol && bestCaseCol.submissionMode === 'Manual'}
                                 onClick={() => togglePanel(deal.id, 'bestCase')}
@@ -273,7 +267,7 @@ export default function SourceForecastBoardsRepView() {
                                   managerAnnotation: deal.managerAnnotation ?? repRow.cells['col-commit']?.managerAnnotation ?? null,
                                 }}
                                 status={deal.submissionStatus}
-                                emptyLabel={deal.isClosedWon ? 'N/A' : 'Not started'}
+                                emptyLabel="$0"
                                 isActive={activePanel?.dealId === deal.id && activePanel?.columnKey === 'commit'}
                                 isEditable={canEditDeal && !!commitCol && commitCol.submissionMode === 'Manual'}
                                 onClick={() => togglePanel(deal.id, 'commit')}

@@ -15,7 +15,7 @@ type BoardColumnLike = {
   label: string;
   type?: string;
   columnType?: string;
-  submissionMode?: string;
+  submissionMode?: string | null;
   sortOrder?: number;
   isVisible?: boolean;
   infoTooltip?: string | null;
@@ -485,6 +485,19 @@ export class ForecastBoardsService {
       },
     };
 
+    await Promise.all(
+      users.map(async (user) => {
+        const ids = [user.id, user.repId].filter(Boolean) as string[];
+        const repDeals = deals.filter((deal) => deal.repUserId && ids.includes(deal.repUserId));
+        const pipelineVal = repDeals.filter((deal) => !deal.isClosedWon && !deal.isClosedLost).reduce((sum, deal) => sum + deal.amount, 0);
+        await this.prisma.pipelineValuesCache.upsert({
+          where: { tenantId_periodId_repId_dealId: { tenantId, periodId: this.periodId(board), repId: user.id, dealId: '' } },
+          create: { tenantId, periodId: this.periodId(board), repId: user.id, dealId: '', pipelineValue: pipelineVal, computedAt: new Date() },
+          update: { pipelineValue: pipelineVal, computedAt: new Date() }
+        });
+      })
+    );
+
     const shapedRows = rows.map(({ deals: _deals, ...row }) => row);
     if (isManager) return { ...envelope, rows: shapedRows };
     return { ...envelope, rows: shapedRows, repRow: shapedRows[0] ?? null, deals: firstRow?.deals ?? [] };
@@ -793,12 +806,25 @@ export class ForecastBoardsService {
       where: { tenantId, periodId: this.periodId(board), repUserId },
       orderBy: { createdAt: 'asc' },
     });
+    
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const monthlyMap = new Map<string, any>();
+    for (const submission of submissions) {
+      const monthKey = `${submission.createdAt.getFullYear()}-${submission.createdAt.getMonth()}`;
+      monthlyMap.set(monthKey, submission);
+    }
+    
+    const monthlySubmissions = Array.from(monthlyMap.values());
     let previousValue: number | null = null;
-    const history = submissions.map((submission) => {
+    const history = monthlySubmissions.map((submission) => {
       const value = Number(field === 'bestCaseForecast' ? submission.bestCaseForecast : submission.commitForecast);
       const delta = previousValue == null ? null : value - previousValue;
       const entry = {
-        weekLabel: `Week ${period ? Math.max(1, Math.ceil((submission.createdAt.getTime() - period.startDate.getTime()) / 604800000)) : 1}`,
+        weekLabel: months[submission.createdAt.getMonth()],
         submitterName: submission.managerId ? 'Manager' : 'Sales Rep',
         submittedAt: submission.submittedAt ?? submission.createdAt,
         value,
@@ -881,6 +907,49 @@ export class ForecastBoardsService {
       where: { id: submissionId },
       data: { status: 'approved', approvedAt: new Date(), managerId },
     });
+
+    // Side effect 1: Sync manual forecast to CRM deals
+    if (submission.committedDealIds) {
+      try {
+        const parsed = typeof submission.committedDealIds === 'string'
+          ? JSON.parse(submission.committedDealIds)
+          : submission.committedDealIds;
+        if (parsed && parsed.dealForecasts) {
+          for (const [dealId, df] of Object.entries(parsed.dealForecasts)) {
+            const commitVal = (df as any).commit;
+            if (commitVal !== null && commitVal !== undefined) {
+              await this.prisma.crmDeal.update({
+                where: { id: dealId },
+                data: {
+                  manualForecast: commitVal,
+                  manualForecastUpdatedAt: new Date(),
+                }
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to sync manual forecast to deals during approval', e);
+      }
+    }
+
+    // Side effect 2: Insert a notification record for the sales rep
+    try {
+      await this.prisma.forecastNotification.create({
+        data: {
+          tenantId,
+          repId: submission.repUserId,
+          submissionId: submission.id,
+          actionType: 'approved',
+          dealName: 'Team Rollup',
+          finalValue: submission.commitForecast,
+          isSeen: false,
+        }
+      });
+    } catch (e) {
+      console.error('Failed to create approval notification', e);
+    }
+
     await this.prisma.forecastAuditLog.create({ data: { tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_APPROVED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
     return { submissionId, status: 'approved', approvedAt: submission.approvedAt };
   }
@@ -891,6 +960,24 @@ export class ForecastBoardsService {
       where: { id: submissionId },
       data: { status: 'reopened', reopenedAt: new Date(), managerId },
     });
+
+    // Side effect: Insert a notification record for the sales rep
+    try {
+      await this.prisma.forecastNotification.create({
+        data: {
+          tenantId,
+          repId: submission.repUserId,
+          submissionId: submission.id,
+          actionType: 'reopened',
+          dealName: 'Team Rollup',
+          finalValue: null,
+          isSeen: false,
+        }
+      });
+    } catch (e) {
+      console.error('Failed to create reopen notification', e);
+    }
+
     await this.prisma.forecastAuditLog.create({ data: { tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_REOPENED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
     return { submissionId, status: 'reopened', reopenedAt: submission.reopenedAt };
   }
@@ -921,6 +1008,46 @@ export class ForecastBoardsService {
         submittedAt: latest?.submittedAt ?? new Date(),
       },
     });
+
+    // Side effect 1: Sync manual forecast to AI prediction
+    try {
+      // Find rep's active deals to update manual forecasts or sync to deal values
+      const deals = await this.prisma.crmDeal.findMany({
+        where: { tenantId, repUserId, isClosedWon: false, isClosedLost: false }
+      });
+      if (deals.length > 0) {
+        // Apportion manager override proportionally across active deals, or update all
+        for (const deal of deals) {
+          await this.prisma.crmDeal.update({
+            where: { id: deal.id },
+            data: {
+              manualForecast: data.value / deals.length, // split override proportionally
+              manualForecastUpdatedAt: new Date(),
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync manual forecast to deals during override', e);
+    }
+
+    // Side effect 2: Insert a notification record for the sales rep
+    try {
+      await this.prisma.forecastNotification.create({
+        data: {
+          tenantId,
+          repId: repUserId,
+          submissionId: submission.id,
+          actionType: 'overridden',
+          dealName: 'Team Rollup',
+          finalValue: data.value,
+          isSeen: false,
+        }
+      });
+    } catch (e) {
+      console.error('Failed to create override notification', e);
+    }
+
     await this.prisma.forecastAuditLog.create({
       data: { tenantId, forecastSubmissionId: submission.id, action: 'MANAGER_OVERRIDE', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId, columnLabel: column.label, oldValue: latest?.[field], newValue: data.value } },
     });
@@ -954,7 +1081,66 @@ export class ForecastBoardsService {
         bestCaseValue: submission.bestCaseForecast,
         submittedAt: submission.submittedAt,
         note: submission.notes,
+        submissionId: submission.id,
       };
+    });
+  }
+
+  async assignTargets(
+    tenantId: string,
+    body: { periodId: string; assignments: { repUserId: string; targetValue: number }[] },
+    managerId: string,
+    role: string
+  ) {
+    this.assertManager(role);
+    const { periodId, assignments } = body;
+    
+    const results = await Promise.all(
+      assignments.map(async (assign) => {
+        return this.prisma.quota.upsert({
+          where: {
+            tenantId_periodId_repUserId: {
+              tenantId,
+              periodId,
+              repUserId: assign.repUserId,
+            }
+          },
+          create: {
+            tenantId,
+            periodId,
+            repUserId: assign.repUserId,
+            amount: assign.targetValue,
+            managerId,
+          },
+          update: {
+            amount: assign.targetValue,
+            managerId,
+          }
+        });
+      })
+    );
+    
+    return { success: true, count: results.length, data: results };
+  }
+
+  async getNotifications(tenantId: string, repId: string) {
+    return this.prisma.forecastNotification.findMany({
+      where: { tenantId, repId, isSeen: false },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async markNotificationSeen(tenantId: string, id: string) {
+    return this.prisma.forecastNotification.update({
+      where: { id },
+      data: { isSeen: true }
+    });
+  }
+
+  async getSubmissionActivity(tenantId: string, submissionId: string) {
+    return this.prisma.forecastAuditLog.findMany({
+      where: { tenantId, forecastSubmissionId: submissionId },
+      orderBy: { createdAt: 'asc' }
     });
   }
 }
