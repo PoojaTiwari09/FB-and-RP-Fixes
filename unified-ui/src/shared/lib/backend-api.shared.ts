@@ -1,6 +1,6 @@
 /** Matches m09-api dev seed (see m09-memory.store.ts). */
 const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
-const DEFAULT_REP_USER_ID = '00000000-0000-0000-0000-000000000003';
+const DEFAULT_REP_USER_ID = 'me';
 const DEFAULT_MANAGER_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 function envOrDefault(raw: string | undefined, fallback: string): string {

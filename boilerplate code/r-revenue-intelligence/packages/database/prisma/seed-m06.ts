@@ -7,11 +7,11 @@ const MANAGER_ID = '00000000-0000-0000-0000-000000000002';
 const PRIMARY_REP_ID = '00000000-0000-0000-0000-000000000003';
 
 const TEAM = [
-  { id: PRIMARY_REP_ID, repId: 'rep-01', name: 'Alex Chen',  email: 'rep@example.com',  commit: 4500000, bestCase: 5200000, status: 'submitted', aiProjection: 4100000, region: 'Americas', quota: 5000000 },
-  { id: '00000000-0000-0000-0000-000000000004', repId: 'rep-02', name: 'Priya Mehta',  email: 'priya@demo.com',  commit: 5900000, bestCase: 6500000, status: 'approved',  aiProjection: 5800000, region: 'EMEA',     quota: 6000000 },
-  { id: '00000000-0000-0000-0000-000000000005', repId: 'rep-03', name: 'Arjun Verma',  email: 'arjun@demo.com',  commit: 3800000, bestCase: 4500000, status: 'submitted', aiProjection: 2800000, region: 'APAC',     quota: 4000000 },
-  { id: '00000000-0000-0000-0000-000000000006', repId: 'rep-04', name: 'Sneha Nair',   email: 'sneha@demo.com',  commit: 4400000, bestCase: 4800000, status: 'approved',  aiProjection: 4400000, region: 'Americas', quota: 4500000 },
-  { id: '00000000-0000-0000-0000-000000000007', repId: 'rep-05', name: 'Mohan Kumar',  email: 'mohan@demo.com',  commit: 5200000, bestCase: 6000000, status: 'draft',     aiProjection: 3800000, region: 'EMEA',     quota: 5500000 },
+  { id: 'me', repId: 'rep-01', name: 'Alex Morgan',  email: 'alex.morgan@relanto.ai',  commit: 4500000, bestCase: 5200000, status: 'submitted', aiProjection: 4100000, region: 'Americas', quota: 5000000 },
+  { id: 'sarah', repId: 'rep-02', name: 'Sarah Chen',  email: 'sarah.chen@company.com',  commit: 5900000, bestCase: 6500000, status: 'approved',  aiProjection: 5800000, region: 'EMEA',     quota: 6000000 },
+  { id: 'michael', repId: 'rep-03', name: 'Michael Rodriguez',  email: 'michael.rod@company.com',  commit: 3800000, bestCase: 4500000, status: 'submitted', aiProjection: 2800000, region: 'APAC',     quota: 4000000 },
+  { id: 'david', repId: 'rep-04', name: 'David Park',   email: 'david.park@company.com',  commit: 4400000, bestCase: 4800000, status: 'approved',  aiProjection: 4400000, region: 'Americas', quota: 4500000 },
+  { id: 'emily', repId: 'rep-05', name: 'Emily Thompson',  email: 'emily.thompson@company.com',  commit: 5200000, bestCase: 6000000, status: 'draft',     aiProjection: 3800000, region: 'EMEA',     quota: 5500000 },
 ];
 
 const ACTIVE_DEALS = [
@@ -238,7 +238,7 @@ async function main() {
     data: {
       tenantId,
       periodId: q2.id,
-      repUserId: 'rep-01',
+      repUserId: TEAM[0].id,
       lob: 'Enterprise Software',
       commitForecast: 42000000,
       bestCaseForecast: 50000000,
@@ -253,7 +253,7 @@ async function main() {
     data: {
       tenantId,
       periodId: q2.id,
-      repUserId: 'rep-01',
+      repUserId: TEAM[0].id,
       lob: 'Enterprise Software',
       commitForecast: 45000000,
       bestCaseForecast: 52000000,
@@ -268,7 +268,7 @@ async function main() {
       data: {
         tenantId,
         periodId: q2.id,
-        repUserId: rep.repId,
+        repUserId: rep.id,
         lob: 'Enterprise Software',
         commitForecast: rep.commit,
         bestCaseForecast: rep.bestCase,
@@ -284,7 +284,7 @@ async function main() {
         tenantId,
         forecastSubmissionId: repSubmission.id,
         action: rep.status === 'approved' ? 'Approved' : rep.status === 'submitted' ? 'Submitted' : 'Draft created',
-        actorId: rep.status === 'approved' ? manager.id : rep.repId,
+        actorId: rep.status === 'approved' ? manager.id : rep.id,
         actorRole: rep.status === 'approved' ? 'Manager' : 'Sales Rep',
       },
     });
@@ -296,7 +296,7 @@ async function main() {
       tenantId,
       forecastSubmissionId: submission.id,
       action: 'Draft created',
-      actorId: 'rep-01',
+      actorId: TEAM[0].id,
       actorRole: 'Sales Rep',
     },
   });
@@ -398,7 +398,7 @@ async function main() {
         isClosedWon: true,
         isClosedLost: false,
         region: deal.region,
-        repUserId: 'rep-01',
+        repUserId: TEAM[0].id,
       })),
       // Rep-02 Closed Won deals (attributed to Priya Mehta)
       ...CLOSED_WON_REP02.map((deal, index) => ({
@@ -411,7 +411,7 @@ async function main() {
         isClosedWon: true,
         isClosedLost: false,
         region: deal.region,
-        repUserId: 'rep-02',
+        repUserId: TEAM[1].id,
       })),
       // Active open deals (rep-01 gets first 4, rep-02 gets last 2)
       ...ACTIVE_DEALS.map((deal, index) => ({
@@ -424,7 +424,7 @@ async function main() {
         isClosedWon: false,
         isClosedLost: false,
         region: deal.region ?? 'Americas',
-        repUserId: index < 3 ? 'rep-01' : 'rep-02',
+        repUserId: index < 3 ? TEAM[0].id : TEAM[1].id,
       })),
       // Historical deals (no rep assigned — used for AI model training only)
       ...crmDeals
@@ -454,3 +454,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

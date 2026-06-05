@@ -921,15 +921,19 @@ model HistoricalConversionRate {
 }
 
 model ForecastNotification {
-  id           String   @id @default(uuid())
-  tenantId     String
-  repId        String
-  submissionId String
-  actionType   String   // 'approved' | 'reopened' | 'overridden'
-  dealName     String
-  finalValue   Float?
-  isSeen       Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id            String   @id @default(uuid())
+  tenantId      String
+  repId         String
+  repName       String?
+  submissionId  String
+  actionType    String   // 'approved' | 'reopened' | 'overridden'
+  requestType   String?  // 'best_case' | 'commit' | 'both'
+  dealName      String
+  finalValue    Float?
+  bestCaseValue Float?
+  commitValue   Float?
+  isSeen        Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   @@index([tenantId, repId, isSeen])
   @@map("forecast_notifications")

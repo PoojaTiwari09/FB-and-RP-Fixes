@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: '/api/v1/hubspot/:path*', destination: `${backendUrl}/api/v1/hubspot/:path*` },
+      { source: '/api/forecast/:path*', destination: `${backendUrl}/api/forecast/:path*` },
+      { source: '/api/notifications/:path*', destination: `${backendUrl}/api/notifications/:path*` },
+      { source: '/api/closed-deals/:path*', destination: `${backendUrl}/api/closed-deals/:path*` },
+      { source: '/api/pipeline/:path*', destination: `${backendUrl}/api/pipeline/:path*` },
+      { source: '/api/ai-predictor/:path*', destination: `${backendUrl}/api/ai-predictor/:path*` },
+      { source: '/api/targets/:path*', destination: `${backendUrl}/api/targets/:path*` },
+      { source: '/api/targets', destination: `${backendUrl}/api/targets` },
       { source: '/api/calls/:path*', destination: `${backendUrl}/api/calls/:path*` },
       { source: '/api/coaching/:path*', destination: `${backendUrl}/api/coaching/:path*` },
       { source: '/api/tasks/:path*', destination: `${backendUrl}/api/tasks/:path*` },

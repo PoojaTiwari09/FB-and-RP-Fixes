@@ -56,7 +56,7 @@ export function useSubmissionPanel({
         value: numericValue,
         note: note || undefined,
         dealId,
-        status: isManagerView ? 'submitted' : (isRepLocked ? 'change_request' : 'draft'),
+        status: isManagerView ? 'overridden' : (isRepLocked ? 'change_request' : 'draft'),
       });
       setSaveSuccess(true);
       onSaveSuccess(numericValue, note);

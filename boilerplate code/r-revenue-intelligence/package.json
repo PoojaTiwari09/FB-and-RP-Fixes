@@ -18,6 +18,7 @@
     "seed:m02-trackers": "pnpm exec tsx packages/database/prisma/seed-trackers.ts",
     "seed:call-reviews": "pnpm exec tsx packages/database/prisma/seed-call-reviews.ts",
     "seed:m06": "pnpm exec tsx packages/database/prisma/seed-m06.ts",
+    "seed:revenue": "pnpm exec tsx packages/database/prisma/seed-revenue.ts",
     "dev:m09-web": "pnpm --filter @rri/m09-web run dev",
     "dev:m03": "pnpm run dev:m03-api & pnpm run dev:m03-web",
     "dev:m03-api": "pnpm --filter m03-api run dev",

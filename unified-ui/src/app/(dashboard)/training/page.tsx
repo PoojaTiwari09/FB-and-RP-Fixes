@@ -46,7 +46,7 @@ export default async function TrainingDashboardPage() {
   const inProgress = trainings.filter((t) => t.status === 'in-progress').length;
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="h-full flex flex-col min-h-0 flex-1 overflow-y-auto">
       <div className="px-8 py-8 max-w-6xl w-full mx-auto">
           {/* Page Header */}
           <div className="mb-6">

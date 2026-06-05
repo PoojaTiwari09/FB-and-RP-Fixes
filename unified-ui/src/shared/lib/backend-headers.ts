@@ -2,7 +2,7 @@
 export const BACKEND_ORG_ID =
   process.env.NEXT_PUBLIC_BACKEND_ORG_ID ?? '00000000-0000-0000-0000-000000000001';
 export const BACKEND_USER_ID =
-  process.env.NEXT_PUBLIC_BACKEND_USER_ID ?? '00000000-0000-0000-0000-000000000003';
+  process.env.NEXT_PUBLIC_BACKEND_USER_ID ?? 'me';
 
 export function getBridgeHeaders(): Record<string, string> {
   return {

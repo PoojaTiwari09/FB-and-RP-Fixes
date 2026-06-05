@@ -29,45 +29,39 @@ export default function SourceSubmissionCell({ cell, isActive, isEditable, statu
   const isOverridden = status === 'overridden';
 
   if (isApproved) {
-    borderStyle = isActive
-      ? 'border-2 border-green-600 bg-green-50/10 text-green-700'
-      : 'border-gray-200 bg-gray-50 hover:border-green-400 text-gray-700';
+    borderStyle = 'border-gray-200 bg-gray-50 text-gray-700';
     badge = (
       <div className="absolute -top-1.5 -right-1.5 bg-green-100 text-green-700 rounded-full p-0.5 border border-green-200 shadow-sm" title="Approved">
         <div className="text-[8px] leading-none px-0.5 font-extrabold">✅</div>
       </div>
     );
-    tooltip = 'Approved — final';
+    tooltip = `Approved — ${formattedVal} (final)`;
   } else if (isPending) {
-    borderStyle = isActive
-      ? 'border-2 border-amber-600 bg-amber-50/10 text-amber-700'
-      : 'border-gray-200 bg-gray-50 hover:border-amber-400 text-gray-500';
+    borderStyle = 'border-gray-200 bg-gray-50 text-gray-500';
     badge = (
       <div className="absolute -top-1.5 -right-1.5 bg-amber-100 text-amber-700 rounded-full p-0.5 border border-amber-200 shadow-sm" title="Pending Approval">
         <div className="text-[8px] leading-none px-0.5 font-extrabold">🕐</div>
       </div>
     );
-    tooltip = 'Pending Approval';
+    tooltip = 'Pending approval — submitted';
   } else if (isReopened) {
     borderStyle = isActive
-      ? 'border-2 border-purple-600 bg-purple-50/20 text-purple-700'
-      : 'border-2 border-purple-500 hover:border-purple-600 bg-white text-gray-900 shadow-xs';
+      ? 'border-2 border-blue-600 bg-blue-50/20 text-blue-700'
+      : 'border-2 border-blue-500 hover:border-blue-600 bg-white text-gray-900 shadow-xs';
     badge = (
       <div className="absolute -top-1.5 -right-1.5 bg-purple-100 text-purple-700 rounded-full p-0.5 border border-purple-200 shadow-sm" title="Reopened">
         <div className="text-[8px] leading-none px-0.5 font-extrabold">🔄</div>
       </div>
     );
-    tooltip = 'Reopened — please enter your value';
+    tooltip = 'Reopened — please re-enter your value';
   } else if (isOverridden) {
-    borderStyle = isActive
-      ? 'border-2 border-yellow-600 bg-yellow-50/10 text-yellow-700'
-      : 'border-gray-200 bg-gray-50 hover:border-yellow-400 text-gray-700';
+    borderStyle = 'border-gray-200 bg-gray-50 text-gray-700';
     badge = (
       <div className="absolute -top-1.5 -right-1.5 bg-yellow-100 text-yellow-700 rounded-full p-0.5 border border-yellow-200 shadow-sm" title="Overridden">
         <div className="text-[8px] leading-none px-0.5 font-extrabold">🟡</div>
       </div>
     );
-    tooltip = 'Overridden — manager override, final';
+    tooltip = `Overridden — ${formattedVal} (manager override, final)`;
   } else {
     if (isEditable) {
       borderStyle = isActive
@@ -75,14 +69,12 @@ export default function SourceSubmissionCell({ cell, isActive, isEditable, statu
         : 'border-2 border-blue-500 hover:border-blue-600 bg-white text-gray-900 shadow-xs';
       tooltip = 'Editable — enter your value';
     } else {
-      borderStyle = isActive
-        ? 'border-2 border-blue-600 bg-blue-50/10 text-blue-700'
-        : 'border-gray-200 bg-gray-50 hover:border-blue-400';
+      borderStyle = 'border-gray-200 bg-gray-50 text-gray-700';
       tooltip = 'Read-only';
     }
   }
 
-  // Adjust for requested values / annotations override visuals
+  // Override / Pending visual logic
   if (requestedValue !== undefined && requestedValue !== null) {
     badge = (
       <div className="absolute -top-1.5 -right-1.5 bg-blue-100 text-blue-700 rounded-full p-0.5 border border-blue-200 shadow-sm" title={`Pending Change Request: ${formatCurrency(requestedValue)}`}>

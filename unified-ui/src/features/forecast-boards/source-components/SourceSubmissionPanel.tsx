@@ -275,7 +275,7 @@ export default function SourceSubmissionPanel({
         )}
 
         {/* Submission history */}
-        <SourceSubmissionHistoryAccordion boardId={boardId} repUserId={repUserId} columnId={columnId} />
+        <SourceSubmissionHistoryAccordion boardId={boardId} repUserId={repUserId} columnId={columnId} dealId={dealId} />
 
         {saveError && (
           <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">{saveError}</p>

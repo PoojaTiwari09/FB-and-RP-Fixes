@@ -6,7 +6,7 @@ import { getSubmissionHistory } from '../source-services/history.service';
 import { getErrorMessage } from '../source-utils/format';
 
 export function useSubmissionHistory(
-  boardId: string, repUserId: string, columnId: string, isOpen: boolean,
+  boardId: string, repUserId: string, columnId: string, isOpen: boolean, dealId?: string
 ) {
   const [data, setData] = useState<SubmissionHistoryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +18,7 @@ export function useSubmissionHistory(
     void Promise.resolve()
       .then(() => {
         setIsLoading(true);
-        return getSubmissionHistory(boardId, repUserId, columnId);
+        return getSubmissionHistory(boardId, repUserId, columnId, dealId);
       })
       .then((res) => {
         if (!isCurrent) return;
@@ -34,7 +34,7 @@ export function useSubmissionHistory(
     return () => {
       isCurrent = false;
     };
-  }, [boardId, repUserId, columnId, isOpen]);
+  }, [boardId, repUserId, columnId, isOpen, dealId]);
 
   return { history: data?.history ?? [], isLoading, error };
 }

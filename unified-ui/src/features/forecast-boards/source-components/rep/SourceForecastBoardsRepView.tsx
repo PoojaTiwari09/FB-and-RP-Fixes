@@ -245,10 +245,10 @@ export default function SourceForecastBoardsRepView() {
                                   note: null,
                                   managerAnnotation: deal.managerAnnotation ?? repRow.cells['col-best-case']?.managerAnnotation ?? null,
                                 }}
-                                status={deal.submissionStatus}
+                                status={deal.bestCaseState}
                                 emptyLabel="$0"
                                 isActive={activePanel?.dealId === deal.id && activePanel?.columnKey === 'bestCase'}
-                                isEditable={canEditDeal && !!bestCaseCol && bestCaseCol.submissionMode === 'Manual'}
+                                isEditable={['editable', 'reopened'].includes(deal.bestCaseState ?? 'editable') && !!bestCaseCol && bestCaseCol.submissionMode === 'Manual'}
                                 onClick={() => togglePanel(deal.id, 'bestCase')}
                                 requestedValue={deal.requestedBestCase}
                               />
@@ -266,10 +266,10 @@ export default function SourceForecastBoardsRepView() {
                                   note: null,
                                   managerAnnotation: deal.managerAnnotation ?? repRow.cells['col-commit']?.managerAnnotation ?? null,
                                 }}
-                                status={deal.submissionStatus}
+                                status={deal.commitState}
                                 emptyLabel="$0"
                                 isActive={activePanel?.dealId === deal.id && activePanel?.columnKey === 'commit'}
-                                isEditable={canEditDeal && !!commitCol && commitCol.submissionMode === 'Manual'}
+                                isEditable={['editable', 'reopened'].includes(deal.commitState ?? 'editable') && !!commitCol && commitCol.submissionMode === 'Manual'}
                                 onClick={() => togglePanel(deal.id, 'commit')}
                                 requestedValue={deal.requestedCommit}
                               />
