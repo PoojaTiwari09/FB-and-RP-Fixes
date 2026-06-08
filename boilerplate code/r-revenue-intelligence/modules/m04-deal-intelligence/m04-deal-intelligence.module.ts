@@ -54,12 +54,27 @@ import { DealBoardRepository } from './repositories/deal-board.repository';
 import { DealRepository } from './repositories/deal.repository';
 import { SessionUserMiddleware } from './middleware/session-user.middleware';
 
+// Deal Drivers API integration
+import { PrismaModule } from './database/prisma.module';
+import { DealsController, DealBoardsRepController, NotificationsApiController } from './controllers/deals.controller';
+import { DealDriversApiController } from './controllers/deal-drivers-api.controller';
+import { DealDriversManagerController } from './controllers/deal-drivers-manager.controller';
+import { DealDriversDealController } from './controllers/deal-drivers-deal.controller';
+import { HubSpotService } from './services/hubspot.service';
+import { DealsService } from './services/deals.service';
+import { DealMeddpiccService } from './services/deal-meddpicc.service';
+import { DealCatalogService } from './services/deal-catalog.service';
+import { DealDriversApiRepository } from './repositories/deal-drivers-api.repository';
+import { DealDriversApiService } from './services/deal-drivers-api.service';
+import { DealDriversAnalyticsService } from './services/deal-drivers-analytics.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     HttpModule.register({ timeout: 30000, maxRedirects: 5 }),
     ScheduleModule.forRoot(),
     M04DatabaseModule,
+    PrismaModule,
   ],
   controllers: [
     DealBoardController,
@@ -82,6 +97,12 @@ import { SessionUserMiddleware } from './middleware/session-user.middleware';
     AnalyticsController,
     SettingsController,
     M04TestController,
+    DealsController,
+    DealBoardsRepController,
+    NotificationsApiController,
+    DealDriversApiController,
+    DealDriversManagerController,
+    DealDriversDealController,
   ],
   providers: [
     DealBoardService,
@@ -105,6 +126,13 @@ import { SessionUserMiddleware } from './middleware/session-user.middleware';
     SettingsService,
     DealBoardRepository,
     DealRepository,
+    HubSpotService,
+    DealsService,
+    DealMeddpiccService,
+    DealCatalogService,
+    DealDriversApiRepository,
+    DealDriversApiService,
+    DealDriversAnalyticsService,
   ],
   exports: [
     DealBoardService,
@@ -118,6 +146,11 @@ import { SessionUserMiddleware } from './middleware/session-user.middleware';
     DealWarningService,
     DealRepository,
     AuthService,
+    HubSpotService,
+    DealsService,
+    DealMeddpiccService,
+    DealDriversApiService,
+    DealDriversAnalyticsService,
   ],
 })
 export class M04DealIntelligenceModule implements NestModule {

@@ -307,9 +307,9 @@ export class DealPlaybookService {
     return {
       id: playbook.id,
       dealId: playbook.dealId,
-      type: playbook.type,
+      type: playbook.type as PlaybookType,
       criterion: playbook.criterion,
-      status: playbook.status,
+      status: playbook.status as PlaybookItemStatus,
       notes: playbook.notes ?? undefined,
       aiSuggestion: playbook.aiSuggestion ?? undefined,
       order: playbook.order,

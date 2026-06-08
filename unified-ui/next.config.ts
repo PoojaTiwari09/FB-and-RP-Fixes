@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     return [
       { source: '/api/v1/hubspot/:path*', destination: `${backendUrl}/api/v1/hubspot/:path*` },
       { source: '/api/forecast/:path*', destination: `${backendUrl}/api/forecast/:path*` },
+      { source: '/api/deals/:path*', destination: `${backendUrl}/api/deals/:path*` },
+      { source: '/api/deal-boards/:path*', destination: `${backendUrl}/api/deal-boards/:path*` },
       { source: '/api/notifications/:path*', destination: `${backendUrl}/api/notifications/:path*` },
       { source: '/api/closed-deals/:path*', destination: `${backendUrl}/api/closed-deals/:path*` },
       { source: '/api/pipeline/:path*', destination: `${backendUrl}/api/pipeline/:path*` },

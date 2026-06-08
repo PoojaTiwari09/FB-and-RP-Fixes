@@ -29,6 +29,7 @@
       "@topics/*": ["./src/features/topics/*"],
       "@trackers/*": ["./src/features/trackers/*"],
       "@forecast/*": ["./src/features/forecast-boards/*"],
+      "@deal-boards/*": ["./src/features/deal-boards/*"],
       "@revenue/*": ["./src/features/revenue/*"],
       "@deal-drivers/*": ["./src/features/deal-drivers/*"],
       "@ai-deep-researcher/*": ["./src/features/ai-deep-researcher/*"],

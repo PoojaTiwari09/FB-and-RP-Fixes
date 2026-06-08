@@ -12,13 +12,17 @@
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@/*": ["../../modules/m04-deal-intelligence/*"]
+    }
   },
   "include": [
     "src/**/*",
     "../../modules/m01-capture-transcription/**/*",
     "../../modules/m02-conversation-intelligence/**/*",
     "../../modules/m09-coaching-training/**/*",
+    "../../modules/m04-deal-intelligence/**/*",
     "../../modules/platform-core/**/*"
   ],
   "exclude": ["node_modules", "dist", "../../modules/**/features/**"]

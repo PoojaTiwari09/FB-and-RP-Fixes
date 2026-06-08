@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import PageHeader from '@shared/components/PageHeader/PageHeader';
 import RoleBadge from '@shared/components/RoleBadge/RoleBadge';
 
@@ -8,6 +9,13 @@ export default function TopicsRepView() {
         title="Topics"
         subtitle="Conversation topics flagged across your calls — track trends and prepare responses."
         badge={<RoleBadge role="sales_rep" />}
+        actions={
+          <Link href="/deal-boards">
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors cursor-pointer">
+              Deal Boards
+            </button>
+          </Link>
+        }
       />
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">

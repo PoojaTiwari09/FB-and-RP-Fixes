@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Optional } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
@@ -9,7 +9,7 @@ export class M06ForecastingPredictionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventPublisher: EventPublisherService,
-    private readonly predictionQueue: M06PredictionQueueService,
+    @Optional() private readonly predictionQueue?: M06PredictionQueueService,
   ) { }
 
   private stageFallbackRates: Record<string, number> = {
@@ -285,12 +285,13 @@ export class M06ForecastingPredictionService {
 
   async requestAiPrediction(tenantId: string, periodId: string) {
     const period = await this.resolvePeriod(tenantId, periodId);
+    if (!this.predictionQueue) throw new BadRequestException('Prediction queue not available');
     return this.predictionQueue.enqueuePrediction(tenantId, period.id, 'api.manual');
   }
 
   async getAiPredictionJobStatus(tenantId: string, periodId: string) {
     const period = await this.resolvePeriod(tenantId, periodId);
-    const job = await this.predictionQueue.getLatestJob(tenantId, period.id);
+    const job = await this.predictionQueue?.getLatestJob(tenantId, period.id);
     const snapshot = await this.prisma.aiForecastSnapshot.findFirst({
       where: { tenantId, periodId: period.id },
       orderBy: { computedAt: 'desc' },
@@ -308,7 +309,7 @@ export class M06ForecastingPredictionService {
 
     const snapshot = await this.prisma.aiForecastSnapshot.findFirst({ where: { tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } });
     if (!snapshot) {
-      const job = await this.predictionQueue.getLatestJob(tenantId, period.id);
+      const job = await this.predictionQueue?.getLatestJob(tenantId, period.id);
       throw new NotFoundException({
         message: 'Prediction pending',
         jobStatus: job?.status ?? 'none',
@@ -1059,7 +1060,7 @@ export class M06ForecastingPredictionService {
     region?: string,
     periodId: string = 'current',
     opts?: { skipSnapshot?: boolean },
-  ) {
+  ): Promise<any> {
     const period = await this.resolvePeriod(tenantId, periodId);
     const normalizedBaseline = this.normalizeBaseline(baseline);
     if (!period) throw new NotFoundException('No open period');
@@ -1150,7 +1151,7 @@ export class M06ForecastingPredictionService {
     const deal = await this.prisma.crmDeal.create({ data: { tenantId, dealName: data.dealName, stage: data.stage, amount: data.amount, closeDate: new Date(data.closeDate), probability: normalizedProbability, isClosedWon: data.stage === 'Closed Won', isClosedLost: data.stage === 'Closed Lost', region: data.region, lob: data.lob, repUserId: data.repUserId, source: 'manual', createdBy: 'user' } });
 
     const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
-    if (period) {
+    if (period && this.predictionQueue) {
       await this.predictionQueue.enqueuePrediction(tenantId, period.id, 'deal.created');
     }
     

@@ -161,6 +161,15 @@ export default function SourceForecastBoardsRepView() {
         <div className="flex items-center gap-4">
           <SourceNotificationBell repUserId={repRow.repUserId} />
           <SourceBoardPeriodSelector periodName={displayPeriodName} onChange={setSelectedPeriodName} />
+          {['draft', 'not_started', 'reopened'].includes(repRow.submissionStatus || 'draft') && (
+            <button
+              onClick={() => setShowSubmitModal(true)}
+              className="px-4 py-2 border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold rounded-lg text-gray-700 cursor-pointer transition-colors flex items-center gap-1.5"
+            >
+              <Send size={12} className="text-gray-500" />
+              Submit Forecast
+            </button>
+          )}
         </div>
       </div>
 

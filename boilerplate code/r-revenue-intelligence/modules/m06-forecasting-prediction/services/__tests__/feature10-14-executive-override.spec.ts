@@ -9,15 +9,20 @@ import { PrismaService } from '../../database/prisma.service';
 import { EventPublisherService } from '../../../platform-core/events/event-publisher.service';
 
 function mockPrisma() {
+  const userMock = { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), upsert: jest.fn() };
   return {
-    forecastPeriod: { findFirst: jest.fn() },
+    forecastPeriod: { findFirst: jest.fn(), findMany: jest.fn() },
     aiForecastSnapshot: { findFirst: jest.fn() },
-    historicalConversionRate: { findMany: jest.fn() },
+    historicalConversionRate: { findMany: jest.fn(), createMany: jest.fn() },
     crmDeal: { findMany: jest.fn(), create: jest.fn() },
-    forecastSubmission: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn(), create: jest.fn() },
+    forecastSubmission: { findFirst: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn() },
     forecastAuditLog: { findMany: jest.fn(), create: jest.fn() },
-    user: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), upsert: jest.fn() },
+    user: userMock,
+    forecastUser: userMock,
     quota: { findFirst: jest.fn(), findMany: jest.fn(), upsert: jest.fn(), create: jest.fn() },
+    forecastExecutiveSnapshot: { findFirst: jest.fn(), findMany: jest.fn(), upsert: jest.fn(), create: jest.fn() },
+    pipelineValuesCache: { findFirst: jest.fn(), findMany: jest.fn(), upsert: jest.fn(), create: jest.fn() },
+    pipelineCoverageMetrics: { findFirst: jest.fn(), findMany: jest.fn() },
   };
 }
 
