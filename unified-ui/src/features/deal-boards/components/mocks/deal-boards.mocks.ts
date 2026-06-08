@@ -282,50 +282,123 @@ export const MOCK_DEALS: Record<string, Deal[]> = {
 
 export const MOCK_BRIEF: Record<string, BriefData> = {
   "deal-1": {
-    aiSummary:
-      "The deal is stalled in negotiation. Buyer raised pricing concerns on Apr 20 — no follow-up has occurred since. The CFO (economic buyer) has never joined a recorded call. Close date has passed. Sentiment is negative.",
-    whatChangedThisWeek:
-      "Close date crossed on Apr 28 with deal still open. Warning count increased from 2 → 3. No new activity logged since Apr 21.",
-    buyerSentiment: "Negative",
-    lastInteraction: "Apr 21 — email sent, no reply",
-    keyRisks: "CFO not engaged • No next steps • Close date past",
+    overview: "The deal is stalled in negotiation. Buyer raised pricing concerns on Apr 20 and no follow-up has occurred since. The CFO (economic buyer) has never joined a recorded call. Close date has passed. Sentiment is negative.",
+    keyDiscussionPoints: [
+      "Pricing concerns raised on Apr 20 regarding seat licenses",
+      "No follow-up on technical implementation specs",
+      "CFO involvement requested but not scheduled"
+    ],
+    customerNeeds: [
+      { title: "Reduce Overhead", description: "Need to consolidate 3 tools into one platform." },
+      { title: "Budget Constraints", description: "Strict Q2 budget limit requiring discount." }
+    ],
+    risks: [
+      { title: "CFO not engaged", description: "Economic buyer has not been on any calls.", severity: "high" },
+      { title: "Close date past", description: "The original close date of Apr 28 has passed.", severity: "high" }
+    ],
+    commitments: [
+      { description: "Send revised pricing", assigneeType: "rep", dueDate: "ASAP" }
+    ],
+    stakeholders: [
+      { name: "Robert Davis", title: "CFO", company: "Acme Corp", avatarInitials: "RD" },
+      { name: "Jane Doe", title: "VP Engineering", company: "Acme Corp", avatarInitials: "JD" }
+    ],
+    activityContext: [
+      { type: "email", description: "Followed up on pricing", date: "Apr 21" }
+    ]
   },
   "deal-2": {
-    aiSummary:
-      "Deal is progressing well. Contract review is underway and champion is actively engaged. Legal review expected to complete by end of week.",
-    whatChangedThisWeek:
-      "Legal team received contract draft on May 20. Champion confirmed budget approval. No blockers identified.",
-    buyerSentiment: "Positive",
-    lastInteraction: "May 22 — call with champion, 30 min",
-    keyRisks: "None identified",
+    overview: "Deal is progressing well. Contract review is underway and champion is actively engaged. Legal review expected to complete by end of week.",
+    keyDiscussionPoints: [
+      "Contract redlines under review by legal",
+      "Champion confirmed budget is approved",
+      "Implementation timeline agreed for Q3"
+    ],
+    customerNeeds: [
+      { title: "Fast Deployment", description: "Needs to be live before busy season starts." }
+    ],
+    risks: [],
+    commitments: [
+      { description: "Return contract redlines", assigneeType: "customer", dueDate: "Friday" }
+    ],
+    stakeholders: [
+      { name: "Alex Johnson", title: "Champion", company: "TechStart", avatarInitials: "AJ" }
+    ],
+    activityContext: [
+      { type: "call", description: "Check-in call with champion (30 min)", date: "May 22" }
+    ]
   },
   "deal-3": {
-    aiSummary:
-      "Deal engagement has stalled. Primary contact changed roles last week. No executive sponsor identified yet. Discovery is incomplete.",
-    whatChangedThisWeek:
-      "Primary contact (Jane Lee) moved to different division. No replacement contact assigned. Last call was May 10.",
-    buyerSentiment: "Neutral",
-    lastInteraction: "May 10 — intro call with new contact",
-    keyRisks: "Contact change • No exec sponsor • Incomplete discovery",
+    overview: "Deal engagement has stalled. Primary contact changed roles last week. No executive sponsor identified yet. Discovery is incomplete.",
+    keyDiscussionPoints: [
+      "Jane Lee moved to a different division",
+      "No clear handover provided",
+      "Discovery phase interrupted"
+    ],
+    customerNeeds: [
+      { title: "Enterprise Scalability", description: "Need a solution that scales globally." }
+    ],
+    risks: [
+      { title: "Contact change", description: "Primary contact left role without handover.", severity: "high" },
+      { title: "No exec sponsor", description: "No VP or C-suite sponsor identified.", severity: "medium" }
+    ],
+    commitments: [
+      { description: "Identify new primary contact", assigneeType: "rep", dueDate: "This week" }
+    ],
+    stakeholders: [
+      { name: "Jane Lee", title: "Former Contact", company: "Global Solutions", avatarInitials: "JL" }
+    ],
+    activityContext: [
+      { type: "call", description: "Intro call with new contact", date: "May 10" }
+    ]
   },
   "deal-4": {
-    aiSummary:
-      "Early-stage deal with strong initial interest. Champion engaged but no economic buyer identified yet. Need to multi-thread into VP and IT decision-makers.",
-    whatChangedThisWeek:
-      "Champion requested technical deep-dive for May 30. IT team added to evaluation committee.",
-    buyerSentiment: "Positive",
-    lastInteraction: "May 24 — email exchange with champion",
-    keyRisks: "No economic buyer • Single-threaded • Budget not confirmed",
+    overview: "Early-stage deal with strong initial interest. Champion engaged but no economic buyer identified yet. Need to multi-thread into VP and IT decision-makers.",
+    keyDiscussionPoints: [
+      "Champion requested technical deep-dive for May 30",
+      "IT team added to evaluation committee",
+      "Initial demo received positive feedback"
+    ],
+    customerNeeds: [
+      { title: "Technical Integration", description: "Must integrate seamlessly with legacy systems." }
+    ],
+    risks: [
+      { title: "Single-threaded", description: "Only speaking with one person.", severity: "medium" },
+      { title: "Budget not confirmed", description: "No budget allocated yet.", severity: "low" }
+    ],
+    commitments: [
+      { description: "Schedule technical deep-dive", assigneeType: "rep", dueDate: "May 30" }
+    ],
+    stakeholders: [
+      { name: "Mark Smith", title: "IT Director", company: "NextGen", avatarInitials: "MS" }
+    ],
+    activityContext: [
+      { type: "email", description: "Email exchange with champion", date: "May 24" }
+    ]
   },
   "deal-5": {
-    aiSummary:
-      "Strong enterprise deal with active procurement engagement. Pricing has been challenged — revised proposal sent May 22. Technical evaluation passed.",
-    whatChangedThisWeek:
-      "Procurement requested volume discount on May 21. Revised proposal submitted May 22. Awaiting response.",
-    buyerSentiment: "Neutral",
-    lastInteraction: "May 22 — revised proposal sent",
-    keyRisks: "Pricing sensitivity • Procurement delay • Competing vendor in evaluation",
-  },
+    overview: "Strong enterprise deal with active procurement engagement. Pricing has been challenged; revised proposal sent May 22. Technical evaluation passed.",
+    keyDiscussionPoints: [
+      "Procurement requested volume discount",
+      "Revised proposal submitted May 22",
+      "Technical requirements signed off"
+    ],
+    customerNeeds: [
+      { title: "Cost Efficiency", description: "Looking for volume discounts." }
+    ],
+    risks: [
+      { title: "Procurement delay", description: "Legal review taking longer than expected.", severity: "medium" }
+    ],
+    commitments: [
+      { description: "Review revised proposal", assigneeType: "customer", dueDate: "End of week" }
+    ],
+    stakeholders: [
+      { name: "Sarah Connor", title: "Procurement", company: "MegaCorp", avatarInitials: "SC" }
+    ],
+    activityContext: [
+      { type: "email", description: "Sent revised proposal", date: "May 22" }
+    ]
+  }
 };
 
 // ─── Seed: GET /api/deals/:dealId/warnings ───────────────────

@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Logger, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Logger, Body, Req } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { DealSummaryService } from '../services/deal-summary.service';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -14,7 +15,10 @@ interface ApiResponse<T> {
 export class DealsController {
   private readonly logger = new Logger(DealsController.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly summaryService: DealSummaryService,
+  ) {}
 
   private async getBoardsFromDb(): Promise<any[]> {
     const boards = [
@@ -327,44 +331,33 @@ export class DealsController {
   }
 
   @Get(':dealId/brief')
-  async getDealBrief(@Param('dealId') dealId: string): Promise<ApiResponse<any>> {
+  async getDealBrief(
+    @Param('dealId') dealId: string,
+    @Req() req: any
+  ): Promise<ApiResponse<any>> {
     try {
       const deal = await this.prisma.deal.findUnique({
         where: { id: dealId },
       });
       if (!deal) throw new Error('Deal not found');
 
-      // Generate brief information dynamically from DB
-      const warnings = await this.prisma.dealWarning.findMany({
-        where: { dealId, status: 'active' },
-      });
+      const userId = req.user?.id || 'system-user';
+      let summaryEntity = await this.summaryService.getCurrentSummary(dealId);
+      
+      if (!summaryEntity) {
+        summaryEntity = await this.summaryService.generateSummary(dealId, userId);
+      }
 
-      const criteria = await this.prisma.dealPlaybook.findMany({
-        where: { dealId },
-      });
-      const completedCount = criteria.filter((c) => c.status === 'Completed').length;
-      const score = criteria.length > 0 ? Math.round((completedCount / criteria.length) * 100) : deal.meddpiccScore || 0;
-
-      const amt = Number(deal.amount);
-      const amountStr = amt >= 1000 ? `$${(amt / 1000).toFixed(0)}K` : `$${amt}`;
-      const closeDateStr = deal.closeDate ? deal.closeDate.toISOString().split('T')[0] : 'unknown';
-
-      const aiSummary = `${deal.name} (${amountStr}) is in ${deal.stage} stage with close date ${closeDateStr}. Deal health score is ${score}% based on MEDDPICC criteria.`;
-      const whatChangedThisWeek = warnings.length > 0 ? `${warnings.length} active warnings identified on this deal.` : 'No significant changes this week.';
-      const buyerSentiment = score >= 75 ? 'Positive' : score >= 50 ? 'Neutral' : 'Negative';
-
-      const risks = warnings.map((w) => w.title);
-      const keyRisks = risks.length > 0 ? risks.join(' • ') : 'No major risks identified';
+      let parsedSummary;
+      try {
+        parsedSummary = JSON.parse(summaryEntity.summary);
+      } catch (e) {
+        parsedSummary = {};
+      }
 
       return {
         success: true,
-        data: {
-          aiSummary,
-          whatChangedThisWeek,
-          buyerSentiment,
-          lastInteraction: 'Yesterday',
-          keyRisks,
-        },
+        data: parsedSummary,
         isMock: false,
       };
     } catch (error: any) {

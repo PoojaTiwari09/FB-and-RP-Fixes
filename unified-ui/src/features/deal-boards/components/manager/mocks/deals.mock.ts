@@ -1,4 +1,5 @@
 import type { Deal, DealDetail, PipelineSummary } from '../types/deal.types';
+import { MOCK_BRIEF } from '../../mocks/deal-boards.mocks';
 
 export const MOCK_DEALS: Deal[] = [
   {
@@ -144,6 +145,7 @@ export const MOCK_DEAL_DETAILS: DealDetail[] = [
       'Economic buyer has not been identified',
       'Qualification exit criteria are incomplete',
     ],
+    briefData: MOCK_BRIEF['deal-1'],
     playbookCompletion: 33,
     meddic: [
       {
@@ -221,6 +223,7 @@ export const MOCK_DEAL_DETAILS: DealDetail[] = [
       'Pricing concern raised after proposal review',
       'Finance approver has not attended a call',
     ],
+    briefData: MOCK_BRIEF['deal-2'],
     playbookCompletion: 67,
     meddic: [
       {
@@ -298,6 +301,7 @@ export const MOCK_DEAL_DETAILS: DealDetail[] = [
       'Decision process has not been confirmed',
       'Competitive evaluation status is unknown',
     ],
+    briefData: MOCK_BRIEF['deal-3'],
     playbookCompletion: 50,
     meddic: [
       {
@@ -374,6 +378,7 @@ export const MOCK_DEAL_DETAILS: DealDetail[] = [
       'Pricing exception needs CFO approval',
       'Economic buyer has not been identified',
     ],
+    briefData: MOCK_BRIEF['deal-4'],
     playbookCompletion: 83,
     meddic: [
       {
@@ -490,6 +495,7 @@ export const MOCK_DEAL_DETAILS: DealDetail[] = [
     lastInteraction: 'May 16 - procurement confirmed final review',
     keyRisks: 'Legal signature timing - Multi-year payment terms',
     activeWarnings: ['Signature owner is not yet confirmed'],
+    briefData: MOCK_BRIEF['deal-5'],
     playbookCompletion: 100,
     meddic: [
       {

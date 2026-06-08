@@ -156,7 +156,17 @@ export class M09FrontendRevenueManagerController {
     if (!acc) {
       return { briefContent: 'Account not found.' };
     }
-    const systemPrompt = `You are a helpful sales coaching assistant. Generate a professional and structured account brief (summary, highlights, recommended actions) in clean markdown format for a sales representative based on the provided account metadata. Keep it professional, structured, and easy to read.`;
+    const systemPrompt = `You are a helpful sales coaching assistant. Generate a professional and structured account brief for a sales representative based on the provided account metadata. You MUST return ONLY raw JSON matching exactly this structure, with no markdown fences, no preamble, and no extra text:
+{
+  "overview": "string",
+  "keyDiscussionPoints": "string",
+  "customerNeedsGoals": "string",
+  "risksObjections": "string",
+  "decisionsCommitments": "string",
+  "nextSteps": "string",
+  "keyStakeholders": "string or null",
+  "recentActivityContext": "string or null"
+}`;
     const userMessage = `Generate an account brief for the following account:
 Account Name: ${acc.name}
 Exit ARR: $${acc.exitARR.toLocaleString()}
@@ -174,7 +184,16 @@ Activities: ${JSON.stringify(acc.activity)}`;
       console.error('[Briefs] Groq call failed, using fallback:', e);
     }
     if (!briefContent) {
-      briefContent = `**Account Summary**\n\n${acc.name} is a key account with $${acc.exitARR.toLocaleString()} ARR. They have ${acc.contactsCount} contacts and $${acc.openDeals.toLocaleString()} open deals.\n\n**Key Highlights**\n- Last activity: ${acc.lastActivity}\n- Renewal date: ${acc.renewalDate}\n- Manager note: ${acc.managerNote || 'None'}\n\n**Recommended Actions**\n- Follow up on open deals\n- Plan renewal review meeting`;
+      briefContent = JSON.stringify({
+        overview: `${acc.name} is a key account with $${acc.exitARR.toLocaleString()} ARR. They have ${acc.contactsCount} contacts and $${acc.openDeals.toLocaleString()} open deals.`,
+        keyDiscussionPoints: `Last activity recorded on ${acc.lastActivity}.`,
+        customerNeedsGoals: `Need to ensure successful renewal by ${acc.renewalDate}.`,
+        risksObjections: `No specific risks recorded.`,
+        decisionsCommitments: `None recorded.`,
+        nextSteps: `Follow up on open deals and plan renewal review meeting.`,
+        keyStakeholders: `Manager note: ${acc.managerNote || 'None'}`,
+        recentActivityContext: null
+      });
     }
     return { briefContent };
   }

@@ -146,19 +146,124 @@ function ActivityTab({ accountId }: { accountId: string }) {
 }
 
 // ─── Briefs Tab ──────────────────────────────────────────────
-function BriefsTab({ accountId }: { accountId: string }) {
-  const { data, isLoading } = useAccountBriefs(accountId);
+const SECTION_ORDER = [
+  { key: 'overview', title: 'Overview', color: 'bg-blue-100 text-blue-600' },
+  { key: 'keyDiscussionPoints', title: 'Key Discussion Points', color: 'bg-purple-100 text-purple-600' },
+  { key: 'customerNeedsGoals', title: 'Customer Needs & Goals', color: 'bg-emerald-100 text-emerald-600' },
+  { key: 'risksObjections', title: 'Risks & Objections', color: 'bg-rose-100 text-rose-600' },
+  { key: 'decisionsCommitments', title: 'Decisions & Commitments', color: 'bg-amber-100 text-amber-600' },
+  { key: 'nextSteps', title: 'Next Steps', color: 'bg-cyan-100 text-cyan-600' },
+  { key: 'keyStakeholders', title: 'Key Stakeholders', color: 'bg-indigo-100 text-indigo-600' },
+  { key: 'recentActivityContext', title: 'Recent Activity Context', color: 'bg-orange-100 text-orange-600' },
+];
 
-  if (isLoading) return <div className="p-4 space-y-2"><div className="skeleton h-4 w-full rounded"/><div className="skeleton h-24 w-full rounded"/></div>;
+function BriefsTab({ accountId }: { accountId: string }) {
+  const { data, isLoading, regenerate } = useAccountBriefs(accountId);
+  const [expandedSection, setExpandedSection] = useState<string | null>('overview');
+
+  let parsedData: any = null;
+  let isMalformed = false;
+
+  if (data?.briefContent) {
+    try {
+      parsedData = JSON.parse(data.briefContent);
+    } catch (e) {
+      isMalformed = true;
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 space-y-4">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-6 flex-1 bg-gray-200 rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!data?.briefContent) {
+    return <p className="text-sm text-gray-400 text-center p-6">No brief available.</p>;
+  }
 
   return (
-    <div className="px-4 py-4">
-      {data?.briefContent ? (
-        <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed prose-sm">
-          {data.briefContent}
+    <div className="px-6 py-5">
+      {/* Metadata Bar */}
+      <div className="mb-6 flex items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-[11px] font-medium text-gray-500 ring-1 ring-inset ring-gray-200">
+        <div className="flex items-center gap-1.5">
+          <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          Generated from Account Data
+        </div>
+        <div className="flex items-center gap-3">
+          <span>Generated: Today</span>
+          <button
+            onClick={regenerate}
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <RefreshCw size={12} />
+            Regenerate
+          </button>
+        </div>
+      </div>
+
+      {isMalformed ? (
+        <div className="space-y-3">
+          <div className="flex w-full items-center justify-between py-3 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <span className="text-xs font-bold">1</span>
+              </div>
+              <span className="text-sm font-semibold text-gray-900">Summary</span>
+            </div>
+            <ChevronUp size={18} className="text-gray-400" />
+          </div>
+          <div className="pl-9 pr-4 pb-4">
+            <div className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
+              {data.briefContent}
+            </div>
+          </div>
         </div>
       ) : (
-        <p className="text-sm text-gray-400 text-center">No brief available.</p>
+        <div className="divide-y divide-gray-100">
+          {SECTION_ORDER.map((section, idx) => {
+            const content = parsedData[section.key];
+            if (!content) return null;
+
+            const isExpanded = expandedSection === section.key;
+
+            return (
+              <div key={section.key} className="group">
+                <button
+                  onClick={() => setExpandedSection(isExpanded ? null : section.key)}
+                  className="flex w-full items-center justify-between py-3 hover:bg-gray-50/50 transition-colors rounded-sm px-1"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-full ${section.color}`}>
+                      <span className="text-xs font-bold">{idx + 1}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{section.title}</span>
+                  </div>
+                  <ChevronDown
+                    size={18}
+                    className={`text-gray-400 transition-transform duration-200 ${
+                      isExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {isExpanded && (
+                  <div className="pl-10 pr-4 pb-4 pt-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                    <div className="text-sm leading-relaxed text-gray-600">
+                      {content}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

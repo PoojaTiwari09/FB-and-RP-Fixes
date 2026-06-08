@@ -154,14 +154,22 @@ export function useAccountActivity(
 
 // ─── Account Drawer — Briefs ──────────────────────────────────
 export function useAccountBriefs(accountId: string | null) {
-  return useApiWithFallback<AccountBriefs>(
+  const [trigger, setTrigger] = useState(0);
+
+  const hook = useApiWithFallback<AccountBriefs>(
     () =>
       accountId
-        ? api.getAccountBriefs(accountId)
+        ? api.getAccountBriefs(accountId, trigger > 0)
         : Promise.resolve({ briefContent: '' }),
     () => (accountId ? mock.mockAccountBriefs(accountId) : { briefContent: '' }),
-    [accountId],
+    [accountId, trigger],
   );
+
+  const regenerate = useCallback(() => {
+    setTrigger((t) => t + 1);
+  }, []);
+
+  return { ...hook, regenerate };
 }
 
 // ─── Account Drawer — Todos ──────────────────────────────────

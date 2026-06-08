@@ -110,11 +110,19 @@ export interface ActivityData {
 }
 
 export interface BriefData {
-  aiSummary: string;
-  whatChangedThisWeek: string;
-  buyerSentiment: "Positive" | "Neutral" | "Negative";
-  lastInteraction: string;
-  keyRisks: string;
+  aiSummary?: string;
+  whatChangedThisWeek?: string;
+  buyerSentiment?: "Positive" | "Neutral" | "Negative";
+  lastInteraction?: string;
+  keyRisks?: string;
+
+  overview?: string;
+  keyDiscussionPoints?: string[];
+  customerNeeds?: { title: string; description: string }[];
+  risks?: { title: string; description: string; severity: string }[];
+  commitments?: { description: string; assigneeType: string; dueDate: string }[];
+  stakeholders?: { name: string; title: string; company: string; avatarInitials: string }[];
+  activityContext?: { type: string; description: string; date: string }[];
 }
 
 export interface CrmFields {

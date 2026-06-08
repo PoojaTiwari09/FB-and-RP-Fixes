@@ -107,10 +107,17 @@ export async function getAccountActivity(
 }
 
 // ─── Account Drawer — Briefs ──────────────────────────────────
-export async function getAccountBriefs(accountId: string): Promise<AccountBriefs> {
-  return apiFetch<AccountBriefs>(
+const briefCache = new Map<string, AccountBriefs>();
+
+export async function getAccountBriefs(accountId: string, force = false): Promise<AccountBriefs> {
+  if (!force && briefCache.has(accountId)) {
+    return briefCache.get(accountId)!;
+  }
+  const result = await apiFetch<AccountBriefs>(
     `/api/manager/revenue/accounts/${accountId}/briefs`,
   );
+  briefCache.set(accountId, result);
+  return result;
 }
 
 // ─── Account Drawer — Todos ──────────────────────────────────

@@ -34,6 +34,8 @@ export interface Deal {
   activityData: number[];
 }
 
+import type { BriefData } from '../../services/dealBoardsService';
+
 export type DealSentiment = 'Positive' | 'Neutral' | 'Negative';
 
 export interface DealDetail {
@@ -45,6 +47,7 @@ export interface DealDetail {
   lastInteraction: string;
   keyRisks: string;
   activeWarnings: string[];
+  briefData?: BriefData;
   playbookCompletion: number;
   meddic: Array<{
     label: string;

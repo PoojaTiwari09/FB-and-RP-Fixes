@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Deal, DealDetail, DealTaskPayload, DealStage, DealCategory } from '../types/deal.types';
 import { ActivityOverTimeChart } from './ActivityChart';
+import BriefTab from '../../components/deal-detail/tabs/BriefTab';
 
 type DealDetailTab = 'brief' | 'warnings' | 'playbook' | 'activity' | 'crm';
 
@@ -47,50 +48,7 @@ const tabs: Array<{
   { id: 'crm', label: 'Update CRM', icon: RefreshCcw },
 ];
 
-function BriefTab({ detail }: { detail: DealDetail }) {
-  const sentimentClass = {
-    Positive: 'bg-emerald-50 text-emerald-700',
-    Neutral: 'bg-amber-50 text-amber-700',
-    Negative: 'bg-red-50 text-red-700',
-  }[detail.buyerSentiment];
 
-  return (
-    <div className="space-y-5">
-      <section>
-        <h3 className="mb-3 text-[11px] font-bold uppercase text-[#2563EB]">AI Summary</h3>
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-4 text-sm leading-6 text-blue-800">
-          {detail.aiSummary}
-        </div>
-      </section>
-
-      <section>
-        <h3 className="mb-3 text-[11px] font-bold uppercase text-amber-800">What Changed This Week</h3>
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-800">
-          {detail.weeklyChange}
-        </div>
-      </section>
-
-      <div className="divide-y divide-gray-200">
-        <div className="flex items-center justify-between py-3">
-          <span className="text-sm text-gray-500">Buyer sentiment</span>
-          <span className={`rounded px-3 py-1.5 text-xs font-semibold ${sentimentClass}`}>
-            {detail.buyerSentiment}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-5 py-3">
-          <span className="text-sm text-gray-500">Last interaction</span>
-          <span className="text-right text-sm font-medium text-gray-700">{detail.lastInteraction}</span>
-        </div>
-        <div className="flex items-start justify-between gap-5 py-3">
-          <span className="text-sm text-gray-500">Key risks</span>
-          <span className="max-w-[65%] text-right text-sm font-medium text-gray-700">
-            {detail.keyRisks}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function WarningsTab({
   deal,
@@ -613,7 +571,7 @@ export default function DealDetailsDrawer({
         </nav>
 
         <div className="flex-1 overflow-y-auto px-8 py-7">
-          {activeTab === 'brief' && <BriefTab detail={detail} />}
+          {activeTab === 'brief' && <BriefTab data={detail.briefData || null} loading={false} />}
           {activeTab === 'warnings' && (
             <WarningsTab deal={deal} detail={detail} onCreateTask={onCreateTask} />
           )}

@@ -104,6 +104,7 @@ export async function fetchDealDetail(dealId: string): Promise<DealDetail> {
       buyerSentiment: brief.buyerSentiment || 'Neutral',
       lastInteraction: brief.lastInteraction || '',
       keyRisks: brief.keyRisks || '',
+      briefData: brief || fallbackDetail.briefData,
       activeWarnings: Array.isArray(warnings) ? warnings.map((w: any) => w.title || w.description || '') : [],
       playbookCompletion: playbook?.scorePercentage ?? 0,
       meddic: Array.isArray(playbook?.criteria)
