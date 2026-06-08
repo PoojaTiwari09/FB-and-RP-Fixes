@@ -61,6 +61,7 @@ const repNavItems: NavItem[] = [
       { label: 'AI Trainer', icon: <Bot size={16} />, href: '/training' },
     ],
   },
+  { label: 'Deal Boards', icon: <Grid3X3 size={18} />, href: '/deal-boards' },
   { label: 'Topics', icon: <Tag size={18} />, href: '/topics' },
   { label: 'Trackers', icon: <Hash size={18} />, href: '/trackers' },
   { label: 'Forecast Boards', icon: <Grid3X3 size={18} />, href: '/forecast-boards' },
@@ -96,7 +97,14 @@ const managerNavItems: NavItem[] = [
       { label: 'Revenue Dashboards', icon: <Sparkles size={16} />, href: '/revenue/revenue-dashboards' },
     ],
   },
-  { label: 'Deal Drivers', icon: <AlertTriangle size={18} />, href: '/deal-drivers' },
+  {
+    label: 'Deal Drivers',
+    icon: <AlertTriangle size={18} />,
+    subItems: [
+      { label: 'Deal Drivers', icon: <AlertTriangle size={16} />, href: '/deal-drivers' },
+      { label: 'Deal Boards', icon: <Grid3X3 size={16} />, href: '/deal-boards' },
+    ],
+  },
   { label: 'AI Deep Researcher', icon: <Search size={18} />, href: '/ai-deep-researcher' },
   { label: 'AI Revenue Predictor', icon: <TrendingUp size={18} />, href: '/ai-revenue-predictor' },
   { label: 'Forecast Boards', icon: <Grid3X3 size={18} />, href: '/forecast-boards' },
@@ -113,6 +121,7 @@ export default function Sidebar() {
     Calls: false,
     Coaching: true,
     Revenue: false,
+    'Deal Drivers': false,
   });
 
   useEffect(() => {

@@ -180,19 +180,6 @@ export default function ManagerRepDrillDown({
 
             {/* Approval controls */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 mr-1 flex items-center gap-1.5">
-                Status:{' '}
-                <span className={`font-bold capitalize px-2.5 py-0.5 rounded-full text-[10px] border ${
-                  repStatus === 'approved'
-                    ? 'bg-green-50 text-green-700 border-green-200'
-                    : repStatus === 'reopened'
-                    ? 'bg-purple-50 text-purple-700 border-purple-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                }`}>
-                  {repStatus === 'submitted' ? 'Pending Manager Approval' : repStatus}
-                </span>
-              </span>
-              
               {drilldownData.submission?.id && (
                 <div className="flex items-center gap-1.5 ml-2">
                   {repStatus === 'submitted' && (
@@ -257,90 +244,106 @@ export default function ManagerRepDrillDown({
                     Commit <SourceColumnInfoTooltip text="Sales Rep Commit Forecast" />
                   </th>
                   <th className="py-3 px-4 text-right text-[10px] font-bold uppercase tracking-wider text-gray-400">Closed</th>
+                  <th className="py-3 px-4 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">AI Prediction Score</th>
                   <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">Target</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredDeals.map((deal) => (
-                  <tr key={deal.id} className="hover:bg-gray-50/50 transition-colors">
-                    {/* Deal Name info */}
-                    <td className="py-3 px-4">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400">{deal.accountName}</span>
-                        <span className="text-xs font-semibold text-blue-600">{deal.dealName}</span>
-                      </div>
-                    </td>
+                {filteredDeals.map((deal) => {
+                  const isPending = deal.bestCaseState === 'submitted' || deal.commitState === 'submitted';
+                  return (
+                    <tr key={deal.id} className={`hover:bg-gray-50/50 transition-colors ${isPending ? 'bg-amber-50/70' : ''}`}>
+                      {/* Deal Name info */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-400">{deal.accountName}</span>
+                            <span className="text-xs font-semibold text-blue-600">{deal.dealName}</span>
+                          </div>
+                          {isPending && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                              ⏳ Pending
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
-                    {/* Pipeline */}
-                    <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
-                      {deal.isClosedWon || deal.isClosedLost ? '$0' : formatCurrency(deal.amount)}
-                    </td>
+                      {/* Pipeline */}
+                      <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
+                        {deal.isClosedWon || deal.isClosedLost ? '$0' : formatCurrency(deal.amount)}
+                      </td>
 
-                    {/* Best Case cell */}
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex justify-center">
-                        <SourceSubmissionCell
-                          cell={{
-                            value: deal.bestCase ?? null,
-                            submissionId: null,
-                            lastUpdatedAt: null,
-                            isAutoSubmit: false,
-                            note: null,
-                            managerAnnotation: deal.managerAnnotation ?? null,
-                          }}
-                          status={deal.submissionStatus}
-                          emptyLabel="$0"
-                          isActive={activeColumnKey === 'bestCase' && activeDealId === deal.id}
-                          isEditable={isEditable && !!bestCaseCol}
-                          onClick={() => {
-                            setActiveColumnKey('bestCase');
-                            setActiveDealId(deal.id);
-                          }}
-                          requestedValue={deal.requestedBestCase}
+                      {/* Best Case cell */}
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex justify-center">
+                          <SourceSubmissionCell
+                            cell={{
+                              value: deal.bestCase ?? null,
+                              submissionId: null,
+                              lastUpdatedAt: null,
+                              isAutoSubmit: false,
+                              note: null,
+                              managerAnnotation: deal.managerAnnotation ?? null,
+                            }}
+                            status={deal.bestCaseState}
+                            emptyLabel="$0"
+                            isActive={activeColumnKey === 'bestCase' && activeDealId === deal.id}
+                            isEditable={['editable', 'submitted', 'reopened'].includes(deal.bestCaseState ?? 'editable')}
+                            onClick={() => {
+                              setActiveColumnKey('bestCase');
+                              setActiveDealId(deal.id);
+                            }}
+                            requestedValue={deal.requestedBestCase}
+                          />
+                        </div>
+                      </td>
+
+                      {/* Commit cell */}
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex justify-center">
+                          <SourceSubmissionCell
+                            cell={{
+                              value: deal.commit ?? null,
+                              submissionId: null,
+                              lastUpdatedAt: null,
+                              isAutoSubmit: false,
+                              note: null,
+                              managerAnnotation: deal.managerAnnotation ?? null,
+                            }}
+                            status={deal.commitState}
+                            emptyLabel="$0"
+                            isActive={activeColumnKey === 'commit' && activeDealId === deal.id}
+                            isEditable={['editable', 'submitted', 'reopened'].includes(deal.commitState ?? 'editable')}
+                            onClick={() => {
+                              setActiveColumnKey('commit');
+                              setActiveDealId(deal.id);
+                            }}
+                            requestedValue={deal.requestedCommit}
+                          />
+                        </div>
+                      </td>
+
+                      {/* Closed */}
+                      <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
+                        {deal.isClosedWon ? formatCurrency(deal.amount) : '$0'}
+                      </td>
+
+                      {/* AI Prediction Score */}
+                      <td className="py-3 px-4 text-center text-xs font-semibold text-gray-700">
+                        {deal.aiPredictionScore ?? '-'}
+                      </td>
+
+                      {/* Target quota progress */}
+                      <td className="py-3 px-4">
+                        <SourceTargetProgressBar
+                          quota={drilldownData.targetAttainment.quota}
+                          closed={drilldownData.targetAttainment.closed}
+                          commit={deal.commit}
                         />
-                      </div>
-                    </td>
-
-                    {/* Commit cell */}
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex justify-center">
-                        <SourceSubmissionCell
-                          cell={{
-                            value: deal.commit ?? null,
-                            submissionId: null,
-                            lastUpdatedAt: null,
-                            isAutoSubmit: false,
-                            note: null,
-                            managerAnnotation: deal.managerAnnotation ?? null,
-                          }}
-                          status={deal.submissionStatus}
-                          emptyLabel="$0"
-                          isActive={activeColumnKey === 'commit' && activeDealId === deal.id}
-                          isEditable={isEditable && !!commitCol}
-                          onClick={() => {
-                            setActiveColumnKey('commit');
-                            setActiveDealId(deal.id);
-                          }}
-                          requestedValue={deal.requestedCommit}
-                        />
-                      </div>
-                    </td>
-
-                    {/* Closed */}
-                    <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
-                      {deal.isClosedWon ? formatCurrency(deal.amount) : '$0'}
-                    </td>
-
-                    {/* Target quota progress */}
-                    <td className="py-3 px-4">
-                      <SourceTargetProgressBar
-                        quota={drilldownData.targetAttainment.quota}
-                        closed={drilldownData.targetAttainment.closed}
-                        commit={deal.commit}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

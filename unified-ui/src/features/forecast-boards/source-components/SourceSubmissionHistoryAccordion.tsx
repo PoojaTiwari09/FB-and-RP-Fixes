@@ -9,11 +9,12 @@ interface Props {
   boardId: string;
   repUserId: string;
   columnId: string;
+  dealId?: string;
 }
 
-export default function SourceSubmissionHistoryAccordion({ boardId, repUserId, columnId }: Props) {
+export default function SourceSubmissionHistoryAccordion({ boardId, repUserId, columnId, dealId }: Props) {
   const [isOpen, setIsOpen] = useState(true);
-  const { history, isLoading } = useSubmissionHistory(boardId, repUserId, columnId, isOpen);
+  const { history, isLoading } = useSubmissionHistory(boardId, repUserId, columnId, isOpen, dealId);
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">

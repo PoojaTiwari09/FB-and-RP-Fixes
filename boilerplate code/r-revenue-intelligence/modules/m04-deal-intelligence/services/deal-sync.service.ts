@@ -35,7 +35,11 @@ export class DealSyncService {
     }
 
     this.logger.log('Starting incremental deal sync');
-    await this.syncDeals(SyncType.INCREMENTAL);
+    try {
+      await this.syncDeals(SyncType.INCREMENTAL);
+    } catch (error) {
+      this.logger.error('Incremental sync cron task failed', error);
+    }
   }
 
   async syncDeals(syncType: SyncType = SyncType.INCREMENTAL): Promise<SyncLog> {

@@ -161,6 +161,15 @@ export default function SourceForecastBoardsRepView() {
         <div className="flex items-center gap-4">
           <SourceNotificationBell repUserId={repRow.repUserId} />
           <SourceBoardPeriodSelector periodName={displayPeriodName} onChange={setSelectedPeriodName} />
+          {['draft', 'not_started', 'reopened'].includes(repRow.submissionStatus || 'draft') && (
+            <button
+              onClick={() => setShowSubmitModal(true)}
+              className="px-4 py-2 border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold rounded-lg text-gray-700 cursor-pointer transition-colors flex items-center gap-1.5"
+            >
+              <Send size={12} className="text-gray-500" />
+              Submit Forecast
+            </button>
+          )}
         </div>
       </div>
 
@@ -245,10 +254,10 @@ export default function SourceForecastBoardsRepView() {
                                   note: null,
                                   managerAnnotation: deal.managerAnnotation ?? repRow.cells['col-best-case']?.managerAnnotation ?? null,
                                 }}
-                                status={deal.submissionStatus}
+                                status={deal.bestCaseState}
                                 emptyLabel="$0"
                                 isActive={activePanel?.dealId === deal.id && activePanel?.columnKey === 'bestCase'}
-                                isEditable={canEditDeal && !!bestCaseCol && bestCaseCol.submissionMode === 'Manual'}
+                                isEditable={['editable', 'reopened'].includes(deal.bestCaseState ?? 'editable') && !!bestCaseCol && bestCaseCol.submissionMode === 'Manual'}
                                 onClick={() => togglePanel(deal.id, 'bestCase')}
                                 requestedValue={deal.requestedBestCase}
                               />
@@ -266,10 +275,10 @@ export default function SourceForecastBoardsRepView() {
                                   note: null,
                                   managerAnnotation: deal.managerAnnotation ?? repRow.cells['col-commit']?.managerAnnotation ?? null,
                                 }}
-                                status={deal.submissionStatus}
+                                status={deal.commitState}
                                 emptyLabel="$0"
                                 isActive={activePanel?.dealId === deal.id && activePanel?.columnKey === 'commit'}
-                                isEditable={canEditDeal && !!commitCol && commitCol.submissionMode === 'Manual'}
+                                isEditable={['editable', 'reopened'].includes(deal.commitState ?? 'editable') && !!commitCol && commitCol.submissionMode === 'Manual'}
                                 onClick={() => togglePanel(deal.id, 'commit')}
                                 requestedValue={deal.requestedCommit}
                               />

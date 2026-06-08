@@ -20,6 +20,7 @@ export interface FindManyOptions<T> {
 export interface FindOneOptions<T> {
   where?: FindWhere<T>;
   relations?: string[];
+  order?: Record<string, 'ASC' | 'DESC' | 'asc' | 'desc'>;
 }
 
 type FindWhere<T> = Partial<Record<keyof T & string, unknown>>;
@@ -542,8 +543,11 @@ export class M04EntityRepository<T extends { id: string }> {
   }
 
   async findOne(options: FindOneOptions<T>): Promise<T | null> {
-    const rows = this.getAllRows().filter((row) => matchesWhereClause(row as Record<string, unknown>, options.where));
+    let rows = this.getAllRows().filter((row) => matchesWhereClause(row as Record<string, unknown>, options.where));
     if (rows.length === 0) return null;
+    if (options.order) {
+      rows = applyOrder(rows, options.order as any);
+    }
     const entity = { ...rows[0] } as T;
     if (options.relations?.length) {
       this.attachRelations(entity, options.relations);

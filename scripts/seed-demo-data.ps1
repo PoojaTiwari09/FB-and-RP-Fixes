@@ -46,10 +46,22 @@ if ($LASTEXITCODE -ne 0) {
   Write-Host "Seed warning: pnpm run seed:m02-trackers exited $LASTEXITCODE" -ForegroundColor Yellow
 }
 
-Write-Host "[6/6] M06 forecasting + revenue predictor..." -ForegroundColor Yellow
+Write-Host "[6/7] M06 forecasting + revenue predictor..." -ForegroundColor Yellow
 pnpm run seed:m06
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Seed warning: pnpm run seed:m06 exited $LASTEXITCODE" -ForegroundColor Yellow
+}
+
+Write-Host "[7/8] Revenue manager accounts + coaching insights..." -ForegroundColor Yellow
+pnpm run seed:revenue
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Seed warning: pnpm run seed:revenue exited $LASTEXITCODE" -ForegroundColor Yellow
+}
+
+Write-Host "[8/8] M04 Deal Drivers..." -ForegroundColor Yellow
+pnpm run seed:m04
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Seed warning: pnpm run seed:m04 exited $LASTEXITCODE" -ForegroundColor Yellow
 }
 Pop-Location
 

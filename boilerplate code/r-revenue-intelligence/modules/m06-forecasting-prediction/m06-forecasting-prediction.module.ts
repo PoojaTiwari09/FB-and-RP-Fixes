@@ -19,6 +19,9 @@ import { PrismaModule } from './database/prisma.module';
 import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
 import { HubSpotIntegrationModule } from '../platform-core/integrations/hubspot-integration.module';
 
+import { ForecastUpgradeController } from './controllers/forecast-upgrade.controller';
+import { ForecastUpgradeService } from './services/forecast-upgrade.service';
+
 @Module({
   imports: [
     PrismaModule,
@@ -27,12 +30,12 @@ import { HubSpotIntegrationModule } from '../platform-core/integrations/hubspot-
     BullModule.registerQueue({ name: 'm06-queue' }),
   ],
   controllers: [
-
     M06ForecastingPredictionController,
     M06ExecutiveController,
     HubSpotController,
     AdminForecastBoardsController,
     ForecastBoardsController,
+    ForecastUpgradeController,
   ],
   providers: [
     ForecastBoardsRepository,
@@ -44,6 +47,7 @@ import { HubSpotIntegrationModule } from '../platform-core/integrations/hubspot-
     M06ForecastingPredictionWorker,
     M06ForecastingPredictionRepository,
     ForecastSubmittedListener,
+    ForecastUpgradeService,
   ],
   exports: [
     ForecastBoardsService,

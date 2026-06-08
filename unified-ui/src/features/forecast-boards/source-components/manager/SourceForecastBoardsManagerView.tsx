@@ -438,12 +438,12 @@ export default function SourceForecastBoardsManagerView() {
                         </tr>
                       ) : (
                         filteredRows.map((row) => {
-                          const editable = row.submissionStatus !== 'approved';
+                          const isPending = row.submissionStatus === 'submitted';
 
                           return (
                             <tr
                               key={row.repUserId}
-                              className="hover:bg-gray-50/50 transition-colors"
+                              className={`hover:bg-gray-50/50 transition-colors ${isPending ? 'bg-amber-50/70 border-l-4 border-l-amber-500' : ''}`}
                             >
                               {/* Member profile info */}
                               <td className="py-3 px-4">
@@ -459,6 +459,11 @@ export default function SourceForecastBoardsManagerView() {
                                       >
                                         {row.repName}
                                       </button>
+                                      {isPending && (
+                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                          ⏳ Review Pending
+                                        </span>
+                                      )}
                                     </div>
                                     <span className="text-[10px] text-gray-400 flex items-center gap-1.5">
                                       Quota attainment: {calculateTargetAttainment(row.targetAttainment.closed, row.cells['col-commit']?.value ?? undefined, row.targetAttainment.quota) ?? 0}%
@@ -483,7 +488,7 @@ export default function SourceForecastBoardsManagerView() {
                                     status={row.submissionStatus}
                                     emptyLabel="$0"
                                     isActive={false}
-                                    isEditable={editable}
+                                    isEditable={false}
                                     onClick={() => handleOpenDrilldown(row.repUserId)}
                                   />
                                 </div>
@@ -497,7 +502,7 @@ export default function SourceForecastBoardsManagerView() {
                                     status={row.submissionStatus}
                                     emptyLabel="$0"
                                     isActive={false}
-                                    isEditable={editable && !!commitCol && commitCol.submissionMode === 'Manual'}
+                                    isEditable={false}
                                     onClick={() => handleOpenDrilldown(row.repUserId)}
                                   />
                                 </div>

@@ -91,6 +91,20 @@ model Deal {
   account         Account?  @relation(fields: [accountId], references: [id])
   tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  // Deal boards integration fields
+  ownerName        String?
+  ownerEmail       String?
+  forecastCategory String?
+  probability      Int?
+  dealType         String?
+  aiScore          Int?
+  meddpiccScore    Int?
+  nextStep         String?
+  lastActivity     DateTime?
+  pipeline         String?   @default("default")
+  escalated        Boolean?  @default(false)
+  warningsCount    Int?      @default(0)
+
   @@index([tenantId, quarter, ownerId])
   @@schema("public")
 }
@@ -921,15 +935,19 @@ model HistoricalConversionRate {
 }
 
 model ForecastNotification {
-  id           String   @id @default(uuid())
-  tenantId     String
-  repId        String
-  submissionId String
-  actionType   String   // 'approved' | 'reopened' | 'overridden'
-  dealName     String
-  finalValue   Float?
-  isSeen       Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id            String   @id @default(uuid())
+  tenantId      String
+  repId         String
+  repName       String?
+  submissionId  String
+  actionType    String   // 'approved' | 'reopened' | 'overridden'
+  requestType   String?  // 'best_case' | 'commit' | 'both'
+  dealName      String
+  finalValue    Float?
+  bestCaseValue Float?
+  commitValue   Float?
+  isSeen        Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   @@index([tenantId, repId, isSeen])
   @@map("forecast_notifications")
@@ -1898,3 +1916,148 @@ model ManagerCoachingRep {
   @@map("manager_coaching_reps")
   @@schema("public")
 }
+
+model DealMeddpicc {
+  id                String   @id @default(cuid())
+  tenantId          String
+  dealExternalId    String   // HubSpot / CRM deal ID for direct lookup
+
+  // Overall score (0-100)
+  score             Int      @default(0)
+
+  // Category answers — best evidence sentence for each MEDDPICC element
+  metrics           String?
+  economicBuyer     String?
+  decisionCriteria  String?
+  decisionProcess   String?
+  identifyPain      String?
+  champion          String?
+
+  // Derived data
+  matchedCategories String[] @default([])
+  contactCount      Int      @default(0)
+  aiNextStep        String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([dealExternalId])
+  @@map("deal_meddpicc")
+  @@schema("public")
+}
+
+model M04DealDriver {
+  id          String    @id @default(cuid())
+  tenantId    String    @default("default")
+  dealId      String
+  boardId     String?
+  name        String
+  type        String    @default("action")
+  status      String    @default("active")
+  priority    String    @default("medium")
+  owner       String?
+  dueDate     DateTime?
+  description String?
+  warningType String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([dealId])
+  @@index([boardId])
+  @@index([tenantId])
+  @@map("m04_deal_drivers")
+  @@schema("public")
+}
+
+model DealComment {
+  id        String   @id @default(cuid())
+  tenantId  String
+  dealId    String
+  comment   String
+  createdAt DateTime @default(now())
+
+  @@index([dealId])
+  @@map("m04_deal_comments")
+  @@schema("public")
+}
+
+model DealTask {
+  id          String    @id @default(cuid())
+  tenantId    String
+  dealId      String
+  title       String
+  description String?
+  status      String    @default("pending")
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([dealId])
+  @@map("m04_deal_tasks")
+  @@schema("public")
+}
+
+model DealWarning {
+  id              String   @id @default(cuid())
+  tenantId        String
+  dealId          String
+  severity        String
+  title           String
+  description     String
+  suggestedAction String
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+
+  @@index([dealId])
+  @@map("m04_deal_warnings")
+  @@schema("public")
+}
+
+model DealPlaybook {
+  id              String   @id @default(cuid())
+  tenantId        String
+  dealId          String
+  criterionName   String
+  question        String
+  status          String   @default("Pending")
+  notes           String?
+  aiSuggestedNote String?
+  createdAt       DateTime @default(now())
+
+  @@index([dealId])
+  @@map("m04_deal_playbooks")
+  @@schema("public")
+}
+
+model DealActivityEvent {
+  id           String   @id @default(cuid())
+  tenantId     String
+  dealId       String
+  date         String
+  type         String
+  duration     Int
+  direction    String
+  participants String[]
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  @@index([dealId])
+  @@map("m04_deal_activity_events")
+  @@schema("public")
+}
+
+model DealNotification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  repName   String
+  message   String
+  type      String   @default("info")
+  timestamp DateTime @default(now())
+  read      Boolean  @default(false)
+
+  @@map("m04_deal_notifications")
+  @@schema("public")
+}
+

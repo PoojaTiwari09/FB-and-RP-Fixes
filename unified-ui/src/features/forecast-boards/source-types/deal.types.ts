@@ -20,4 +20,7 @@ export interface CrmDeal {
   requestedCommit?: number | null;
   requestedBestCaseNote?: string | null;
   requestedCommitNote?: string | null;
+  bestCaseState?: 'editable' | 'submitted' | 'approved' | 'reopened' | 'overridden';
+  commitState?: 'editable' | 'submitted' | 'approved' | 'reopened' | 'overridden';
+  aiPredictionScore?: number | null;
 }

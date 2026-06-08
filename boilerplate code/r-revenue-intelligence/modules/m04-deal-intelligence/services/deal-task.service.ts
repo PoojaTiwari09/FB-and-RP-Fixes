@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@/database/inject-repository';
 import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { DealTask } from '@/entities/deal-task.entity';
+import { DealTask, TaskPriority } from '@/entities/deal-task.entity';
 import { Deal } from '@/entities/deal.entity';
 import {
   CreateTaskDto,
@@ -287,9 +287,9 @@ export class DealTaskService {
       dealId: task.dealId,
       title: task.title,
       description: task.description,
-      status: task.status,
-      priority: task.priority,
-      source: task.source,
+      status: task.status as TaskStatus,
+      priority: task.priority as TaskPriority,
+      source: task.source as TaskSource,
       assigneeId: task.assigneeId,
       assigneeName: task.assigneeName,
       assignedBy: task.assignedBy ?? undefined,

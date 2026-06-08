@@ -11,6 +11,12 @@ import {
   Calendar,
   Clock,
   Lock,
+  MessageSquare,
+  Target,
+  CheckCircle,
+  Users,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { activityAPI, dealAPI, playbookAPI, summaryAPI, warningAPI } from '../lib/api'
@@ -182,99 +188,427 @@ export default function DealDetailPanel({ deal, canEdit = true, onClose, onDealU
 // ─────────────────────────────────────────────────────────────────────────────
 // BRIEF TAB
 // ─────────────────────────────────────────────────────────────────────────────
-function BriefTab({ deal, summary }: any) {
-  const aiSummaryText =
-    summary?.summary ||
-    `${deal.name} is currently in ${label(deal.stage)} stage with a ${deal.probability || 0}% close probability. ${
-      deal.nextStep
-        ? `Next step: ${deal.nextStep}.`
-        : 'No next step recorded.'
-    } ${deal.isHighRisk ? 'This deal shows high-risk signals — immediate attention recommended.' : ''}`
+const briefCache = new Map<string, any>()
 
-  const weekChanges =
-    summary?.changes ||
-    `Close date is ${
-      deal.closeDate ? formatDateFull(deal.closeDate) : 'not set'
-    } with deal still open. Warning count: ${
-      deal.warningCount || (deal.isHighRisk ? 1 : 0)
-    }. Last activity: ${formatDate(deal.lastActivityAt)}.`
+function tryParseBrief(summaryObj: any) {
+  if (!summaryObj || !summaryObj.summary) return null
+  try {
+    const parsed = JSON.parse(summaryObj.summary)
+    if (parsed && typeof parsed === 'object' && 'overview' in parsed) {
+      return parsed
+    }
+  } catch (e) {
+    // Not valid JSON
+  }
+  return null
+}
 
-  const sentiment = deal.isHighRisk ? 'Negative' : 'Positive'
-  const sentimentPositive = !deal.isHighRisk
-
-  const lastInteraction = `${formatDate(deal.lastActivityAt)} — ${
-    deal.crmData?.lastCallSentiment || 'no follow-up recorded'
-  }`
-
-  const keyRisks =
-    deal.riskReason ||
-    (deal.isHighRisk
-      ? [
-          deal.crmData?.decisionMakerEngaged === 'No' && 'CFO not engaged',
-          !deal.nextStep && 'No next steps',
-          deal.closeDate && new Date(deal.closeDate) < new Date() && 'Close date past',
-        ]
-          .filter(Boolean)
-          .join(' · ') || 'Risk score requires attention'
-      : 'No key risks identified')
-
+function BriefSkeleton() {
   return (
-    <div className="space-y-6">
-      {/* AI Summary */}
-      <section>
-        <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-blue-600">
-          AI Summary
-        </h3>
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-          {aiSummaryText}
+    <div className="space-y-4 animate-pulse">
+      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-200" />
+              <div className="h-4 w-32 bg-gray-200 rounded" />
+            </div>
+            <div className="w-4 h-4 bg-gray-200 rounded" />
+          </div>
         </div>
-      </section>
-
-      {/* What Changed This Week */}
-      <section>
-        <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-amber-700">
-          What Changed This Week
-        </h3>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-          {weekChanges}
-        </div>
-      </section>
-
-      {/* Key Metrics */}
-      <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
-        <InfoRow
-          label="Buyer sentiment"
-          value={
-            <span
-              className={`rounded-md px-3 py-1 text-xs font-bold ${
-                sentimentPositive
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-red-100 text-red-700'
-              }`}
-            >
-              {sentiment}
-            </span>
-          }
-        />
-        <InfoRow label="Last interaction" value={lastInteraction} />
-        <InfoRow
-          label="Engagement"
-          value={`${deal.crmData?.totalCalls || 0} calls · ${deal.crmData?.totalEmails || 0} emails · ${deal.crmData?.totalMeetings || 0} meetings`}
-        />
-        <InfoRow label="Close date" value={deal.closeDate ? formatDateFull(deal.closeDate) : 'Not set'} />
-        <InfoRow label="Probability" value={`${deal.probability || 0}%`} />
-        <InfoRow label="AI score" value={`${deal.aiScore || 0}/100`} />
-        <InfoRow label="Key risks" value={keyRisks} />
-      </div>
+      ))}
     </div>
   )
 }
 
-function InfoRow({ label, value }: { label: string; value: any }) {
+function BriefTab({ deal, summary }: any) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [briefData, setBriefData] = useState<any>(null)
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']))
+
+  useEffect(() => {
+    let active = true
+
+    async function loadBrief() {
+      // 1. Check client-side cache
+      if (briefCache.has(deal.id)) {
+        setBriefData(briefCache.get(deal.id))
+        setLoading(false)
+        return
+      }
+
+      // 2. Check summary prop
+      const parsedFromProp = tryParseBrief(summary)
+      if (parsedFromProp) {
+        setBriefData(parsedFromProp)
+        briefCache.set(deal.id, parsedFromProp)
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+
+      try {
+        let summaryObj = null
+        try {
+          const currentRes = await summaryAPI.getCurrent(deal.id)
+          summaryObj = currentRes.data
+        } catch (fetchErr: any) {
+          if (fetchErr.response?.status !== 404) {
+            throw fetchErr
+          }
+        }
+
+        let parsed = tryParseBrief(summaryObj)
+
+        if (parsed) {
+          if (active) {
+            setBriefData(parsed)
+            briefCache.set(deal.id, parsed)
+            setLoading(false)
+          }
+          return
+        }
+
+        // 3. Generate summary
+        const genRes = await summaryAPI.generate(deal.id)
+        const genSummaryObj = genRes.data
+        parsed = tryParseBrief(genSummaryObj)
+
+        if (parsed) {
+          if (active) {
+            setBriefData(parsed)
+            briefCache.set(deal.id, parsed)
+            setLoading(false)
+          }
+        } else {
+          throw new Error('Failed to parse newly generated brief')
+        }
+      } catch (err: any) {
+        console.error('Error loading brief:', err)
+        if (active) {
+          setError(err.message || 'Failed to load deal brief')
+          setLoading(false)
+        }
+      }
+    }
+
+    loadBrief()
+
+    return () => {
+      active = false
+    }
+  }, [deal.id, summary])
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(section)) {
+        next.delete(section)
+      } else {
+        next.add(section)
+      }
+      return next
+    })
+  }
+
+  if (loading) {
+    return <BriefSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <p className="font-semibold mb-1">Failed to load deal brief</p>
+        <p className="text-xs text-red-600">{error}</p>
+        <button
+          onClick={() => {
+            // Trigger refresh
+            briefCache.delete(deal.id)
+            setLoading(true)
+            setError(null)
+            summaryAPI.generate(deal.id)
+              .then((res) => {
+                const parsed = tryParseBrief(res.data)
+                if (parsed) {
+                  setBriefData(parsed)
+                  briefCache.set(deal.id, parsed)
+                  setLoading(false)
+                } else {
+                  throw new Error('Could not parse brief')
+                }
+              })
+              .catch((err) => {
+                setError(err.message || 'Failed to regenerate brief')
+                setLoading(false)
+              })
+          }}
+          className="mt-2.5 inline-flex items-center justify-center px-3 py-1.5 border border-red-300 rounded-md text-xs font-medium bg-white hover:bg-gray-50 text-red-700"
+        >
+          Try Regenerating Brief
+        </button>
+      </div>
+    )
+  }
+
+  if (!briefData) {
+    return null
+  }
+
   return (
-    <div className="flex items-center justify-between gap-6 px-4 py-3 text-sm">
-      <span className="shrink-0 text-gray-500">{label}</span>
-      <span className="text-right font-medium text-gray-900">{value}</span>
+    <div className="space-y-4">
+      {/* 1. Overview */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('overview')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#3B82F6' }}>
+              <FileText className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Overview</span>
+          </div>
+          {expandedSections.has('overview') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('overview') && (
+          <div className="px-6 py-4 border-t border-gray-200 text-sm text-gray-700 leading-relaxed">
+            {briefData.overview}
+          </div>
+        )}
+      </div>
+
+      {/* 2. Key Discussion Points */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('discussion')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#7C3AED' }}>
+              <MessageSquare className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Key Discussion Points</span>
+          </div>
+          {expandedSections.has('discussion') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('discussion') && (
+          <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+            {briefData.keyDiscussionPoints?.map((pt: string, i: number) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6' }}>
+                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-violet-500" />
+                <p className="text-sm text-gray-700">{pt}</p>
+              </div>
+            ))}
+            {(!briefData.keyDiscussionPoints || briefData.keyDiscussionPoints.length === 0) && (
+              <p className="text-sm text-gray-500 italic">No key discussion points recorded.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 3. Customer Needs & Goals */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('needs')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#0D9488' }}>
+              <Target className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Customer Needs & Goals</span>
+          </div>
+          {expandedSections.has('needs') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('needs') && (
+          <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+            {briefData.customerNeeds?.map((need: any, i: number) => (
+              <div key={i} className="p-4 rounded-lg" style={{ backgroundColor: '#EFF6FF', border: '1px solid #DBEAFE' }}>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#1D4ED8' }}>{need.title}</h4>
+                <p className="text-sm" style={{ color: '#4B5563' }}>{need.description}</p>
+              </div>
+            ))}
+            {(!briefData.customerNeeds || briefData.customerNeeds.length === 0) && (
+              <p className="text-sm text-gray-500 italic">No customer needs recorded.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Risks & Objections */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('risks')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#F59E0B' }}>
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Risks & Objections</span>
+          </div>
+          {expandedSections.has('risks') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('risks') && (
+          <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+            {briefData.risks?.map((risk: any, i: number) => (
+              <div key={i} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#D97706' }} />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="text-sm font-semibold" style={{ color: '#D97706' }}>{risk.title}</h4>
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize"
+                      style={{
+                        backgroundColor: risk.severity === 'high' ? '#FEE2E2' : risk.severity === 'medium' ? '#FEF3C7' : '#DBEAFE',
+                        color: risk.severity === 'high' ? '#DC2626' : risk.severity === 'medium' ? '#B45309' : '#1D4ED8',
+                      }}
+                    >
+                      {risk.severity}
+                    </span>
+                  </div>
+                  <p className="text-sm" style={{ color: '#6B7280' }}>{risk.description}</p>
+                </div>
+              </div>
+            ))}
+            {(!briefData.risks || briefData.risks.length === 0) && (
+              <p className="text-sm text-gray-500 italic">No risks identified.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 5. Decisions & Commitments */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('commitments')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#10B981' }}>
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Decisions & Commitments</span>
+          </div>
+          {expandedSections.has('commitments') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('commitments') && (
+          <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+            {briefData.commitments?.map((com: any, i: number) => (
+              <div key={i} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#F0FDF4', border: '1px solid #D1FAE5' }}>
+                <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#10B981' }} />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize"
+                      style={{
+                        backgroundColor: com.assigneeType === 'rep' ? '#EFF6FF' : '#EDE9FE',
+                        color: com.assigneeType === 'rep' ? '#3B82F6' : '#6D28D9',
+                      }}
+                    >
+                      {com.assigneeType === 'rep' ? 'Me' : 'Customer'}
+                    </span>
+                    <span className="text-xs" style={{ color: '#9CA3AF' }}>{com.dueDate}</span>
+                  </div>
+                  <p className="text-sm text-gray-700">{com.description}</p>
+                </div>
+              </div>
+            ))}
+            {(!briefData.commitments || briefData.commitments.length === 0) && (
+              <p className="text-sm text-gray-500 italic">No decisions or commitments recorded.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 6. Key Stakeholders */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('stakeholders')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#EC4899' }}>
+              <Users className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900">Key Stakeholders</span>
+          </div>
+          {expandedSections.has('stakeholders') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('stakeholders') && (
+          <div className="px-6 py-4 border-t border-gray-200 divide-y divide-gray-100">
+            {briefData.stakeholders?.map((sh: any, i: number) => (
+              <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+                  style={{
+                    backgroundColor: sh.avatarInitials?.charCodeAt(0) % 3 === 0 ? '#10B981' : sh.avatarInitials?.charCodeAt(0) % 3 === 1 ? '#3B82F6' : '#8B5CF6',
+                  }}
+                >
+                  {sh.avatarInitials}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">{sh.name}</h4>
+                  <p className="text-xs text-gray-500">{sh.title} • {sh.company}</p>
+                </div>
+              </div>
+            ))}
+            {(!briefData.stakeholders || briefData.stakeholders.length === 0) && (
+              <p className="text-sm text-gray-500 italic">No stakeholders mapped.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 7. Recent Activity Context */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => toggleSection('activity')}
+          className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: '#F97316' }}>
+              <ActivityIcon className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900">Recent Activity Context</span>
+          </div>
+          {expandedSections.has('activity') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        
+        {expandedSections.has('activity') && (
+          <div className="px-6 py-4 border-t border-gray-200 divide-y divide-gray-100">
+            {briefData.activityContext?.map((act: any, i: number) => (
+              <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize mt-0.5 shrink-0"
+                  style={{
+                    backgroundColor: act.type === 'email' ? '#EFF6FF' : act.type === 'call' ? '#FEF3C7' : '#E9D5FF',
+                    color: act.type === 'email' ? '#3B82F6' : act.type === 'call' ? '#D97706' : '#6B7280',
+                  }}
+                >
+                  {act.type}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 leading-tight">{act.description}</p>
+                  <span className="text-xs text-gray-400 mt-1 block">{act.date}</span>
+                </div>
+              </div>
+            ))}
+            {(!briefData.activityContext || briefData.activityContext.length === 0) && (
+              <p className="text-sm text-gray-500 italic">No recent activities found.</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -8,7 +8,7 @@ import {
 /** Demo tenant — must match packages/database/prisma/seed-m06.ts */
 export const M06_DEMO_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 export const M06_DEMO_MANAGER_ID = '00000000-0000-0000-0000-000000000002';
-export const M06_DEMO_REP_ID = '00000000-0000-0000-0000-000000000003';
+export const M06_DEMO_REP_ID = 'me';
 
 /** Same-origin path — proxied by app/api/v1/forecasting/[...path]/route.ts */
 export const M06_API_BASE = '/api/v1/forecasting';

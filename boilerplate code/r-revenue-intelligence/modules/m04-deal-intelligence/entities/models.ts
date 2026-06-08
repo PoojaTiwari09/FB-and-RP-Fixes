@@ -221,6 +221,8 @@ export class DealPlaybook {
   notes?: string;
   aiSuggestion?: string;
   order: number;
+  completedBy?: string | null;
+  completedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -248,8 +250,26 @@ export class DealComment {
   dealId: string;
   userId: string;
   content: string;
+  authorName?: string;
+  authorRole?: string;
+  isCoaching?: boolean;
+  isEdited?: boolean;
+  editedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export enum TaskStatus {
+  NOT_STARTED = 'NOT_STARTED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TaskPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
 }
 
 export class DealTask {
@@ -257,8 +277,8 @@ export class DealTask {
   dealId: string;
   title: string;
   description?: string;
-  status: string;
-  priority?: string;
+  status: TaskStatus | string;
+  priority?: TaskPriority | string;
   assigneeId?: string;
   assigneeName?: string;
   assignedBy?: string;
@@ -266,6 +286,7 @@ export class DealTask {
   completedBy?: string;
   dueDate?: Date;
   completedAt?: Date;
+  source?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -308,13 +329,42 @@ export class AuditLog {
   createdAt: Date;
 }
 
+export enum SyncStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+}
+
+export enum SyncType {
+  FULL = 'FULL',
+  DELTA = 'DELTA',
+  MANUAL = 'MANUAL',
+  INCREMENTAL = 'INCREMENTAL',
+}
+
+export enum SyncEntityType {
+  DEAL = 'DEAL',
+  CONTACT = 'CONTACT',
+  COMPANY = 'COMPANY',
+  ALL = 'ALL',
+}
+
 export class SyncLog {
   id: string;
   source: string;
-  status: string;
+  status: SyncStatus | string;
+  syncType?: SyncType | string;
+  entityType?: SyncEntityType | string;
   recordsProcessed: number;
   recordsFailed: number;
+  recordsCreated?: number;
+  recordsUpdated?: number;
   error?: string;
+  errorMessage?: string;
+  errorDetails?: any;
+  durationMs?: number;
   startedAt: Date;
   completedAt?: Date;
   createdAt: Date;
@@ -324,6 +374,13 @@ export class DealSummary {
   id: string;
   dealId: string;
   summary: string;
+  isCurrent?: boolean;
+  keyPoints?: string[];
+  nextSteps?: string[];
+  competitorMentions?: string[];
+  confidenceScore?: number;
+  weeklyChanges?: string[];
+  flaggedForReview?: boolean;
   generatedAt: Date;
   createdAt: Date;
   updatedAt: Date;
