@@ -23,6 +23,7 @@
     "../../modules/m02-conversation-intelligence/**/*",
     "../../modules/m09-coaching-training/**/*",
     "../../modules/m04-deal-intelligence/**/*",
+    "../../modules/m11-ai-deep-researcher/**/*",
     "../../modules/platform-core/**/*"
   ],
   "exclude": ["node_modules", "dist", "../../modules/**/features/**"]

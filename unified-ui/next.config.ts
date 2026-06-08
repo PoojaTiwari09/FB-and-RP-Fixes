@@ -43,6 +43,13 @@ const nextConfig: NextConfig = {
       { source: '/api/smart-call/:path*', destination: `${backendUrl}/api/smart-call/:path*` },
       { source: '/api/trackers/:path*', destination: `${backendUrl}/api/trackers/:path*` },
       { source: '/api/trackers', destination: `${backendUrl}/api/trackers` },
+      // AI Deep Researcher endpoints
+      { source: '/api/ai-deep-researcher/:path*', destination: `${backendUrl}/api/ai-deep-researcher/:path*` },
+      { source: '/api/reps/:path*', destination: `${backendUrl}/api/reps/:path*` },
+      { source: '/api/reps', destination: `${backendUrl}/api/reps` },
+      { source: '/api/objections/:path*', destination: `${backendUrl}/api/objections/:path*` },
+      { source: '/api/accounts/:path*', destination: `${backendUrl}/api/accounts/:path*` },
+      { source: '/api/recommendations/:path*', destination: `${backendUrl}/api/recommendations/:path*` },
     ];
   },
 };

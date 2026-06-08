@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, HelpCircle, ChevronDown, Filter } from 'lucide-react'
 import NotificationsPanel from '@deal-boards/components/components/NotificationsPanel'
 import StageSummaryCards from '@deal-boards/components/components/StageSummaryCards'
@@ -16,7 +16,9 @@ import type { BoardDetail, Deal, NotificationsResponse } from '@deal-boards/comp
 export default function DealBoardDetail() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const boardId = params.boardId as string
+  const urlDealId = searchParams.get('dealId')
 
   const [board, setBoard] = useState<BoardDetail | null>(null)
   const [deals, setDeals] = useState<Deal[]>([])
@@ -48,6 +50,15 @@ export default function DealBoardDetail() {
       setLoading(false)
     })
   }, [boardId])
+
+  useEffect(() => {
+    if (!loading && deals.length > 0 && urlDealId) {
+      const found = deals.find(d => String(d.dealId) === urlDealId);
+      if (found) {
+        setSelectedDeal(found);
+      }
+    }
+  }, [loading, deals, urlDealId])
 
   const computedSummaryCards = useMemo(() => {
     const buckets = {

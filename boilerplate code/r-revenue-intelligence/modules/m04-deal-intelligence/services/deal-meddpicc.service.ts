@@ -37,6 +37,7 @@ export class DealMeddpiccService {
    * If stored in DB, return it; otherwise return null (caller computes + stores).
    */
   async findStoredMeddpicc(dealExternalId: string) {
+    // Queries stored MEDDPICC analysis from database
     return this.prisma.dealMeddpicc.findFirst({
       where: { dealExternalId },
     });

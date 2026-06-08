@@ -161,7 +161,7 @@ export class ForecastUpgradeService {
     await this.logActivity(sub.id, 'approved', managerId, `Approved ${field} forecast`);
 
     const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
-    const rep = await this.prisma.user.findFirst({ where: { id: latest.repUserId } });
+    const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
 
     await this.createNotification(
       latest.repUserId,
@@ -213,7 +213,7 @@ export class ForecastUpgradeService {
     await this.logActivity(sub.id, 'reopened', managerId, 'Reopened submission');
 
     const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
-    const rep = await this.prisma.user.findFirst({ where: { id: latest.repUserId } });
+    const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
 
     await this.createNotification(
       latest.repUserId,
@@ -325,7 +325,7 @@ export class ForecastUpgradeService {
 
     const result = [];
     for (const log of list) {
-      const actor = await this.prisma.user.findFirst({ where: { id: log.actorId } });
+      const actor = await this.prisma.forecastUser.findFirst({ where: { id: log.actorId } });
       result.push({
         id: log.id,
         status: log.action,
@@ -338,7 +338,7 @@ export class ForecastUpgradeService {
   }
 
   async logActivity(submissionId: string, status: string, performedByUserId: string, notes?: string) {
-    const actor = await this.prisma.user.findFirst({ where: { id: performedByUserId } });
+    const actor = await this.prisma.forecastUser.findFirst({ where: { id: performedByUserId } });
     await this.prisma.forecastAuditLog.create({
       data: {
         tenantId: '00000000-0000-0000-0000-000000000001',
@@ -387,7 +387,7 @@ export class ForecastUpgradeService {
     const list = await this.prisma.quota.findMany({ where: { periodId } });
     const result = [];
     for (const q of list) {
-      const rep = await this.prisma.user.findFirst({ where: { id: q.repUserId } });
+      const rep = await this.prisma.forecastUser.findFirst({ where: { id: q.repUserId } });
       result.push({
         rep_id: q.repUserId,
         rep_name: rep?.name ?? 'Rep',
@@ -453,7 +453,7 @@ export class ForecastUpgradeService {
 
     const result = [];
     for (const repId of repIds) {
-      const rep = await this.prisma.user.findFirst({ where: { id: repId } });
+      const rep = await this.prisma.forecastUser.findFirst({ where: { id: repId } });
       if (rep) {
         result.push({ rep_id: rep.id, rep_name: rep.name });
       }
@@ -722,8 +722,8 @@ export class ForecastUpgradeService {
 
   async getManagerBoard(managerId: string, periodId: string) {
     // Find all reps under this manager
-    const reps = await this.prisma.user.findMany({
-      where: { tenantId: '00000000-0000-0000-0000-000000000001', role: 'SALES_REP' },
+    const reps = await this.prisma.forecastUser.findMany({
+      where: { tenantId: '00000000-0000-0000-0000-000000000001', role: 'sales_rep' },
     });
 
     const result = [];

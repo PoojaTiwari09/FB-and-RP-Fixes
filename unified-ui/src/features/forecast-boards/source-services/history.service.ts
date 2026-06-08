@@ -19,7 +19,7 @@ export async function getSubmissionHistory(
     // Wait, let's look at `/api/forecast/activity/:submission_id`. But we don't have a direct endpoint for all versions.
     // Wait, let's call GET `/api/forecast/submissions/:period_id/:rep_id` to find the current submission ID for this deal.
     const subsRes = await fetch(`/api/forecast/submissions/${periodId}/${repUserId}`, {
-      headers: getRepM06Headers(),
+      headers: getRepM06Headers(repUserId),
       cache: 'no-store',
     });
     if (!subsRes.ok) return { history: [] };
@@ -32,7 +32,7 @@ export async function getSubmissionHistory(
 
     // Fetch the activity log list
     const actRes = await fetch(`/api/forecast/activity/${activeSub.id}`, {
-      headers: getRepM06Headers(),
+      headers: getRepM06Headers(repUserId),
       cache: 'no-store',
     });
     if (!actRes.ok) return { history: [] };

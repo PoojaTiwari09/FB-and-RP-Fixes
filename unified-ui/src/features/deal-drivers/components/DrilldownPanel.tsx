@@ -13,6 +13,15 @@ type Props = {
   onExport?: () => void;
 };
 
+function getBoardIdForDeal(dealId: string): string {
+  const idStr = String(dealId);
+  if (['deal-1', 'deal-2', 'deal-3', 'deal-4', '1', '2', '3', '4'].includes(idStr)) return 'board-1';
+  if (['deal-5', 'deal-6', '5', '6'].includes(idStr)) return 'board-2';
+  if (['deal-7', '7'].includes(idStr)) return 'board-3';
+  if (['deal-8', '8'].includes(idStr)) return 'board-4';
+  return 'board-1'; // fallback
+}
+
 function getDefaultDateValue() {
   return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
@@ -176,7 +185,10 @@ export default function DrilldownPanel({ data, repName, warningLabel, warningTyp
                   </td>
                   <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                     <button
-                      onClick={() => window.location.href = `/dealboard?dealId=${deal.dealId || ''}`}
+                      onClick={() => {
+                        const dId = deal.dealId || '';
+                        window.location.href = `/deal-boards/${getBoardIdForDeal(dId)}?dealId=${dId}`;
+                      }}
                       style={{
                         background: 'none',
                         border: 'none',

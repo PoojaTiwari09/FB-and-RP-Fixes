@@ -10,7 +10,7 @@ dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { json, urlencoded } from 'express';
+import { json, urlencoded, Request, Response } from 'express';
 import { M03AppModule } from './app.module';
 
 async function bootstrap() {
@@ -40,7 +40,7 @@ async function bootstrap() {
   const webUrl = process.env.M03_WEB_URL || 'http://localhost:5177';
   const apiBase = `http://localhost:${port}/api/v1/ai-summaries-genai`;
 
-  app.getHttpAdapter().get('/', (_req, res) => {
+  app.getHttpAdapter().get('/', (_req: Request, res: Response) => {
     res.json({
       service: 'm03-api',
       status: 'ok',

@@ -24,7 +24,7 @@ import {
   type ForecastPeriod,
 } from '../../api';
 
-const REP_USER_ID = BACKEND_REP_USER_ID;
+const REP_USER_ID = BACKEND_REP_USER_ID === 'me' ? 'sarah' : BACKEND_REP_USER_ID;
 
 export default function RepForecastView() {
   const [boardData, setBoardData] = useState<Record<string, unknown> | null>(null);
@@ -51,7 +51,7 @@ export default function RepForecastView() {
       setLoading(true);
       setError(null);
       try {
-        const periodList = await fetchPeriods(DEMO_TENANT_ID, getRepM06Headers()).catch(
+        const periodList = await fetchPeriods(DEMO_TENANT_ID, getRepM06Headers(REP_USER_ID)).catch(
           () => [] as ForecastPeriod[],
         );
         setPeriods(periodList);
@@ -100,7 +100,7 @@ export default function RepForecastView() {
 
         if (userSub?.id) {
           const auditRes = await fetch(`${M06_API_BASE}/submissions/${userSub.id}/audit-log`, {
-            headers: getRepM06Headers(),
+            headers: getRepM06Headers(REP_USER_ID),
             cache: 'no-store',
           });
           if (auditRes.ok) {
@@ -128,7 +128,7 @@ export default function RepForecastView() {
   }, [selectedPeriod, loadData]);
 
   const handleSubmit = async (newData: Record<string, unknown>) => {
-    const headers = { ...getRepM06Headers(), 'Content-Type': 'application/json' };
+    const headers = { ...getRepM06Headers(REP_USER_ID), 'Content-Type': 'application/json' };
     const repUserId = REP_USER_ID;
     if (newData.status === 'submitted' && submission?.id) {
       const res = await fetch(`${M06_API_BASE}/submissions`, {
@@ -153,7 +153,7 @@ export default function RepForecastView() {
   };
 
   const handleCreateDeal = async (deal: Record<string, unknown>) => {
-    const headers = { ...getRepM06Headers(), 'Content-Type': 'application/json' };
+    const headers = { ...getRepM06Headers(REP_USER_ID), 'Content-Type': 'application/json' };
     const res = await fetch(`${M06_API_BASE}/deals`, {
       method: 'POST',
       headers,
@@ -177,7 +177,7 @@ export default function RepForecastView() {
     const params = new URLSearchParams({ repUserId: REP_USER_ID });
     if (baseline) params.set('baseline', baseline);
     const res = await fetch(`${M06_API_BASE}/periods/${resolved}/ai-prediction?${params}`, {
-      headers: getRepM06Headers(),
+      headers: getRepM06Headers(REP_USER_ID),
       cache: 'no-store',
     });
     if (res.ok) {

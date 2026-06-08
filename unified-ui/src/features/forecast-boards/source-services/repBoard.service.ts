@@ -3,10 +3,14 @@
 import type { RepBoardViewResponse, BoardColumn, ActiveBoardForPeriodResponse } from '../source-types';
 import { M06_API_BASE, getRepM06Headers } from '../services/m06-api';
 
-const headers = () => getRepM06Headers();
+const headers = (userId?: string) => {
+  const rawId = userId || getRepM06Headers()['x-user-id'] || 'me';
+  const resolvedId = (rawId === 'me' || rawId === '00000000-0000-0000-0000-000000000003') ? 'sarah' : rawId;
+  return getRepM06Headers(resolvedId);
+};
 
 export async function getRepBoardView(boardId: string): Promise<RepBoardViewResponse> {
-  const repUserId = headers()['x-user-id'] || 'me';
+  const repUserId = headers()['x-user-id'] || 'sarah';
   const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
 
   // 1. Fetch periods to find active period info
@@ -37,12 +41,17 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
   // 4. Fetch targets for period to get rep's target
   const targetsRes = await fetch(`/api/forecast/targets/${periodId}`, { headers: headers(), cache: 'no-store' });
   let quotaVal = 5000000; // default seed fallback
+  let repName = repUserId === 'sarah' ? 'Sarah Chen' : 'Alex Morgan';
   if (targetsRes.ok) {
     const targetsEnvelope = await targetsRes.json();
     const targets = targetsEnvelope.data || [];
     const repTarget = targets.find((t: any) => t.rep_id === repUserId);
-    if (repTarget) quotaVal = repTarget.target_value;
+    if (repTarget) {
+      quotaVal = repTarget.target_value;
+      if (repTarget.rep_name) repName = repTarget.rep_name;
+    }
   }
+  const avatarInitials = repName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
   // 5. Construct RepBoardViewResponse
   const deals = drilldownDeals.map((d: any) => ({
@@ -135,8 +144,8 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
     columns,
     repRow: {
       repUserId,
-      repName: 'Alex Chen',
-      avatarInitials: 'AC',
+      repName,
+      avatarInitials,
       cells,
       targetAttainment: {
         quota: quotaVal,
@@ -176,12 +185,13 @@ export async function submitForecast(
 ) {
   const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
   const field = payload.columnId === 'col-best-case' ? 'best_case' : 'commit';
+  const customHeaders = headers(payload.repUserId);
 
   let subId = payload.dealId;
   if (payload.value !== undefined && payload.dealId) {
     const saveRes = await fetch(`/api/forecast/submissions`, {
       method: 'POST',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
+      headers: { ...customHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rep_id: payload.repUserId,
         deal_id: payload.dealId,
@@ -200,7 +210,7 @@ export async function submitForecast(
   if (payload.status === 'submitted' && subId) {
     const submitRes = await fetch(`/api/forecast/submissions/${subId}/submit`, {
       method: 'PATCH',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
+      headers: { ...customHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rep_id: payload.repUserId,
         field: payload.columnId === 'col-best-case' ? 'best_case' : payload.columnId === 'col-commit' ? 'commit' : 'both',
@@ -213,7 +223,7 @@ export async function submitForecast(
   if (payload.status === 'overridden' && subId) {
     const overrideRes = await fetch(`/api/forecast/submissions/${subId}/override`, {
       method: 'PATCH',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
+      headers: { ...customHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         manager_id: '00000000-0000-0000-0000-000000000002', // Central manager ID for demo
         field: payload.columnId === 'col-best-case' ? 'best_case' : payload.columnId === 'col-commit' ? 'commit' : 'both',

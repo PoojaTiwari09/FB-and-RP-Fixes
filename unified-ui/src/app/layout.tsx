@@ -18,8 +18,8 @@ export default async function RootLayout({
   const session = await getUserSession();
 
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="h-full overflow-hidden bg-background text-foreground">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <body className="h-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
         <RoleProvider session={session}>
           <div className="flex h-full overflow-hidden">
             <Sidebar />

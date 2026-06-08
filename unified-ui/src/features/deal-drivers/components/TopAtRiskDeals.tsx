@@ -27,6 +27,15 @@ function getRisksStyle(count: number) {
   return { background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a', fontWeight: 600 };
 }
 
+function getBoardIdForDeal(dealId: string): string {
+  const idStr = String(dealId);
+  if (['deal-1', 'deal-2', 'deal-3', 'deal-4', '1', '2', '3', '4'].includes(idStr)) return 'board-1';
+  if (['deal-5', 'deal-6', '5', '6'].includes(idStr)) return 'board-2';
+  if (['deal-7', '7'].includes(idStr)) return 'board-3';
+  if (['deal-8', '8'].includes(idStr)) return 'board-4';
+  return 'board-1'; // fallback
+}
+
 export default function TopAtRiskDeals({ deals }: { deals: AtRiskDeal[] }) {
   const [search, setSearch] = useState('');
   const filtered = deals.filter(d => d.accountName.toLowerCase().includes(search.toLowerCase()));
@@ -116,7 +125,7 @@ export default function TopAtRiskDeals({ deals }: { deals: AtRiskDeal[] }) {
                 </td>
                 <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                   <button
-                    onClick={() => window.location.href = `/dealboard?dealId=${deal.dealId}`}
+                    onClick={() => window.location.href = `/deal-boards/${getBoardIdForDeal(deal.dealId)}?dealId=${deal.dealId}`}
                     style={{
                       background: 'none',
                       border: 'none',
