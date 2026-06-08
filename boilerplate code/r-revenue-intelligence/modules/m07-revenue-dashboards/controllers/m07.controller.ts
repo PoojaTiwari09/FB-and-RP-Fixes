@@ -25,7 +25,7 @@ import { M07DealAccountService } from "../services/m07.service";
 
 type TenantRequest = { tenantContext: { tenantId: string; userId: string; role: string } };
 
-@Controller("api/v1/revenue-dashboards")
+@Controller("api/manager/revenue-dashboards")
 export class M07DealAccountController {
   constructor(private readonly service: M07DealAccountService) {}
 
@@ -63,6 +63,50 @@ export class M07DealAccountController {
       req.tenantContext.userId,
       createDashboardDtoSchema.parse(body),
     );
+  }
+
+  @Get("pipeline-analysis")
+  @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(TenantInterceptor)
+  getPipelineAnalysis(
+    @Req() req: TenantRequest,
+    @Query("period") period: string = "This Quarter",
+  ) {
+    return this.service.getPipelineAnalysis(req.tenantContext.tenantId, period);
+  }
+
+  @Get("competitive-analysis")
+  @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(TenantInterceptor)
+  getCompetitiveAnalysis(
+    @Req() req: TenantRequest,
+    @Query("period") period: string = "This Quarter",
+  ) {
+    return this.service.getCompetitiveAnalysis(req.tenantContext.tenantId, period);
+  }
+
+  @Get("scorecards-analysis")
+  @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(TenantInterceptor)
+  getScorecardsAnalysis(
+    @Req() req: TenantRequest,
+    @Query("period") period: string = "This Quarter",
+  ) {
+    return this.service.getScorecardsAnalysis(req.tenantContext.tenantId, period);
+  }
+
+  @Get("economic-pulse")
+  @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(TenantInterceptor)
+  getEconomicPulse(
+    @Req() req: TenantRequest,
+    @Query("period") period: string = "This Quarter",
+  ) {
+    return this.service.getEconomicPulse(req.tenantContext.tenantId, period);
   }
 
   @Get("widgets/catalog")

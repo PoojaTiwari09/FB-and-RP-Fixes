@@ -94,6 +94,7 @@ const managerNavItems: NavItem[] = [
     subItems: [
       { label: 'Accounts', icon: <Building2 size={16} />, href: '/revenue/accounts' },
       { label: 'Coaching Insights', icon: <TrendingUp size={16} />, href: '/revenue/coaching-insights' },
+      { label: 'Revenue Dashboards', icon: <Sparkles size={16} />, href: '/revenue/revenue-dashboards' },
     ],
   },
   {
