@@ -30,6 +30,7 @@ export default function RevenueDashboardsManagerView() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
+    if (!activeTab) return;
     setLoading(true);
     setData(null);
     try {
@@ -40,7 +41,10 @@ export default function RevenueDashboardsManagerView() {
         'economic': 'economic-pulse'
       };
       
-      const response = await fetch(`/api/manager/revenue-dashboards/${endpointMap[activeTab]}?period=${encodeURIComponent(period)}`, {
+      const endpoint = endpointMap[activeTab];
+      if (!endpoint) return;
+      
+      const response = await fetch(`/api/manager/revenue-dashboards/${endpoint}?period=${encodeURIComponent(period)}`, {
         headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' }
       });
       
