@@ -1,7 +1,23 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, ExternalLink, ChevronDown, ChevronUp, Send, CheckSquare, Square, RefreshCw } from 'lucide-react';
+import {
+  X,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  CheckSquare,
+  Square,
+  RefreshCw,
+  FileText,
+  MessageSquare,
+  Target,
+  AlertTriangle,
+  CheckCircle,
+  Users,
+  Activity,
+} from 'lucide-react';
 import type { AccountRow } from '@revenue/types/accounts.types';
 import {
   useAccountOverview,
@@ -145,32 +161,161 @@ function ActivityTab({ accountId }: { accountId: string }) {
   );
 }
 
+// Helper to parse raw markdown into structured sections when JSON parsing fails
+function parseMarkdownToSections(text: string): Record<string, string> {
+  const sections: Record<string, string> = {};
+  const lines = text.split('\n');
+  
+  const headingMappings = [
+    { key: 'overview', patterns: [/overview/i, /summary/i, /about/i] },
+    { key: 'keyDiscussionPoints', patterns: [/discussion/i, /key.*point/i, /topic/i] },
+    { key: 'customerNeedsGoals', patterns: [/need/i, /goal/i, /customer/i] },
+    { key: 'risksObjections', patterns: [/risk/i, /objection/i, /concern/i] },
+    { key: 'decisionsCommitments', patterns: [/decision/i, /commitment/i, /action/i] },
+    { key: 'keyStakeholders', patterns: [/stakeholder/i, /contact/i, /people/i] },
+    { key: 'recentActivityContext', patterns: [/activity/i, /context/i, /history/i] }
+  ];
+
+  let currentKey: string | null = null;
+  let currentContent: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Check for Markdown headers (e.g. ### Overview or **Overview**)
+    const isHeader = trimmed.startsWith('#') || 
+                     (trimmed.startsWith('**') && trimmed.endsWith('**') && trimmed.length < 100) ||
+                     (trimmed.endsWith(':') && trimmed.length < 50 && !trimmed.includes('http'));
+
+    if (isHeader) {
+      if (currentKey && currentContent.length > 0) {
+        sections[currentKey] = currentContent.join('\n').trim();
+        currentContent = [];
+      }
+      
+      const cleanHeader = trimmed.replace(/[#\*:]/g, '').trim();
+      let matchedKey: string | null = null;
+      for (const mapping of headingMappings) {
+        if (mapping.patterns.some(p => p.test(cleanHeader))) {
+          matchedKey = mapping.key;
+          break;
+        }
+      }
+      currentKey = matchedKey;
+    } else {
+      if (currentKey) {
+        currentContent.push(line);
+      } else {
+        currentKey = 'overview';
+        currentContent.push(line);
+      }
+    }
+  }
+
+  if (currentKey && currentContent.length > 0) {
+    sections[currentKey] = currentContent.join('\n').trim();
+  }
+
+  return sections;
+}
+
+// Helper to format raw markdown list items (e.g. * **Title**: Desc) into beautifully styled HTML nodes
+function renderFormattedContent(content: string, bulletColor: string = '#3B82F6') {
+  if (!content) return null;
+  
+  const lines = content.split('\n');
+  const renderedElements: React.ReactNode[] = [];
+  
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    
+    // Match bullet point with bold header: * **Title**: Description
+    const boldTitleMatch = trimmed.match(/^[\*\-\s]*\*\*(.*?)\*\*[:\s]*(.*)$/);
+    if (boldTitleMatch) {
+      const title = boldTitleMatch[1].trim();
+      const desc = boldTitleMatch[2].trim();
+      renderedElements.push(
+        <div key={index} className="flex items-start gap-2.5 mb-2 last:mb-0">
+          <span 
+            className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" 
+            style={{ backgroundColor: bulletColor }}
+          />
+          <div className="text-sm leading-relaxed">
+            <strong className="font-semibold text-gray-900">{title}</strong>
+            {desc && <span className="text-gray-600">: {desc}</span>}
+          </div>
+        </div>
+      );
+      return;
+    }
+    
+    // Match simple bullet: * Description
+    const simpleBulletMatch = trimmed.match(/^[\*\-\s]+(.*)$/);
+    if (simpleBulletMatch) {
+      const desc = simpleBulletMatch[1].trim();
+      renderedElements.push(
+        <div key={index} className="flex items-start gap-2.5 mb-2 last:mb-0">
+          <span 
+            className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" 
+            style={{ backgroundColor: bulletColor }}
+          />
+          <div className="text-sm leading-relaxed text-gray-600">{desc}</div>
+        </div>
+      );
+      return;
+    }
+    
+    // Regular text paragraph — render with bullet point using the section's color
+    renderedElements.push(
+      <div key={index} className="flex items-start gap-2.5 mb-2 last:mb-0">
+        <span 
+          className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" 
+          style={{ backgroundColor: bulletColor }}
+        />
+        <div className="text-sm leading-relaxed text-gray-600">{trimmed}</div>
+      </div>
+    );
+  });
+  
+  return <div className="space-y-1.5">{renderedElements}</div>;
+}
+
 // ─── Briefs Tab ──────────────────────────────────────────────
 const SECTION_ORDER = [
-  { key: 'overview', title: 'Overview', color: 'bg-blue-100 text-blue-600' },
-  { key: 'keyDiscussionPoints', title: 'Key Discussion Points', color: 'bg-purple-100 text-purple-600' },
-  { key: 'customerNeedsGoals', title: 'Customer Needs & Goals', color: 'bg-emerald-100 text-emerald-600' },
-  { key: 'risksObjections', title: 'Risks & Objections', color: 'bg-rose-100 text-rose-600' },
-  { key: 'decisionsCommitments', title: 'Decisions & Commitments', color: 'bg-amber-100 text-amber-600' },
-  { key: 'nextSteps', title: 'Next Steps', color: 'bg-cyan-100 text-cyan-600' },
-  { key: 'keyStakeholders', title: 'Key Stakeholders', color: 'bg-indigo-100 text-indigo-600' },
-  { key: 'recentActivityContext', title: 'Recent Activity Context', color: 'bg-orange-100 text-orange-600' },
+  { key: 'overview', title: 'Overview', icon: FileText, color: '#3B82F6' },
+  { key: 'keyDiscussionPoints', title: 'Key Discussion Points', icon: MessageSquare, color: '#7C3AED' },
+  { key: 'customerNeedsGoals', title: 'Customer Needs & Goals', icon: Target, color: '#0D9488' },
+  { key: 'risksObjections', title: 'Risks & Objections', icon: AlertTriangle, color: '#F59E0B' },
+  { key: 'decisionsCommitments', title: 'Decisions & Commitments', icon: CheckCircle, color: '#10B981' },
+  { key: 'keyStakeholders', title: 'Key Stakeholders', icon: Users, color: '#EC4899' },
+  { key: 'recentActivityContext', title: 'Recent Activity Context', icon: Activity, color: '#F97316' },
 ];
 
 function BriefsTab({ accountId }: { accountId: string }) {
   const { data, isLoading, regenerate } = useAccountBriefs(accountId);
-  const [expandedSection, setExpandedSection] = useState<string | null>('overview');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
 
-  let parsedData: any = null;
-  let isMalformed = false;
+  let parsedData: any = {};
 
   if (data?.briefContent) {
     try {
       parsedData = JSON.parse(data.briefContent);
     } catch (e) {
-      isMalformed = true;
+      parsedData = parseMarkdownToSections(data.briefContent);
     }
   }
+
+  const toggleSection = (sectionId: string) => {
+    const newSet = new Set(expandedSections);
+    if (newSet.has(sectionId)) {
+      newSet.delete(sectionId);
+    } else {
+      newSet.add(sectionId);
+    }
+    setExpandedSections(newSet);
+  };
 
   if (isLoading) {
     return (
@@ -209,62 +354,63 @@ function BriefsTab({ accountId }: { accountId: string }) {
         </div>
       </div>
 
-      {isMalformed ? (
-        <div className="space-y-3">
-          <div className="flex w-full items-center justify-between py-3 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                <span className="text-xs font-bold">1</span>
-              </div>
-              <span className="text-sm font-semibold text-gray-900">Summary</span>
-            </div>
-            <ChevronUp size={18} className="text-gray-400" />
-          </div>
-          <div className="pl-9 pr-4 pb-4">
-            <div className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
-              {data.briefContent}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="divide-y divide-gray-100">
-          {SECTION_ORDER.map((section, idx) => {
-            const content = parsedData[section.key];
-            if (!content) return null;
+      <div className="space-y-4">
+        {SECTION_ORDER.map((section) => {
+          let content = parsedData[section.key];
+          
+          // Merge decisions & commitments and next steps
+          if (section.key === 'decisionsCommitments' && parsedData.nextSteps) {
+            const nextStepsText = parsedData.nextSteps.trim();
+            if (nextStepsText) {
+              content = (content ? content.trim() + '\n\n' : '') + `**Next Steps:**\n${nextStepsText}`;
+            }
+          }
 
-            const isExpanded = expandedSection === section.key;
+          const isExpanded = expandedSections.has(section.key);
+          const Icon = section.icon;
 
-            return (
-              <div key={section.key} className="group">
-                <button
-                  onClick={() => setExpandedSection(isExpanded ? null : section.key)}
-                  className="flex w-full items-center justify-between py-3 hover:bg-gray-50/50 transition-colors rounded-sm px-1"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-full ${section.color}`}>
-                      <span className="text-xs font-bold">{idx + 1}</span>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">{section.title}</span>
+          return (
+            <div key={section.key} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <button
+                onClick={() => toggleSection(section.key)}
+                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white" 
+                    style={{ backgroundColor: section.color }}
+                  >
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <ChevronDown
-                    size={18}
-                    className={`text-gray-400 transition-transform duration-200 ${
-                      isExpanded ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {isExpanded && (
-                  <div className="pl-10 pr-4 pb-4 pt-1 animate-in slide-in-from-top-1 fade-in duration-200">
-                    <div className="text-sm leading-relaxed text-gray-600">
-                      {content}
-                    </div>
-                  </div>
+                  <span 
+                    className="font-semibold text-gray-900" 
+                    style={{ fontFamily: 'var(--font-serif)' }}
+                  >
+                    {section.title}
+                  </span>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
                 )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              </button>
+              
+              {isExpanded && (
+                <div className="px-6 py-4 border-t border-gray-200 text-sm text-gray-700 leading-relaxed">
+                  {content ? (
+                    renderFormattedContent(content, section.color)
+                  ) : (
+                    <span className="text-gray-400 italic">
+                      Under this feature, it's still not reflecting.
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
