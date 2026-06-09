@@ -1,12 +1,12 @@
 import { Eye } from 'lucide-react';
-import { MOCK_TEAM_MEMBERS } from '../mocks/engage.mock';
 
 interface ViewOnlyBannerProps {
   selectedUserId: string;
+  teamMembers?: { id: string; name: string; role: string }[];
 }
 
-export default function ViewOnlyBanner({ selectedUserId }: ViewOnlyBannerProps) {
-  const member = MOCK_TEAM_MEMBERS.find((m) => m.id === selectedUserId);
+export default function ViewOnlyBanner({ selectedUserId, teamMembers = [] }: ViewOnlyBannerProps) {
+  const member = teamMembers.find((m) => m.id === selectedUserId);
   const name = member ? member.name : selectedUserId;
 
   return (

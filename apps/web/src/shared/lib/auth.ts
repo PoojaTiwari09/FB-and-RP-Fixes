@@ -24,8 +24,26 @@ const MOCK_SESSIONS: Record<UserRole, UserSession> = {
 
 export async function getUserSession(): Promise<UserSession> {
   const cookieStore = await cookies();
-  const raw = cookieStore.get('user_role')?.value;
-  const role: UserRole = raw === 'sales_manager' ? 'sales_manager' : 'sales_rep';
+  const rawRole = cookieStore.get('user_role')?.value;
+  const role: UserRole = rawRole === 'sales_manager' ? 'sales_manager' : 'sales_rep';
+
+  const rbacUserStr = cookieStore.get('rbac_user_json')?.value;
+  if (rbacUserStr) {
+    try {
+      const rawUser = rbacUserStr.startsWith('%') ? decodeURIComponent(rbacUserStr) : rbacUserStr;
+      const u = JSON.parse(rawUser);
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: role, // Use the role from user_role cookie to support manager switching views if needed
+        teamId: 'team-relanto',
+      };
+    } catch (e) {
+      console.error('Failed to parse rbac_user_json:', e);
+    }
+  }
+
   return MOCK_SESSIONS[role];
 }
 

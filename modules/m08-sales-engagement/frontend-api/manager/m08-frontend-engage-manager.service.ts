@@ -1,10 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class M08FrontendEngageManagerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(public readonly prisma: PrismaService) { }
+
+  private async validateTaskAccess(tenantId: string, taskId: string, userId: string, userRole: string) {
+    const task = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+    const isRep = userRole === 'SALES_REP' || userRole === 'sales_rep';
+    if (isRep && task.assigneeId !== userId) {
+      throw new ForbiddenException('Forbidden resource');
+    }
+    return task;
+  }
 
   async fetchTasks(
     tenantId: string,
@@ -18,16 +32,27 @@ export class M08FrontendEngageManagerService {
       sortBy?: string;
       page?: number;
       size?: number;
-    }
+    },
+    userId: string,
+    userRole: string
   ) {
+    let targetAssigneeId = query.assigneeId;
+    if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+      targetAssigneeId = userId;
+    } else if (targetAssigneeId === 'me') {
+      targetAssigneeId = userId;
+    }
+
+    const whereClause: any = { tenantId };
+    if (targetAssigneeId && targetAssigneeId !== 'all') {
+      whereClause.assigneeId = targetAssigneeId;
+    }
+
     const tasks = await this.prisma.engageTask.findMany({
-      where: { tenantId },
+      where: whereClause,
     });
 
-    let list = tasks.filter((t) => {
-      if (query.assigneeId === 'me') return true;
-      return t.assigneeId === query.assigneeId;
-    });
+    let list = tasks;
 
     const todayStr = query.date;
     const now = new Date();
@@ -119,7 +144,7 @@ export class M08FrontendEngageManagerService {
     const groups: { groupLabel: string; count: number; tasks: any[] }[] = [];
     const highPriority = pagedTasks.filter((t) => t.priority.toUpperCase() === 'HIGH');
     const normalPriority = pagedTasks.filter((t) => t.priority.toUpperCase() !== 'HIGH');
-    
+
     // Normalize mapping helper for tasks
     const mapTask = (t: any) => ({
       id: t.taskId,
@@ -182,15 +207,24 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async fetchSummary(tenantId: string, assigneeId: string, date: string) {
+  async fetchSummary(tenantId: string, assigneeId: string, date: string, userId: string, userRole: string) {
+    let targetAssigneeId = assigneeId;
+    if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+      targetAssigneeId = userId;
+    } else if (targetAssigneeId === 'me') {
+      targetAssigneeId = userId;
+    }
+
+    const whereClause: any = { tenantId };
+    if (targetAssigneeId && targetAssigneeId !== 'all') {
+      whereClause.assigneeId = targetAssigneeId;
+    }
+
     const tasks = await this.prisma.engageTask.findMany({
-      where: { tenantId },
+      where: whereClause,
     });
 
-    const list =
-      assigneeId === 'me'
-        ? tasks
-        : tasks.filter((t) => t.assigneeId === assigneeId);
+    const list = tasks;
 
     const now = new Date();
     const isCurrentlySnoozed = (t: any) => {
@@ -227,15 +261,15 @@ export class M08FrontendEngageManagerService {
   }
 
   async fetchTeamMembers(tenantId: string) {
-    // Return seeded members
-    const members = [
-      { id: 'me', name: 'Alex Morgan', role: 'Account Executive' },
-      { id: 'sarah', name: 'Sarah Chen', role: 'Senior AE' },
-      { id: 'michael', name: 'Michael Rodriguez', role: 'Account Executive' },
-      { id: 'jennifer', name: 'Jennifer Kim', role: 'Team Lead' },
-      { id: 'david', name: 'David Park', role: 'Account Executive' },
-      { id: 'emily', name: 'Emily Thompson', role: 'Senior AE' },
-    ];
+    const users = await this.prisma.user.findMany({
+      where: { tenantId },
+      orderBy: { name: 'asc' },
+    });
+    const members = users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      role: u.role === 'MANAGER' ? 'Team Lead' : 'Account Executive',
+    }));
     return { status: 'success', data: members };
   }
 
@@ -273,7 +307,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async fetchTaskDetail(tenantId: string, taskId: string) {
+  async fetchTaskDetail(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const t = await this.prisma.engageTask.findFirst({
       where: { tenantId, taskId },
     });
@@ -315,7 +350,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async fetchEmailDraft(tenantId: string, taskId: string) {
+  async fetchEmailDraft(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const d = await this.prisma.emailDraft.findFirst({
       where: { tenantId, taskId },
     });
@@ -343,11 +379,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async fetchLinkedInScript(tenantId: string, taskId: string) {
-    const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
-    });
-    if (!t) throw new NotFoundException('Task not found');
+  async fetchLinkedInScript(tenantId: string, taskId: string, userId: string, userRole: string) {
+    const t = await this.validateTaskAccess(tenantId, taskId, userId, userRole);
 
     const contact = await this.prisma.engageContact.findFirst({
       where: { tenantId, contactId: t.contactId || '' },
@@ -406,8 +439,37 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async createTask(tenantId: string, body: Record<string, any>) {
+  async createTask(tenantId: string, body: Record<string, any>, userId?: string, userRole?: string) {
     const taskId = `task_${Date.now()}`;
+
+    // Always resolve assigneeId to a real DB user ID — never store 'me'
+    let assigneeId = body.assigneeId;
+    if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+      assigneeId = userId;
+    } else if (!assigneeId || assigneeId === 'me') {
+      assigneeId = userId;
+    }
+    if (!assigneeId || assigneeId === 'me') {
+      assigneeId = userId;
+    }
+
+    let assigneeName = body.assigneeName || 'Unknown';
+    let assigneeRole = body.assigneeRole || 'Account Executive';
+
+    if (assigneeId) {
+      try {
+        const user = await this.prisma.user.findUnique({
+          where: { id: assigneeId },
+        });
+        if (user) {
+          assigneeName = user.name;
+          assigneeRole = user.role === 'MANAGER' ? 'Team Lead' : 'Account Executive';
+        }
+      } catch {
+        // user lookup failed — use fallback names above
+      }
+    }
+
     const newTask = await this.prisma.engageTask.create({
       data: {
         tenantId,
@@ -415,16 +477,16 @@ export class M08FrontendEngageManagerService {
         title: body.title,
         contactName: body.contactName || 'New Contact',
         companyName: body.companyName || 'New Company',
-        channel: (body.channel || 'custom').toUpperCase(),
+        channel: ((body.channel || body.taskType || 'CUSTOM')).toUpperCase(),
         status: 'PENDING',
         dueDate: body.dueDate || new Date().toISOString().split('T')[0],
         dueTime: body.dueTime || null,
         scheduledTime: body.dueTime || null,
         dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
         priority: (body.priority || 'NORMAL').toUpperCase(),
-        assigneeId: body.assigneeId || 'me',
-        assigneeName: body.assigneeName || 'Alex Morgan',
-        assigneeRole: body.assigneeRole || 'Account Executive',
+        assigneeId,
+        assigneeName,
+        assigneeRole,
         todoType: body.todoType || 'manual',
         entityType: body.entityType || 'lead',
         interactionCount: 0,
@@ -444,13 +506,17 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async reassignTask(tenantId: string, taskId: string, newAssigneeId: string) {
+  async reassignTask(tenantId: string, taskId: string, newAssigneeId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
+    const user = await this.prisma.user.findUnique({
+      where: { id: newAssigneeId },
+    });
     const updated = await this.prisma.engageTask.update({
       where: { taskId },
       data: {
         assigneeId: newAssigneeId,
-        assigneeName: newAssigneeId === 'me' ? 'Alex Morgan' : 'Sarah Chen',
-        assigneeRole: newAssigneeId === 'me' ? 'Account Executive' : 'Senior AE',
+        assigneeName: user?.name || 'Unknown User',
+        assigneeRole: user?.role === 'MANAGER' ? 'Team Lead' : 'Account Executive',
       },
     });
 
@@ -466,7 +532,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async markComplete(tenantId: string, taskId: string) {
+  async markComplete(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
@@ -474,7 +541,8 @@ export class M08FrontendEngageManagerService {
     return { status: 'success', data: { ok: true } };
   }
 
-  async skipTask(tenantId: string, taskId: string) {
+  async skipTask(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
@@ -491,7 +559,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async dismissTask(tenantId: string, taskId: string) {
+  async dismissTask(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
@@ -508,7 +577,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async logAction(tenantId: string, taskId: string, action: string) {
+  async logAction(tenantId: string, taskId: string, action: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     return {
       status: 'success',
       data: {
@@ -539,7 +609,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async saveNotes(tenantId: string, taskId: string, notes: string) {
+  async saveNotes(tenantId: string, taskId: string, notes: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { notes },
@@ -547,7 +618,8 @@ export class M08FrontendEngageManagerService {
     return { status: 'success', data: { ok: true } };
   }
 
-  async saveDraft(tenantId: string, taskId: string, body: any) {
+  async saveDraft(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const draft = await this.prisma.emailDraft.upsert({
       where: { taskId },
       update: {
@@ -573,7 +645,8 @@ export class M08FrontendEngageManagerService {
     return { status: 'success', data: draft };
   }
 
-  async sendEmail(tenantId: string, taskId: string, body: any) {
+  async sendEmail(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const t = await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
@@ -586,7 +659,7 @@ export class M08FrontendEngageManagerService {
     const from = process.env.SMTP_FROM || user;
 
     if (!host || !user || !pass) {
-      throw new Error('SMTP configuration (SMTP_HOST, SMTP_USER, SMTP_PASS) is missing in .env');
+      throw new BadRequestException('SMTP configuration (SMTP_HOST, SMTP_USER, SMTP_PASS) is missing in .env');
     }
 
     try {
@@ -609,7 +682,7 @@ export class M08FrontendEngageManagerService {
       });
     } catch (err: any) {
       console.error('SMTP sending failed:', err);
-      throw new Error(`SMTP sending failed: ${err.message || err}`);
+      throw new InternalServerErrorException(`SMTP sending failed: ${err.message || err}`);
     }
 
     await this.prisma.engageActivity.create({
@@ -628,7 +701,8 @@ export class M08FrontendEngageManagerService {
     return { status: 'success', data: { ok: true } };
   }
 
-  async rephraseEmail(tenantId: string, taskId: string, body: any) {
+  async rephraseEmail(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const text = body.body || body.bodyHtml || '';
     const rephrasedBody = text
       ? `${text}\n\n[AI Rephrased: Clearer, more concise call-to-action added.]`
@@ -642,7 +716,8 @@ export class M08FrontendEngageManagerService {
     };
   }
 
-  async updateTask(tenantId: string, taskId: string, body: any) {
+  async updateTask(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const updated = await this.prisma.engageTask.update({
       where: { taskId },
       data: body,

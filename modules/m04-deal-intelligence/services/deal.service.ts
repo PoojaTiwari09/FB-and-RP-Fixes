@@ -420,9 +420,10 @@ export class DealService implements OnModuleInit {
     // Fetch recent deal updates from audit log
     const logs = await this.auditLogService.findRecentDealUpdates(30);
     
-    // Filter logs based on role-based ownership if normal USER
+    // Filter logs based on role-based ownership if normal USER/SALES_REP
     let filteredLogs = logs;
-    if (userRole === 'USER') {
+    const normalizedRole = String(userRole).toUpperCase();
+    if (normalizedRole === 'USER' || normalizedRole === 'SALES_REP') {
       const userDeals = await this.dealRepository.getDealsForOwner(userId, 1000);
       const userDealIds = new Set(userDeals.map(d => d.id));
       filteredLogs = logs.filter(log => userDealIds.has(log.entityId));

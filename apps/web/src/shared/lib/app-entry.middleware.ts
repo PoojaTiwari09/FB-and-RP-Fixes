@@ -45,12 +45,14 @@ export function createAppMiddleware() {
     const { pathname } = request.nextUrl;
     const role = getRole(request);
 
-    if (!request.cookies.get('user_role')?.value) {
-      return withRoleCookie(NextResponse.next(), DEFAULT_ROLE);
+    const hasRole = request.cookies.get('user_role')?.value;
+
+    if (!hasRole && !pathname.startsWith('/login')) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     if (pathname === '/') {
-      return NextResponse.redirect(new URL(HOME_PATH, request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     const isManagerOnly = MANAGER_ONLY_PREFIXES.some((p) => pathname.startsWith(p)) || pathname.startsWith('/training/manage');

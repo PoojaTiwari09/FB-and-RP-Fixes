@@ -19,98 +19,98 @@ export class M02FrontendCallReviewsController {
   constructor(private readonly svc: M02FrontendCallReviewsService) {}
 
   @Get()
-  list(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
-    return this.svc.listReviews(req.tenantId, query);
+  list(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.listReviews(req.tenantId, query, req.userId, req.userRole);
   }
 
   @Get(':reviewId/view')
-  view(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.getSubmittedView(req.tenantId, reviewId);
+  view(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getSubmittedView(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Get(':reviewId/submitted')
-  submitted(@Param('reviewId') reviewId: string) {
-    return this.svc.getSubmitted(reviewId);
+  submitted(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getSubmitted(reviewId, req.userId, req.userRole);
   }
 
   @Get(':reviewId/summary')
-  summary(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.getSummary(req.tenantId, reviewId);
+  summary(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getSummary(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Get(':reviewId/coaching')
-  getCoaching(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.getCoaching(req.tenantId, reviewId);
+  getCoaching(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getCoaching(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Post(':reviewId/coaching')
   saveCoaching(
     @Param('reviewId') reviewId: string,
     @Body() body: unknown,
-    @Req() req: Record<string, string>,
+    @Req() req: any,
   ) {
-    return this.svc.saveCoaching(req.tenantId, reviewId, body);
+    return this.svc.saveCoaching(req.tenantId, reviewId, body, req.userId, req.userRole);
   }
 
   @Get(':reviewId/scorecard')
-  scorecard(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.getScorecardForm(req.tenantId, reviewId);
+  scorecard(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getScorecardForm(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Get(':reviewId/transcript')
-  transcript(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.getTranscript(req.tenantId, reviewId);
+  transcript(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getTranscript(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Get(':reviewId/ai-insights')
-  aiInsights() {
-    return this.svc.getAiInsights();
+  aiInsights(@Req() req: any) {
+    return this.svc.getAiInsights(req.userId, req.userRole);
   }
 
   @Get(':reviewId')
-  detail(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.getReviewDetail(req.tenantId, reviewId);
+  detail(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getReviewDetail(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Patch(':reviewId')
   patch(
     @Param('reviewId') reviewId: string,
     @Body() body: unknown,
-    @Req() req: Record<string, string>,
+    @Req() req: any,
   ) {
-    return this.svc.patchReview(req.tenantId, reviewId, body);
+    return this.svc.patchReview(req.tenantId, reviewId, body, req.userId, req.userRole);
   }
 
   @Post(':reviewId/mark-na')
-  markNa(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.markNa(req.tenantId, reviewId);
+  markNa(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.markNa(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Post(':reviewId/answers')
   saveAnswer(
     @Param('reviewId') reviewId: string,
     @Body() body: unknown,
-    @Req() req: Record<string, string>,
+    @Req() req: any,
   ) {
-    return this.svc.saveAnswer(req.tenantId, reviewId, body);
+    return this.svc.saveAnswer(req.tenantId, reviewId, body, req.userId, req.userRole);
   }
 
   @Post(':reviewId/save-draft')
   saveDraft(
     @Param('reviewId') reviewId: string,
     @Body() body: any,
-    @Req() req: Record<string, string>,
+    @Req() req: any,
   ) {
-    return this.svc.saveDraft(req.tenantId, reviewId, body);
+    return this.svc.saveDraft(req.tenantId, reviewId, body, req.userId, req.userRole);
   }
 
   @Post(':reviewId/submit')
   submit(
     @Param('reviewId') reviewId: string,
     @Body() body: any,
-    @Req() req: Record<string, string>,
+    @Req() req: any,
   ) {
-    return this.svc.submitReview(req.tenantId, reviewId, body);
+    return this.svc.submitReview(req.tenantId, reviewId, body, req.userId, req.userRole);
   }
 
   @Post(':reviewId/export')
@@ -174,8 +174,8 @@ export class M02FrontendManagerCallsController {
   constructor(private readonly svc: M02FrontendCallReviewsService) {}
 
   @Get()
-  listCalls(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
-    return this.svc.listReviews(req.tenantId, query);
+  listCalls(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.listReviews(req.tenantId, query, req.userId, req.userRole);
   }
 }
 
@@ -185,27 +185,17 @@ export class M02FrontendAnalyticsController {
   constructor(private readonly svc: M02FrontendCallReviewsService) {}
 
   @Get('summary')
-  summary() {
-    return this.svc.getAnalyticsSummary();
+  summary(@Req() req: any) {
+    return this.svc.getAnalyticsSummary(req.userId, req.userRole);
   }
 
   @Get('score-trend')
-  scoreTrend() {
-    return this.svc.getScoreTrend();
+  scoreTrend(@Req() req: any) {
+    return this.svc.getScoreTrend(req.userId, req.userRole);
   }
 
   @Get('focus-areas')
-  focusAreas() {
-    return this.svc.getFocusAreas();
-  }
-
-  @Get('common-tags')
-  commonTags() {
-    return this.svc.getCommonTags();
-  }
-
-  @Get('review-history')
-  history(@Query() query: Record<string, string>) {
-    return this.svc.getReviewHistory(query);
+  focusAreas(@Req() req: any) {
+    return this.svc.getFocusAreas(req.userId, req.userRole);
   }
 }

@@ -1,14 +1,41 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class M08FrontendEngageService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(public readonly prisma: PrismaService) {}
 
-  async getTasks(tenantId: string) {
+  private async validateTaskAccess(tenantId: string, taskId: string, userId: string, userRole: string) {
+    const task = await this.prisma.engageTask.findFirst({
+      where: { tenantId, taskId },
+    });
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+    const isRep = userRole === 'SALES_REP' || userRole === 'sales_rep';
+    if (isRep && task.assigneeId !== userId) {
+      throw new ForbiddenException('Forbidden resource');
+    }
+    return task;
+  }
+
+  async getTasks(tenantId: string, userId: string, userRole: string) {
+    const whereClause: any = { tenantId };
+    // Hide pre-seeded mock tasks — only show manually created tasks
+    whereClause.taskId = {
+      notIn: [
+        'task-001', 'task-002', 'task-003', 'task-004', 'task-005',
+        'task_001', 'task_002', 'task_003', 'task_004', 'task_005',
+        'task_006', 'task_007', 'task_008', 'task_014', 'task_015'
+      ]
+    };
+    if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+      whereClause.assigneeId = userId;
+    }
+
     const dbTasks = await this.prisma.engageTask.findMany({
-      where: { tenantId },
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
     });
 
@@ -32,9 +59,22 @@ export class M08FrontendEngageService {
     }));
   }
 
-  async getTaskSummary(tenantId: string) {
+  async getTaskSummary(tenantId: string, userId: string, userRole: string) {
+    const whereClause: any = { tenantId };
+    // Hide pre-seeded mock tasks — only show manually created tasks
+    whereClause.taskId = {
+      notIn: [
+        'task-001', 'task-002', 'task-003', 'task-004', 'task-005',
+        'task_001', 'task_002', 'task_003', 'task_004', 'task_005',
+        'task_006', 'task_007', 'task_008', 'task_014', 'task_015'
+      ]
+    };
+    if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+      whereClause.assigneeId = userId;
+    }
+
     const tasks = await this.prisma.engageTask.findMany({
-      where: { tenantId },
+      where: whereClause,
     });
 
     const now = new Date();
@@ -70,9 +110,14 @@ export class M08FrontendEngageService {
     };
   }
 
-  async getRecentActivity(tenantId: string, limit: number) {
+  async getRecentActivity(tenantId: string, limit: number, userId?: string, userRole?: string) {
+    const where: any = { tenantId };
+    if (userRole === 'sales_rep' && userId) {
+      where.userId = userId;
+    }
+
     const activities = await this.prisma.engageActivity.findMany({
-      where: { tenantId },
+      where,
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
@@ -89,12 +134,15 @@ export class M08FrontendEngageService {
     }));
   }
 
-  async getTaskDetail(tenantId: string, taskId: string) {
-    console.log('[M08 Service] getTaskDetail: tenantId =', tenantId, 'taskId =', taskId);
+  async getTaskDetail(tenantId: string, taskId: string, userId?: string, userRole?: string) {
+    const where: any = { tenantId, taskId };
+    if (userRole === 'sales_rep' && userId) {
+      where.assigneeId = userId;
+    }
+
     const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
+      where,
     });
-    console.log('[M08 Service] getTaskDetail: found task =', t);
     if (!t) return null;
 
     return {
@@ -113,7 +161,7 @@ export class M08FrontendEngageService {
     };
   }
 
-  async getContactDetails(tenantId: string, contactId: string) {
+  async getContactDetails(tenantId: string, contactId: string, userId?: string, userRole?: string) {
     const c = await this.prisma.engageContact.findFirst({
       where: { tenantId, contactId },
     });
@@ -133,9 +181,14 @@ export class M08FrontendEngageService {
     };
   }
 
-  async getEmailDraft(tenantId: string, taskId: string) {
+  async getEmailDraft(tenantId: string, taskId: string, userId?: string, userRole?: string) {
+    const where: any = { tenantId, taskId };
+    if (userRole === 'sales_rep' && userId) {
+      where.assigneeId = userId;
+    }
+
     const d = await this.prisma.emailDraft.findFirst({
-      where: { tenantId, taskId },
+      where,
     });
     if (!d) return null;
 
@@ -150,9 +203,14 @@ export class M08FrontendEngageService {
     };
   }
 
-  async getLinkedInDraft(tenantId: string, taskId: string) {
+  async getLinkedInDraft(tenantId: string, taskId: string, userId?: string, userRole?: string) {
+    const where: any = { tenantId, taskId };
+    if (userRole === 'sales_rep' && userId) {
+      where.assigneeId = userId;
+    }
+
     const t = await this.prisma.engageTask.findFirst({
-      where: { tenantId, taskId },
+      where,
     });
     if (!t) return null;
 
@@ -218,8 +276,41 @@ export class M08FrontendEngageService {
 
   // --- Write Operations ---
 
-  async createTask(tenantId: string, body: any) {
+  async createTask(tenantId: string, body: any, userId?: string, userRole?: string) {
     const taskId = `task_${Date.now()}`;
+
+    // Always resolve assigneeId to a real user ID — never store 'me'
+    let assigneeId = body.assigneeId;
+    if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+      // Reps always own their own tasks
+      assigneeId = userId;
+    } else if (!assigneeId || assigneeId === 'me') {
+      // Manager creating for themselves
+      assigneeId = userId;
+    }
+    // Final safety guard — if still unresolved, fall back to userId
+    if (!assigneeId || assigneeId === 'me') {
+      assigneeId = userId;
+    }
+
+    let assigneeName = body.assigneeName || 'Unknown';
+    let assigneeRole = body.assigneeRole || 'Account Executive';
+
+    // Only look up user if we have a valid non-empty assigneeId
+    if (assigneeId) {
+      try {
+        const user = await this.prisma.user.findUnique({
+          where: { id: assigneeId },
+        });
+        if (user) {
+          assigneeName = user.name;
+          assigneeRole = user.role === 'MANAGER' ? 'Team Lead' : 'Account Executive';
+        }
+      } catch {
+        // user lookup failed — use fallback names above
+      }
+    }
+
     const newTask = await this.prisma.engageTask.create({
       data: {
         tenantId,
@@ -227,16 +318,16 @@ export class M08FrontendEngageService {
         title: body.title,
         contactName: body.contactName || 'New Contact',
         companyName: body.companyName || 'New Company',
-        channel: (body.channel || 'custom').toUpperCase(),
+        channel: ((body.channel || body.taskType || 'CUSTOM')).toUpperCase(),
         status: 'PENDING',
         dueDate: body.dueDate || new Date().toISOString().split('T')[0],
         dueTime: body.dueTime || null,
         scheduledTime: body.dueTime || null,
         dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
         priority: (body.priority || 'NORMAL').toUpperCase(),
-        assigneeId: body.assigneeId || 'me',
-        assigneeName: body.assigneeName || 'Alex Morgan',
-        assigneeRole: body.assigneeRole || 'Account Executive',
+        assigneeId,
+        assigneeName,
+        assigneeRole,
         todoType: body.todoType || 'manual',
         entityType: body.entityType || 'lead',
         interactionCount: 0,
@@ -256,7 +347,8 @@ export class M08FrontendEngageService {
     };
   }
 
-  async updateTask(tenantId: string, taskId: string, body: any) {
+  async updateTask(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const updated = await this.prisma.engageTask.update({
       where: { taskId },
       data: body,
@@ -264,7 +356,8 @@ export class M08FrontendEngageService {
     return { status: 'success', data: updated };
   }
 
-  async saveNotes(tenantId: string, taskId: string, notes: string) {
+  async saveNotes(tenantId: string, taskId: string, notes: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const updated = await this.prisma.engageTask.update({
       where: { taskId },
       data: { notes },
@@ -272,7 +365,8 @@ export class M08FrontendEngageService {
     return { status: 'success', data: updated };
   }
 
-  async getNotes(tenantId: string, taskId: string) {
+  async getNotes(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const t = await this.prisma.engageTask.findFirst({
       where: { tenantId, taskId },
     });
@@ -288,7 +382,8 @@ export class M08FrontendEngageService {
     ];
   }
 
-  async sendEmail(tenantId: string, taskId: string, body: any) {
+  async sendEmail(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const t = await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
@@ -346,7 +441,8 @@ export class M08FrontendEngageService {
     return { status: 'success', data: { ok: true } };
   }
 
-  async saveDraft(tenantId: string, taskId: string, body: any) {
+  async saveDraft(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const draft = await this.prisma.emailDraft.upsert({
       where: { taskId },
       update: {
@@ -372,7 +468,8 @@ export class M08FrontendEngageService {
     return { status: 'success', data: draft };
   }
 
-  async rephraseEmail(tenantId: string, taskId: string, body: any) {
+  async rephraseEmail(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     const text = body.bodyHtml || body.body || '';
     const rephrasedBody = text
       ? `${text}\n\n[AI Rephrased: Clearer, more concise call-to-action added.]`
@@ -386,7 +483,8 @@ export class M08FrontendEngageService {
     };
   }
 
-  async markComplete(tenantId: string, taskId: string) {
+  async markComplete(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' },
@@ -394,7 +492,8 @@ export class M08FrontendEngageService {
     return { status: 'success', data: { ok: true } };
   }
 
-  async skipTask(tenantId: string, taskId: string) {
+  async skipTask(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' }, // skip completed
@@ -402,7 +501,8 @@ export class M08FrontendEngageService {
     return { status: 'success', data: { ok: true, action: 'skipped' } };
   }
 
-  async dismissTask(tenantId: string, taskId: string) {
+  async dismissTask(tenantId: string, taskId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     await this.prisma.engageTask.update({
       where: { taskId },
       data: { status: 'COMPLETED' }, // dismiss completed
@@ -410,13 +510,17 @@ export class M08FrontendEngageService {
     return { status: 'success', data: { ok: true, action: 'dismissed' } };
   }
 
-  async reassignTask(tenantId: string, taskId: string, newAssigneeId: string) {
+  async reassignTask(tenantId: string, taskId: string, newAssigneeId: string, userId: string, userRole: string) {
+    await this.validateTaskAccess(tenantId, taskId, userId, userRole);
+    const user = await this.prisma.user.findUnique({
+      where: { id: newAssigneeId },
+    });
     const updated = await this.prisma.engageTask.update({
       where: { taskId },
       data: {
         assigneeId: newAssigneeId,
-        assigneeName: newAssigneeId === 'me' ? 'Alex Morgan' : 'Sarah Chen',
-        assigneeRole: newAssigneeId === 'me' ? 'Account Executive' : 'Senior AE',
+        assigneeName: user?.name || 'Unknown User',
+        assigneeRole: user?.role === 'MANAGER' ? 'Team Lead' : 'Account Executive',
       },
     });
     return { status: 'success', data: updated };

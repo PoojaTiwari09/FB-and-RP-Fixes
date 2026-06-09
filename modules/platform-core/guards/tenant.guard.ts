@@ -28,12 +28,14 @@ export class TenantGuard implements CanActivate {
     }
 
     request.tenantId = tenantId;
-    // Optional userId pass-through (Notes / Shares record actor) — kept
-    // permissive while JWT integration is in progress.
+    
+    // RBAC: Extract User ID and Role
     const headerUser = request.headers?.['x-user-id'];
-    if (!request.userId && (userTenant || headerUser)) {
-      request.userId = request.user?.id ?? headerUser ?? 'anonymous';
-    }
+    const headerRole = request.headers?.['x-user-role'];
+    
+    request.userId = request.user?.id ?? headerUser ?? 'anonymous';
+    request.userRole = request.user?.role ?? headerRole ?? 'SALES_REP';
+    
     return true;
   }
 }

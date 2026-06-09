@@ -36,7 +36,7 @@ export class AccountsService {
     return cutoff.toISOString();
   }
 
-  async getAccounts(params: AccountQueryParams) {
+  async getAccounts(tenantId: string, params: AccountQueryParams, userId?: string, userRole?: string) {
     const {
       board_slug,
       tab_id,
@@ -47,6 +47,12 @@ export class AccountsService {
       page = 1,
       page_size = 20,
     } = params;
+
+    // Data Isolation: Sales Reps can only see their own accounts
+    let effectiveRepId = rep_id;
+    if (userRole === 'sales_rep' && userId) {
+      effectiveRepId = userId;
+    }
 
     // 1. Get board config to validate slug
     const { data: boardConfig } = await this.supabase
@@ -66,9 +72,6 @@ export class AccountsService {
     const periodCutoff = this.getPeriodCutoff(period);
 
     // BF-20: Only include companies that have ≥1 activity on this board.
-    // crm_activities has no board column — cross-reference via crm_companies.
-    // Strategy: fetch all company hubspot_ids for this board first, then find
-    // which of them have activities.
     const { data: boardCompanyRows } = await this.supabase
       .from('crm_companies')
       .select('hubspot_id')
@@ -76,7 +79,7 @@ export class AccountsService {
     const boardCompanyIds = (boardCompanyRows || []).map((c) => c.hubspot_id);
 
     if (boardCompanyIds.length === 0) {
-      const summary = await this.buildSummary(board_slug, [], rep_id, periodCutoff);
+      const summary = await this.buildSummary(board_slug, [], effectiveRepId, periodCutoff);
       return { total: 0, page, page_size, summary, accounts: [] };
     }
 
@@ -92,8 +95,7 @@ export class AccountsService {
     const activeIds = [...new Set((activeActivityRows || []).map((a) => a.company_hubspot_id))];
 
     if (activeIds.length === 0) {
-      // No active companies — return empty result early
-      const summary = await this.buildSummary(board_slug, [], rep_id, periodCutoff);
+      const summary = await this.buildSummary(board_slug, [], effectiveRepId, periodCutoff);
       return { total: 0, page, page_size, summary, accounts: [] };
     }
 
@@ -105,8 +107,8 @@ export class AccountsService {
       .in('hubspot_id', activeIds);
 
     // 4. Rep filter
-    if (rep_id) {
-      const repIds = rep_id.split(',').map((r) => r.trim());
+    if (effectiveRepId) {
+      const repIds = effectiveRepId.split(',').map((r) => r.trim());
       if (repIds.length === 1) {
         query = query.eq('assigned_rep_id', repIds[0]);
       } else {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useEngage } from './hooks/useEngage';
+import { useRole } from '@shared/hooks/useRole';
 import CompactHeader from './components/CompactHeader';
 import CompactFilters from './components/CompactFilters';
 import TypeTabs from './components/TypeTabs';
@@ -28,6 +29,7 @@ export default function EngageManagerView() {
     tabCounts,
     statusPills,
     summary,
+    teamMembers,
     
     // States
     selectedUserId,
@@ -89,14 +91,15 @@ export default function EngageManagerView() {
     emptyStateReason,
   } = useEngage();
 
-  const isReadOnly = selectedUserId !== 'me';
+  const { session } = useRole();
+  const isReadOnly = selectedUserId !== session?.userId && selectedUserId !== 'me';
   const [snoozeModalOpen, setSnoozeModalOpen] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden" style={{ backgroundColor: '#F9FAFB' }}>
       
       {/* Warning Banner for manager looking at teammate workspaces */}
-      {isReadOnly && <ViewOnlyBanner selectedUserId={selectedUserId} />}
+      {isReadOnly && <ViewOnlyBanner selectedUserId={selectedUserId} teamMembers={teamMembers} />}
 
       {/* Header */}
       <CompactHeader
@@ -120,6 +123,7 @@ export default function EngageManagerView() {
         filterCount={filterCount}
         onFilterClick={() => setIsFilterDrawerOpen(true)}
         onClearFilters={handleClearFilters}
+        teamMembers={teamMembers}
       />
 
       {/* Status Tabs and Channels Selection */}
@@ -189,6 +193,7 @@ export default function EngageManagerView() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateTask}
+        teamMembers={teamMembers}
       />
 
       {/* Generalized Reassign Modal */}

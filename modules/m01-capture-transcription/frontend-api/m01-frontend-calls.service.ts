@@ -24,13 +24,19 @@ export class M01FrontendCallsService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async listCalls(tenantId: string, rawQuery: Record<string, string>) {
+  async listCalls(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
     const q = FrontendListCallsQuerySchema.parse(rawQuery);
 
     if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
       const offset = (q.page - 1) * q.size;
       const extra: Record<string, unknown> = {};
       const andClauses: Record<string, unknown>[] = [];
+
+      // Data Isolation: Sales Reps can only see their own calls
+      if (userRole === 'sales_rep' && userId) {
+        andClauses.push({ callOwner: userId });
+      }
+
       if (q.search?.trim()) {
         const needle = q.search.trim();
         andClauses.push({
@@ -84,6 +90,11 @@ export class M01FrontendCallsService {
 
     const extra: Record<string, any> = {};
     const andClauses: any[] = [];
+
+    // Data Isolation: Sales Reps can only see their own calls
+    if (userRole === 'sales_rep' && userId) {
+      andClauses.push({ callOwner: userId });
+    }
 
     // Calls List UI: only show review-ready rows (recording + completed transcript).
     const isCallsList =
@@ -195,8 +206,14 @@ export class M01FrontendCallsService {
     };
   }
 
-  async getCall(callId: string, tenantId: string, rawQuery: Record<string, string> = {}) {
+  async getCall(callId: string, tenantId: string, rawQuery: Record<string, string> = {}, userId?: string, userRole?: string) {
     const record = await this.calls.getCallDetail(callId, tenantId);
+
+    // Data Isolation: Sales Reps can only see their own calls
+    if (userRole === 'sales_rep' && userId && record.callOwner !== userId) {
+      throw new Error('Access denied');
+    }
+
     if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
       const matchingReview = await this.prisma.callReview.findFirst({
         where: { callTitle: record.title, tenantId },
@@ -216,12 +233,18 @@ export class M01FrontendCallsService {
     return mapCallDetail(record);
   }
 
-  async getCallMetadata(callId: string, tenantId: string) {
+  async getCallMetadata(callId: string, tenantId: string, userId?: string, userRole?: string) {
     const record = await this.calls.getCallDetail(callId, tenantId);
+
+    // Data Isolation: Sales Reps can only see their own calls
+    if (userRole === 'sales_rep' && userId && record.callOwner !== userId) {
+      throw new Error('Access denied');
+    }
+
     return mapCallMetadata(record);
   }
 
-  async searchCalls(tenantId: string, rawQuery: Record<string, string>) {
+  async searchCalls(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
     const q = FrontendSearchCallsQuerySchema.parse(rawQuery);
     const offset = (q.page - 1) * q.size;
 
@@ -231,7 +254,12 @@ export class M01FrontendCallsService {
       offset,
     });
 
-    const calls = (Array.isArray(hits) ? hits : []).map(mapCallSearchHit);
+    let calls = (Array.isArray(hits) ? hits : []).map(mapCallSearchHit);
+
+    // Data Isolation: Sales Reps can only see their own calls
+    if (userRole === 'sales_rep' && userId) {
+      calls = calls.filter((c) => c.callOwner === userId);
+    }
 
     return {
       totalCount: calls.length,
@@ -239,10 +267,17 @@ export class M01FrontendCallsService {
     };
   }
 
-  async listAccounts(tenantId: string, rawQuery: Record<string, string>) {
+  async listAccounts(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
     const { search } = FrontendFilterSearchSchema.parse(rawQuery);
+    const where: any = { tenantId };
+
+    // Data Isolation: Sales Reps can only see accounts for their own calls
+    if (userRole === 'sales_rep' && userId) {
+      where.callOwner = userId;
+    }
+
     const rows = await this.prisma.callRecord.findMany({
-      where: { tenantId },
+      where,
       select: { accountId: true, title: true },
       take: 500,
     });
@@ -271,10 +306,15 @@ export class M01FrontendCallsService {
     return { accounts };
   }
 
-  async listParticipants(tenantId: string, rawQuery: Record<string, string>) {
+  async listParticipants(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
     const { search, accountId } = FrontendFilterSearchSchema.parse(rawQuery);
     const where: any = { tenantId };
     if (accountId) where.accountId = accountId;
+
+    // Data Isolation: Sales Reps can only see participants for their own calls
+    if (userRole === 'sales_rep' && userId) {
+      where.callOwner = userId;
+    }
 
     const rows = await this.prisma.callRecord.findMany({
       where,

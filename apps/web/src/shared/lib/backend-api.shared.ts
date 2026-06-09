@@ -25,15 +25,18 @@ export const BACKEND_MANAGER_USER_ID = envOrDefault(
 export type BackendRole = 'sales_rep' | 'sales_manager';
 
 export function roleFromCookieValue(raw: string | undefined): BackendRole {
-  return raw === 'sales_manager' ? 'sales_manager' : 'sales_rep';
+  if (!raw) return 'sales_rep';
+  const norm = raw.toLowerCase();
+  return (norm === 'sales_manager' || norm === 'manager' || norm === 'admin') ? 'sales_manager' : 'sales_rep';
 }
 
-export function buildBackendHeaders(role: BackendRole = 'sales_rep'): Record<string, string> {
+export function buildBackendHeaders(role: BackendRole = 'sales_rep', userId?: string): Record<string, string> {
   return {
     'Content-Type': 'application/json',
     'x-tenant-id': BACKEND_ORG_ID,
     'x-org-id': BACKEND_ORG_ID,
-    'x-user-id': role === 'sales_manager' ? BACKEND_MANAGER_USER_ID : BACKEND_REP_USER_ID,
+    'x-user-id': userId || (role === 'sales_manager' ? BACKEND_MANAGER_USER_ID : BACKEND_REP_USER_ID),
+    'x-user-role': role,
   };
 }
 
@@ -42,7 +45,12 @@ export function getClientBackendHeaders(): Record<string, string> {
   if (typeof document === 'undefined') {
     return buildBackendHeaders('sales_rep');
   }
-  const match = document.cookie.match(/(?:^|;\s*)user_role=([^;]+)/);
-  const role = roleFromCookieValue(match?.[1] ? decodeURIComponent(match[1]) : undefined);
-  return buildBackendHeaders(role);
+  const roleMatch = document.cookie.match(/(?:^|;\s*)user_role=([^;]+)/);
+  const role = roleFromCookieValue(roleMatch?.[1] ? decodeURIComponent(roleMatch[1]) : undefined);
+  
+  const idMatch = document.cookie.match(/(?:^|;\s*)user_id=([^;]+)/);
+  const userId = idMatch?.[1] ? decodeURIComponent(idMatch[1]) : undefined;
+  
+  return buildBackendHeaders(role, userId);
 }
+
