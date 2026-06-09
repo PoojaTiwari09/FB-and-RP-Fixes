@@ -3,8 +3,8 @@
 
 $ErrorActionPreference = "Continue"
 $Root = $PSScriptRoot
-$BackendRoot = Join-Path $Root "boilerplate code\r-revenue-intelligence"
-$UnifiedUi = Join-Path $Root "unified-ui"
+$BackendRoot = $Root
+$UnifiedUi = Join-Path $Root "apps\web"
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
 
 Write-Host ""
@@ -23,17 +23,16 @@ if ((docker ps -a --filter "name=revenue_intel_db" --format "{{.Names}}" 2>$null
   Write-Host "      Created containers via docker compose." -ForegroundColor Green
 }
 
-Write-Host "[2/5] Backend pnpm install + db:generate..." -ForegroundColor Yellow
-Push-Location $BackendRoot
+Write-Host "[2/5] Monorepo pnpm install + db:generate..." -ForegroundColor Yellow
+Push-Location $Root
 $env:DATABASE_URL = $dbUrl
 pnpm install
 if ($LASTEXITCODE -ne 0) { Write-Host "      pnpm install failed." -ForegroundColor Red; Pop-Location; exit 1 }
-.\scripts\free_ports_all.ps1 2>$null | Out-Null
 pnpm run db:generate
 Pop-Location
-Write-Host "      Backend ready." -ForegroundColor Green
+Write-Host "      Monorepo workspaces ready." -ForegroundColor Green
 
-Write-Host "[3/5] Unified UI - npm install + .env.local..." -ForegroundColor Yellow
+Write-Host "[3/5] Next.js frontend - npm install + .env.local..." -ForegroundColor Yellow
 if (Test-Path $UnifiedUi) {
   Push-Location $UnifiedUi
   if (-not (Test-Path ".env.local") -and (Test-Path ".env.example")) {
@@ -41,9 +40,9 @@ if (Test-Path $UnifiedUi) {
   }
   if (-not (Test-Path "node_modules")) { npm install }
   Pop-Location
-  Write-Host "      Unified UI ready." -ForegroundColor Green
+  Write-Host "      Frontend ready." -ForegroundColor Green
 } else {
-  Write-Host "      Missing unified-ui folder." -ForegroundColor Red
+  Write-Host "      Missing apps/web folder." -ForegroundColor Red
   exit 1
 }
 

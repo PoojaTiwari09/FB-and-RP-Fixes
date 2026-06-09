@@ -2,7 +2,7 @@
 # Usage: cd r-revenue-intelligence-monorepo; .\scripts\seed-demo-data.ps1
 
 $Root = $PSScriptRoot | Split-Path -Parent
-$BackendRoot = Join-Path $Root "boilerplate code\r-revenue-intelligence"
+$BackendRoot = $Root
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
 
 Write-Host ""

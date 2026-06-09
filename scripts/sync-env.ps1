@@ -3,8 +3,8 @@
 
 $Root = $PSScriptRoot | Split-Path -Parent
 $RootEnv = Join-Path $Root ".env"
-$BackendEnv = Join-Path $Root "boilerplate code\r-revenue-intelligence\.env"
-$UiEnv = Join-Path $Root "unified-ui\.env.local"
+$BackendEnv = Join-Path $Root ".env"
+$UiEnv = Join-Path $Root "apps\web\.env.local"
 
 if (-not (Test-Path $RootEnv)) {
   Write-Host "Missing root .env - add provider keys there first." -ForegroundColor Yellow
@@ -31,9 +31,7 @@ function Read-DotEnv {
 
 $vars = Read-DotEnv $RootEnv
 
-# Backend: full copy of root .env (Nest unified API + workers)
-Copy-Item -Path $RootEnv -Destination $BackendEnv -Force
-Write-Host 'Synced -> boilerplate code\r-revenue-intelligence\.env' -ForegroundColor Green
+# Backend is at root, so it uses root .env directly. No copy needed.
 
 # Unified UI: server routes + client-side training/smart-call keys
 $groq = $vars['GROQ_API_KEY']
@@ -61,4 +59,4 @@ $uiLines = @(
 )
 
 Set-Content -Path $UiEnv -Value ($uiLines -join [Environment]::NewLine) -Encoding UTF8
-Write-Host 'Synced -> unified-ui\.env.local' -ForegroundColor Green
+Write-Host 'Synced -> apps\web\.env.local' -ForegroundColor Green

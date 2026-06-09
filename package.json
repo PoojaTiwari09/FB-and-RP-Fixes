@@ -2,18 +2,67 @@
   "name": "r-revenue-intelligence",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "test": "turbo run test",
-    "db:migrate": "turbo run db:migrate",
-    "db:generate": "turbo run db:generate"
+    "dev": "pnpm --parallel --filter api --filter web run dev",
+    "dev:m01-m02": "pnpm run dev:m01-api & pnpm run dev:m02-api & pnpm run dev:m01-web & pnpm run dev:m02-web",
+    "dev:m01-api": "pnpm --filter m01-api run dev",
+    "dev:m02-api": "pnpm --filter m02-api run dev",
+    "dev:m01-web": "pnpm --filter @rri/m01-web run dev",
+    "dev:m02-web": "pnpm --filter @rri/m02-web run dev",
+    "dev:m09": "pnpm run dev:m09-api & pnpm run dev:m09-web",
+    "dev:m09-api": "pnpm --filter m09-api run dev",
+    "dev:unified-api": "pnpm --filter unified-api run dev",
+    "seed:m01": "pnpm exec tsx modules/m01-capture-transcription/seeds/seed.ts",
+    "seed:m01-reseed-3-4": "pnpm exec tsx modules/m01-capture-transcription/seeds/reseed-calls-3-4.ts",
+    "seed:m01-transcribe-extra": "pnpm exec tsx modules/m01-capture-transcription/seeds/build-extra-transcripts.ts",
+    "seed:m08": "pnpm exec tsx packages/database/prisma/seed-engage.ts",
+    "seed:m02-trackers": "pnpm exec tsx packages/database/prisma/seed-trackers.ts",
+    "seed:call-reviews": "pnpm exec tsx packages/database/prisma/seed-call-reviews.ts",
+    "seed:m06": "pnpm exec tsx packages/database/prisma/seed-m06.ts",
+    "seed:revenue": "pnpm exec tsx packages/database/prisma/seed-revenue.ts",
+    "seed:m04": "pnpm exec tsx modules/m04-deal-intelligence/seeds/deal-drivers.seed.ts && pnpm exec tsx packages/database/prisma/seed-m04-dealboards.ts",
+    "dev:m09-web": "pnpm --filter @rri/m09-web run dev",
+    "dev:m03": "pnpm run dev:m03-api & pnpm run dev:m03-web",
+    "dev:m03-api": "pnpm --filter m03-api run dev",
+    "dev:m03-web": "pnpm --filter @rri/m03-web run dev",
+    "dev:m05": "pnpm run dev:m05-api & pnpm run dev:m05-web",
+    "dev:m05-api": "pnpm --filter m05-api run dev",
+    "dev:m05-web": "pnpm --filter @rri/m05-web run dev",
+    "dev:m07": "pnpm run dev:m07-api & pnpm run dev:m07-web",
+    "dev:m07-api": "pnpm --filter m07-api run dev",
+    "dev:m07-web": "pnpm --filter @rri/m07-web run dev",
+    "sync:m07-api-routes": "node scripts/sync_m07_app_api.cjs",
+    "db:generate": "pnpm --filter @rri/database run db:generate",
+    "dev:m10": "pnpm run dev:m10-api & pnpm run dev:m10-web",
+    "dev:m10-api": "pnpm --filter m10-api run dev",
+    "dev:m10-web": "pnpm --filter @rri/m10-web run dev",
+    "seed:m10": "node scripts/seed_m10_demo.cjs",
+    "dev:ai-services": "pnpm --dir apps/ai-services exec python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+    "build": "pnpm -r run build",
+    "db:migrate": "pnpm --filter @rri/database run db:migrate"
+  },
+  "pnpm": {
+    "overrides": {
+      "@nestjs/core": "^10.0.0",
+      "@nestjs/common": "^10.0.0"
+    }
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.0",
+    "pnpm": "10.14.0",
+    "tsx": "^4.22.3",
     "turbo": "^2.0.0",
     "typescript": "^5.0.0"
   },
   "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
   "dependencies": {
-    "react-router-dom": "^7.15.1"
+    "@nestjs/event-emitter": "^2.1.1",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/serve-static": "^4.0.2",
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1",
+    "ioredis": "^5.10.1",
+    "nodemailer": "^6.10.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1"
   }
 }

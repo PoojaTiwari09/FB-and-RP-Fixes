@@ -2,8 +2,8 @@
 # Usage: cd r-revenue-intelligence-monorepo; .\start-demo.ps1
 
 $Root = $PSScriptRoot
-$BackendRoot = Join-Path $Root "boilerplate code\r-revenue-intelligence"
-$UnifiedUi = Join-Path $Root "unified-ui"
+$BackendRoot = $Root
+$UnifiedUi = Join-Path $Root "apps\web"
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
 
 Write-Host ""
@@ -11,7 +11,7 @@ Write-Host "=== Unified Demo (UI :3000, API :3001) ===" -ForegroundColor Cyan
 Write-Host ""
 
 if (-not (Test-Path (Join-Path $UnifiedUi "package.json"))) {
-  Write-Host "Missing unified-ui. Run .\setup-first-time.ps1 first." -ForegroundColor Red
+  Write-Host "Missing frontend web app in apps/web. Run .\setup-first-time.ps1 first." -ForegroundColor Red
   exit 1
 }
 
@@ -19,7 +19,6 @@ Write-Host "[Env] Syncing API keys from .env..." -ForegroundColor Yellow
 & (Join-Path $Root "scripts\sync-env.ps1") 2>$null | Out-Null
 
 Write-Host "[Ports] Clearing 3000 and 3001..." -ForegroundColor Yellow
-& (Join-Path $Root "free-ui-ports.ps1") 2>$null | Out-Null
 foreach ($port in 3000, 3001) {
   $lines = netstat -ano | Select-String ":$port\s" | Select-String "LISTENING"
   foreach ($line in $lines) {
@@ -40,9 +39,6 @@ if ((docker ps -a --filter "name=revenue_intel_db" --format "{{.Names}}" 2>$null
   Pop-Location
   Start-Sleep -Seconds 3
 }
-
-Write-Host "[Seed] M01 Postgres demo calls..." -ForegroundColor Yellow
-& (Join-Path $Root "scripts\seed-demo-data.ps1")
 
 function Start-DevWindow {
   param([string]$Title, [string]$Command)

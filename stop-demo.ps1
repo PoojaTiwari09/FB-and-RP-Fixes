@@ -2,7 +2,7 @@
 # Usage: cd r-revenue-intelligence-monorepo; .\stop-demo.ps1
 
 $Root = $PSScriptRoot
-$BackendRoot = Join-Path $Root "boilerplate code\r-revenue-intelligence"
+$BackendRoot = $Root
 
 Write-Host ""
 Write-Host "=== Stopping unified demo ===" -ForegroundColor Cyan
@@ -10,7 +10,7 @@ Write-Host 'Note: API windows may show ERR_PNPM exit 4294967295 when stopped. Th
 Write-Host ""
 
 Write-Host "[1/2] UI port 3000 (and legacy 3010-3014)..." -ForegroundColor Yellow
-& (Join-Path $Root "free-ui-ports.ps1")
+& (Join-Path $Root "scripts\free-ui-ports.ps1")
 
 Write-Host '[2/2] API port 3001 (unified) and legacy ports...' -ForegroundColor Yellow
 if (Test-Path (Join-Path $BackendRoot "scripts\free_ports_all.ps1")) {

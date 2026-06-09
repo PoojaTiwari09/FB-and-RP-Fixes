@@ -1,0 +1,113 @@
+export declare const M09_DEV_ORG_ID = "00000000-0000-0000-0000-000000000001";
+export declare const M09_DEV_MANAGER_ID = "00000000-0000-0000-0000-000000000002";
+export declare const M09_DEV_REP_ID = "00000000-0000-0000-0000-000000000003";
+export declare const M09_DEV_SCENARIO_1 = "00000000-0000-0000-0000-000000000101";
+export declare const M09_DEV_SCENARIO_2 = "00000000-0000-0000-0000-000000000102";
+export declare function isUuid(value: string): boolean;
+type UserRow = {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    status: string;
+    org_id: string;
+    manager_id?: string | null;
+    password?: string | null;
+    created_at: Date;
+};
+type ScenarioRow = {
+    id: string;
+    org_id: string;
+    persona_name: string;
+    persona_type: string;
+    context_text: string;
+    difficulty: string;
+    custom_prompt?: string | null;
+    voice_id?: string | null;
+    manager_id?: string | null;
+    created_at: Date;
+};
+type SessionRow = {
+    id: string;
+    rep_id: string;
+    scenario_id: string;
+    manager_id?: string | null;
+    messages_json: any;
+    feedback_json: any | null;
+    selected_voice_id?: string | null;
+    completed_at?: Date | null;
+    created_at: Date;
+    is_practice: boolean;
+    hints_used: number;
+    lifecycle_status?: 'active' | 'paused' | 'completed';
+    elapsed_seconds?: number;
+    scenario?: ScenarioRow;
+    rep?: UserRow;
+};
+type AssignmentRow = {
+    id: string;
+    rep_id: string;
+    scenario_id: string;
+    manager_id: string;
+    session_id?: string | null;
+    status: string;
+    priority: string;
+    deadline: Date;
+    assigned_at: Date;
+    completed_at?: Date | null;
+    attempt_count: number;
+    max_attempts?: number | null;
+    max_hints?: number | null;
+    best_score: number;
+    best_session_id?: string | null;
+    manager_score?: number | null;
+    manager_note?: string | null;
+    scenario?: ScenarioRow;
+    rep?: UserRow;
+};
+type VoiceRow = {
+    id: string;
+    name: string;
+    is_active: boolean;
+};
+type NoteRow = {
+    id: string;
+    rep_id: string;
+    manager_id?: string | null;
+    org_id: string;
+    content: string;
+    priority: string;
+    is_agent_generated: boolean;
+    weakest_skill?: string | null;
+    created_at: Date;
+    rep?: UserRow;
+};
+type RecommendationRow = {
+    id: string;
+    rep_id: string;
+    focus_area: string;
+    weakest_skill: string;
+    recommendation_text: string;
+    suggested_action: string;
+    priority: string;
+    status: string;
+    generated_at: Date;
+};
+export declare class M09MemoryStore {
+    users: Map<string, UserRow>;
+    scenarios: Map<string, ScenarioRow>;
+    sessions: Map<string, SessionRow>;
+    assignments: Map<string, AssignmentRow>;
+    voices: Map<string, VoiceRow>;
+    notes: Map<string, NoteRow>;
+    recommendations: Map<string, RecommendationRow>;
+    seedDefaults(hashedPassword: string): {
+        orgId: string;
+        managerId: string;
+        repId: string;
+    };
+    attachScenario(session: SessionRow): SessionRow;
+    parseSession(session: SessionRow): SessionRow;
+}
+export declare const m09MemoryStore: M09MemoryStore;
+export {};
