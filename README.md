@@ -1,84 +1,144 @@
-# 🚀 R-Revenue Intelligence Platform
+# R-Revenue Intelligence Monorepo Boilerplate
 
-Welcome to the **R-Revenue Intelligence Platform** repository. The codebase and documentation have been streamlined to maintain a clean, standardized architectural layout consisting of two primary pillars: **Boilerplate Code** and **Reference Documents**.
+Welcome to the **R-Revenue Intelligence Platform**—an enterprise-grade AI-powered revenue intelligence platform built to capture customer interactions across the full sales lifecycle and convert them into structured business insights.
+
+This repository uses a high-performance **pnpm workspaces** and **Turborepo** monorepo layout, integrating NestJS, Python FastAPI, and Next.js SPA clients into a single, unified codebase.
 
 ---
 
-## 📂 Repository Structure
+## 🛠️ Repository Quick-Start
 
-The repository is organized into two main root directories and this primary `README.md`:
+1. **Initialize Git**:
+   ```bash
+   git init
+   git remote add origin <your-github-repo-url>
+   git checkout -b develop
+   ```
+
+2. **Commit & Push Initial Scaffold**:
+   ```bash
+   git add .
+   git commit -m "chore: scaffold modular monolith boilerplate with platform core and 10 modules"
+   git push -u origin develop
+   ```
+
+---
+
+## 💻 Local Development Setup (Dual-Approach Options)
+
+You can run the entire platform locally utilizing one of the two following approaches, depending on your system resources and configuration preferences:
+
+### 🐳 Option A: With Docker (Recommended)
+This approach leverages containerized services to run the entire backend and database infrastructure out-of-the-box with a single command.
+
+1. **Spin up local infrastructure and application containers**:
+   ```bash
+   # In the repository root
+   docker-compose up -d
+   ```
+   *This starts Postgres (with `pgvector` on port 5432), Redis (on port 6379), Meilisearch (on port 7700), ClickHouse (on port 8123/9000), and all backend microservices.*
+
+2. **Sync the Database Schema**:
+   Prisma compiles database queries at the runtime layer. Generate the client typings and push the master schema to your local Postgres container:
+   ```bash
+   # Compile schemas and types globally
+   pnpm --workspace-concurrency=1 -r db:generate
+   
+   # Push master schema to local DB
+   npx prisma db push --schema=packages/database/prisma/schema.prisma
+   ```
+
+3. **Access Services locally**:
+   * **Frontend PanelSPA**: `http://localhost:3000`
+   * **NestJS Gateway API**: `http://localhost:3001`
+   * **FastAPI AI Server**: `http://localhost:8000`
+
+---
+
+### 🔌 Option B: Without Docker (Native Host Setup)
+If you prefer not to run Docker or want to avoid local container virtualization overhead, you can run all services natively on your host machine.
+
+#### **Prerequisites**:
+- Install **Node.js 20 LTS** and **pnpm** globally.
+- Install **Python 3.11** globally (required for AI and transcription services).
+- Install and start **PostgreSQL** natively (or point to a free remote DB like Supabase/Neon).
+- Install and start **Redis** natively (or point to a cloud service like Upstash).
+
+#### **Setup & Run Steps**:
+
+1. **Configure local environment variables**:
+   Create a `.env` file in your repository root directory and define the native connection strings:
+   ```env
+   # Local or Cloud Postgres Connection
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/revenue_intel?schema=public"
+
+   # Local or Cloud Redis Host configuration
+   REDIS_HOST="localhost"
+   REDIS_PORT="6379"
+
+   # FastAPI Endpoint
+   AI_SERVICE_URL="http://localhost:8000"
+   ```
+
+2. **Initialize Database Typings & Tables**:
+   Push the global shared schema models directly to your native/cloud PostgreSQL instance:
+   ```bash
+   # Run sequential generator typings
+   pnpm --workspace-concurrency=1 -r db:generate
+   
+   # Synchronize models with your target DB instance
+   npx prisma db push --schema=packages/database/prisma/schema.prisma
+   ```
+
+3. **Launch the Node applications**:
+   ```bash
+   # Install monorepo dependencies
+   pnpm install
+   
+   # Launch Next.js and NestJS API in parallel
+   pnpm dev
+   ```
+
+4. **Launch the Python FastAPI AI Service**:
+   Open a separate terminal window and run:
+   ```bash
+   cd apps/ai-services
+   python -m venv venv
+   source venv/bin/activate  # (On Windows: venv\Scripts\activate)
+   pip install -r requirements.txt
+   uvicorn app.main:app --port 8000 --reload
+   ```
+
+---
+
+## 📦 Monorepo Workspace Directory Layout
 
 ```text
-├── 📦 boilerplate code/         # Complete runnable monorepo boilerplate & utility scripts
-└── 📚 Reference documents/       # Technical specifications, standards, and module designs
-    ├── M1 Capture & Transcription/
-    ├── M2 Conversation Intelligence/
-    ├── M3 AI Summaries & GenAI/
-    ├── ...
-    ├── docs/                     # Core system-wide specifications & architectures
-    └── archives/                 # Historic documentation versions
+r-revenue-intelligence/
+├── apps/
+│   ├── web/               # Next.js 14 SPA Dashboard
+│   ├── api/               # NestJS Core Gateway Orchestrator
+│   └── ai-services/       # FastAPI Python AI/ML Inference engine
+├── modules/               # Root-level Decoupled Monorepo Workspaces
+│   ├── platform-core/     # Global Core Auth, JWT guards, Central Prisma services
+│   └── m01-m10/           # Features code workspaces (M1 Capture through M10 Compliance)
+└── packages/
+    ├── database/          # Central database base models and migrations
+    └── shared-types/      # Centralized Event schemas & DTO bindings
 ```
 
 ---
 
-## 📦 1. Boilerplate Code (`/boilerplate code`)
+## 🎯 Modular Sprint Development Workflow
 
-This directory contains the production-ready modular monolith skeleton and all supporting utility scripts:
+To prevent workspace conflicts during parallel development across our module teams, adhere strictly to the following Git branching guidelines:
 
-*   **[boilerplate code/r-revenue-intelligence/](./boilerplate%20code/r-revenue-intelligence/)**: The core NestJS & FastAPI monorepo, including Docker configuration, DB seeding, and Turborepo setup.
-*   **[boilerplate code/generate_boilerplate.py](./boilerplate%20code/generate_boilerplate.py)**: Python utility script to scaffold and regenerate the boilerplate code.
-*   **[boilerplate code/syntax_validator.py](./boilerplate%20code/syntax_validator.py)**: Automated syntax and AST validator script to enforce compile-readiness.
-*   **[boilerplate code/audit_boilerplate.py](./boilerplate%20code/audit_boilerplate.py)**: Verification suite for verifying all scaffolded files and paths.
-
----
-
-## 📚 2. Reference Documents (`/Reference documents`)
-
-The system design, product specifications, and standards are partitioned across individual module domains and general core standards:
-
-### 🧩 Lifecycle Module Documents
-*   **[M1 Capture & Transcription](./Reference%20documents/M1%20Capture%20&%20Transcription/)**: Ingests audio, video, and text interactions across Zoom, Meet, Slack, and Email.
-*   **[M2 Conversation Intelligence](./Reference%20documents/M2%20Conversation%20Intelligence/)**: Performs NLP, theme detection, and sentiment analysis on captured interactions.
-*   **[M3 AI Summaries & GenAI](./Reference%20documents/M3%20AI%20Summaries%20&%20GenAI/)**: Generates deal briefs, meeting summaries, and executive reports using LLMs.
-*   **[M4 Deal Intelligence](./Reference%20documents/M4%20Deal%20Intelligence/)**: Tracks opportunity health, blockers, and progression through the sales pipeline.
-*   **[M5 Account Intelligence](./Reference%20documents/M5%20Account%20Intelligence/)**: Provides a 360-degree view of account health and relationship depth.
-*   **[M6 Forecasting & Prediction](./Reference%20documents/M6%20Forecasting%20&%20Prediction/)**: Predictive engine for revenue forecasting and quota attainment.
-*   **[M7 Revenue Dashboards](./Reference%20documents/M7%20Revenue%20Dashboards/)**: High-performance visualization layer built on ClickHouse and PostgreSQL.
-*   **[M8 Sales Engagement](./Reference%20documents/M8%20Sales%20Engagement/)**: Workflow automation, email composition, and sales play orchestration.
-*   **[M9 Coaching & Training](./Reference%20documents/M9%20Coaching%20&%20Training/)**: AI-simulated training scenarios and performance coaching insights.
-*   **[M10 Data & Compliance](./Reference%20documents/M10%20Data%20&%20Compliance/)**: Revenue Graph, regional compliance (GDPR/CCPA), and customer data exports.
-
-### 📐 Core Platform Architecture & Standards
-*   **[docs/](./Reference%20documents/docs/)**: Contains system-wide standards and architecture guides.
-    *   `System_architecture.md`: The "Single Source of Truth" for the platform's microservices and event flow.
-    *   `Coding standards.md`: Machine-enforceable rules and engineering guidance.
-    *   `Event Schema registry.md`: Definitions for all cross-module asynchronous events.
-    *   `API Design Standards.md`: REST and Internal API naming and behavior conventions.
-
----
-
-## 🏗️ Architectural Principles
-
-The platform adheres to several strict architectural boundaries enforced during automated linting and validations:
-
-1.  **Tenant Isolation**: All data is strictly scoped by `tenant_id` at the database level (enforced via PostgreSQL RLS policies).
-2.  **Product vs. Architecture Separation**: Frontend-facing "Product Modules" (e.g., M8) map to discrete backend "Architecture Modules" (e.g., M-02, M-08).
-3.  **Event-Driven Communication**: Modules interact asynchronously via a centralized event bus using a `noun.verb` naming convention.
-4.  **AI/Business Separation**: AI inference workloads (Python/FastAPI) are strictly separated from core business logic (TypeScript/NestJS).
-5.  **Snake_Case Database Standard**: All PostgreSQL table and schema references follow the `snake_case` naming convention.
-
----
-
-## 🛠️ Getting Started
-
-For engineers and Tech Leads new to the repository:
-1.  Review the **[System Architecture](./Reference%20documents/docs/markdown%20documents/System_architecture.md)** to understand platform-wide module boundaries.
-2.  Consult the **[Local Development Setup Guide](./Reference%20documents/docs/markdown%20documents/Local-Dev-Setup-Guide.md)** to initialize your local dockerized environment.
-3.  Follow the **[Git Branching Strategy](./Reference%20documents/docs/markdown%20documents/git-branching-strategy.md)** for contributing changes.
-4.  Launch local validations by executing the custom validation suite:
-    ```bash
-    python "boilerplate code/syntax_validator.py"
-    ```
-
----
-*Last Updated: 2026-05-18*
+1. **Base branches**:
+   * `main`: Reflects the production state. Never commit directly to `main`.
+   * `develop`: Active monorepo integration target.
+2. **Module Integration Branches (`module/mX-*`)**:
+   * Each team works within one persistent sprint staging branch (e.g. `module/m04-deal-intelligence`).
+3. **Feature branches**:
+   * Cut individual feature branches directly from your parent `module/mX-*` branch (e.g. `feature/m4-RRI-401-deals-board-ui`).
+   * When complete, open a PR to merge back into `module/mX-*`.
+   * Once fully integrated and stable, the Tech Lead merges `module/mX-*` into the main `develop` branch.
