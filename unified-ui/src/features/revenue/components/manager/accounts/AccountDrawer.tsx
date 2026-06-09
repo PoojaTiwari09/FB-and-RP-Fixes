@@ -330,9 +330,7 @@ function BriefsTab({ accountId }: { accountId: string }) {
     );
   }
 
-  if (!data?.briefContent) {
-    return <p className="text-sm text-gray-400 text-center p-6">No brief available.</p>;
-  }
+
 
   return (
     <div className="px-6 py-5">

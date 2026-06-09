@@ -20,11 +20,6 @@ Write-Host "[Env] Syncing API keys from .env..." -ForegroundColor Yellow
 
 Write-Host "[Ports] Clearing 3000 and 3001..." -ForegroundColor Yellow
 & (Join-Path $Root "free-ui-ports.ps1") 2>$null | Out-Null
-if (Test-Path (Join-Path $BackendRoot "scripts\free_ports_all.ps1")) {
-  Push-Location $BackendRoot
-  .\scripts\free_ports_all.ps1 2>$null | Out-Null
-  Pop-Location
-}
 foreach ($port in 3000, 3001) {
   $lines = netstat -ano | Select-String ":$port\s" | Select-String "LISTENING"
   foreach ($line in $lines) {
@@ -74,6 +69,7 @@ $uiCmd = @"
 Set-Location '$UnifiedUi'
 if (-not (Test-Path '.env.local')) { & '$Root\scripts\sync-env.ps1' | Out-Null }
 if (-not (Test-Path 'node_modules')) { npm install }
+`$env:M07_API_PORT='3001'
 Write-Host 'Open -> http://localhost:3000/engage' -ForegroundColor Cyan
 Write-Host 'API  -> http://localhost:3001' -ForegroundColor Cyan
 npm run dev

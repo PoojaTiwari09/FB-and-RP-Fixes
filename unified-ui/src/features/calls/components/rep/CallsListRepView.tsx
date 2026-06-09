@@ -372,6 +372,12 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
   const dealStyle = getDealTypeBadgeStyle(metadata.dealType);
   const audioSourceUrl = metadata.audioUrl || '';
 
+  const NoDataFallback = () => (
+    <span className="text-gray-400 italic">
+      Under this feature, it's still not reflecting.
+    </span>
+  );
+
   const overviewText = activeBrief?.overview?.text ?? '';
   const keyPoints = activeBrief?.keyDiscussionPoints ?? [];
   const customerNeeds = activeBrief?.customerNeeds ?? [];
@@ -588,23 +594,6 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
       {/* Tab Contents */}
       {activeTab === 'briefs' ? (
         <div className="space-y-6">
-          {!activeBrief ? (
-            <div className="bg-white rounded-lg p-8 border border-gray-200 text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                No brief is available for this call yet. Generate one from the transcript or wait for processing to finish.
-              </p>
-              <button
-                type="button"
-                onClick={() => setGenerateOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white cursor-pointer"
-                style={{ backgroundColor: '#2563EB' }}
-              >
-                <Sparkles className="w-4 h-4" />
-                Generate Brief
-              </button>
-            </div>
-          ) : (
-          <>
           {/* Brief header with generate/share buttons */}
           <div className="flex items-center justify-between bg-white rounded-lg p-6 border border-gray-200">
             <div>
@@ -629,47 +618,22 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Hide Regenerate for Sales Rep */}
-              {false && (
+              {!activeBrief ? (
                 <button
-                  onClick={() => setRegenerateOpen(true)}
-                  disabled={isRegenerating}
-                  className="inline-flex items-center justify-center gap-2 h-9 px-4 py-2 border rounded-md text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
-                  style={{
-                    borderColor: '#D1D5DB',
-                    backgroundColor: '#FFFFFF',
-                    color: '#374151',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isRegenerating) e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  }}
+                  type="button"
+                  onClick={() => setGenerateOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 h-9 px-4 py-2 rounded-md text-sm font-medium text-white cursor-pointer"
+                  style={{ backgroundColor: '#2563EB' }}
                 >
-                  {isRegenerating ? (
-                    <>
-                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                      </svg>
-                      Regenerating...
-                    </>
-                  ) : (
-                    <>
-                      <RotateCw className="w-4 h-4" />
-                      Regenerate
-                    </>
-                  )}
+                  <Sparkles className="w-4 h-4" />
+                  Generate Brief
                 </button>
-              )}
-
-              <button
+              ) : (
+                <button
                   onClick={handleBriefShareClick}
-                  className="inline-flex items-center justify-center gap-2 h-9 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 h-9 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer text-white"
                   style={{
                     backgroundColor: '#2563EB',
-                    color: '#FFFFFF',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#1D4ED8';
@@ -681,6 +645,7 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
                   <Share2 className="w-4 h-4" />
                   Share
                 </button>
+              )}
             </div>
           </div>
 
@@ -703,232 +668,258 @@ function CallDetailPanel({ callId, onBack, onProcessed }: CallDetailPanelProps) 
               
               {expandedSections.has('overview') && (
                 <div className="px-6 py-4 border-t border-gray-200 text-sm text-gray-700 leading-relaxed">
-                  {overviewText}
+                  {overviewText ? overviewText : <NoDataFallback />}
                 </div>
               )}
             </div>
-
-            {/* 2. Key Discussion Points */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => toggleSection('discussion')}
-                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#7C3AED' }}>
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Key Discussion Points</span>
-                </div>
-                {expandedSections.has('discussion') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-              </button>
-              
-              {expandedSections.has('discussion') && (
-                <div className="px-6 py-4 border-t border-gray-200 space-y-3">
-                  {keyPoints.map((pt, i) => (
-                    <div key={i} className="flex items-start gap-4 p-3 rounded-lg" style={{ backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6' }}>
-                      <button
-                        onClick={() => handleSeek(parseTimeToSeconds(pt.timestamp))}
-                        className="inline-flex items-center justify-center px-2.5 py-0.5 rounded text-xs font-semibold cursor-pointer flex-shrink-0"
-                        style={{ backgroundColor: '#DBEAFE', color: '#1D4ED8' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#BFDBFE'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
-                      >
-                        {pt.timestamp}
-                      </button>
-                      <p className="text-sm" style={{ color: '#374151' }}>{pt.description}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 3. Customer Needs & Goals */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => toggleSection('needs')}
-                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#0D9488' }}>
-                    <Target className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Customer Needs & Goals</span>
-                </div>
-                {expandedSections.has('needs') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-              </button>
-              
-              {expandedSections.has('needs') && (
-                <div className="px-6 py-4 border-t border-gray-200 space-y-3">
-                  {customerNeeds.map((need, i) => (
-                    <div key={i} className="p-4 rounded-lg" style={{ backgroundColor: '#EFF6FF', border: '1px solid #DBEAFE' }}>
-                      <h4 className="text-sm font-semibold mb-1" style={{ color: '#1D4ED8' }}>{need.title}</h4>
-                      <p className="text-sm" style={{ color: '#6B7280' }}>{need.description}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 4. Risks & Objections */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => toggleSection('risks')}
-                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#F59E0B' }}>
-                    <AlertTriangle className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Risks & Objections</span>
-                </div>
-                {expandedSections.has('risks') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-              </button>
-              
-              {expandedSections.has('risks') && (
-                <div className="px-6 py-4 border-t border-gray-200 space-y-3">
-                  {risks.map((risk, i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
-                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#D97706' }} />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-sm font-semibold" style={{ color: '#D97706' }}>{risk.title}</h4>
-                          <span
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize"
-                            style={{
-                              backgroundColor: risk.severity === 'high' ? '#FEE2E2' : risk.severity === 'medium' ? '#FEF3C7' : '#DBEAFE',
-                              color: risk.severity === 'high' ? '#DC2626' : risk.severity === 'medium' ? '#B45309' : '#1D4ED8',
-                            }}
-                          >
-                            {risk.severity}
-                          </span>
-                        </div>
-                        <p className="text-sm" style={{ color: '#6B7280' }}>{risk.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 5. Decisions & Commitments */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => toggleSection('commitments')}
-                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#10B981' }}>
-                    <CheckCircle className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Decisions & Commitments</span>
-                </div>
-                {expandedSections.has('commitments') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-              </button>
-              
-              {expandedSections.has('commitments') && (
-                <div className="px-6 py-4 border-t border-gray-200 space-y-3">
-                  {commitments.map((com, i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#F0FDF4', border: '1px solid #D1FAE5' }}>
-                      <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#10B981' }} />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize"
-                            style={{
-                              backgroundColor: com.assigneeType === 'rep' ? '#EFF6FF' : '#EDE9FE',
-                              color: com.assigneeType === 'rep' ? '#3B82F6' : '#6D28D9',
-                            }}
-                          >
-                            {com.assigneeType === 'rep' ? 'Me' : 'Customer'}
-                          </span>
-                          <span className="text-xs" style={{ color: '#9CA3AF' }}>{com.dueDate}</span>
-                        </div>
-                        <p className="text-sm" style={{ color: '#374151' }}>{com.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 6. Key Stakeholders */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => toggleSection('stakeholders')}
-                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#EC4899' }}>
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-gray-900">Key Stakeholders</span>
-                </div>
-                {expandedSections.has('stakeholders') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-              </button>
-              
-              {expandedSections.has('stakeholders') && (
-                <div className="px-6 py-4 border-t border-gray-200 divide-y divide-gray-100">
-                  {stakeholders.map((sh, i) => (
-                    <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white"
-                        style={{
-                          backgroundColor: sh.name === 'Alex Rodriguez' ? '#10B981' : sh.name === 'John Smith' ? '#3B82F6' : '#8B5CF6',
-                        }}
-                      >
-                        {sh.avatarInitials}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900">{sh.name}</h4>
-                        <p className="text-xs text-gray-500">{sh.title} • {sh.company}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 7. Recent Activity Context */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                onClick={() => toggleSection('activity')}
-                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#F97316' }}>
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-gray-900">Recent Activity Context</span>
-                </div>
-                {expandedSections.has('activity') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-              </button>
-              
-              {expandedSections.has('activity') && (
-                <div className="px-6 py-4 border-t border-gray-200 divide-y divide-gray-100">
-                  {activityContext.map((act, i) => (
-                    <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                      <span
-                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize mt-0.5"
-                        style={{
-                          backgroundColor: act.type === 'email' ? '#EFF6FF' : act.type === 'call' ? '#FEF3C7' : '#E9D5FF',
-                          color: act.type === 'email' ? '#3B82F6' : act.type === 'call' ? '#D97706' : '#6B7280',
-                        }}
-                      >
-                        {act.type}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-700 leading-tight">{act.description}</p>
-                        <span className="text-xs text-gray-400 mt-1 block">{act.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+ 
+             {/* 2. Key Discussion Points */}
+             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+               <button
+                 onClick={() => toggleSection('discussion')}
+                 className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#7C3AED' }}>
+                     <MessageSquare className="w-5 h-5" />
+                   </div>
+                   <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Key Discussion Points</span>
+                 </div>
+                 {expandedSections.has('discussion') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+               </button>
+               
+               {expandedSections.has('discussion') && (
+                 <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+                   {keyPoints && keyPoints.length > 0 ? (
+                     keyPoints.map((pt, i) => (
+                       <div key={i} className="flex items-start gap-4 p-3 rounded-lg" style={{ backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6' }}>
+                         <button
+                           onClick={() => handleSeek(parseTimeToSeconds(pt.timestamp))}
+                           className="inline-flex items-center justify-center px-2.5 py-0.5 rounded text-xs font-semibold cursor-pointer flex-shrink-0"
+                           style={{ backgroundColor: '#DBEAFE', color: '#1D4ED8' }}
+                           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#BFDBFE'; }}
+                           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#DBEAFE'; }}
+                         >
+                           {pt.timestamp}
+                         </button>
+                         <p className="text-sm m-0" style={{ color: '#374151' }}>{pt.description}</p>
+                       </div>
+                     ))
+                   ) : (
+                     <NoDataFallback />
+                   )}
+                 </div>
+               )}
+             </div>
+ 
+             {/* 3. Customer Needs & Goals */}
+             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+               <button
+                 onClick={() => toggleSection('needs')}
+                 className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#0D9488' }}>
+                     <Target className="w-5 h-5" />
+                   </div>
+                   <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Customer Needs & Goals</span>
+                 </div>
+                 {expandedSections.has('needs') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+               </button>
+               
+               {expandedSections.has('needs') && (
+                 <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+                   {customerNeeds && customerNeeds.length > 0 ? (
+                     customerNeeds.map((need, i) => (
+                       <div key={i} className="p-4 rounded-lg" style={{ backgroundColor: '#EFF6FF', border: '1px solid #DBEAFE' }}>
+                         <h4 className="text-sm font-semibold mb-1" style={{ color: '#1D4ED8' }}>{need.title}</h4>
+                         <p className="text-sm m-0" style={{ color: '#6B7280' }}>{need.description}</p>
+                       </div>
+                     ))
+                   ) : (
+                     <NoDataFallback />
+                   )}
+                 </div>
+               )}
+             </div>
+ 
+             {/* 4. Risks & Objections */}
+             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+               <button
+                 onClick={() => toggleSection('risks')}
+                 className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#F59E0B' }}>
+                     <AlertTriangle className="w-5 h-5" />
+                   </div>
+                   <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Risks & Objections</span>
+                 </div>
+                 {expandedSections.has('risks') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+               </button>
+               
+               {expandedSections.has('risks') && (
+                 <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+                   {risks && risks.length > 0 ? (
+                     risks.map((risk, i) => (
+                       <div key={i} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#D97706' }} />
+                         <div className="flex-1">
+                           <div className="flex items-center gap-2 mb-1">
+                             <h4 className="text-sm font-semibold" style={{ color: '#D97706' }}>{risk.title}</h4>
+                             <span
+                               className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize"
+                               style={{
+                                 backgroundColor: risk.severity === 'high' ? '#FEE2E2' : risk.severity === 'medium' ? '#FEF3C7' : '#DBEAFE',
+                                 color: risk.severity === 'high' ? '#DC2626' : risk.severity === 'medium' ? '#B45309' : '#1D4ED8',
+                               }}
+                             >
+                               {risk.severity}
+                             </span>
+                           </div>
+                           <p className="text-sm m-0" style={{ color: '#6B7280' }}>{risk.description}</p>
+                         </div>
+                       </div>
+                     ))
+                   ) : (
+                     <NoDataFallback />
+                   )}
+                 </div>
+               )}
+             </div>
+ 
+             {/* 5. Decisions & Commitments */}
+             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+               <button
+                 onClick={() => toggleSection('commitments')}
+                 className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#10B981' }}>
+                     <CheckCircle className="w-5 h-5" />
+                   </div>
+                   <span className="font-semibold text-gray-900" style={{ fontFamily: 'var(--font-serif)' }}>Decisions & Commitments</span>
+                 </div>
+                 {expandedSections.has('commitments') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+               </button>
+               
+               {expandedSections.has('commitments') && (
+                 <div className="px-6 py-4 border-t border-gray-200 space-y-3">
+                   {commitments && commitments.length > 0 ? (
+                     commitments.map((com, i) => (
+                       <div key={i} className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#F0FDF4', border: '1px solid #D1FAE5' }}>
+                         <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#10B981' }} />
+                         <div className="flex-1">
+                           <div className="flex items-center gap-2 mb-1">
+                             <span
+                               className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize"
+                               style={{
+                                 backgroundColor: com.assigneeType === 'rep' ? '#EFF6FF' : '#EDE9FE',
+                                 color: com.assigneeType === 'rep' ? '#3B82F6' : '#6D28D9',
+                               }}
+                             >
+                               {com.assigneeType === 'rep' ? 'Me' : 'Customer'}
+                             </span>
+                             <span className="text-xs" style={{ color: '#9CA3AF' }}>{com.dueDate}</span>
+                           </div>
+                           <p className="text-sm m-0" style={{ color: '#374151' }}>{com.description}</p>
+                         </div>
+                       </div>
+                     ))
+                   ) : (
+                     <NoDataFallback />
+                   )}
+                 </div>
+               )}
+             </div>
+ 
+             {/* 6. Key Stakeholders */}
+             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+               <button
+                 onClick={() => toggleSection('stakeholders')}
+                 className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#EC4899' }}>
+                     <Users className="w-5 h-5" />
+                   </div>
+                   <span className="font-semibold text-gray-900">Key Stakeholders</span>
+                 </div>
+                 {expandedSections.has('stakeholders') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+               </button>
+               
+               {expandedSections.has('stakeholders') && (
+                 <div className="px-6 py-4 border-t border-gray-200 divide-y divide-gray-100">
+                   {stakeholders && stakeholders.length > 0 ? (
+                     stakeholders.map((sh, i) => (
+                       <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                         <div
+                           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white"
+                           style={{
+                             backgroundColor: sh.name === 'Alex Rodriguez' ? '#10B981' : sh.name === 'John Smith' ? '#3B82F6' : '#8B5CF6',
+                           }}
+                         >
+                           {sh.avatarInitials}
+                         </div>
+                         <div>
+                           <h4 className="text-sm font-semibold text-gray-900">{sh.name}</h4>
+                           <p className="text-xs text-gray-500">{sh.title} • {sh.company}</p>
+                         </div>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="py-2">
+                       <NoDataFallback />
+                     </div>
+                   )}
+                 </div>
+               )}
+             </div>
+ 
+             {/* 7. Recent Activity Context */}
+             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+               <button
+                 onClick={() => toggleSection('activity')}
+                 className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/50 hover:bg-gray-50 cursor-pointer text-left"
+               >
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: '#F97316' }}>
+                     <Activity className="w-5 h-5" />
+                   </div>
+                   <span className="font-semibold text-gray-900">Recent Activity Context</span>
+                 </div>
+                 {expandedSections.has('activity') ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+               </button>
+               
+               {expandedSections.has('activity') && (
+                 <div className="px-6 py-4 border-t border-gray-200 divide-y divide-gray-100">
+                   {activityContext && activityContext.length > 0 ? (
+                     activityContext.map((act, i) => (
+                       <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                         <span
+                           className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize mt-0.5"
+                           style={{
+                             backgroundColor: act.type === 'email' ? '#EFF6FF' : act.type === 'call' ? '#FEF3C7' : '#E9D5FF',
+                             color: act.type === 'email' ? '#3B82F6' : act.type === 'call' ? '#D97706' : '#6B7280',
+                           }}
+                         >
+                           {act.type}
+                         </span>
+                         <div className="flex-1">
+                           <p className="text-sm text-gray-700 leading-tight m-0">{act.description}</p>
+                           <span className="text-xs text-gray-400 mt-1 block">{act.date}</span>
+                         </div>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="py-2">
+                       <NoDataFallback />
+                     </div>
+                   )}
+                 </div>
+               )}
+             </div>
           </div>
-          </>
-          )}
         </div>
       ) : (
         /* Transcript & Analysis Tab Content */

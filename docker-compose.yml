@@ -34,6 +34,31 @@ services:
       timeout: 3s
       retries: 5
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.8
+    container_name: revenue_intel_meili
+    restart: unless-stopped
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_MASTER_KEY=meili_master_key
+    volumes:
+      - meilisearch_data:/meili_data
+
+  ai-services:
+    build: ./boilerplate code/r-revenue-intelligence/apps/ai-services
+    container_name: revenue_intel_ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://revenue_user:revenue_pass@postgres:5432/revenue_intelligence?schema=public
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   pgdata:
     name: revenue_intel_pgdata
+  meilisearch_data:
+    name: revenue_intel_meili_data

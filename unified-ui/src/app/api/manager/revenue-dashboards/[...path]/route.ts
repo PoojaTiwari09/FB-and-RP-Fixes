@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// m07-api runs on port 4013 by default (M07_API_PORT env var)
+// m07-api runs on port 3001 by default when unified in monorepo monolith (M07_API_PORT env var)
 // Use 127.0.0.1 explicitly — Next.js/Turbopack resolves 'localhost' to ::1 (IPv6)
 // which fails when the backend only listens on IPv4
 const M07_API_ORIGIN =
   process.env.M07_API_URL ??
-  `http://127.0.0.1:${process.env.M07_API_PORT ?? '4013'}`;
+  `http://127.0.0.1:${process.env.M07_API_PORT ?? '3001'}`;
 
 const DEMO_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const DEMO_USER_ID   = '00000000-0000-0000-0000-000000000002';

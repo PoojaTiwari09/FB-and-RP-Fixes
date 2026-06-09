@@ -5,10 +5,10 @@ const backendUrl =
   process.env.BACKEND_API_URL ??
   'http://localhost:3001';
 
-// m07-api runs on port 4013. Use 127.0.0.1 to avoid IPv6 issues.
+// m07-api runs on port 3001 when unified in monorepo monolith. Use 127.0.0.1 to avoid IPv6 issues.
 const m07ApiUrl =
   process.env.M07_API_URL ??
-  `http://127.0.0.1:${process.env.M07_API_PORT ?? '4013'}`;
+  `http://127.0.0.1:${process.env.M07_API_PORT ?? '3001'}`;
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['groq-sdk'],

@@ -27,13 +27,11 @@ export default function BriefTab({ data, loading }: Props) {
     return <div style={{ padding: 24, color: '#9ca3af', fontSize: 13 }}>Loading brief...</div>
   }
 
-  if (!data) {
-    return <div style={{ padding: 24, color: '#9ca3af', fontSize: 13 }}>No brief available</div>
-  }
+  const brief = data || {}
 
   const NoDataFallback = () => (
     <p className="text-[13px] text-gray-400 italic leading-relaxed m-0">
-      Information not available for this deal yet.
+      Under this feature, it's still not reflecting.
     </p>
   )
 
@@ -56,8 +54,8 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('overview') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.overview ? (
-              <p className="text-[13px] text-gray-700 leading-relaxed m-0">{data.overview}</p>
+            {brief.overview ? (
+              <p className="text-[13px] text-gray-700 leading-relaxed m-0">{brief.overview}</p>
             ) : (
               <NoDataFallback />
             )}
@@ -81,9 +79,9 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('discussion') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.keyDiscussionPoints && data.keyDiscussionPoints.length > 0 ? (
+            {brief.keyDiscussionPoints && brief.keyDiscussionPoints.length > 0 ? (
               <ul className="space-y-3 m-0 pl-0">
-                {data.keyDiscussionPoints.map((point, idx) => (
+                {brief.keyDiscussionPoints.map((point, idx) => (
                   <li key={idx} className="flex items-start gap-3 text-[13px] text-gray-700 leading-relaxed">
                     <div className="w-1.5 h-1.5 rounded-full bg-violet-400 mt-1.5 shrink-0" />
                     <span>{point}</span>
@@ -113,9 +111,9 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('needs') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.customerNeeds && data.customerNeeds.length > 0 ? (
+            {brief.customerNeeds && brief.customerNeeds.length > 0 ? (
               <div className="space-y-4">
-                {data.customerNeeds.map((need, idx) => (
+                {brief.customerNeeds.map((need, idx) => (
                   <div key={idx}>
                     <h4 className="text-[13px] font-semibold text-gray-900 mb-1">{need.title}</h4>
                     <p className="text-[13px] text-gray-600 leading-relaxed m-0">{need.description}</p>
@@ -145,9 +143,9 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('risks') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.risks && data.risks.length > 0 ? (
+            {brief.risks && brief.risks.length > 0 ? (
               <div className="space-y-4">
-                {data.risks.map((risk, idx) => (
+                {brief.risks.map((risk, idx) => (
                   <div key={idx} className={`p-3 rounded-lg border ${
                     risk.severity === 'high' ? 'bg-red-50 border-red-100' :
                     risk.severity === 'medium' ? 'bg-orange-50 border-orange-100' :
@@ -196,9 +194,9 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('commitments') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.commitments && data.commitments.length > 0 ? (
+            {brief.commitments && brief.commitments.length > 0 ? (
               <div className="space-y-3">
-                {data.commitments.map((commitment, idx) => (
+                {brief.commitments.map((commitment, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
                     {commitment.assigneeType === 'rep' ? (
                       <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
@@ -246,9 +244,9 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('stakeholders') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.stakeholders && data.stakeholders.length > 0 ? (
+            {brief.stakeholders && brief.stakeholders.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {data.stakeholders.map((stakeholder, idx) => (
+                {brief.stakeholders.map((stakeholder, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/50">
                     <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold text-sm shrink-0 border border-indigo-200">
                       {stakeholder.avatarInitials}
@@ -284,9 +282,9 @@ export default function BriefTab({ data, loading }: Props) {
         </button>
         {expandedSections.has('activity') && (
           <div className="px-6 py-4 border-t border-gray-100 bg-white">
-            {data.activityContext && data.activityContext.length > 0 ? (
+            {brief.activityContext && brief.activityContext.length > 0 ? (
               <div className="relative border-l-2 border-gray-100 ml-3 space-y-6 pb-2">
-                {data.activityContext.map((activity, idx) => (
+                {brief.activityContext.map((activity, idx) => (
                   <div key={idx} className="relative pl-6">
                     <div className="absolute -left-[13px] top-1 w-6 h-6 rounded-full bg-white border-2 border-teal-500 flex items-center justify-center">
                       {activity.type === 'call' && <Phone className="w-3 h-3 text-teal-600" />}

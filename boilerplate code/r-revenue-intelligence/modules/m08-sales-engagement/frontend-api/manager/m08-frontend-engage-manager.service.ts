@@ -37,10 +37,10 @@ export class M08FrontendEngageManagerService {
     };
 
     const getCounts = (taskList: any[]) => ({
-      today: taskList.filter((t) => (t.dueDate <= todayStr || t.priority.toUpperCase() === 'HIGH') && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t)).length,
+      today: taskList.filter((t) => ((t.dueDate && t.dueDate <= todayStr) || t.priority.toUpperCase() === 'HIGH') && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t)).length,
       inProgress: taskList.filter((t) => t.status.toLowerCase() === 'in_progress' && !isCurrentlySnoozed(t)).length,
       upcoming: taskList.filter(
-        (t) => t.dueDate > todayStr && t.priority.toUpperCase() !== 'HIGH' && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t),
+        (t) => t.dueDate && t.dueDate > todayStr && t.priority.toUpperCase() !== 'HIGH' && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t),
       ).length,
       completed: taskList.filter((t) => t.status.toLowerCase() === 'completed').length,
       snoozed: taskList.filter((t) => isCurrentlySnoozed(t)).length,
@@ -56,7 +56,7 @@ export class M08FrontendEngageManagerService {
     switch (currentTab) {
       case 'today':
         list = channelFilteredList.filter(
-          (t) => (t.dueDate <= todayStr || t.priority.toUpperCase() === 'HIGH') && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t),
+          (t) => ((t.dueDate && t.dueDate <= todayStr) || t.priority.toUpperCase() === 'HIGH') && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t),
         );
         break;
       case 'inProgress':
@@ -65,7 +65,7 @@ export class M08FrontendEngageManagerService {
       case 'upcoming':
         list = channelFilteredList.filter(
           (t) =>
-            t.dueDate > todayStr && t.priority.toUpperCase() !== 'HIGH' && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t),
+            t.dueDate && t.dueDate > todayStr && t.priority.toUpperCase() !== 'HIGH' && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t),
         );
         break;
       case 'completed':
