@@ -1,0 +1,723 @@
+================================================================================
+API DOCUMENTATION — CALL INTELLIGENCE & CRM PLATFORM
+================================================================================
+
+
+================================================================================
+Screen Name: Calls List
+Route: /calls
+Purpose of Screen: Display all recorded calls with filtering, search, and status
+                   overview. Allows the user to navigate into individual call
+                   records.
+================================================================================
+
+
+CALLS — LIST & FILTERS
+--------------------------------------------------------------------------------
+
+1. GET /api/calls
+
+    Purpose:
+    Fetch paginated list of all calls with applied filters.
+
+    User Action:
+    Land on Calls List screen / Apply status, duration, deal type,
+    account, participant, owner, or date range filters / Search by keyword
+
+    Request:
+    - page
+    - size
+    - search
+    - status               (all | completed | processing | failed | skipped)
+    - duration             (all | lt2 | 2to10 | gt10)
+    - dealType
+    - account
+    - participantId
+    - ownerId
+    - dateRange            (last7days | last30days | custom)
+    - startDate
+    - endDate
+
+    Response:
+    - totalCount
+    - page
+    - size
+    - calls[]
+        - callId
+        - callTitle
+        - dealType
+        - account
+        - owner
+            - ownerId
+            - ownerName
+            - avatarInitials
+        - dateTime
+        - duration
+        - keyInsight
+        - status           (completed | processing | failed | skipped)
+
+--------------------------------
+
+2. GET /api/calls/:callId
+
+    Purpose:
+    Fetch full detail of a single call record on row click.
+
+    User Action:
+    Click on a call row in the calls list table
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - callId
+    - callTitle
+    - account
+    - type                 (outbound | inbound)
+    - dealType
+    - date
+    - time
+    - duration
+    - source
+    - participants[]
+        - name
+    - owner
+        - ownerId
+        - ownerName
+        - avatarInitials
+    - status
+
+--------------------------------
+
+3. GET /api/calls/accounts
+
+    Purpose:
+    Fetch list of accounts to populate the Account filter dropdown.
+
+    User Action:
+    Click Account filter dropdown on Calls List screen
+
+    Request:
+    - search
+
+    Response:
+    - accounts[]
+        - accountId
+        - accountName
+
+--------------------------------
+
+4. GET /api/calls/participants
+
+    Purpose:
+    Fetch list of participants to populate the Participants filter dropdown.
+
+    User Action:
+    Click Participants filter dropdown on Calls List screen
+
+    Request:
+    - search
+    - accountId
+
+    Response:
+    - participants[]
+        - participantId
+        - name
+
+--------------------------------
+
+5. GET /api/calls/search
+
+    Purpose:
+    Search calls by keyword, account name, or owner name.
+
+    User Action:
+    Type in the search bar at the top right of the Calls List screen
+
+    Request:
+    - q
+    - page
+    - size
+
+    Response:
+    - totalCount
+    - calls[]
+        - callId
+        - callTitle
+        - account
+        - owner
+        - status
+        - dateTime
+        - duration
+        - keyInsight
+
+
+================================================================================
+Screen Name: Call Detail — Briefs Tab
+Route: /calls/:callId/briefs
+Purpose of Screen: View AI-generated call brief with structured sections including
+                   overview, key discussion points, customer needs, risks,
+                   decisions, stakeholders, and recent activity context.
+================================================================================
+
+
+CALL DETAIL — METADATA
+--------------------------------------------------------------------------------
+
+6. GET /api/calls/:callId/metadata
+
+    Purpose:
+    Fetch call header metadata displayed at the top of the Call Detail screen.
+
+    User Action:
+    Open any call detail page (Briefs tab or Transcript tab)
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - callId
+    - callTitle
+    - account
+    - type                 (outbound | inbound)
+    - dealType
+    - date
+    - time
+    - duration
+    - source
+    - participants[]
+        - name
+    - owner
+        - ownerId
+        - ownerName
+        - avatarInitials
+
+--------------------------------
+
+
+CALL BRIEFS
+--------------------------------------------------------------------------------
+
+7. GET /api/calls/:callId/briefs
+
+    Purpose:
+    Fetch all generated briefs available for a call.
+
+    User Action:
+    Open Briefs tab on Call Detail screen
+
+    Request:
+    - callId               (path param)
+    - page
+    - size
+
+    Response:
+    - briefs[]
+        - briefId
+        - briefTemplate
+        - period
+        - generatedAt
+        - generatedFrom
+
+--------------------------------
+
+8. GET /api/calls/:callId/briefs/:briefId
+
+    Purpose:
+    Fetch a specific brief with all its structured sections.
+
+    User Action:
+    View loaded brief on Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - briefId
+    - briefTemplate
+    - period
+    - generatedAt
+    - generatedFrom
+    - overview
+        - text
+    - keyDiscussionPoints[]
+        - timestamp
+        - description
+    - customerNeeds[]
+        - title
+        - description
+    - risks[]
+        - title
+        - description
+        - severity         (low | medium | high)
+    - commitments[]
+        - description
+        - assigneeType     (rep | customer)
+        - dueDate
+    - stakeholders[]
+        - name
+        - title
+        - company
+        - avatarInitials
+    - activityContext[]
+        - date
+        - type             (email | call | meeting)
+        - description
+
+--------------------------------
+
+9. GET /api/brief-templates
+
+    Purpose:
+    Fetch available brief template options for the Generate Brief modal dropdown.
+
+    User Action:
+    Open Generate Brief modal — Brief Template dropdown
+
+    Request:
+    - (none)
+
+    Response:
+    - templates[]
+        - templateId
+        - templateName
+
+--------------------------------
+
+10. GET /api/brief-periods
+
+    Purpose:
+    Fetch available time period options for the Generate Brief modal dropdown.
+
+    User Action:
+    Open Generate Brief modal — Period dropdown
+
+    Request:
+    - (none)
+
+    Response:
+    - periods[]
+        - periodId
+        - periodLabel
+
+--------------------------------
+
+11. POST /api/calls/:callId/briefs
+
+    Purpose:
+    Generate a new AI-powered brief for a call using selected template and period.
+
+    User Action:
+    Click Regenerate button → select Brief Template and Period
+    → click Generate Brief in the Generate Brief modal
+
+    Request:
+    - callId               (path param)
+    - briefTemplate
+    - period
+
+    Response:
+    - briefId
+    - briefTemplate
+    - period
+    - generatedAt
+    - status               (processing | completed)
+
+--------------------------------
+
+
+CALL BRIEFS — SHARING & EXPORT
+--------------------------------------------------------------------------------
+
+12. POST /api/calls/:callId/briefs/:briefId/share-link
+
+    Purpose:
+    Generate a unique shareable link for a brief.
+
+    User Action:
+    Click Share button on brief → click Copy Shareable Link in Share Brief modal
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - shareableLink
+    - expiresAt
+
+--------------------------------
+
+13. POST /api/calls/:callId/briefs/:briefId/share-internal
+
+    Purpose:
+    Share brief internally via email to selected team members.
+
+    User Action:
+    Click Share button on brief → click Share Internally in Share Brief modal
+    → enter recipients and send
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+    - recipientEmails[]
+    - message
+
+    Response:
+    - message
+    - sentTo[]
+
+--------------------------------
+
+14. GET /api/calls/:callId/briefs/:briefId/export/pdf
+
+    Purpose:
+    Export the full brief as a downloadable PDF file.
+
+    User Action:
+    Click Share button on brief → click Export as PDF in Share Brief modal
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - file stream          (application/pdf)
+
+--------------------------------
+
+15. GET /api/calls/:callId/briefs/:briefId/formatted-summary
+
+    Purpose:
+    Fetch a plain-text formatted summary of the brief for clipboard copy.
+
+    User Action:
+    Click Share button on brief → click Copy Formatted Summary in Share Brief modal
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - formattedText
+
+--------------------------------
+
+
+BRIEF SECTIONS — KEY DISCUSSION POINTS
+--------------------------------------------------------------------------------
+
+16. GET /api/calls/:callId/briefs/:briefId/discussion-points
+
+    Purpose:
+    Fetch timestamped key discussion points listed in the brief.
+
+    User Action:
+    View Key Discussion Points section on the Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - discussionPoints[]
+        - pointId
+        - timestamp
+        - description
+
+--------------------------------
+
+
+BRIEF SECTIONS — CUSTOMER NEEDS & GOALS
+--------------------------------------------------------------------------------
+
+17. GET /api/calls/:callId/briefs/:briefId/customer-needs
+
+    Purpose:
+    Fetch customer needs and goals identified in the brief.
+
+    User Action:
+    View Customer Needs & Goals section on the Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - customerNeeds[]
+        - needId
+        - title
+        - description
+
+--------------------------------
+
+
+BRIEF SECTIONS — RISKS & OBJECTIONS
+--------------------------------------------------------------------------------
+
+18. GET /api/calls/:callId/briefs/:briefId/risks
+
+    Purpose:
+    Fetch risks and objections with assigned severity levels.
+
+    User Action:
+    View Risks & Objections section on the Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - risks[]
+        - riskId
+        - title
+        - description
+        - severity         (low | medium | high)
+
+--------------------------------
+
+
+BRIEF SECTIONS — DECISIONS & COMMITMENTS
+--------------------------------------------------------------------------------
+
+19. GET /api/calls/:callId/briefs/:briefId/commitments
+
+    Purpose:
+    Fetch decisions and commitments with assignee type and due dates.
+
+    User Action:
+    View Decisions & Commitments section on the Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - commitments[]
+        - commitmentId
+        - description
+        - assigneeType     (rep | customer)
+        - dueDate
+
+--------------------------------
+
+
+BRIEF SECTIONS — KEY STAKEHOLDERS
+--------------------------------------------------------------------------------
+
+20. GET /api/calls/:callId/briefs/:briefId/stakeholders
+
+    Purpose:
+    Fetch key stakeholders associated with the call brief.
+
+    User Action:
+    View Key Stakeholders section on the Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+
+    Response:
+    - stakeholders[]
+        - stakeholderId
+        - name
+        - title
+        - company
+        - avatarInitials
+
+--------------------------------
+
+
+BRIEF SECTIONS — RECENT ACTIVITY CONTEXT
+--------------------------------------------------------------------------------
+
+21. GET /api/calls/:callId/briefs/:briefId/activity-context
+
+    Purpose:
+    Fetch recent activity timeline (emails, calls, meetings) for the account
+    displayed in the Recent Activity Context section.
+
+    User Action:
+    View Recent Activity Context section on the Briefs tab
+
+    Request:
+    - callId               (path param)
+    - briefId              (path param)
+    - page
+    - size
+    - types                (email | call | meeting)
+
+    Response:
+    - activities[]
+        - activityId
+        - date
+        - type             (email | call | meeting)
+        - description
+
+--------------------------------
+
+
+================================================================================
+Screen Name: Call Detail — Transcript & Analysis Tab
+Route: /calls/:callId/transcript
+Purpose of Screen: View full call transcript with speaker labels, AI summary,
+                   talk ratio, topics, audio playback, and suggested next steps.
+================================================================================
+
+
+TRANSCRIPT & ANALYSIS
+--------------------------------------------------------------------------------
+
+22. GET /api/calls/:callId/transcript
+
+    Purpose:
+    Fetch the full call transcript with speaker labels, timestamps,
+    and confidence scores.
+
+    User Action:
+    Open Transcript & Analysis tab / Type in Search transcript field
+    / Toggle Show low-confidence only filter
+
+    Request:
+    - callId               (path param)
+    - page
+    - size
+    - search
+    - showLowConfidenceOnly (boolean)
+
+    Response:
+    - totalCount
+    - transcript[]
+        - entryId
+        - timestamp
+        - speakerName
+        - speakerType      (rep | customer)
+        - text
+        - confidence       (high | low)
+
+--------------------------------
+
+23. GET /api/calls/:callId/transcript/summary
+
+    Purpose:
+    Fetch AI-generated summary of the call displayed in the AI Summary panel.
+
+    User Action:
+    Open Transcript & Analysis tab — AI Summary panel auto-loads
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - summary
+    - generatedAt
+
+--------------------------------
+
+24. GET /api/calls/:callId/transcript/talk-ratio
+
+    Purpose:
+    Fetch talk ratio breakdown between rep and customer shown as progress bars.
+
+    User Action:
+    Open Transcript & Analysis tab — Talk Ratio panel auto-loads
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - rep
+        - percentage
+    - customer
+        - percentage
+
+--------------------------------
+
+25. GET /api/calls/:callId/transcript/audio
+
+    Purpose:
+    Fetch audio playback metadata and streaming URL for the call recording.
+
+    User Action:
+    Open Transcript & Analysis tab — audio player auto-loads
+    / Click play button on audio player
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - audioUrl
+    - duration
+    - format
+
+--------------------------------
+
+26. GET /api/calls/:callId/transcript/topics
+
+    Purpose:
+    Fetch detected topics with timestamps and brief descriptions shown
+    in the Topics panel.
+
+    User Action:
+    Open Transcript & Analysis tab — Topics panel auto-loads
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - topics[]
+        - topicId
+        - label
+        - timestamp
+        - description
+        - color
+
+--------------------------------
+
+
+SUGGESTED NEXT STEPS
+--------------------------------------------------------------------------------
+
+27. GET /api/calls/:callId/next-steps
+
+    Purpose:
+    Fetch AI-suggested next steps displayed as a checklist on the
+    Transcript & Analysis tab.
+
+    User Action:
+    Open Transcript & Analysis tab — Suggested Next Steps panel auto-loads
+
+    Request:
+    - callId               (path param)
+
+    Response:
+    - nextSteps[]
+        - stepId
+        - description
+        - completed        (boolean)
+
+--------------------------------
+
+28. PATCH /api/calls/:callId/next-steps/:stepId
+
+    Purpose:
+    Update the completion status of a suggested next step.
+
+    User Action:
+    Check or uncheck a checkbox in the Suggested Next Steps panel
+
+    Request:
+    - callId               (path param)
+    - stepId               (path param)
+    - completed            (boolean)
+
+    Response:
+    - stepId
+    - completed
+    - updatedAt
+
+--------------------------------
+
+================================================================================
+END OF API DOCUMENTATION
+================================================================================

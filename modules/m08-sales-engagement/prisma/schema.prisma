@@ -7,11 +7,331 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model M08SalesEngagementRecord {
+// Example global models
+model Tenant {
   id        String   @id @default(uuid())
-  tenantId  String
   name      String
   createdAt DateTime @default(now())
-
-  @@map("m08_sales_engagement")
 }
+
+model EmailDraft {
+  id                  String      @id @default(uuid()) @db.Uuid
+  tenantId            String      @db.Uuid
+  userId              String      @db.Uuid
+  recipientContactId  String?     @db.Uuid
+  subject             String?
+  body                String?
+  status              String      // draft | sent | scheduled | generated
+  generatedFromCallId String?     @db.Uuid
+  aiConfidenceScore   Float?
+  flaggedForReview    Boolean     @default(false)
+  createdAt           DateTime    @default(now()) @db.Timestamptz
+
+  sends               EmailSend[]
+
+  @@index([tenantId, userId, createdAt(sort: Desc)])
+  @@map("email_drafts")
+}
+
+model EmailSend {
+  id            String     @id @default(uuid()) @db.Uuid
+  tenantId      String     @db.Uuid
+  userId        String     @db.Uuid
+  draftId       String     @db.Uuid
+  sentAt        DateTime?  @db.Timestamptz
+  openTracked   Boolean    @default(false)
+  clickTracked  Boolean    @default(false)
+  replyReceived Boolean    @default(false)
+  providerUsed  String     // gmail | outlook
+  isFlow        Boolean    @default(false)
+  flowStepIndex Int?
+  flowId        String?    @db.Uuid
+
+  draft         EmailDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, sentAt(sort: Desc)])
+  @@map("email_sends")
+}
+
+model EmailTemplate {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @db.Uuid
+  name            String
+  subjectTemplate String
+  bodyTemplate    String
+  language        String
+  createdBy       String    @db.Uuid
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  isPromoted      Boolean   @default(false)
+  promotedBy      String?   @db.Uuid
+  promotedAt      DateTime? @db.Timestamptz
+
+  @@index([tenantId, name])
+  @@map("email_templates")
+}
+
+model EmailFlow {
+  id               String                @id @default(uuid()) @db.Uuid
+  tenantId         String                @db.Uuid
+  name             String
+  steps            Json                  // JSONB format
+  triggerCondition String
+  createdBy        String                @db.Uuid
+  createdAt        DateTime              @default(now()) @db.Timestamptz
+  enrollments      EmailFlowEnrollment[]
+
+  @@map("email_flows")
+}
+
+model EmailFlowEnrollment {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  flowId      String    @db.Uuid
+  contactId   String    @db.Uuid
+  currentStep Int
+  status      String
+  enrolledAt  DateTime  @default(now()) @db.Timestamptz
+
+  flow        EmailFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, flowId, status])
+  @@map("email_flow_enrollments")
+}
+
+model SalesEngagementOrgSettings {
+  id                         String    @id @default(uuid()) @db.Uuid
+  tenantId                   String    @unique @db.Uuid
+  dailyLimitPerRep           Int       @default(500)
+  notificationThreshold      Int       @default(80) // 80% warning threshold
+  trackingEnabled            Boolean   @default(true) // global open/click tracking toggle
+  salesforceSyncEnabled      Boolean   @default(false)
+  salesforceFieldMapping     Json?     // map local to Salesforce task fields
+  slackWebhookUrl            String?
+  gmailEnabled               Boolean   @default(true)
+  outlookEnabled             Boolean   @default(true)
+  complianceAcknowledgedAt   DateTime? @db.Timestamptz
+  complianceAcknowledgedBy   String?   @db.Uuid
+  updatedAt                  DateTime  @updatedAt @db.Timestamptz
+
+  @@map("sales_engagement_org_settings")
+}
+
+model SalesEngagementAuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  userId      String   @db.Uuid
+  action      String   // e.g. "UPDATE_SETTINGS", "PROMOTED_TEMPLATE", "DISCONNECT_MAILBOX"
+  details     Json
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@map("sales_engagement_audit_logs")
+}
+
+model MailboxConnection {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @db.Uuid
+  userId         String    @db.Uuid
+  email          String
+  provider       String    // gmail | outlook
+  status         String    // connected | disconnected | expired
+  disconnectedAt DateTime? @db.Timestamptz
+  disconnectedBy String?   @db.Uuid
+  lastSyncedAt   DateTime  @default(now()) @db.Timestamptz
+  createdAt      DateTime  @default(now()) @db.Timestamptz
+
+  @@unique([tenantId, userId, email])
+  @@map("mailbox_connections")
+}
+
+model SalesPlay {
+  id                String             @id @default(uuid()) @db.Uuid
+  tenantId          String             @db.Uuid
+  name              String
+  steps             Json               // Array of step: [{stepNum, actionType, description, dueOffsetDays}]
+  triggerConditions Json               // Array of condition: [{eventType, field, operator, value}]
+  createdBy         String             @db.Uuid
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now()) @db.Timestamptz
+  updatedAt         DateTime           @updatedAt @db.Timestamptz
+  enrollments       PlayEnrollment[]
+  adherenceLogs     PlayAdherenceLog[]
+
+  @@index([tenantId, isActive])
+  @@map("sales_plays")
+}
+
+model PlayEnrollment {
+  id             String               @id @default(uuid()) @db.Uuid
+  tenantId       String               @db.Uuid
+  playId         String               @db.Uuid
+  dealId         String               @db.Uuid
+  userId         String               @db.Uuid
+  currentStep    Int                  @default(1)
+  status         String               @default("active") // active | completed | paused | exited
+  triggerEventId String?              @db.Uuid
+  enrolledAt     DateTime             @default(now()) @db.Timestamptz
+  updatedAt      DateTime             @updatedAt @db.Timestamptz
+
+  play           SalesPlay            @relation(fields: [playId], references: [id], onDelete: Cascade)
+  completions    PlayStepCompletion[]
+  notes          PlayNote[]
+  adherenceLogs  PlayAdherenceLog[]
+
+  @@unique([tenantId, playId, dealId, triggerEventId])
+  @@index([tenantId, dealId, status])
+  @@index([tenantId, userId, status])
+  @@map("play_enrollments")
+}
+
+model PlayStepCompletion {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @db.Uuid
+  enrollmentId String         @db.Uuid
+  stepId       Int
+  completedBy  String         @db.Uuid
+  completedAt  DateTime       @default(now()) @db.Timestamptz
+  notes        String?
+
+  enrollment   PlayEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("play_step_completions")
+}
+
+model PlayNote {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @db.Uuid
+  enrollmentId String         @db.Uuid
+  userId       String         @db.Uuid
+  noteText     String
+  createdAt    DateTime       @default(now()) @db.Timestamptz
+
+  enrollment   PlayEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("play_notes")
+}
+
+model PlayAdherenceLog {
+  id             String         @id @default(uuid()) @db.Uuid
+  tenantId       String         @db.Uuid
+  enrollmentId   String         @db.Uuid
+  userId         String         @db.Uuid
+  playId         String         @db.Uuid
+  adherenceScore Float
+  calculatedAt   DateTime       @default(now()) @db.Timestamptz
+
+  play           SalesPlay      @relation(fields: [playId], references: [id], onDelete: Cascade)
+  enrollment     PlayEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("play_adherence_logs")
+}
+
+model Task {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  type        String
+  description String
+  dueDate     DateTime @map("due_date") @db.Timestamptz
+  priority    Int      @default(2)
+  source      String
+  sourceId    String?  @map("source_id")
+  status      String   @default("pending")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([tenantId, source, sourceId])
+  @@index([tenantId, userId, status, dueDate])
+  @@map("tasks")
+}
+
+model Workflow {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  name              String
+  description       String?
+  triggerType       String   @map("trigger_type")
+  triggerConditions Json     @map("trigger_conditions")
+  definition        Json
+  version           Int      @default(1)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("workflows")
+}
+
+model WorkflowRun {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  workflowId       String   @map("workflow_id") @db.Uuid
+  dealId           String?  @map("deal_id") @db.Uuid
+  contactId        String?  @map("contact_id") @db.Uuid
+  status           String   @default("running")
+  currentStepIndex Int      @default(0) @map("current_step_index")
+  triggerPayload   Json     @default("{}") @map("trigger_payload")
+  variables        Json     @default("{}")
+  logs             Json     @default("[]")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("workflow_runs")
+}
+
+model Approval {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  runId            String?  @map("run_id") @db.Uuid
+  workflowId       String?  @map("workflow_id") @db.Uuid
+  type             String
+  title            String
+  description      String
+  status           String   @default("pending")
+  approverId       String?  @map("approver_id") @db.Uuid
+  thresholdDetails Json?    @map("threshold_details")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("approvals")
+}
+
+model WorkflowException {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  runId        String?   @map("run_id") @db.Uuid
+  workflowId   String?   @map("workflow_id") @db.Uuid
+  errorCode    String    @map("error_code")
+  errorMessage String    @map("error_message")
+  stackTrace   String?   @map("stack_trace")
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("workflow_exceptions")
+}
+
+model IntegrationState {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  provider  String
+  status    String   @default("connected")
+  config    Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("integration_states")
+}
+
+model WorkflowAuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  workflowId String?  @map("workflow_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("workflow_audit_logs")
+}
+
+
+

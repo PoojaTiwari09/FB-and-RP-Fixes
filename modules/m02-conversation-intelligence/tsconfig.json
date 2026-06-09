@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": false,
+    "resolveJsonModule": true
+  },
+  "include": ["**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "features/**",
+    "features/F1/**",
+    "**/r-ri/**",
+    "**/Boilerplate Setup/**"
+  ]
+}

@@ -1,12 +1,13 @@
+version: '3.9'
 services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: revenue_intel
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-revenue_intelligence}
+      POSTGRES_USER: ${DB_USER:-revenue_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-revenue_pass}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -29,16 +30,14 @@ services:
       - "9000:9000"
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    build: ./apps/api
     ports:
       - "3001:3001"
     depends_on:
       - postgres
       - redis
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/revenue_intel}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/m6}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -49,6 +48,7 @@ services:
       - "8000:8000"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY}
 
 volumes:
   pgdata:

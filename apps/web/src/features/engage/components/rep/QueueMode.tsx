@@ -1,0 +1,198 @@
+'use client';
+
+import { useState } from 'react';
+import { X, ChevronLeft, ChevronRight, Video } from 'lucide-react';
+import type { Task } from './types/engage.types';
+import { MOCK_TASK_DETAILS } from './mocks/engage.mock';
+import EmailTaskScreen from './EmailTaskScreen';
+import LinkedInTaskScreen from './LinkedInTaskScreen';
+
+interface QueueModeProps {
+  tasks: Task[];
+  onClose: () => void;
+  onQueueComplete: (completedTaskIds: string[]) => void;
+}
+
+export default function QueueMode({ tasks, onClose, onQueueComplete }: QueueModeProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
+
+  const currentTask = tasks[currentIndex];
+
+  const handleNext = (taskId?: string, wasCompleted = false) => {
+    const updated = wasCompleted && taskId ? [...completedIds, taskId] : completedIds;
+    if (wasCompleted) setCompletedIds(updated);
+
+    if (currentIndex < tasks.length - 1) {
+      setCurrentIndex((i) => i + 1);
+    } else {
+      onQueueComplete(updated);
+    }
+  };
+
+  const handleMarkComplete = () => {
+    if (!currentTask) return;
+    handleNext(currentTask.taskId, true);
+  };
+
+  const handleSkip = () => {
+    handleNext();
+  };
+
+  const handleNavigate = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  if (!currentTask) return null;
+
+  // Render specialized screens for Email and LinkedIn
+  if (currentTask.channelType === 'EMAIL') {
+    return (
+      <EmailTaskScreen
+        task={currentTask}
+        allTasks={tasks}
+        currentIndex={currentIndex}
+        onClose={onClose}
+        onNavigate={handleNavigate}
+        onSuccess={() => handleMarkComplete()}
+        inQueue={true}
+      />
+    );
+  }
+
+  if (currentTask.channelType === 'LINKEDIN') {
+    return (
+      <LinkedInTaskScreen
+        task={currentTask}
+        allTasks={tasks}
+        currentIndex={currentIndex}
+        onClose={onClose}
+        onNavigate={handleNavigate}
+        onMarkComplete={() => handleMarkComplete()}
+        inQueue={true}
+      />
+    );
+  }
+
+  // Fallback UI for CALL or OTHER (original QueueMode UI)
+  const detail = currentTask ? MOCK_TASK_DETAILS[currentTask.taskId] : undefined;
+  const formattedDue = currentTask
+    ? new Date(currentTask.dueDateTime).toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
+          >
+            <X size={18} />
+          </button>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Queue Mode</p>
+            <p className="text-xs text-gray-400">Complete tasks one by one</p>
+          </div>
+        </div>
+
+        {/* Navigator */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <button
+            onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+            disabled={currentIndex === 0}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 cursor-pointer transition-colors"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span className="font-medium text-gray-700">
+            Task {currentIndex + 1} of {tasks.length}
+          </span>
+          <button
+            onClick={() => setCurrentIndex((i) => Math.min(tasks.length - 1, i + 1))}
+            disabled={currentIndex === tasks.length - 1}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 cursor-pointer transition-colors"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        <p className="text-sm text-gray-400">
+          {completedIds.length} completed
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-gray-100">
+        <div
+          className="h-full bg-purple-500 transition-all duration-500"
+          style={{ width: `${(completedIds.length / tasks.length) * 100}%` }}
+        />
+      </div>
+
+      {/* Content — centered */}
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="text-center max-w-sm w-full">
+          {/* Task title */}
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            {detail?.taskTitle ?? currentTask.company}
+          </h2>
+          <p className="text-sm text-gray-500 mb-1">
+            {currentTask.contactName} &middot; {currentTask.company}
+          </p>
+          <p className="text-xs text-gray-400 mb-8">Due: {formattedDue}</p>
+
+          {/* Video Call Platforms */}
+          <div className="mb-8 p-4 bg-gray-50 border border-gray-150 rounded-2xl">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+              Start Video Call
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => window.open('https://zoom.us/start/videomeeting', '_blank')}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#0B5CFF] hover:bg-[#004BD6] text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              >
+                <Video size={14} /> Zoom
+              </button>
+              <button
+                onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#00897B] hover:bg-[#006E63] text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              >
+                <Video size={14} /> Meet
+              </button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={handleSkip}
+              disabled={currentIndex === tasks.length - 1 && completedIds.length < tasks.length}
+              className="text-sm font-medium text-gray-600 border border-gray-200 rounded-lg px-7 py-2.5 hover:bg-gray-50 disabled:opacity-40 cursor-pointer transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={handleMarkComplete}
+              className="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg px-7 py-2.5 cursor-pointer transition-colors"
+            >
+              Mark Complete
+            </button>
+          </div>
+
+          {/* Remaining tasks hint */}
+          <p className="text-xs text-gray-400 mt-6">
+            {tasks.length - currentIndex - 1} task{tasks.length - currentIndex - 1 !== 1 ? 's' : ''} remaining
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

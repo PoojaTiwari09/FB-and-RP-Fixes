@@ -1,36 +1,33 @@
-import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-plus-jakarta",
-});
+import Sidebar from '@shared/components/Sidebar/Sidebar';
+import { getUserSession } from '@shared/lib/auth';
+import { RoleProvider } from '@shared/context/RoleContext';
 
 export const metadata: Metadata = {
-  title: "R-Revenue Intelligence — Boilerplate Platform Hub",
-  description: "Futuristic enterprise revenue operations command center driving capturing, deep conversation intelligence, AI summaries, deal drivers, forecasting, and cross-cutting GDPR/CCPA data compliance.",
-  keywords: ["Revenue Intelligence", "Next.js 14", "Modular Monolith", "Speech-to-Text", "RAG", "Data Export"],
-  authors: [{ name: "Technical Architecture Team & Relanto Engineering" }],
+  title: "Revenue Intelligence Platform",
+  description:
+    "Enterprise revenue intelligence platform with coaching, call analytics, and sales enablement.",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#02040c",
-  width: "device-width",
-  initialScale: 1,
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getUserSession();
+
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
-      <body style={{ fontFamily: "var(--font-plus-jakarta), sans-serif" }}>
-        <div className="cyber-grid" />
-        {children}
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <body className="h-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
+        <RoleProvider session={session}>
+          <div className="flex h-full overflow-hidden">
+            <Sidebar />
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+              {children}
+            </div>
+          </div>
+        </RoleProvider>
       </body>
     </html>
   );

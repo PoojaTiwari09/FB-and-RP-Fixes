@@ -11,7 +11,8 @@
     "@nestjs/bullmq": "^10.0.0",
     "bullmq": "^5.0.0",
     "zod": "^3.0.0",
-    "@prisma/client": "^5.0.0"
+    "@prisma/client": "^5.0.0",
+    "@rri/database": "workspace:*"
   },
   "devDependencies": {
     "prisma": "^5.0.0"

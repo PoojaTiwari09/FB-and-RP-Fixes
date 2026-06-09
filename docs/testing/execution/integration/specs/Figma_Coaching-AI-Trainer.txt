@@ -1,0 +1,309 @@
+# AI Sales Training Module - API Specification
+
+This document outlines the required backend REST API endpoints for the AI Sales Training module. It includes the original endpoints for Sales Reps and the newly added endpoints for Managers (Custom Trainings & Reassignments).
+
+---
+
+## Part 1: Sales Rep Endpoints
+
+### 1. GET `/api/trainings`
+**Purpose**: Fetch all training modules assigned to the logged-in sales rep.
+**Query Params**: 
+- `status` (optional: all | in-progress | completed)
+**Response**:
+```json
+{
+  "trainings": [
+    {
+      "id": "string",
+      "title": "string",
+      "dueDateIso": "ISO-8601 string",
+      "status": "in-progress | completed",
+      "progressPercent": 0,
+      "lastSessionId": "string | null"
+    }
+  ]
+}
+```
+
+### 2. GET `/api/trainings/:trainingId/setup`
+**Purpose**: Fetch the read-only preview and persona setup data before a session begins.
+**Response**:
+```json
+{
+  "id": "string",
+  "title": "string",
+  "contactPersona": {
+    "name": "string",
+    "jobTitle": "string",
+    "company": "string",
+    "motivations": "string",
+    "communicationStyle": "string"
+  },
+  "meetingContext": {
+    "scenario": "string",
+    "objective": "string",
+    "backgroundForTrainee": "string"
+  },
+  "playbookSections": [
+    {
+      "id": "string",
+      "title": "string",
+      "questions": [
+        {
+          "id": "string",
+          "text": "string",
+          "tags": ["high-impact", "missed-last-attempt"],
+          "whyItMatters": "string | null"
+        }
+      ]
+    }
+  ],
+  "voices": [
+    {
+      "id": "string",
+      "label": "string",
+      "description": "string",
+      "previewText": "string"
+    }
+  ]
+}
+```
+*Note: Voices are currently sourced dynamically from ElevenLabs on the frontend, but the backend can cache or override available voices here.*
+
+### 3. POST `/api/trainings/:trainingId/sessions`
+**Purpose**: Create a new training session when the rep clicks "Start Training".
+**Request Body**:
+```json
+{
+  "selectedVoiceId": "string",
+  "trainingId": "string"
+}
+```
+**Response**:
+```json
+{
+  "sessionId": "string",
+  "status": "active",
+  "startedAt": "ISO-8601 string"
+}
+```
+
+### 4. GET `/api/trainings/:trainingId/sessions/:sessionId`
+**Purpose**: Fetch current active/paused session state.
+**Response**:
+```json
+{
+  "sessionId": "string",
+  "status": "active | paused | completed",
+  "elapsedSeconds": 0,
+  "messageCount": 0,
+  "selectedVoiceId": "string",
+  "messages": [
+    {
+      "id": "string",
+      "sender": "user | ai",
+      "text": "string",
+      "timestampSeconds": 0
+    }
+  ],
+  "context": {
+    "trainingTitle": "string",
+    "persona": { /* same as setup persona */ },
+    "meetingContext": { /* same as setup meetingContext */ },
+    "playbookSections": [ /* same as setup playbookSections */ ]
+  }
+}
+```
+*Note: Returning the full `context` here is helpful so the UI has everything it needs to render the sidebars without re-fetching the setup route.*
+
+### 5. POST `/api/trainings/:trainingId/sessions/:sessionId/messages`
+**Purpose**: Send a new message from the trainee. The backend calls the LLM, gets the AI response, tracks the scorecard, and returns it.
+**Request Body**:
+```json
+{
+  "text": "string",
+  "inputType": "text | voice"
+}
+```
+**Response**:
+```json
+{
+  "userMessage": {
+    "id": "string",
+    "sender": "user",
+    "text": "string",
+    "timestampSeconds": 0
+  },
+  "aiResponse": {
+    "id": "string",
+    "sender": "ai",
+    "text": "string",
+    "timestampSeconds": 0,
+    "audioUrl": "string | null"
+  },
+  "scorecardUpdate": {
+    "sectionId1": "in-progress",
+    "sectionId2": "completed"
+  }
+}
+```
+*Note: `scorecardUpdate` allows the UI to dynamically check-off playbook sections in real-time.*
+
+### 6. PATCH `/api/trainings/:trainingId/sessions/:sessionId/pause`
+**Purpose**: Pause the active timer and state.
+**Response**: `{ "success": true, "status": "paused" }`
+
+### 7. PATCH `/api/trainings/:trainingId/sessions/:sessionId/resume`
+**Purpose**: Resume a paused session.
+**Response**: `{ "success": true, "status": "active" }`
+
+### 8. POST `/api/trainings/:trainingId/sessions/:sessionId/end`
+**Purpose**: End the session. Backend should trigger the AI evaluation queue.
+**Response**: `{ "success": true, "status": "completed" }`
+
+### 9. GET `/api/trainings/:trainingId/sessions/:sessionId/results`
+**Purpose**: Fetch the complete, AI-evaluated results of a finished session.
+**Response**:
+```json
+{
+  "trainingId": "string",
+  "trainingTitle": "string",
+  "overallScore": 85,
+  "maxScore": 100,
+  "performanceTier": "excellent | good | needs-improvement",
+  "tierLabel": "string",
+  "summaryText": "string",
+  "performanceTags": [
+    {
+      "id": "string",
+      "label": "string",
+      "type": "positive | warning"
+    }
+  ],
+  "scoredSections": [
+    {
+      "id": "string",
+      "title": "string",
+      "score": 8,
+      "maxScore": 10,
+      "status": "mastered | on-track | needs-practice",
+      "questions": [
+        {
+          "id": "string",
+          "text": "string",
+          "tags": ["high-impact", "missed-last-attempt"]
+        }
+      ]
+    }
+  ],
+  "performanceBreakdown": [
+    {
+      "category": "string",
+      "score": 0,
+      "maxScore": 100,
+      "percentage": 0,
+      "description": "string",
+      "strengths": ["string"],
+      "areasForImprovement": ["string"]
+    }
+  ],
+  "transcript": [
+    {
+      "timestampSeconds": 0,
+      "sender": "user | ai",
+      "senderLabel": "string",
+      "text": "string",
+      "quality": "good-example | missed-opportunity | null"
+    }
+  ]
+}
+```
+
+---
+
+## Part 2: Manager Endpoints
+
+### 10. GET `/api/manager/trainings`
+**Purpose**: Fetch the manager dashboard data, showing completed trainings and actively assigned trainings for all reps reporting to this manager.
+**Response**:
+```json
+{
+  "activeTrainings": [
+    {
+      "id": "string",
+      "repId": "string",
+      "repName": "string",
+      "trainingTitle": "string",
+      "assignedDate": "ISO-8601 string",
+      "dueDateIso": "ISO-8601 string"
+    }
+  ],
+  "trainings": [
+    {
+      "id": "string",
+      "repId": "string",
+      "repName": "string",
+      "trainingTitle": "string",
+      "completedDate": "ISO-8601 string",
+      "overallScore": 0,
+      "overallRating": "string",
+      "lastSessionId": "string",
+      "isReassigned": false
+    }
+  ]
+}
+```
+
+### 11. POST `/api/manager/trainings/create`
+**Purpose**: Manager creates a custom AI persona/playbook and assigns it to a rep.
+**Request Body**:
+```json
+{
+  "repId": "string",
+  "trainingTitle": "string",
+  "dueDateIso": "ISO-8601 string",
+  "persona": {
+    "name": "string",
+    "jobTitle": "string",
+    "company": "string",
+    "motivations": "string",
+    "communicationStyle": "string"
+  },
+  "meetingContext": {
+    "scenario": "string",
+    "objective": "string",
+    "backgroundForTrainee": "string"
+  },
+  "playbookSections": [
+    {
+      "title": "string",
+      "questions": ["string"]
+    }
+  ]
+}
+```
+**Response**:
+```json
+{
+  "success": true,
+  "trainingId": "string"
+}
+```
+
+### 12. POST `/api/manager/trainings/:trainingId/reassign`
+**Purpose**: Manager reviews a completed training (e.g. poor score) and reassigns it back to the rep so they can practice again.
+**Request Body**:
+```json
+{
+  "repId": "string"
+}
+```
+**Response**:
+```json
+{
+  "success": true,
+  "newTrainingId": "string"
+}
+```
+*Note: Reassigning should theoretically clone the original training setup into a new tracking record (`newTrainingId`) assigned to the rep, while preserving the old completed record for historical purposes. The new record should append `(Reassigned)` or a similar visual tag in the UI.*

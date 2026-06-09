@@ -1,25 +1,33 @@
 {
-  "name": "web",
+  "name": "ai_training_pages",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint",
+    "test:notes": "node ../scratch/test_notes.js"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
+    "groq-sdk": "^1.2.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.16.0",
-    "next": "14.2.35",
-    "react": "^18",
-    "react-dom": "^18"
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/dom-speech-recognition": "^0.0.11",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

@@ -1,0 +1,14 @@
+# Free ports used by standalone M09 stack
+param([int[]]$Ports = @(4009, 5176))
+
+foreach ($port in $Ports) {
+  $lines = netstat -ano | Select-String ":$port\s" | Select-String "LISTENING"
+  foreach ($line in $lines) {
+    $procId = ($line -split '\s+')[-1]
+    if ($procId -match '^\d+$') {
+      Write-Host "Stopping PID $procId on port $port"
+      Stop-Process -Id ([int]$procId) -Force -ErrorAction SilentlyContinue
+    }
+  }
+}
+Write-Host "Ports $($Ports -join ', ') cleared (if anything was listening)."

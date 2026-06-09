@@ -7,11 +7,333 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model M04DealIntelligenceRecord {
-  id        String   @id @default(uuid())
-  tenantId  String
-  name      String
-  createdAt DateTime @default(now())
+model M04Deal {
+  id                   String         @id @default(uuid())
+  tenantId             String
+  crmDealId            String         @unique
+  name                 String
+  stage                String
+  amount               Decimal        @default(0) @db.Decimal(15, 2)
+  forecastCategory     String         @map("forecast_category")
+  ownerId              String         @map("owner_id")
+  ownerName            String         @map("owner_name")
+  accountId            String?         @map("account_id")
+  accountName          String?         @map("account_name")
+  closeDate            DateTime?      @map("close_date") @db.Date
+  probability          Int            @default(0)
+  aiScore              Int            @default(0) @map("ai_score")
+  warningCount         Int            @default(0) @map("warning_count")
+  contactCount         Int            @default(0) @map("contact_count")
+  activityStrength     Int            @default(0) @map("activity_strength")
+  isHighRisk           Boolean        @default(false) @map("is_high_risk")
+  riskReason           String?        @map("risk_reason")
+  nextStep             String?        @map("next_step")
+  crmData              Json?          @map("crm_data")
+  lastActivityAt       DateTime?      @map("last_activity_at")
+  lastSyncedAt         DateTime?      @map("last_synced_at")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
 
-  @@map("m04_deal_intelligence")
+  warnings             M04DealWarning[]
+  playbooks            M04DealPlaybook[]
+  activities           M04DealActivity[]
+  comments             M04DealComment[]
+  tasks                M04DealTask[]
+
+  @@map("deals")
+  @@index([ownerId, stage])
+  @@index([ownerId, forecastCategory])
+  @@index([closeDate])
+  @@index([crmDealId])
+}
+
+model M04DealBoard {
+  id                        String           @id @default(uuid())
+  tenantId                  String
+  name                      String           @unique
+  description               String?
+  audience                  String[]
+  status                    String           @default("DRAFT")
+  ownerId                   String           @map("owner_id")
+  isLocked                  Boolean          @default(false) @map("is_locked")
+  allowRepColumnReorder     Boolean          @default(false) @map("allow_rep_column_reorder")
+  preventManualDealOverride Boolean          @default(true) @map("prevent_manual_deal_override")
+  metadata                  Json?            @map("metadata")
+  createdAt                 DateTime         @default(now()) @map("created_at")
+  updatedAt                 DateTime         @updatedAt @map("updated_at")
+  publishedAt               DateTime?        @map("published_at")
+
+  filters                   M04BoardFilter[]
+  tabs                      M04BoardTab[]
+  columns                   M04BoardColumn[]
+  permissions               M04BoardPermission[]
+
+  @@map("deal_boards")
+}
+
+model M04BoardFilter {
+  id          String    @id @default(uuid())
+  tenantId    String
+  boardId     String    @map("board_id")
+  field       String
+  operator    String
+  value       String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  board       M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("board_filters")
+  @@index([boardId])
+}
+
+model M04BoardTab {
+  id          String    @id @default(uuid())
+  tenantId    String
+  boardId     String    @map("board_id")
+  name        String
+  order       Int
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  board       M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("board_tabs")
+  @@index([boardId])
+}
+
+model M04BoardColumn {
+  id          String    @id @default(uuid())
+  tenantId    String
+  boardId     String    @map("board_id")
+  field       String
+  label       String
+  width       Int
+  order       Int
+  isVisible   Boolean   @default(true) @map("is_visible")
+  isSortable  Boolean   @default(true) @map("is_sortable")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  board       M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("board_columns")
+  @@index([boardId])
+}
+
+model M04BoardPermission {
+  id          String    @id @default(uuid())
+  tenantId    String
+  boardId     String    @map("board_id")
+  userId      String    @map("user_id")
+  role        String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  board       M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("board_permissions")
+  @@index([boardId])
+  @@index([userId])
+}
+
+model M04DealWarning {
+  id          String    @id @default(uuid())
+  tenantId    String
+  dealId      String    @map("deal_id")
+  title       String
+  severity    String
+  message     String
+  action      String?
+  isResolved  Boolean   @default(false) @map("is_resolved")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  deal        M04Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("deal_warnings")
+  @@index([dealId])
+  @@index([isResolved])
+}
+
+model M04DealPlaybook {
+  id          String    @id @default(uuid())
+  tenantId    String
+  dealId      String    @map("deal_id")
+  type        String
+  criterion   String
+  status      String
+  question    String
+  notes       String?
+  aiSuggestion String?  @map("ai_suggestion")
+  order       Int
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  deal        M04Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("deal_playbooks")
+  @@index([dealId])
+  @@index([type])
+}
+
+model M04DealActivity {
+  id          String    @id @default(uuid())
+  tenantId    String
+  dealId      String    @map("deal_id")
+  type        String
+  title       String
+  description String?
+  activityDate DateTime  @map("activity_date") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  deal        M04Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("deal_activities")
+  @@index([dealId])
+  @@index([activityDate])
+}
+
+model M04DealComment {
+  id          String    @id @default(uuid())
+  tenantId    String
+  dealId      String    @map("deal_id")
+  userId      String    @map("user_id")
+  content     String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  deal        M04Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("deal_comments")
+  @@index([dealId])
+  @@index([userId])
+}
+
+model M04DealTask {
+  id          String    @id @default(uuid())
+  tenantId    String
+  dealId      String    @map("deal_id")
+  title       String
+  description String?
+  status      String
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  deal        M04Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("deal_tasks")
+  @@index([dealId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model M04User {
+  id          String    @id @default(uuid())
+  tenantId    String
+  email       String    @unique
+  password    String
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  role        String
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+  @@index([email])
+}
+
+model M04Session {
+  id          String    @id
+  tenantId    String
+  userId      String    @map("user_id")
+  expiresAt   DateTime  @map("expires_at")
+  data        Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("sessions")
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model M04UserPreference {
+  id          String    @id @default(uuid())
+  tenantId    String
+  userId      String    @map("user_id")
+  key         String
+  value       String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+  @@index([userId])
+  @@unique([userId, key])
+}
+
+model M04AuditLog {
+  id          String    @id @default(uuid())
+  tenantId    String
+  userId      String    @map("user_id")
+  action      String
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id")
+  changes     Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model M04SyncLog {
+  id          String    @id @default(uuid())
+  tenantId    String
+  source      String
+  status      String
+  recordsProcessed Int  @map("records_processed")
+  recordsFailed Int     @map("records_failed")
+  error       String?
+  startedAt   DateTime  @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("sync_logs")
+  @@index([source])
+  @@index([status])
+  @@index([startedAt])
+}
+
+model M04DealSummary {
+  id          String    @id @default(uuid())
+  tenantId    String
+  dealId      String    @map("deal_id")
+  summary     String
+  generatedAt DateTime  @map("generated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("deal_summaries")
+  @@index([dealId])
+  @@unique([dealId])
+}
+
+model M04AnalyticsSnapshot {
+  id          String    @id @default(uuid())
+  tenantId    String
+  userId      String    @map("user_id")
+  snapshotDate DateTime @map("snapshot_date") @db.Date
+  data        Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("analytics_snapshots")
+  @@index([userId])
+  @@index([snapshotDate])
 }

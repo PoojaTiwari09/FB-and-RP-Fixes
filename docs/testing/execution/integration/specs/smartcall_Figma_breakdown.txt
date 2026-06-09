@@ -1,0 +1,658 @@
+Screen Name:
+Smart Call – Live Assist
+
+Route:
+/smart-call  (or /engage/smart-call/{contactId})
+
+Purpose of Screen:
+Smart Call is an AI-powered live call assistant that guides sales reps in real-time during calls. The rep selects a contact, initiates a Smart Call session, gets live AI coaching, competitor intelligence, suggested responses, and intent signals during the call. After the call ends, a detailed Call Summary with performance scores, key moments, missed opportunities, and improvement suggestions is generated automatically.
+
+Flow:
+1. Rep clicks "Smart Call" anywhere in the app (or navigates to /smart-call)
+2. Contact Selection screen — rep searches and selects a contact to call
+3. Smart Call Pre-Call screen — AI briefing, feature overview, screen sharing consent
+4. Live Session screen — real-time AI guidance, overlay mode available
+5. End Session confirmation modal
+6. Call Summary screen — post-call analysis and scoring
+
+================================
+COMPONENTS
+================================
+
+--- 1. Contact Selection Screen ---
+- Page header: "Smart Call" title
+- Search bar: "Search contacts, accounts, companies..."
+- Contact list (recent/suggested contacts):
+    * Contact card: avatar, contact name, job title, company, last interaction label
+    * "Call" button on each card — initiates smart call for that contact
+- Filter/sort options (optional — confirm with design)
+- Empty state: "No contacts found" when search yields no results
+
+--- 2. Smart Call Pre-Call Screen ---
+- Header: "← Back" link
+- Hero section:
+    * AI sparkle icon (orange circle)
+    * Title: "Smart Call – Live Assist"
+    * Subtitle: "Calling: [Contact Name] at [Company]"
+- Intro heading: "Get AI Assistance During Your Call"
+- Intro body: "Start Live Assist to get real-time suggestions, talking points, and insights while you're on a call."
+- "WHAT AI WILL DO" feature list (4 items with icons):
+    1. Real-time call suggestions — "Get instant prompts and responses during the conversation"
+    2. Objection handling prompts — "AI-powered responses to common objections and concerns"
+    3. Key insights and reminders — "Contextual information about the contact and their needs"
+    4. Live transcription and highlights — "Automatic transcript with key moments flagged"
+- "Screen Sharing Required" notice card (lock icon, blue tint):
+    * "To enable Live Assist, you'll need to share your screen or window. We only use this to provide contextual suggestions during your call."
+    * "✓ Your data is secure and not recorded without permission"
+- "WORKS WITH" row: Zoom | Meet | Teams (pill badges)
+- Primary CTA: "Start Live Assist" button (orange, full-width, sparkle icon)
+- Secondary: "Cancel" text link
+
+--- 3. Live Session Screen ---
+Session Header:
+    - Task/call title (e.g. "Follow up on Q2 contract renewal")
+    - Live status: green dot + "Live – Listening and transcribing"
+    - Contact name · Company
+    - Right actions:
+        * "Enable Overlay" button (toggles to "Overlay Active" when enabled, green)
+        * "Focus Mode" button
+        * Live session timer (MM:SS, counts up)
+        * "End Session" button (red, X icon)
+
+Left Panel — Live Guidance + Responses (scrollable):
+    - Live Guidance card:
+        * Lightning bolt icon + "Live Guidance" label
+        * Current stage badge (e.g. "Initial Greeting and Introduction")
+        * "Next:" suggestion text (e.g. "Ask about current challenges to move into discovery")
+    - Suggested Responses section ("SUGGESTED RESPONSES" label):
+        * 4 clickable response cards, each with:
+            - Chat bubble icon
+            - Response text
+            - Copy icon (on hover/active card)
+    - Competitor Intelligence section (collapsible, "COMPETITOR INTELLIGENCE" label + chevron):
+        * Per competitor block:
+            - Competitor badge (colored pill, e.g. orange "Garmin", pink "vs HubSpot", green "vs Zoho")
+            - "Insight" label + insight text (e.g. "Client is looking for an update to their vehicle's map")
+            - "Our Edge" card (green tint, star icon): competitive advantage text
+            - "Say This" card (yellow tint, chat icon): exact scripted response text
+            - "Say" label + quoted response block (in overlay mode)
+        * Multiple competitors can appear simultaneously
+
+Right Panel — Analytics (scrollable):
+    - INTENT & RISK SIGNALS section:
+        * Signal cards (each with label + value badge + color coding):
+            - Pricing Interest — High (green)
+            - Decision Timeline — Q2 2026 (blue/grey)
+            - Budget Concern — Medium (yellow, warning icon)
+            - Feature Request — Integration (purple)
+    - TALK RATIO section:
+        * You: % + blue progress bar
+        * Customer: % + green progress bar
+    - CONVERSATION METRICS section:
+        * Interruptions: count
+        * Speaking Pace: label (e.g. "Good" — green badge)
+        * Words per Minute: number
+        * Questions Asked: count
+    - CONVERSATION SUMMARIES section (pink dot header):
+        * Rolling time-block summaries as call progresses:
+            - Time range (e.g. "00:30 → 01:00")
+            - Summary text with highlighted keywords (e.g. "pricing" in orange, "ROI" in blue)
+            - Topic tags (e.g. "Objection", "Info")
+            - Expandable (chevron)
+
+--- 4. Overlay Mode Widget ("Live AI Co-Pilot") ---
+Triggered by "Enable Overlay" button — floats over the screen as a compact draggable widget:
+    - Widget header:
+        * Green dot + "Live AI Co-Pilot" label
+        * Confidence % badge (e.g. "88%")
+        * Minimize (–) and Close (X) buttons
+    - Contact context: contact name pill + company name pill
+    - Context summary: what the client is currently discussing (AI-detected, e.g. "Client is inquiring about updating the map in their 2009 Nissan Altima")
+    - Sub-context: rep action suggestion (e.g. "Provide a code for the map update and walk John through the process.")
+    - Tab bar: Coach | Signals | Log
+    - COACH tab (default):
+        * "SUGGESTED RESPONSE" label with copy icon + speaker icon
+        * Suggested response text card
+        * "STRATEGIC TIPS" section (orange icon):
+            - Tip text (e.g. "Focus on building rapport and uncovering pain points before moving to pricing.")
+            - Example script in quotes (e.g. "What challenges are you currently facing with your existing solution?")
+        * "COMPETITOR INTELLIGENCE" section:
+            - Per competitor: colored badge, "Our Edge" label + edge text, "Say" label + scripted response in quotes
+            - Multiple competitors shown (e.g. HubSpot, Zoho)
+    - SIGNALS tab: (shows intent/risk signals — confirm content with design)
+    - LOG tab: (shows call log/transcript — confirm content with design)
+
+--- 5. End Session Confirmation Modal ---
+- Title: "End this session and generate summary?"
+- Body: "We'll analyze your conversation and provide insights to help you improve."
+- Cancel button (secondary)
+- "End & Generate Summary" button (primary, red)
+
+--- 6. Call Summary Screen ---
+Header:
+    - Title: "Call Summary"
+    - Meta bar: Duration (e.g. "3:46"), Call Type (call/task title), Signal badge ("✓ Positive Signal" — green)
+
+Performance Snapshot card:
+    - Overall Score: circular badge (e.g. 78/100)
+    - Dimension score rows with progress bars:
+        * Discovery: score/100
+        * Objection Handling: score/100
+        * Closing: score/100
+
+AI Summary card:
+    - Paragraph of AI-generated narrative about the call
+
+Key Moments section:
+    - Colour-coded timeline items (each with timestamp, type badge, description):
+        * OBJECTION (yellow/orange) — e.g. "2:25 · Price concern raised - handled well with ROI breakdown"
+        * INTEREST SIGNAL (green) — e.g. "3:50 · Strong buying signal detected when discussing integration capabilities"
+        * MISSED OPPORTUNITY (red/pink) — e.g. "5:10 · Opportunity to ask about decision timeline was missed"
+
+Missed Opportunities card (red/pink tint):
+    - Title: "Missed Opportunities"
+    - Sub-label: "Key questions you could have asked:"
+    - Bulleted list of missed questions:
+        * "When is the decision being made?"
+        * "Who else is involved in the decision-making process?"
+        * "What are your must-have features versus nice-to-haves?"
+
+Suggested Improvements card (blue tint):
+    - Title: "Suggested Improvements"
+    - List of improvement items (each with checkmark circle icon):
+        * "Ask more open-ended questions early to uncover deeper pain points"
+        * "Confirm budget authority before diving into pricing details"
+        * "Use customer's name more frequently to build rapport"
+
+Conversation Timeline section:
+    - Time-range blocks (blue pill badges) with topic description:
+        * 0:00–0:30 · Introduction and rapport building
+        * 0:30–1:00 · Discussed current challenges with vehicle mapping systems
+        * 1:00–1:30 · Presented Version 7.7 features and benefits
+        * 1:30–2:00 · Competitor comparison (Garmin) – highlighted our edge
+        * 2:00–2:30 · Price sensitivity discussion and ROI justification
+        * 2:30–3:00 · Integration questions and technical capabilities
+
+Footer actions:
+    - "← Back to Dashboard" button
+    - "View Full Transcript" button
+    - "Practice Again" button (primary, blue)
+
+================================
+USER ACTIONS
+================================
+- Search and select a contact to smart call (Contact Selection screen)
+- View AI pre-call briefing (Pre-Call screen)
+- Start Live Assist session ("Start Live Assist" button)
+- Cancel before starting ("Cancel" link → back to Contact Selection)
+- Go back to task from Pre-Call screen ("← Back")
+- View live AI guidance and stage during call (Live Session)
+- Copy a suggested response to clipboard (copy icon on response card)
+- View and use competitor intelligence talking points (Competitor Intelligence section)
+- Monitor Intent & Risk Signals in real-time (right panel)
+- Monitor Talk Ratio and Conversation Metrics (right panel)
+- Read rolling Conversation Summaries (right panel)
+- Enable Overlay mode → opens "Live AI Co-Pilot" floating widget
+- Use Coach tab in overlay (suggested response + strategic tips + competitor intel)
+- Use Signals tab in overlay (intent signals)
+- Use Log tab in overlay (call log/transcript)
+- Minimize or close overlay widget
+- Switch to Focus Mode (hides analytics right panel)
+- End session ("End Session" → confirmation modal)
+- Cancel end ("Cancel" in confirmation modal)
+- End and generate summary ("End & Generate Summary")
+- View Call Summary: Performance Snapshot, AI Summary, Key Moments, Missed Opportunities, Suggested Improvements, Conversation Timeline
+- View Full Transcript (footer button)
+- Practice Again (footer button — restart Smart Call flow)
+- Back to Dashboard (footer button)
+
+================================
+APIs
+================================
+
+================================
+1. GET /api/smart-call/contacts
+================================
+Purpose:
+Fetch the contact list for the Contact Selection screen. Returns recent/suggested contacts for the rep, with search support.
+
+Sample Request:
+GET /api/smart-call/contacts?q=sarah&limit=20&offset=0
+
+Sample Response:
+{
+  "contacts": [
+    {
+      "contactId": "cnt_001",
+      "contactName": "Sarah Chen",
+      "jobTitle": "VP of Sales",
+      "company": "Acme Corp",
+      "avatarUrl": "https://cdn.relanto.ai/avatars/cnt_001.png",
+      "lastInteractionLabel": "Called 2 days ago",
+      "phone": "+1 (555) 123-4567"
+    },
+    {
+      "contactId": "cnt_002",
+      "contactName": "Michael Rodriguez",
+      "jobTitle": "CTO",
+      "company": "TechFlow Inc",
+      "avatarUrl": null,
+      "lastInteractionLabel": "Emailed 5 days ago",
+      "phone": "+1 (555) 987-6543"
+    }
+  ],
+  "total": 2,
+  "hasMore": false
+}
+
+--------------------------------
+
+================================
+2. GET /api/smart-call/contacts/{contactId}/pre-call-brief
+================================
+Purpose:
+Fetch AI pre-call briefing for a selected contact — shown on the Pre-Call screen before starting the session.
+
+Sample Request:
+GET /api/smart-call/contacts/cnt_001/pre-call-brief
+
+Sample Response:
+{
+  "contactId": "cnt_001",
+  "contactName": "Sarah Chen",
+  "contactCompany": "Acme Corp",
+  "supportedIntegrations": ["ZOOM", "MEET", "TEAMS"],
+  "preCallBriefing": "Sarah has shown high pricing interest. Last call focused on ROI concerns. Lead with the TechCorp case study — similar use case, 3x ROI in 6 months. She's the decision maker but needs IT sign-off.",
+  "keyObjections": ["Budget", "Integration complexity"],
+  "dealStage": "Negotiation",
+  "arrValue": "$240K ARR"
+}
+
+--------------------------------
+
+================================
+3. POST /api/smart-call/sessions/start
+================================
+Purpose:
+Start a Smart Call Live Assist session for a selected contact. Returns session details used to initialise the Live Session screen.
+
+Sample Request:
+POST /api/smart-call/sessions/start
+
+{
+  "contactId": "cnt_001",
+  "taskId": "task_001",
+  "startedAt": "2026-05-27T08:05:00Z",
+  "integration": "ZOOM"
+}
+
+Sample Response:
+{
+  "sessionId": "session_001",
+  "contactId": "cnt_001",
+  "contactName": "Sarah Chen",
+  "contactCompany": "Acme Corp",
+  "taskTitle": "Follow up on Q2 contract renewal",
+  "status": "LIVE",
+  "wsEndpoint": "wss://live.relanto.ai/sessions/session_001",
+  "message": "Live Assist session started"
+}
+
+Note: taskTitle is displayed in the Live Session header. wsEndpoint is reserved for future WebSocket integration.
+
+--------------------------------
+
+================================
+4. LIVE AI COACHING — Direct Browser API Calls (Groq + OpenRouter)
+================================
+Purpose:
+Real-time AI coaching during the Live Session is powered by direct browser-to-API calls — no backend relay needed.
+The rep clicks "Start AI Assist" to trigger browser screen/tab audio capture (getDisplayMedia). Audio is chunked
+every 7 seconds, transcribed, and fed to a coaching LLM. Deep analysis runs every 30 seconds via a separate model.
+
+If the rep has not configured API keys, the session falls back to mock simulation data automatically.
+
+API Keys are stored in browser localStorage (never sent to the backend):
+  - Groq key: sc_groq_key
+  - OpenRouter key: sc_openrouter_key
+
+--- 4a. POST https://api.groq.com/openai/v1/audio/transcriptions ---
+Purpose: Transcribe 7-second audio chunks captured from the rep's active call tab.
+Model: whisper-large-v3
+Auth: Bearer {groq_api_key}
+
+Sample Request (multipart/form-data):
+  file:            audio.webm (Blob, audio/webm;codecs=opus)
+  model:           whisper-large-v3
+  language:        en
+  response_format: json
+
+Sample Response:
+{
+  "text": "So Sarah, I wanted to walk you through the ROI we've seen with similar customers..."
+}
+
+--- 4b. POST https://api.groq.com/openai/v1/chat/completions ---
+Purpose: Generate tactical live coaching events from the accumulated transcript (runs after each transcription chunk).
+Model: llama-3.1-8b-instant
+Auth: Bearer {groq_api_key}
+Config: response_format: { type: "json_object" }, temperature: 0.3, max_tokens: 1200
+
+System Prompt instructs the model to return a single JSON object. Frontend maps fields to these live event types:
+  LIVE_GUIDANCE, SUGGESTED_RESPONSES, COMPETITOR_INTELLIGENCE, INTENT_SIGNALS, TALK_RATIO
+
+Sample LLM JSON Output (coaching):
+{
+  "currentStage": "Initial Greeting and Introduction",
+  "nextSuggestion": "Ask about current challenges to move into discovery",
+  "responses": [
+    "That's a great point. Can you walk me through what your current process looks like when that happens?",
+    "I hear you. Many of our customers had the same concern before implementing our solution. What would make this feel less risky for your team?",
+    "Help me understand the impact — if we could solve this, what would that mean for your quarterly targets?",
+    "That makes sense. Who else on your team should be involved in this conversation to make sure we're addressing everyone's needs?"
+  ],
+  "competitors": [
+    {
+      "competitorName": "Garmin",
+      "badgeColor": "orange",
+      "insight": "Client is looking for an update to their vehicle's map",
+      "ourEdge": "Our version 7.7 update provides more accurate and up-to-date mapping information",
+      "sayThis": "Our version 7.7 update is specifically designed for accurate, up-to-date mapping. Would you like to know more?"
+    }
+  ],
+  "signals": [
+    { "label": "Pricing Interest", "value": "High", "severity": "HIGH", "color": "green" },
+    { "label": "Decision Timeline", "value": "Q2 2026", "severity": "INFO", "color": "blue" },
+    { "label": "Budget Concern", "value": "Medium", "severity": "MEDIUM", "color": "yellow" },
+    { "label": "Feature Request", "value": "Integration", "severity": "INFO", "color": "purple" }
+  ],
+  "repPercent": 45,
+  "customerPercent": 55
+}
+
+Frontend maps this to live event types:
+  LIVE_GUIDANCE:          { currentStage, nextSuggestion }
+  SUGGESTED_RESPONSES:    { responses[] }
+  COMPETITOR_INTELLIGENCE:{ competitors[] }
+  INTENT_SIGNALS:         { signals[] }
+  TALK_RATIO:             { repPercent, customerPercent }
+
+--- 4c. POST https://openrouter.ai/api/v1/chat/completions ---
+Purpose: Deep conversation analysis — runs every 30 seconds on the full transcript if OpenRouter key is provided.
+Model: deepseek/deepseek-r1
+Auth: Bearer {openrouter_api_key}
+Config: response_format: { type: "json_object" }
+
+System Prompt instructs the model to return a single JSON object for deep metrics and overlay data.
+
+Sample LLM JSON Output (deep analysis):
+{
+  "interruptions": 2,
+  "speakingPace": "GOOD",
+  "wordsPerMinute": 128,
+  "questionsAsked": 7,
+  "summarySegments": [
+    {
+      "startTime": "00:30",
+      "endTime": "01:00",
+      "summary": "Discussed pricing concerns and ROI expectations",
+      "highlightedKeywords": [
+        { "word": "pricing", "color": "orange" },
+        { "word": "ROI", "color": "blue" }
+      ],
+      "tags": ["Objection", "Info"]
+    }
+  ],
+  "confidenceScore": 88,
+  "contextSummary": "Client is inquiring about updating the map in their 2009 Nissan Altima",
+  "actionSuggestion": "Provide a code for the map update and walk John through the process.",
+  "suggestedResponse": "That's a great point. Can you walk me through what your current process looks like?",
+  "strategicTip": "Focus on building rapport and uncovering pain points before moving to pricing.",
+  "strategicTipScript": "What challenges are you currently facing with your existing solution?",
+  "overlayCompetitors": [
+    {
+      "competitorName": "HubSpot",
+      "ourEdge": "More robust and scalable platform for enterprise needs",
+      "sayThis": "While HubSpot may offer some similarities, our solution provides a more robust platform."
+    },
+    {
+      "competitorName": "Zoho",
+      "ourEdge": "Deeper integrations, more enterprise-ready infrastructure",
+      "sayThis": "Compared to Zoho, our platform offers deeper integrations and no operational bottlenecks."
+    }
+  ]
+}
+
+Frontend maps this to live event types:
+  CONVERSATION_METRICS:   { interruptions, speakingPace, wordsPerMinute, questionsAsked }
+  CONVERSATION_SUMMARY:   { segments[] }
+  OVERLAY_UPDATE:         { confidenceScore, contextSummary, actionSuggestion, suggestedResponse,
+                            strategicTip, strategicTipScript, competitors[] }
+
+--- Live Event Type Shapes (for reference — same data model as original WebSocket design) ---
+
+LIVE_GUIDANCE:
+{ "eventType": "LIVE_GUIDANCE", "currentStage": "string", "nextSuggestion": "string" }
+
+SUGGESTED_RESPONSES:
+{ "eventType": "SUGGESTED_RESPONSES", "responses": ["string"] }
+
+COMPETITOR_INTELLIGENCE:
+{ "eventType": "COMPETITOR_INTELLIGENCE", "competitors": [{ "competitorName": "string", "badgeColor": "string", "insight": "string", "ourEdge": "string", "sayThis": "string" }] }
+
+INTENT_SIGNALS:
+{ "eventType": "INTENT_SIGNALS", "signals": [{ "label": "string", "value": "string", "severity": "HIGH|MEDIUM|LOW|INFO", "color": "green|blue|yellow|purple|red" }] }
+
+TALK_RATIO:
+{ "eventType": "TALK_RATIO", "repPercent": number, "customerPercent": number }
+
+CONVERSATION_METRICS:
+{ "eventType": "CONVERSATION_METRICS", "interruptions": number, "speakingPace": "GOOD|FAST|SLOW", "wordsPerMinute": number, "questionsAsked": number }
+
+CONVERSATION_SUMMARY:
+{ "eventType": "CONVERSATION_SUMMARY", "segments": [{ "startTime": "MM:SS", "endTime": "MM:SS", "summary": "string", "highlightedKeywords": [{ "word": "string", "color": "orange|blue" }], "tags": ["string"] }] }
+
+OVERLAY_UPDATE:
+{ "eventType": "OVERLAY_UPDATE", "confidenceScore": number, "contextSummary": "string", "actionSuggestion": "string", "suggestedResponse": "string", "strategicTip": "string", "strategicTipScript": "string", "competitors": [{ "competitorName": "string", "ourEdge": "string", "sayThis": "string" }] }
+
+--- Fallback / Mock Simulation ---
+When no Groq key is configured, the frontend auto-plays a mock event sequence:
+  900ms  → LIVE_GUIDANCE
+  1400ms → SUGGESTED_RESPONSES
+  1900ms → COMPETITOR_INTELLIGENCE
+  2300ms → INTENT_SIGNALS
+  2700ms → TALK_RATIO
+  3100ms → CONVERSATION_METRICS
+  3500ms → OVERLAY_UPDATE
+  9000ms → CONVERSATION_SUMMARY
+  (+ LOG entries at 6s, 8.5s, 11s, 13.5s)
+
+--------------------------------
+
+================================
+5. POST /api/smart-call/sessions/{sessionId}/end
+================================
+Purpose:
+End the Live Assist session and trigger post-call AI analysis.
+
+Sample Request:
+POST /api/smart-call/sessions/session_001/end
+
+{
+  "endedAt": "2026-05-27T08:21:00Z",
+  "generateSummary": true
+}
+
+Sample Response:
+{
+  "sessionId": "session_001",
+  "status": "ENDED",
+  "callSummaryId": "summary_001",
+  "message": "Session ended. Generating call summary..."
+}
+
+--------------------------------
+
+================================
+6. GET /api/smart-call/sessions/{sessionId}/summary
+================================
+Purpose:
+Fetch the full Call Summary screen data after the session ends.
+
+Sample Request:
+GET /api/smart-call/sessions/session_001/summary
+
+Sample Response:
+{
+  "sessionId": "session_001",
+  "callSummaryId": "summary_001",
+  "duration": "3:46",
+  "callType": "Follow up on Q2 contract renewal",
+  "signalLabel": "Positive Signal",
+  "signalType": "POSITIVE",
+  "overallScore": 78,
+  "dimensionScores": [
+    { "dimension": "DISCOVERY", "score": 82, "maxScore": 100 },
+    { "dimension": "OBJECTION_HANDLING", "score": 75, "maxScore": 100 },
+    { "dimension": "CLOSING", "score": 77, "maxScore": 100 }
+  ],
+  "aiSummary": "Strong opening with good rapport building. Successfully navigated price sensitivity by focusing on ROI and value proposition. Competitor comparison was handled well with clear differentiation. However, missed opportunities to qualify decision timeline and stakeholders. Overall positive engagement with clear interest signals from Sarah Chen.",
+  "keyMoments": [
+    {
+      "timestamp": "2:25",
+      "type": "OBJECTION",
+      "color": "yellow",
+      "description": "Price concern raised - handled well with ROI breakdown"
+    },
+    {
+      "timestamp": "3:50",
+      "type": "INTEREST_SIGNAL",
+      "color": "green",
+      "description": "Strong buying signal detected when discussing integration capabilities"
+    },
+    {
+      "timestamp": "5:10",
+      "type": "MISSED_OPPORTUNITY",
+      "color": "red",
+      "description": "Opportunity to ask about decision timeline was missed"
+    }
+  ],
+  "missedOpportunities": {
+    "title": "Missed Opportunities",
+    "subLabel": "Key questions you could have asked:",
+    "questions": [
+      "When is the decision being made?",
+      "Who else is involved in the decision-making process?",
+      "What are your must-have features versus nice-to-haves?"
+    ]
+  },
+  "suggestedImprovements": [
+    "Ask more open-ended questions early to uncover deeper pain points",
+    "Confirm budget authority before diving into pricing details",
+    "Use customer's name more frequently to build rapport"
+  ],
+  "conversationTimeline": [
+    { "startTime": "0:00", "endTime": "0:30", "topic": "Introduction and rapport building" },
+    { "startTime": "0:30", "endTime": "1:00", "topic": "Discussed current challenges with vehicle mapping systems" },
+    { "startTime": "1:00", "endTime": "1:30", "topic": "Presented Version 7.7 features and benefits" },
+    { "startTime": "1:30", "endTime": "2:00", "topic": "Competitor comparison (Garmin) - highlighted our edge" },
+    { "startTime": "2:00", "endTime": "2:30", "topic": "Price sensitivity discussion and ROI justification" },
+    { "startTime": "2:30", "endTime": "3:00", "topic": "Integration questions and technical capabilities" }
+  ],
+  "transcriptUrl": "https://app.relanto.ai/transcripts/session_001"
+}
+
+--------------------------------
+
+================================
+7. GET /api/smart-call/sessions/{sessionId}/transcript
+================================
+Purpose:
+Fetch the full call transcript for the "View Full Transcript" button on the Call Summary screen.
+
+Sample Request:
+GET /api/smart-call/sessions/session_001/transcript
+
+Sample Response:
+{
+  "sessionId": "session_001",
+  "contactName": "Sarah Chen",
+  "duration": "3:46",
+  "segments": [
+    {
+      "timestamp": "0:00",
+      "speaker": "REP",
+      "text": "Hi Sarah, thanks for taking the time to connect today. How are you doing?"
+    },
+    {
+      "timestamp": "0:08",
+      "speaker": "CUSTOMER",
+      "text": "I'm doing well, thanks. I wanted to discuss the renewal terms."
+    },
+    {
+      "timestamp": "0:15",
+      "speaker": "REP",
+      "text": "Absolutely, let's dive into that. I actually wanted to share some ROI data with you first..."
+    }
+  ]
+}
+
+--------------------------------
+
+================================
+Validations:
+================================
+- contactId: required on session start; must be a valid contact in the system
+- taskId: optional on session start (pass if called from a task context)
+- integration: optional; must be ZOOM | MEET | TEAMS | OTHER if provided
+- generateSummary: defaults to true on session end
+- Search query (contact selection): min 1 character; debounce 300ms
+- Session cannot be started if another session is already LIVE for the same rep
+
+================================
+Dynamic Data:
+================================
+- Contact Selection screen: contact list — from contacts API (lazy loaded, search-driven)
+- Pre-Call screen: contact name, company, AI briefing, key objections, deal stage — from pre-call-brief API
+- Pre-Call screen: supported integrations (Zoom/Meet/Teams) — from pre-call-brief API
+- Live Session header: contact name, company, task title — from session start response
+- Live Session left panel: ALL content streamed in real-time via WebSocket:
+    * Live Guidance (stage + next suggestion)
+    * Suggested Responses (4 cards)
+    * Competitor Intelligence (multiple competitor blocks)
+    * Conversation Summaries (rolling segments with highlighted keywords + tags)
+- Live Session right panel: ALL content streamed via WebSocket:
+    * Intent & Risk Signals (label, value, severity, color)
+    * Talk Ratio (rep %, customer %)
+    * Conversation Metrics (interruptions, pace, WPM, questions)
+- Overlay Widget: all content from OVERLAY_UPDATE WebSocket event:
+    * Confidence score %, context summary, action suggestion
+    * Suggested response, strategic tip + script
+    * Competitor intelligence (multiple)
+    * Coach/Signals/Log tabs
+- Session timer: client-side, counts up from 0:00 on session start
+- "Overlay Active" button state: toggles green when overlay is enabled
+- Call Summary: all sections from summary API
+- Full Transcript: from transcript API (loaded on "View Full Transcript" click)
+
+================================
+Notes:
+================================
+- The Contact Selection screen is the entry point when Smart Call is accessed independently (not from a task). If launched from a task's "Smart Call" button, skip Contact Selection and go directly to the Pre-Call screen using the task's linked contact.
+- Live AI coaching (API #4) uses direct browser calls to Groq (Whisper + LLaMA) and OpenRouter (DeepSeek). No WebSocket or backend relay is involved for the live coaching data path.
+- Rep must click "Start AI Assist" to trigger browser screen/tab audio capture (getDisplayMedia). The button is disabled once capturing starts and shows "AI Active".
+- If no Groq API key is set, the session automatically falls back to mock event simulation so the UI is always functional for demo/testing.
+- API keys (Groq + OpenRouter) are entered via the "Set Up API Keys" button on the Contact Selection screen. Keys are stored in browser localStorage only — never sent to the backend or committed to source control.
+- The Overlay Widget is a fixed-position floating panel (top-right corner) — position should be saved in local/session state so it doesn't reset on content updates.
+- Overlay confidence score (e.g. "88%") represents AI confidence in the current context detection — update on each OVERLAY_UPDATE event.
+- Multiple competitor blocks can appear simultaneously in both the main Competitor Intelligence section and the overlay Coach tab.
+- Conversation Summaries in the right panel update in rolling fashion — new segments prepend to the top.
+- Highlighted keywords in summaries ("pricing" in orange, "ROI" in blue) are AI-tagged — the backend must return the keyword + color in the CONVERSATION_SUMMARY event.
+- Key Moments types on Call Summary: OBJECTION (yellow), INTEREST_SIGNAL (green), MISSED_OPPORTUNITY (red) — frontend should color-code cards based on type.
+- "Missed Opportunities" is a separate section from "Suggested Improvements" — both must be returned from the summary API.
+- "Practice Again" restarts the entire Smart Call flow from the Contact Selection screen (or Pre-Call if context is preserved).
+- Screen sharing permission is a browser-level API (getDisplayMedia) — no backend involvement. The browser will prompt the user to select a screen/tab. Only audio tracks are used; video tracks are dropped immediately.
+- All timestamps in transcript and timeline are in MM:SS format (display); store as seconds integer on the backend.
+- Session timer in the header is purely client-side (no backend sync needed).
+- Focus Mode: hides the right analytics panel to show only the left guidance panel — pure frontend UI toggle, no API needed.
+- taskTitle in the session start response is displayed in the Live Session header as the call/task title.

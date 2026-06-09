@@ -1,0 +1,11 @@
+node_modules
+dist
+.next
+**/dist
+**/node_modules
+**/.next
+**/modules/**/features/**
+**/r-ri/**
+**/Boilerplate Setup/**
+**/EXAMPLE_ONLY*
+**/*.bak

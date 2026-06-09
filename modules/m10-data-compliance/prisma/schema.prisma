@@ -1,17 +1,324 @@
+// M10 Data & Compliance — Prisma Schema
+// Owned by: modules/m10-data-compliance/ (TDD Doc #11a v3.0)
+// All tables use m10_data_compliance schema namespace.
+// RLS enforced at DB layer (PostgreSQL); tenantId enforced at app layer.
+
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("M10_DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model M10DataComplianceRecord {
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — ACCOUNTS
+// Tenant-scoped CRM-synced account records (TDD §6.1)
+// ─────────────────────────────────────────────────────────────
+model M10Account {
+  id            String    @id @default(uuid())
+  tenantId      String
+  crmAccountId  String?
+  name          String
+  domain        String?
+  region        String?
+  industry      String?
+  crmSource     String?
+  crmSyncedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  deals            M10Deal[]
+  contacts         M10Contact[]
+  activities       M10Activity[]
+  interactionLinks M10InteractionLink[]
+
+  @@index([tenantId])
+  @@index([tenantId, crmAccountId])
+  @@index([tenantId, domain])
+  @@map("m10_accounts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — CONTACTS (TDD §6.1)
+// ─────────────────────────────────────────────────────────────
+model M10Contact {
+  id            String    @id @default(uuid())
+  tenantId      String
+  crmContactId  String?
+  accountId     String?
+  email         String
+  name          String?
+  title         String?
+  crmSource     String?
+  crmSyncedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  account          M10Account?         @relation(fields: [accountId], references: [id])
+  dealContacts     M10DealContact[]
+  interactionLinks M10InteractionLink[]
+  activities       M10Activity[]
+
+  @@index([tenantId])
+  @@index([tenantId, email])
+  @@index([tenantId, crmContactId])
+  @@map("m10_contacts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — DEALS (TDD §6.1)
+// ─────────────────────────────────────────────────────────────
+model M10Deal {
+  id           String    @id @default(uuid())
+  tenantId     String
+  crmDealId    String?
+  accountId    String?
+  name         String
+  stage        String?
+  amount       Float?
+  currency     String?   @default("USD")
+  closeDate    DateTime?
+  ownerId      String?
+  crmSource    String?
+  crmSyncedAt  DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  account          M10Account?          @relation(fields: [accountId], references: [id])
+  dealContacts     M10DealContact[]
+  interactionLinks M10InteractionLink[]
+  activities       M10Activity[]
+
+  @@index([tenantId])
+  @@index([tenantId, crmDealId])
+  @@index([tenantId, accountId])
+  @@index([tenantId, isActive])
+  @@map("m10_deals")
+}
+
+// Many-to-many: deals ↔ contacts
+model M10DealContact {
+  id        String   @id @default(uuid())
+  tenantId  String
+  dealId    String
+  contactId String
+  role      String?
+  createdAt DateTime @default(now())
+
+  deal    M10Deal    @relation(fields: [dealId], references: [id])
+  contact M10Contact @relation(fields: [contactId], references: [id])
+
+  @@unique([tenantId, dealId, contactId])
+  @@index([tenantId, dealId])
+  @@map("m10_deal_contacts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — ACTIVITIES (TDD §6.1)
+// Interaction timeline entries per captured event.
+// ─────────────────────────────────────────────────────────────
+model M10Activity {
+  id             String   @id @default(uuid())
+  tenantId       String
+  idempotencyKey String   @unique // FR-5: prevents duplicate rows on retry
+
+  sourceType     String   // call | email | meeting | crm_task | crm_note
+  sourcePlatform String?
+  sourceRecordId String?
+  occurredAt     DateTime
+
+  // Linked entity refs (set after Revenue Graph linking)
+  accountId      String?
+  contactId      String?
+  dealId         String?
+  ownerId        String?
+
+  // Status lifecycle (FR-3, FR-4)
+  status         String   @default("received")
+
+  // Artifact refs
+  transcriptId    String?
+  calendarEventId String?
+  emailThreadId   String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  account          M10Account?          @relation(fields: [accountId], references: [id])
+  contact          M10Contact?          @relation(fields: [contactId], references: [id])
+  deal             M10Deal?             @relation(fields: [dealId], references: [id])
+  interactionLinks M10InteractionLink[]
+
+  @@index([tenantId])
+  @@index([tenantId, sourceRecordId])
+  @@index([tenantId, accountId])
+  @@index([tenantId, dealId])
+  @@index([tenantId, status])
+  @@map("m10_activities")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — INTERACTION LINKS (TDD §6.1)
+// Resolved entity relationships with confidence & explanation.
+// ─────────────────────────────────────────────────────────────
+model M10InteractionLink {
+  id         String   @id @default(uuid())
+  tenantId   String
+  activityId String
+  entityType String   // account | contact | deal
+  entityId   String   // ID of resolved entity
+
+  linkedAccountId String?
+  linkedContactId String?
+  linkedDealId    String?
+
+  confidence  String   // high | medium | low  (TDD FR-4)
+  signals     Json     @default("[]")
+  explanation Json     @default("{}")
+  aiAssisted  Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  activity M10Activity  @relation(fields: [activityId], references: [id])
+  account  M10Account?  @relation(fields: [linkedAccountId], references: [id], map: "m10_ilink_account_fkey")
+  contact  M10Contact?  @relation(fields: [linkedContactId], references: [id], map: "m10_ilink_contact_fkey")
+  deal     M10Deal?     @relation(fields: [linkedDealId],    references: [id], map: "m10_ilink_deal_fkey")
+
+  @@unique([tenantId, activityId, entityType, entityId])
+  @@index([tenantId])
+  @@index([tenantId, activityId])
+  @@map("m10_interaction_links")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — AUDIT TRAIL (TDD FR-4 Explainable linking)
+// ─────────────────────────────────────────────────────────────
+model M10LinkDecisionLog {
+  id             String   @id @default(uuid())
+  tenantId       String
+  activityId     String
+  idempotencyKey String
+
+  candidatesJson Json
+  selectedLinks  Json
+  rejectedLinks  Json
+  aiRequestSent  Boolean  @default(false)
+  aiResponseJson Json?
+  processingMs   Int?
+
+  outcome       String   // linked | linked_low_confidence | unresolved | failed
+  failureReason String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, activityId])
+  @@map("m10_link_decision_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — MAPPING RULE SETS (admin-configurable)
+// ─────────────────────────────────────────────────────────────
+model M10MappingRuleSet {
   id        String   @id @default(uuid())
   tenantId  String
   name      String
+  isActive  Boolean  @default(true)
+  config    Json     @default("{}")
+  createdBy String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("m10_data_compliance")
+  @@index([tenantId, isActive])
+  @@map("m10_mapping_rule_sets")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVENUE GRAPH — CRM SYNC STATE
+// ─────────────────────────────────────────────────────────────
+model M10CrmSyncState {
+  id            String    @id @default(uuid())
+  tenantId      String
+  crmSource     String
+  entityType    String
+  lastSyncedAt  DateTime?
+  lastCursor    String?
+  status        String    @default("idle")
+  errorMessage  String?
+  recordsSynced Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([tenantId, crmSource, entityType])
+  @@index([tenantId])
+  @@map("m10_crm_sync_states")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONFIGURE COMPLIANCE — POLICIES (TDD §3.2)
+// ─────────────────────────────────────────────────────────────
+model M10CompliancePolicy {
+  id         String   @id @default(uuid())
+  tenantId   String
+  name       String
+  channel    String   // email | call | sms
+  region     String?  // GDPR | CCPA | global
+  isActive   Boolean  @default(true)
+  rules      Json     @default("{}")
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([tenantId, isActive])
+  @@map("m10_compliance_policies")
+}
+
+// ─────────────────────────────────────────────────────────────
+// DATA CLOUD — CONNECTION CONFIG (TDD §3.3)
+// ─────────────────────────────────────────────────────────────
+model M10DataCloudConnection {
+  id          String   @id @default(uuid())
+  tenantId    String
+  destination String   // snowflake | bigquery | s3 | databricks | redshift
+  config      Json     @default("{}")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  exportRuns M10DataCloudExportRun[]
+
+  @@index([tenantId])
+  @@map("m10_data_cloud_connections")
+}
+
+model M10DataCloudExportRun {
+  id           String    @id @default(uuid())
+  tenantId     String
+  connectionId String
+  status       String    @default("pending")
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+  rowsExported Int       @default(0)
+  filePaths    Json?
+
+  connection M10DataCloudConnection @relation(fields: [connectionId], references: [id])
+
+  @@index([tenantId])
+  @@map("m10_data_cloud_export_runs")
+}
+
+model M10DataCloudCheckpoint {
+  id           String   @id @default(uuid())
+  tenantId     String
+  domain       String   // accounts | contacts | deals | activities
+  lastCursor   String?
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, domain])
+  @@map("m10_data_cloud_checkpoints")
 }

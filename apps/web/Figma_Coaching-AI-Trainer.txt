@@ -1,0 +1,463 @@
+========================================
+SCREEN 1: My Training Dashboard
+========================================
+
+Screen Name: My Training Dashboard
+Route: /training
+
+Purpose of Screen:
+Shows all training modules assigned to the logged-in user. Each module displays
+a progress bar, due date, status, and an action button that changes based on
+whether the training is in-progress or completed. Users can filter by status.
+
+Components:
+- Status filter tabs (All | In-Progress | Completed) with count badges
+- Table (Training Title, Due Date, Status, Action)
+- Progress bar per training (with percentage label)
+- Status badge (In-Progress | Completed)
+- Action button per row:
+  - "Practice" for In-Progress trainings
+  - "Review" for Completed trainings
+
+User Actions:
+- Filter by status tab (All / In-Progress / Completed)
+- Click "Practice" → navigates to Training Setup screen for that training
+- Click "Review" → navigates to Training Results screen for that training
+
+APIs:
+
+1. GET /api/trainings
+
+Purpose:
+Fetch all training modules assigned to the logged-in user
+
+Request (Query Params):
+- status (all | in-progress | completed)
+
+Response (per record):
+- id
+- title
+- dueDate
+- status (in-progress | completed)
+- progressPercent (0–100)
+
+--------------------------------
+
+Notes:
+- Status tab counts (e.g., "In-Progress 3") should come from the API — either
+  returned as a summary object or computed from the list
+- The "Practice" button is shown for in-progress trainings; "Review" for completed
+- Progress bar color differs by status (blue for in-progress, green for completed);
+  this can be driven by status field
+- Training list appears to be user-specific (assigned to the logged-in user only);
+  no global/admin view shown here
+
+
+========================================
+SCREEN 2: Training Setup (Pre-Session)
+========================================
+
+Screen Name: Training Setup
+Route: /training/:trainingId
+
+Purpose of Screen:
+Read-only preview screen shown before a training session begins. Displays the
+full context of the training: contact persona, voice selection for the AI client,
+meeting context, and the coaching playbook (list of questions the trainee should
+ask, categorized and tagged). User reviews this and clicks "Start Training" to
+begin the live session.
+
+Components:
+- Back to Dashboard link
+- Training title + subtitle ("Review the training setup and start when ready")
+- Contact Persona card (Name, Title, Company, Motivations & Priorities,
+  Communication Style)
+- Voice Selection (4 radio button options in a 2x2 grid)
+- Meeting Context card (Meeting Scenario, Rep Objective, Background for Trainee)
+- Coaching Playbook (collapsible categories of suggested questions, each question
+  tagged with High Impact and/or Missed in last attempt)
+- Back button | Start Training button
+
+User Actions:
+- Review all setup details (read-only)
+- Select a voice for the AI client (radio button, 4 options)
+- Click "Start Training" → starts the session and navigates to the Live Session screen
+- Click "Back" → returns to dashboard
+
+Coaching Playbook sections observed:
+- Discovery (4 questions)
+- Objection Handling (3 questions)
+- Closing (3 questions)
+
+Each question can have optional tags:
+- "High Impact" (blue badge)
+- "Missed in last attempt" (red badge)
+- "Why this question matters" (expandable tooltip/sub-section with explanation text)
+
+APIs:
+
+1. GET /api/trainings/:trainingId
+
+Purpose:
+Fetch all setup data for the training session
+
+Response:
+- id
+- title
+- contactPersona:
+  - name
+  - title
+  - company
+  - motivationsAndPriorities (text)
+  - communicationStyle (text)
+- voices (list of):
+  - id
+  - label (e.g., "Voice 2")
+  - description (e.g., "Professional Male - Calm & Analytical")
+- meetingContext:
+  - meetingScenario (e.g., "Discovery Call - Initial Meeting")
+  - repObjectiicve (text)
+  - backgroundForTrainee (text)
+- coachingPlaybook (list of categories):
+  - categoryName (e.g., "Discovery", "Objection Handling", "Closing")
+  - questions (list of):
+    - id
+    - text
+    - highImpact (boolean)
+    - missedInLastAttempt (boolean)
+    - whyItMatters (string | null)
+
+--------------------------------
+
+2. POST /api/trainings/:trainingId/sessions
+
+Purpose:
+Create a new training session (called on "Start Training" click)
+
+Request:
+- selectedVoiceId
+- trainingId
+
+Response:
+- sessionId
+- status (active)
+- startedAt
+
+--------------------------------
+
+Dynamic Data:
+- Voice options (fetched from API — 4 options shown, may be configurable)
+- Coaching playbook questions (fetched per training)
+- "Missed in last attempt" flag is computed from the user's previous session history
+
+Notes:
+- All fields on this screen are read-only (no editing)
+- Voice selection is the only user input before starting — the selected voice ID
+  must be passed when creating the session
+- "Why this question matters" appears as a collapsible inline explanation beneath
+  a question; the backend just returns the text string, expand/collapse is UI-only
+- "Missed in last attempt" flag requires the backend to compare this training's
+  playbook questions against which questions were asked in the user's most recent
+  completed session
+
+
+========================================
+SCREEN 3: Live Training Session
+========================================
+
+Screen Name: Live Training Session
+Route: /training/:trainingId/sessions/:sessionId
+
+Purpose of Screen:
+The active role-play session. The trainee plays the Sales Rep and interacts with
+an AI-powered bot (the AI client persona). The trainee can type responses or use
+voice input (microphone button). A right panel provides live coaching context via
+two tabs: Background (persona + meeting context) and Scorecard (live coaching
+playbook progress).
+
+Components:
+- Header: Training title + live session timer | Pause Training button | End Session button
+- Left panel: Video-call-style UI with:
+  - AI bot avatar (animated, labeled with persona name)
+  - "You (Sales Rep)" avatar
+  - Microphone button (for voice input, highlighted when active)
+  - Text input ("Type your response...") + Send button
+- Right panel — Background tab:
+  - Contact Persona (name, title + company)
+  - Motivations (text)
+  - Communication Style (text)
+  - Meeting Context (scenario label)
+  - [scrollable — same data as setup screen]
+- Right panel — Scorecard tab:
+  - Coaching Playbook (live, mirrors setup playbook)
+    - Each category collapsible (Discovery, Objection Handling, Closing)
+    - Each question shows High Impact / Missed in last attempt tags
+  - Real-time section status cards:
+    - Discovery Questions — "In Progress" with bullet suggestions
+      (e.g., Ask about current pain points, Explore budget and timeline,
+      Identify decision makers)
+    - Objection Handling — "Not Started"
+    - Closing & Next Steps — "Not Started"
+
+User Actions:
+- Type and send a message
+- Use mic to speak (voice input)
+- Pause training → opens "Training Paused" modal
+- End Session → ends session and navigates to Training Complete/Results screen
+- Switch between Background and Scorecard tabs (UI-only)
+
+-- Modal: Training Paused --
+Triggered by: "Pause Training" button
+Displays:
+- "Your progress has been saved. You can resume this session anytime."
+- Session Time (elapsed)
+- Messages count (number of exchanges so far)
+Actions:
+- Resume Now → closes modal, resumes session
+- Exit to Dashboard → saves and exits
+
+APIs:
+
+1. GET /api/trainings/:trainingId/sessions/:sessionId
+
+Purpose:
+Fetch current session state (used when resuming a paused session)
+
+Response:
+- sessionId
+- trainingId
+- status (active | paused | completed)
+- elapsedSeconds
+- messageCount
+- selectedVoiceId
+- messages (conversation history, list of):
+  - role (ai | user)
+  - text
+  - timestamp (seconds from start)
+
+--------------------------------
+
+2. POST /api/trainings/:trainingId/sessions/:sessionId/messages
+
+Purpose:
+Send a new message from the trainee and get the AI response
+
+Request:
+- text (string — typed or transcribed voice input)
+- inputType (text | voice)
+
+Response:
+- userMessage: { id, text, timestamp }
+- aiResponse: { id, text, timestamp, audioUrl (for TTS playback) }
+- scorecardUpdate (optional — backend may push updated section status in real-time)
+
+--------------------------------
+
+3. PATCH /api/trainings/:trainingId/sessions/:sessionId/pause
+
+Purpose:
+Pause the current session and save progress
+
+Request:
+- (none required — or action: "pause")
+
+Response:
+- message
+- sessionId
+- status (paused)
+- elapsedSeconds
+- messageCount
+
+--------------------------------
+
+4. PATCH /api/trainings/:trainingId/sessions/:sessionId/resume
+
+Purpose:
+Resume a previously paused session
+
+Response:
+- message
+- sessionId
+- status (active)
+
+--------------------------------
+
+5. POST /api/trainings/:trainingId/sessions/:sessionId/end
+
+Purpose:
+End the session, trigger AI evaluation, and generate results
+
+Request:
+- (none required — or action: "end")
+
+Response:
+- message
+- sessionId
+- status (completed)
+- resultsReady (boolean — may be async if evaluation takes time)
+
+--------------------------------
+
+Dynamic Data:
+- AI responses (LLM-generated, using the selected voice + persona context)
+- Scorecard section status (in-progress / not-started) — updated as the conversation
+  progresses and questions from the playbook are detected as covered
+- Suggestions within each scorecard section (e.g., "Ask about current pain points")
+  are likely static per training, not dynamically generated during the session
+
+Notes:
+- Voice input (mic button): the frontend handles STT (speech-to-text) and sends
+  the transcribed text to the messages endpoint; the backend receives plain text
+- AI audio output: the aiResponse should include an audioUrl for TTS playback
+  using the selected voice — backend must route to the correct TTS voice model
+- The AI client's behavior and responses are driven by the contact persona + meeting
+  context + conversation history; all of this context must be included in the LLM
+  prompt on every turn (stateless LLM + stateful backend message history)
+- Scorecard section status (In Progress / Not Started) changes as the conversation
+  progresses — consider whether this is computed in real-time on message response
+  or polled separately
+- Session timer is client-side but elapsed time should be persisted server-side
+  on pause/end so resuming reflects accurate time
+- Consider WebSocket or SSE for streaming AI responses and live scorecard updates
+  instead of polling
+
+
+========================================
+SCREEN 4: Training Complete / Results
+========================================
+
+Screen Name: Training Complete — Results
+Route: /training/:trainingId/sessions/:sessionId/results
+
+Purpose of Screen:
+Post-session performance review. Shows an overall score, performance highlights,
+two tabs (Evaluation Summary and Full Transcript), a detailed coaching playbook
+breakdown with per-category scores, and a full annotated transcript.
+
+Components:
+- Page title: "Training Complete — [Training Name]"
+- Overall Performance card:
+  - Score circle (e.g., 78/100 with label "Good")
+  - Score description text
+  - Performance highlight badges (e.g., "Strong Opening" [green], "Improve Closing" [yellow])
+- Tab bar: Evaluation Summary | Full Transcript
+- Evaluation Summary tab:
+  - Coaching Playbook section (same collapsible structure as setup/session):
+    - Each category shows: name, question count, score (e.g., 6/10), rating badge
+      (Needs Practice [yellow] | Good [green])
+    - Each question shows: text, High Impact tag, Missed in last attempt tag
+  - Detailed performance breakdown (separate from playbook):
+    - Opening & Rapport Building — score (e.g., 13/15, 87%) + description + progress bar
+    - Discovery Questions — score (e.g., 26/35, 74%) + description + progress bar
+    - Objection Handling — score (e.g., 20/25, 80%) + description + progress bar
+    - Closing & Next Steps — score (e.g., 19/25, 76%) + description + progress bar
+    - Each expanded category has: Strengths (list) + Areas for Improvement (list)
+- Full Transcript tab:
+  - Full conversation log with timestamps
+  - Each message from "You" (the trainee) is annotated with a quality label:
+    - "Good example" (green badge)
+    - "Could improve" (yellow badge)
+  - AI/persona messages shown without annotation
+
+User Actions:
+- Switch between Evaluation Summary and Full Transcript tabs
+- Expand/collapse coaching playbook categories
+- Expand/collapse performance breakdown categories
+- Click "Back to Dashboard" → returns to training list
+
+APIs:
+
+1. GET /api/trainings/:trainingId/sessions/:sessionId/results
+
+Purpose:
+Fetch complete evaluation results for a finished session
+
+Response:
+- sessionId
+- trainingTitle
+- overallScore (number, out of 100)
+- overallRating (label — e.g., "Good", "Needs Practice", "Excellent")
+- overallDescription (text summary)
+- highlightBadges (list of { label, type (positive | warning) })
+- coachingPlaybook (same structure as setup — categories + questions — with added
+  per-category: score, maxScore, rating)
+- performanceBreakdown (list of):
+  - category (e.g., "Opening & Rapport Building")
+  - score
+  - maxScore
+  - percentage
+  - description
+  - strengths (list of strings)
+  - areasForImprovement (list of strings)
+- transcript (list of):
+  - role (ai | user)
+  - speakerLabel (e.g., "Sarah Johnson" | "You")
+  - text
+  - timestamp (seconds from start)
+  - quality (good | could-improve | null — only for user messages)
+
+--------------------------------
+
+Dynamic Data:
+- All scores, ratings, descriptions, strengths/improvements are AI-generated
+  as part of the post-session evaluation
+- Quality labels on transcript messages ("Good example" / "Could improve") are
+  AI-annotated per user message
+
+Validations / Business Logic:
+- Results are only available once session status = completed and evaluation is done
+- If evaluation is async (takes time after End Session), the backend should expose
+  a status field on the results endpoint so the frontend can poll or show a loading state
+- "Missed in last attempt" on the next setup screen is derived from this results
+  data — backend should flag which questions were not asked in this session
+
+Notes:
+- Rating labels and thresholds (e.g., what score = "Good" vs "Needs Practice")
+  should be configurable server-side, not hardcoded on frontend
+- Performance breakdown categories (Opening, Discovery, Objection Handling, Closing)
+  differ slightly from the coaching playbook categories — these are evaluative
+  dimensions scored by the AI evaluator; backend must return them separately
+- The transcript quality annotation ("Good example" / "Could improve") must be
+  generated per user message during evaluation — consider storing these alongside
+  the messages in the session record
+- Score colors: green progress bar = 80%+, orange = below 80% — frontend can
+  derive this from the percentage field
+
+
+========================================
+SHARED / CROSS-SCREEN NOTES
+========================================
+
+Session Lifecycle:
+  created (on Start Training) → active → paused ↔ active → completed
+  Backend must support resuming a paused session and must prevent starting
+  a new session if an active/paused one already exists for that training.
+
+Progress Tracking:
+  The dashboard progress bar (e.g., "65%") for in-progress trainings likely
+  reflects the trainee's overall completion across attempts. Backend should track
+  and update this after each session ends.
+
+"Missed in last attempt" Flag:
+  This requires the backend to compare the coaching playbook questions against
+  which questions were organically asked/covered in the most recent completed
+  session. This needs to be computed and stored after each session evaluation,
+  not computed on the fly.
+
+Voice / TTS:
+  The selected voice ID must be stored on the session record and used for all
+  AI audio responses throughout that session. If 4 voices are offered, the backend
+  must integrate with a TTS provider that supports at least 4 distinct voice personas.
+
+AI Evaluation Engine:
+  After a session ends (POST /end), the backend must run an AI evaluation that:
+  1. Scores the transcript against the coaching playbook
+  2. Generates per-category scores and descriptions
+  3. Annotates each user message with a quality label
+  4. Produces overall score, rating, highlights, strengths, and improvements
+  This is likely async — consider a job queue and a results-ready flag.
+
+Training Status Updates:
+  When a session is completed and evaluation is done, the training's status on
+  the dashboard may change (e.g., from In-Progress to Completed) and the progress
+  percentage should update to 100%. Backend should handle this transition.
