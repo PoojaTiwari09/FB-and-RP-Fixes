@@ -10,6 +10,8 @@ dotenv.config({ path: path.join(__dirname, '../../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
 
+process.env.M07_STANDALONE_AUTH = process.env.M07_STANDALONE_AUTH ?? 'true';
+
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
@@ -70,7 +72,7 @@ async function bootstrap() {
     res.json({
       service: 'unified-api',
       status: 'ok',
-      modules: ['M01', 'M02', 'M06', 'M08-Engage', 'M09'],
+      modules: ['M01', 'M02', 'M06', 'M07', 'M08-Engage', 'M09'],
       ui: 'http://localhost:3000',
       samples: {
         m01Calls: `http://localhost:${port}/api/calls?page=1&size=1`,
@@ -93,7 +95,7 @@ async function bootstrap() {
     }
   }
 
-  logger.log(`Unified API (M01+M02+M08 Engage+M09) on http://localhost:${port}`);
+  logger.log(`Unified API (M01+M02+M07+M08 Engage+M09) on http://localhost:${port}`);
   logger.log('Frontend: http://localhost:3000');
 }
 

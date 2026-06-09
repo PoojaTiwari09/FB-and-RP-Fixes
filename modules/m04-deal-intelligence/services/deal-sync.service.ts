@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@/database/inject-repository';
 import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -34,6 +34,13 @@ export class DealSyncService {
       return;
     }
 
+    if (!this.hubspotClient.isConfigured()) {
+      this.logger.warn(
+        'Skipping incremental deal sync: HubSpot client is not configured (missing HUBSPOT_ACCESS_TOKEN or HUBSPOT_API_KEY)',
+      );
+      return;
+    }
+
     this.logger.log('Starting incremental deal sync');
     try {
       await this.syncDeals(SyncType.INCREMENTAL);
@@ -43,6 +50,13 @@ export class DealSyncService {
   }
 
   async syncDeals(syncType: SyncType = SyncType.INCREMENTAL): Promise<SyncLog> {
+    if (!this.hubspotClient.isConfigured()) {
+      throw new HttpException(
+        'HubSpot integration is not configured. Please check your environment variables.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     this.isSyncing = true;
     const syncLog = await this.createSyncLog(syncType, SyncEntityType.DEAL);
 
@@ -246,6 +260,13 @@ export class DealSyncService {
    */
   async syncSingleDeal(hubspotDealId: string): Promise<Deal> {
     this.logger.log(`Syncing single deal: ${hubspotDealId}`);
+
+    if (!this.hubspotClient.isConfigured()) {
+      throw new HttpException(
+        'HubSpot integration is not configured. Please check your environment variables.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     try {
       // Fetch deal from HubSpot

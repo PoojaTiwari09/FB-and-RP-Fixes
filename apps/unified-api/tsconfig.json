@@ -24,6 +24,7 @@
     "../../modules/m09-coaching-training/**/*",
     "../../modules/m04-deal-intelligence/**/*",
     "../../modules/m11-ai-deep-researcher/**/*",
+    "../../modules/m07-revenue-dashboards/**/*",
     "../../modules/platform-core/**/*"
   ],
   "exclude": ["node_modules", "dist", "../../modules/**/features/**"]
