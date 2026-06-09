@@ -44,6 +44,25 @@ export class ForecastBoardsService {
     if (role && !this.isManagerRole(role)) throw new ForbiddenException('Manager or admin access required');
   }
 
+  private async resolveForecastUserId(tenantId: string, platformUserId?: string): Promise<string | undefined> {
+    if (!platformUserId) return undefined;
+    const platformUser = await this.prisma.user.findUnique({ where: { id: platformUserId } });
+    if (platformUser) {
+      const fUser = await this.prisma.forecastUser.findFirst({
+        where: {
+          tenantId,
+          OR: [
+            { email: platformUser.email },
+            { name: platformUser.name },
+            { id: platformUserId }
+          ]
+        }
+      });
+      if (fUser) return fUser.id;
+    }
+    return platformUserId;
+  }
+
   private periodId(board: any) {
     return board.periodId ?? board.activePeriod;
   }
@@ -326,9 +345,11 @@ export class ForecastBoardsService {
     const columns = board.columns.map((column) => this.normalizeColumn(column));
     const isManager = this.isManagerRole(role);
 
+    const forecastUserId = await this.resolveForecastUserId(tenantId, userId) ?? userId;
+
     let users = isManager
-      ? await this.prisma.forecastUser.findMany({ where: { tenantId, OR: [{ managerId: userId }, { id: userId }] } })
-      : await this.prisma.forecastUser.findMany({ where: { tenantId, id: userId } });
+      ? await this.prisma.forecastUser.findMany({ where: { tenantId, OR: [{ managerId: forecastUserId }, { id: forecastUserId }] } })
+      : await this.prisma.forecastUser.findMany({ where: { tenantId, id: forecastUserId } });
 
     if (!includeInactive) users = users.filter((user) => user.role !== 'inactive');
     users.sort((a, b) => (a.id === userId ? -1 : b.id === userId ? 1 : a.name.localeCompare(b.name)));
@@ -513,17 +534,20 @@ export class ForecastBoardsService {
     const board = await this.loadBoard(tenantId, boardId);
     const period = await this.loadPeriod(tenantId, this.periodId(board));
     if (period?.isLocked) throw new BadRequestException('Period is locked - submissions not allowed');
+
+    const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
+    const forecastRepUserId = await this.resolveForecastUserId(tenantId, data.repUserId) ?? data.repUserId;
     
     const normalizedRole = role?.toLowerCase();
-    if (normalizedRole === 'sales_rep' && actorId && actorId !== data.repUserId) {
+    if (normalizedRole === 'sales_rep' && forecastActorId && forecastActorId !== forecastRepUserId) {
       throw new ForbiddenException('Sales reps can submit only their own forecast');
     }
-    if (role && board.exclusions.some((exclusion) => exclusion.isActive && exclusion.repUserId === data.repUserId)) {
+    if (role && board.exclusions.some((exclusion) => exclusion.isActive && exclusion.repUserId === forecastRepUserId)) {
       throw new ForbiddenException('Rep is excluded from this board');
     }
 
     const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId: data.repUserId },
+      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
 
@@ -536,7 +560,7 @@ export class ForecastBoardsService {
         data: {
           tenantId,
           periodId: this.periodId(board),
-          repUserId: data.repUserId,
+          repUserId: forecastRepUserId,
           lob: latest.lob,
           version: latest.version + 1,
           commitForecast: latest.commitForecast,
@@ -553,16 +577,16 @@ export class ForecastBoardsService {
           tenantId,
           forecastSubmissionId: submission.id,
           action: 'BOARD_SUBMIT',
-          actorId: actorId || data.repUserId,
+          actorId: forecastActorId || forecastRepUserId,
           actorRole: role || 'sales_rep',
-          metadata: { boardId, periodId: this.periodId(board), repUserId: data.repUserId, note: data.note },
+          metadata: { boardId, periodId: this.periodId(board), repUserId: forecastRepUserId, note: data.note },
         },
       });
 
       this.eventPublisher?.publish('forecast.submitted', {
         tenantId,
         correlationId: crypto.randomUUID(),
-        payload: { submissionId: submission.id, periodId: submission.periodId, userId: data.repUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob },
+        payload: { submissionId: submission.id, periodId: submission.periodId, userId: forecastRepUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob },
       });
 
       return { ...submission, submission, timestamp: submission.updatedAt };
@@ -647,7 +671,7 @@ export class ForecastBoardsService {
       data: {
         tenantId,
         periodId: this.periodId(board),
-        repUserId: data.repUserId,
+        repUserId: forecastRepUserId,
         lob: latest?.lob ?? 'Enterprise',
         version: (latest?.version ?? 0) + 1,
         commitForecast,
@@ -664,16 +688,16 @@ export class ForecastBoardsService {
         tenantId,
         forecastSubmissionId: submission.id,
         action: 'BOARD_SUBMIT',
-        actorId: actorId || data.repUserId,
+        actorId: forecastActorId || forecastRepUserId,
         actorRole: role || 'sales_rep',
-        metadata: { boardId, columnId: data.columnId, columnLabel: column.label, value: data.value, periodId: this.periodId(board), repUserId: data.repUserId, dealId: data.dealId },
+        metadata: { boardId, columnId: data.columnId, columnLabel: column.label, value: data.value, periodId: this.periodId(board), repUserId: forecastRepUserId, dealId: data.dealId },
       },
     });
 
     this.eventPublisher?.publish('forecast.submitted', {
       tenantId,
       correlationId: crypto.randomUUID(),
-      payload: { submissionId: submission.id, periodId: submission.periodId, userId: data.repUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob },
+      payload: { submissionId: submission.id, periodId: submission.periodId, userId: forecastRepUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob },
     });
 
     return { ...submission, submission, timestamp: submission.updatedAt };
@@ -689,8 +713,11 @@ export class ForecastBoardsService {
     this.assertManager(role);
     const board = await this.loadBoard(tenantId, boardId);
 
+    const forecastRepUserId = await this.resolveForecastUserId(tenantId, data.repUserId) ?? data.repUserId;
+    const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
+
     const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId: data.repUserId },
+      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
 
@@ -752,7 +779,7 @@ export class ForecastBoardsService {
       data: {
         tenantId,
         periodId: this.periodId(board),
-        repUserId: data.repUserId,
+        repUserId: forecastRepUserId,
         lob: latest.lob,
         version: latest.version + 1,
         commitForecast,
@@ -769,9 +796,9 @@ export class ForecastBoardsService {
         tenantId,
         forecastSubmissionId: submission.id,
         action: 'CHANGE_APPROVED',
-        actorId: actorId || data.repUserId,
+        actorId: forecastActorId || forecastRepUserId,
         actorRole: role || 'manager',
-        metadata: { boardId, columnId: data.columnId, value: change.value, dealId: data.dealId, repUserId: data.repUserId },
+        metadata: { boardId, columnId: data.columnId, value: change.value, dealId: data.dealId, repUserId: forecastRepUserId },
       },
     });
 
@@ -779,13 +806,16 @@ export class ForecastBoardsService {
   }
 
   async getRepDeals(tenantId: string, boardId: string, repUserId: string, columnId: string, actorId?: string, role?: string) {
-    if (role?.toLowerCase() === 'sales_rep' && actorId !== repUserId) throw new ForbiddenException('Sales reps can view only their own deals');
+    const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
+    const forecastRepUserId = await this.resolveForecastUserId(tenantId, repUserId) ?? repUserId;
+
+    if (role?.toLowerCase() === 'sales_rep' && forecastActorId !== forecastRepUserId) throw new ForbiddenException('Sales reps can view only their own deals');
     const board = await this.loadBoard(tenantId, boardId);
     const period = await this.loadPeriod(tenantId, this.periodId(board));
     const column = board.columns.find((item) => item.id === columnId);
     if (!column) throw new BadRequestException('Invalid columnId');
     const label = column.label.toLowerCase();
-    const where: any = { tenantId, repUserId, ...this.inPeriodWhere(period) };
+    const where: any = { tenantId, repUserId: forecastRepUserId, ...this.inPeriodWhere(period) };
     if (label.includes('closed')) where.isClosedWon = true;
     if (label.includes('pipeline')) {
       where.isClosedWon = false;
@@ -796,14 +826,17 @@ export class ForecastBoardsService {
   }
 
   async getRepHistory(tenantId: string, boardId: string, repUserId: string, columnId: string, actorId?: string, role?: string): Promise<any> {
-    if (role?.toLowerCase() === 'sales_rep' && actorId !== repUserId) throw new ForbiddenException('Sales reps can view only their own history');
+    const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
+    const forecastRepUserId = await this.resolveForecastUserId(tenantId, repUserId) ?? repUserId;
+
+    if (role?.toLowerCase() === 'sales_rep' && forecastActorId !== forecastRepUserId) throw new ForbiddenException('Sales reps can view only their own history');
     const board = await this.loadBoard(tenantId, boardId);
     const period = await this.loadPeriod(tenantId, this.periodId(board));
     const column = board.columns.find((item) => item.id === columnId);
     if (!column) throw new BadRequestException('Invalid columnId');
     const field = this.submissionField(column);
     const submissions = await this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId: this.periodId(board), repUserId },
+      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: { createdAt: 'asc' },
     });
     
@@ -842,18 +875,22 @@ export class ForecastBoardsService {
   async getRepDrilldown(tenantId: string, boardId: string, repUserId: string, actorId?: string, role?: string) {
     this.assertManager(role);
     const board = await this.loadBoard(tenantId, boardId);
+
+    const forecastRepUserId = await this.resolveForecastUserId(tenantId, repUserId) ?? repUserId;
+    const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
+
     if (role === 'manager') {
-      const directReport = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: repUserId, managerId: actorId } });
+      const directReport = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: forecastRepUserId, managerId: forecastActorId } });
       if (!directReport) throw new ForbiddenException('Rep is not a direct report');
     }
-    const view = await this.getBoardView(tenantId, boardId, 'sales_rep', repUserId);
-    const rep = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: repUserId } });
+    const view = await this.getBoardView(tenantId, boardId, 'sales_rep', forecastRepUserId);
+    const rep = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: forecastRepUserId } });
     const submission = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId },
+      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
     return {
-      rep: { id: repUserId, name: rep?.name, avatarInitials: this.initials(rep?.name) },
+      rep: { id: forecastRepUserId, name: rep?.name, avatarInitials: this.initials(rep?.name) },
       summaryCards: {
         pipeline: view.repRow?.cells[view.columns.find((c: any) => c.label.toLowerCase().includes('pipeline'))?.id]?.value ?? 0,
         commit: submission?.commitForecast ?? null,

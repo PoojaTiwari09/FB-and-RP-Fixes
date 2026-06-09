@@ -2,9 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Search, Filter, ChevronDown, User, Check, X } from 'lucide-react';
-import { MOCK_TEAM_MEMBERS } from '../mocks/engage.mock';
-import type { GroupByOption, SortOption } from '../types/engage.types';
-
 interface CompactFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -18,6 +15,7 @@ interface CompactFiltersProps {
   filterCount: number;
   onFilterClick: () => void;
   onClearFilters: () => void;
+  teamMembers?: { id: string; name: string; role: string }[];
 }
 
 const sortLabels: Record<SortOption, string> = {
@@ -32,19 +30,24 @@ const groupByLabels: Record<GroupByOption, string> = {
   step_number: 'Flow Step',
 };
 
-function AssigneeSelector({ selectedUserId, onUserChange }: { selectedUserId: string; onUserChange: (userId: string) => void }) {
+function AssigneeSelector({
+  selectedUserId,
+  onUserChange,
+  teamMembers = [],
+}: {
+  selectedUserId: string;
+  onUserChange: (userId: string) => void;
+  teamMembers?: { id: string; name: string; role: string }[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedUser = MOCK_TEAM_MEMBERS.find(u => u.id === selectedUserId) || MOCK_TEAM_MEMBERS[0];
+  const selectedUser = teamMembers.find(u => u.id === selectedUserId) || { id: selectedUserId, name: selectedUserId === 'me' ? 'Me' : selectedUserId };
 
-  const filteredUsers = MOCK_TEAM_MEMBERS.filter(user =>
+  const filteredUsers = teamMembers.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const currentUserIndex = filteredUsers.findIndex(u => u.id === 'me');
-  const otherUsers = filteredUsers.filter(u => u.id !== 'me');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -100,7 +103,7 @@ function AssigneeSelector({ selectedUserId, onUserChange }: { selectedUserId: st
         >
           <User className="w-3 h-3" style={{ color: '#6B7280' }} />
         </div>
-        <span>{selectedUser.id === 'me' ? 'Me' : selectedUser.name}</span>
+        <span>{selectedUser.name}</span>
         <ChevronDown
           className="w-4 h-4 transition-transform"
           style={{
@@ -147,50 +150,8 @@ function AssigneeSelector({ selectedUserId, onUserChange }: { selectedUserId: st
 
           {/* User List */}
           <div className="max-h-64 overflow-y-auto">
-            {/* Current User */}
-            {currentUserIndex !== -1 && (
-              <>
-                <button
-                  onClick={() => handleUserSelect('me')}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors"
-                  style={{
-                    backgroundColor: selectedUserId === 'me' ? '#F3F4F6' : 'transparent',
-                    color: '#111827',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (selectedUserId !== 'me') {
-                      e.currentTarget.style.backgroundColor = '#F9FAFB';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (selectedUserId !== 'me') {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: '#F3F4F6' }}
-                    >
-                      <User className="w-3 h-3" style={{ color: '#6B7280' }} />
-                    </div>
-                    <span className="truncate">Me</span>
-                  </div>
-                  {selectedUserId === 'me' && (
-                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#4F46E5' }} />
-                  )}
-                </button>
-
-                {/* Divider */}
-                {otherUsers.length > 0 && (
-                  <div className="my-1 mx-3" style={{ borderTop: '1px solid #E5E7EB' }} />
-                )}
-              </>
-            )}
-
             {/* Other Users */}
-            {otherUsers.map((user) => (
+            {filteredUsers.map((user) => (
               <button
                 key={user.id}
                 onClick={() => handleUserSelect(user.id)}
@@ -253,6 +214,7 @@ export default function CompactFilters({
   filterCount,
   onFilterClick,
   onClearFilters,
+  teamMembers = [],
 }: CompactFiltersProps) {
   return (
     <div
@@ -376,7 +338,7 @@ export default function CompactFilters({
 
             {/* Assignee Selector */}
             {isManagerView && (
-              <AssigneeSelector selectedUserId={selectedUserId} onUserChange={onUserChange} />
+              <AssigneeSelector selectedUserId={selectedUserId} onUserChange={onUserChange} teamMembers={teamMembers} />
             )}
           </div>
         </div>

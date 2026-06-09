@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Logger, Body, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Logger, Body, Req, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { DealSummaryService } from '../services/deal-summary.service';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -12,6 +13,7 @@ interface ApiResponse<T> {
 }
 
 @Controller('api/deals')
+@UseGuards(TenantGuard)
 export class DealsController {
   private readonly logger = new Logger(DealsController.name);
 
@@ -20,7 +22,7 @@ export class DealsController {
     private readonly summaryService: DealSummaryService,
   ) {}
 
-  private async getBoardsFromDb(): Promise<any[]> {
+  private async getBoardsFromDb(tenantId: string): Promise<any[]> {
     const boards = [
       {
         boardId: 'board-1',
@@ -55,7 +57,7 @@ export class DealsController {
     return Promise.all(
       boards.map(async (b) => {
         const latestDeal = await this.prisma.deal.findFirst({
-          where: { pipeline: b.boardId },
+          where: { tenantId, pipeline: b.boardId },
           orderBy: { updatedAt: 'desc' },
         });
         return {
@@ -67,9 +69,9 @@ export class DealsController {
   }
 
   @Get('boards')
-  async getDealBoards(): Promise<ApiResponse<any[]>> {
+  async getDealBoards(@Req() req: any): Promise<ApiResponse<any[]>> {
     try {
-      const boards = await this.getBoardsFromDb();
+      const boards = await this.getBoardsFromDb(req.tenantId);
       return { success: true, data: boards, isMock: false };
     } catch (error: any) {
       this.logger.error('Failed to get deal boards:', error);
@@ -80,19 +82,29 @@ export class DealsController {
   @Get('boards/:boardId')
   async getBoardDetail(
     @Param('boardId') boardId: string,
+    @Req() req: any,
     @Query('owner') owner?: string,
   ): Promise<ApiResponse<any>> {
     try {
-      const boards = await this.getBoardsFromDb();
+      const boards = await this.getBoardsFromDb(req.tenantId);
       const board = boards.find((b) => b.boardId === boardId);
       if (!board) throw new Error('Board not found');
 
+      const userRole = req.userRole || 'SALES_REP';
+      const userId = req.userId;
+
+      const whereClause: any = { tenantId: req.tenantId, pipeline: boardId };
+      
+      // Data Isolation
+      if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+        whereClause.ownerId = userId;
+      } else if (owner) {
+        whereClause.ownerName = { contains: owner, mode: 'insensitive' };
+      }
+
       // Calculate summary cards dynamically from DB deals on this board
       const deals = await this.prisma.deal.findMany({
-        where: {
-          pipeline: boardId,
-          ...(owner ? { ownerName: { contains: owner, mode: 'insensitive' } } : {}),
-        },
+        where: whereClause,
       });
 
       const categories = ['Open', 'Commit', 'Most Likely', 'Best Case', 'Closed Won', 'Closed Lost'];
@@ -127,14 +139,24 @@ export class DealsController {
   @Get('boards/:boardId/deals')
   async getDealsByBoard(
     @Param('boardId') boardId: string,
+    @Req() req: any,
     @Query('owner') owner?: string,
   ): Promise<ApiResponse<any[]>> {
     try {
+      const userRole = req.userRole || 'SALES_REP';
+      const userId = req.userId;
+
+      const whereClause: any = { tenantId: req.tenantId, pipeline: boardId };
+      
+      // Data Isolation
+      if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+        whereClause.ownerId = userId;
+      } else if (owner) {
+        whereClause.ownerName = { contains: owner, mode: 'insensitive' };
+      }
+
       const dbDeals = await this.prisma.deal.findMany({
-        where: {
-          pipeline: boardId,
-          ...(owner ? { ownerName: { contains: owner, mode: 'insensitive' } } : {}),
-        },
+        where: whereClause,
         orderBy: { name: 'asc' },
       });
 
@@ -200,9 +222,18 @@ export class DealsController {
   }
 
   @Get('all')
-  async getAllDeals(): Promise<ApiResponse<any[]> & { count: number }> {
+  async getAllDeals(@Req() req: any): Promise<ApiResponse<any[]> & { count: number }> {
     try {
+      const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+      const userId = req.userId || req.headers['x-user-id'];
+
+      const whereClause: any = {};
+      if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+        whereClause.ownerId = userId;
+      }
+
       const dbDeals = await this.prisma.deal.findMany({
+        where: whereClause,
         orderBy: { updatedAt: 'desc' },
       });
 
@@ -238,9 +269,17 @@ export class DealsController {
   }
 
   @Get('pipeline-summary')
-  async getPipelineSummary(): Promise<ApiResponse<any[]>> {
+  async getPipelineSummary(@Req() req: any): Promise<ApiResponse<any[]>> {
     try {
-      const deals = await this.prisma.deal.findMany();
+      const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+      const userId = req.userId || req.headers['x-user-id'];
+
+      const whereClause: any = {};
+      if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+        whereClause.ownerId = userId;
+      }
+
+      const deals = await this.prisma.deal.findMany({ where: whereClause });
       const categories = ['Open', 'Commit', 'Most Likely', 'Best Case', 'Closed Won', 'Closed Lost'];
 
       const summary = categories.map((category) => {
@@ -273,12 +312,24 @@ export class DealsController {
   }
 
   @Get(':dealId')
-  async getDealById(@Param('dealId') dealId: string): Promise<ApiResponse<any>> {
+  async getDealById(
+    @Param('dealId') dealId: string,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
     try {
-      const deal = await this.prisma.deal.findUnique({
-        where: { id: dealId },
+      const userRole = req.userRole || 'SALES_REP';
+      const userId = req.userId;
+
+      const where: any = { id: dealId, tenantId: req.tenantId };
+      if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
+        where.ownerId = userId;
+      }
+
+      const deal = await this.prisma.deal.findFirst({
+        where,
       });
-      if (!deal) throw new Error('Deal not found');
+
+      if (!deal) throw new Error('Deal not found or access denied');
       return { success: true, data: deal, isMock: false };
     } catch (error: any) {
       this.logger.error(`Failed to get deal by id ${dealId}:`, error);

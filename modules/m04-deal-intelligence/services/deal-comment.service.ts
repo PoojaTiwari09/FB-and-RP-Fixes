@@ -75,7 +75,7 @@ export class DealCommentService {
     const comment = this.commentRepository.create({
       dealId,
       content: dto.content,
-      authorId,
+      userId: authorId,
       authorName,
       authorRole,
       isCoaching: dto.isCoaching || false,
@@ -104,7 +104,7 @@ export class DealCommentService {
     }
 
     // Only the author can edit their comment
-    if (comment.authorId !== userId) {
+    if (comment.userId !== userId) {
       throw new ForbiddenException('You can only edit your own comments');
     }
 
@@ -129,7 +129,7 @@ export class DealCommentService {
     }
 
     // Only the author can delete their comment
-    if (comment.authorId !== userId) {
+    if (comment.userId !== userId) {
       throw new ForbiddenException('You can only delete your own comments');
     }
 
@@ -151,7 +151,7 @@ export class DealCommentService {
       id: comment.id,
       dealId: comment.dealId,
       content: comment.content,
-      authorId: comment.authorId,
+      authorId: comment.userId,
       authorName: comment.authorName,
       authorRole: comment.authorRole,
       isCoaching: comment.isCoaching,

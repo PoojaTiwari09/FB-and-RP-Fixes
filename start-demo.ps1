@@ -66,17 +66,17 @@ Set-Location '$UnifiedUi'
 if (-not (Test-Path '.env.local')) { & '$Root\scripts\sync-env.ps1' | Out-Null }
 if (-not (Test-Path 'node_modules')) { npm install }
 `$env:M07_API_PORT='3001'
-Write-Host 'Open -> http://localhost:3000/engage' -ForegroundColor Cyan
+Write-Host 'Open -> http://localhost:3000/' -ForegroundColor Cyan
 Write-Host 'API  -> http://localhost:3001' -ForegroundColor Cyan
 npm run dev
 "@
 Start-DevWindow -Title "Unified UI :3000" -Command $uiCmd
 
 Write-Host ""
-Write-Host "OPEN: http://localhost:3000/engage" -ForegroundColor Green
+Write-Host "OPEN: http://localhost:3000/" -ForegroundColor Green
 Write-Host "API:  http://localhost:3001" -ForegroundColor Green
-Write-Host "Switch role in browser console:" -ForegroundColor DarkGray
-Write-Host '  document.cookie = "user_role=sales_manager; path=/"; location.reload();' -ForegroundColor DarkGray
+Write-Host "Switch role in browser:" -ForegroundColor DarkGray
+Write-Host '  Navigate to http://localhost:3000/login to change profiles' -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "Verify: .\verify-demo-apis.ps1" -ForegroundColor DarkGray
 Write-Host "Stop:   .\stop-demo.ps1" -ForegroundColor DarkGray

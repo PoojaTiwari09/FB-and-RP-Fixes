@@ -32,6 +32,8 @@ export class M08FrontendEngageManagerController {
     @Query('size') size?: string,
   ) {
     const today = new Date().toISOString().split('T')[0];
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
     return this.svc.fetchTasks(req.tenantId, {
       assigneeId,
       date: date || today,
@@ -42,7 +44,7 @@ export class M08FrontendEngageManagerController {
       sortBy,
       page: page ? parseInt(page, 10) : 1,
       size: size ? parseInt(size, 10) : 50,
-    });
+    }, userId, userRole);
   }
 
   @Get('api/tasks/summary')
@@ -52,7 +54,9 @@ export class M08FrontendEngageManagerController {
     @Query('date') date?: string,
   ) {
     const today = new Date().toISOString().split('T')[0];
-    return this.svc.fetchSummary(req.tenantId, assigneeId, date || today);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.fetchSummary(req.tenantId, assigneeId, date || today, userId, userRole);
   }
 
   @Get('api/tasks/filters-config')
@@ -82,17 +86,23 @@ export class M08FrontendEngageManagerController {
 
   @Get('api/tasks/:taskId/detail')
   taskDetail(@Req() req: any, @Param('taskId') taskId: string) {
-    return this.svc.fetchTaskDetail(req.tenantId, taskId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.fetchTaskDetail(req.tenantId, taskId, userId, userRole);
   }
 
   @Get('api/tasks/:taskId/email-draft')
   emailDraft(@Req() req: any, @Param('taskId') taskId: string) {
-    return this.svc.fetchEmailDraft(req.tenantId, taskId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.fetchEmailDraft(req.tenantId, taskId, userId, userRole);
   }
 
   @Get('api/tasks/:taskId/linkedin-script')
   linkedInScript(@Req() req: any, @Param('taskId') taskId: string) {
-    return this.svc.fetchLinkedInScript(req.tenantId, taskId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.fetchLinkedInScript(req.tenantId, taskId, userId, userRole);
   }
 
   @Get('api/contacts/:contactId/detail')
@@ -102,7 +112,9 @@ export class M08FrontendEngageManagerController {
 
   @Post('api/tasks')
   createTask(@Req() req: any, @Body() body: Record<string, unknown>) {
-    return this.svc.createTask(req.tenantId, body);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.createTask(req.tenantId, body, userId, userRole);
   }
 
   @Patch('api/tasks/:taskId/reassign')
@@ -111,22 +123,30 @@ export class M08FrontendEngageManagerController {
     @Param('taskId') taskId: string,
     @Body() body: { newAssigneeId: string },
   ) {
-    return this.svc.reassignTask(req.tenantId, taskId, body.newAssigneeId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.reassignTask(req.tenantId, taskId, body.newAssigneeId, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/mark-complete')
   markComplete(@Req() req: any, @Param('taskId') taskId: string) {
-    return this.svc.markComplete(req.tenantId, taskId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.markComplete(req.tenantId, taskId, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/skip')
   skip(@Req() req: any, @Param('taskId') taskId: string) {
-    return this.svc.skipTask(req.tenantId, taskId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.skipTask(req.tenantId, taskId, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/dismiss')
   dismiss(@Req() req: any, @Param('taskId') taskId: string) {
-    return this.svc.dismissTask(req.tenantId, taskId);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.dismissTask(req.tenantId, taskId, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/action')
@@ -135,7 +155,9 @@ export class M08FrontendEngageManagerController {
     @Param('taskId') taskId: string,
     @Body() body: { action: string },
   ) {
-    return this.svc.logAction(req.tenantId, taskId, body.action);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.logAction(req.tenantId, taskId, body.action, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/notes')
@@ -144,22 +166,30 @@ export class M08FrontendEngageManagerController {
     @Param('taskId') taskId: string,
     @Body() body: { notes: string },
   ) {
-    return this.svc.saveNotes(req.tenantId, taskId, body.notes);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.saveNotes(req.tenantId, taskId, body.notes, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/send-email')
   sendEmail(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
-    return this.svc.sendEmail(req.tenantId, taskId, body);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.sendEmail(req.tenantId, taskId, body, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/save-draft')
   saveDraft(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
-    return this.svc.saveDraft(req.tenantId, taskId, body);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.saveDraft(req.tenantId, taskId, body, userId, userRole);
   }
 
   @Post('api/tasks/:taskId/ai-rephrase')
   rephrase(@Req() req: any, @Param('taskId') taskId: string, @Body() body: any) {
-    return this.svc.rephraseEmail(req.tenantId, taskId, body);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.rephraseEmail(req.tenantId, taskId, body, userId, userRole);
   }
 
   @Patch('api/tasks/:taskId')
@@ -168,7 +198,9 @@ export class M08FrontendEngageManagerController {
     @Param('taskId') taskId: string,
     @Body() body: any,
   ) {
-    return this.svc.updateTask(req.tenantId, taskId, body);
+    const userId = req.userId || req.headers['x-user-id'];
+    const userRole = req.userRole || req.headers['x-user-role'] || 'SALES_REP';
+    return this.svc.updateTask(req.tenantId, taskId, body, userId, userRole);
   }
 }
 

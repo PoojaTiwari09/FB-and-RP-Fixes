@@ -13,32 +13,32 @@ export class M01FrontendCallsController {
 
   /** 1. Calls list with filters */
   @Get()
-  listCalls(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
-    return this.svc.listCalls(req.tenantId, query);
+  listCalls(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole);
   }
 
   /** 5. Search — must be before :callId */
   @Get('search')
-  searchCalls(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
-    return this.svc.searchCalls(req.tenantId, query);
+  searchCalls(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.searchCalls(req.tenantId, query, req.userId, req.userRole);
   }
 
   /** 3. Account filter dropdown */
   @Get('accounts')
-  listAccounts(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
-    return this.svc.listAccounts(req.tenantId, query);
+  listAccounts(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.listAccounts(req.tenantId, query, req.userId, req.userRole);
   }
 
   /** 4. Participants filter dropdown */
   @Get('participants')
-  listParticipants(@Query() query: Record<string, string>, @Req() req: Record<string, string>) {
-    return this.svc.listParticipants(req.tenantId, query);
+  listParticipants(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.listParticipants(req.tenantId, query, req.userId, req.userRole);
   }
 
   /** 6. Lightweight call header (Briefs / Transcript tabs) */
   @Get(':callId/metadata')
-  getCallMetadata(@Param('callId') callId: string, @Req() req: Record<string, string>) {
-    return this.svc.getCallMetadata(callId, req.tenantId);
+  getCallMetadata(@Param('callId') callId: string, @Req() req: any) {
+    return this.svc.getCallMetadata(callId, req.tenantId, req.userId, req.userRole);
   }
 
   /** 2. Single call row / detail */
@@ -46,8 +46,8 @@ export class M01FrontendCallsController {
   getCall(
     @Param('callId') callId: string,
     @Query() query: Record<string, string>,
-    @Req() req: Record<string, string>,
+    @Req() req: any,
   ) {
-    return this.svc.getCall(callId, req.tenantId, query);
+    return this.svc.getCall(callId, req.tenantId, query, req.userId, req.userRole);
   }
 }

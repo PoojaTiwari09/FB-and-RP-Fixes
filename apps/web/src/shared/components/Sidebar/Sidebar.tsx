@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Database,
   User,
+  LogOut,
 } from 'lucide-react';
 import { useRole } from '@shared/hooks/useRole';
 
@@ -123,16 +124,32 @@ export default function Sidebar() {
     Revenue: false,
     'Deal Drivers': false,
   });
+  const [userProfile, setUserProfile] = useState<{ name: string; role: string; email: string } | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     if (saved !== null) setIsCollapsed(saved === 'true');
+    
+    const match = document.cookie.match(/(?:^|;)\s*rbac_user_json=([^;]*)/);
+    if (match) {
+      try {
+        setUserProfile(JSON.parse(decodeURIComponent(match[1])));
+      } catch (e) {}
+    }
   }, []);
 
   const handleToggleCollapse = () => {
     const next = !isCollapsed;
     setIsCollapsed(next);
     localStorage.setItem('sidebar-collapsed', String(next));
+  };
+
+  const handleSignOut = () => {
+    document.cookie = 'rbac_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'user_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'rbac_user_json=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    window.location.href = '/login';
   };
 
   const isItemActive = (href: string) =>
@@ -145,6 +162,10 @@ export default function Sidebar() {
     }
     setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
   };
+
+  if (pathname === '/login') {
+    return null;
+  }
 
   return (
     <aside
@@ -275,36 +296,39 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Role Switcher in Sidebar Footer */}
+      {/* User Profile in Sidebar Footer */}
       <div className="mt-auto border-t border-gray-100 p-3 bg-gray-50/50">
         {isCollapsed ? (
-          <button
-            onClick={() => {
-              const nextRole = isManager ? 'sales_rep' : 'sales_manager';
-              document.cookie = `user_role=${nextRole}; path=/`;
-              window.location.reload();
-            }}
-            className="w-full flex items-center justify-center p-2 rounded-lg bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 transition-all duration-200 shadow-sm cursor-pointer"
-            title={`Switch to ${isManager ? 'Sales Rep' : 'Sales Manager'}`}
-          >
-            {isManager ? <User size={18} className="text-blue-600" /> : <GraduationCap size={18} className="text-indigo-600" />}
-          </button>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1">
-              Role Switcher
-            </label>
-            <select
-              value={isManager ? 'sales_manager' : 'sales_rep'}
-              onChange={(e) => {
-                document.cookie = `user_role=${e.target.value}; path=/`;
-                window.location.reload();
-              }}
-              className="w-full px-2 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+          <div className="flex flex-col gap-2 items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-inner">
+              {userProfile?.name?.charAt(0) || (isManager ? 'M' : 'R')}
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="p-1.5 text-gray-500 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+              title="Sign Out"
             >
-              <option value="sales_rep">Sales Rep</option>
-              <option value="sales_manager">Sales Manager</option>
-            </select>
+              <LogOut size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-inner flex-shrink-0">
+                {userProfile?.name?.charAt(0) || (isManager ? 'M' : 'R')}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-gray-900 truncate">{userProfile?.name || 'Loading...'}</span>
+                <span className="text-xs text-gray-500 truncate">{isManager ? 'Sales Manager' : 'Sales Rep'}</span>
+              </div>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+              title="Sign Out"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         )}
       </div>

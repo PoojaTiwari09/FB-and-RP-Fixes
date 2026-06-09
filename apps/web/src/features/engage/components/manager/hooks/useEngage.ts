@@ -4,16 +4,15 @@ import { useState, useEffect, useCallback, useMemo, startTransition } from 'reac
 import type { Task, FilterState, TaskType, SortOption, GroupByOption, StatusTab } from '../types/engage.types';
 import * as engageService from '../services/engage.service';
 import { useRole } from '@shared/hooks/useRole';
-import { MOCK_TEAM_MEMBERS } from '../mocks/engage.mock';
 
 export function useEngage(initialAssigneeId?: string) {
   const { session, isManager } = useRole();
+  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string; role: string }[]>([]);
 
   // Dynamically resolve default assignee:
-  // If manager, default to first team member that isn't 'me' (e.g. sarah), otherwise 'me'.
   const resolvedInitialId = useMemo(() => {
-    return initialAssigneeId || 'me';
-  }, [initialAssigneeId]);
+    return initialAssigneeId || session?.userId || 'me';
+  }, [initialAssigneeId, session?.userId]);
 
   // Master Date (matches local time/Figma specs)
   const getTodayDateStr = () => new Date().toISOString().split('T')[0];
@@ -111,6 +110,21 @@ export function useEngage(initialAssigneeId?: string) {
       setIsLoading(false);
     }
   }, [selectedUserId, activeStatusTab, activeChannel, searchQuery, groupBy, sortBy, appliedFilters, todayStr, showToast]);
+
+  // Load team members on mount
+  useEffect(() => {
+    async function getMembers() {
+      try {
+        const members = await engageService.fetchTeamMembers();
+        if (members && members.length > 0) {
+          setTeamMembers(members);
+        }
+      } catch (e) {
+        console.error('Failed to load team members:', e);
+      }
+    }
+    getMembers();
+  }, []);
 
   // Keep selected user ID in sync if resolved initial ID changes
   useEffect(() => {
@@ -345,6 +359,7 @@ export function useEngage(initialAssigneeId?: string) {
     tabCounts,
     statusPills,
     summary,
+    teamMembers,
     
     // States
     selectedUserId,

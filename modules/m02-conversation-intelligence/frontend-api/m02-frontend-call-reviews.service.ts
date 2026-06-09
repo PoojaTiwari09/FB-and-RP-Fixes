@@ -47,11 +47,17 @@ export class M02FrontendCallReviewsService {
     private readonly m02: M02ConversationIntelligenceService,
   ) {}
 
-  private async ensureSeeded(tenantId: string) {
+  private async ensureSeeded(tenantId: string, userId?: string) {
     const count = await this.prisma.callReview.count({
       where: { tenantId },
     });
     if (count > 0) return;
+
+    // Fetch actual user names for seeding if possible
+    const dbUsers = await this.prisma.user.findMany({
+      where: { tenantId },
+      take: 5
+    });
 
     const calls = await this.prisma.callRecord.findMany({
       where: { tenantId },
@@ -66,7 +72,7 @@ export class M02FrontendCallReviewsService {
           {
             id: 'call_demo_001',
             title: 'Discovery Call - Acme Corp Q2 Initiative',
-            callOwner: 'Sarah Chen',
+            callOwner: userId || 'usr_sarah_123',
             accountId: 'Acme Corp',
             callDate: new Date(),
             durationSeconds: 2723,
@@ -79,6 +85,9 @@ export class M02FrontendCallReviewsService {
     for (let i = 0; i < seedCalls.length; i++) {
       const c = seedCalls[i];
       const reviewId = `rv_${String(i + 1).padStart(3, '0')}`;
+      const repId = c.callOwner || (dbUsers[i % dbUsers.length]?.id) || 'usr_sarah_123';
+      const repName = (dbUsers.find(u => u.id === repId)?.name) || 'Sarah Chen';
+
       await this.prisma.callReview.upsert({
         where: { reviewId },
         update: {},
@@ -96,8 +105,8 @@ export class M02FrontendCallReviewsService {
           status: i === 0 ? 'Pending' : i === 1 ? 'In Progress' : 'Completed',
           aiFlags: i === 0 ? ['High Risk Deal', 'No Next Steps'] : ['Good Rapport'],
           dueDate: new Date(Date.now() + 7 * 86400000).toISOString(),
-          salesRep: c.callOwner || 'Sarah Chen',
-          reviewer: 'Alex Martinez',
+          salesRep: repId,
+          reviewer: 'usr_manager_001',
           reviewMode: 'AI-Assisted',
           scorecardVersion: 'v2.3',
           talkRatio: { rep: 45, customer: 55 },
@@ -116,12 +125,27 @@ export class M02FrontendCallReviewsService {
     }
   }
 
-  private async getReview(tenantId: string, reviewId: string) {
-    await this.ensureSeeded(tenantId);
+  private async getReview(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    await this.ensureSeeded(tenantId, userId);
+    const where: any = { tenantId, reviewId };
+    
+    // Data Isolation: Sales Reps can only see their own reviews
+    if (userRole === 'sales_rep' && userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        where.OR = [
+          { salesRep: userId },
+          { salesRep: user.name },
+        ];
+      } else {
+        where.salesRep = userId;
+      }
+    }
+
     const review = await this.prisma.callReview.findFirst({
-      where: { tenantId, reviewId },
+      where,
     });
-    if (!review) throw new NotFoundException('Review not found');
+    if (!review) throw new NotFoundException('Review not found or access denied');
     return review;
   }
 
@@ -133,11 +157,25 @@ export class M02FrontendCallReviewsService {
     });
   }
 
-  async listReviews(tenantId: string, raw: Record<string, string>) {
+  async listReviews(tenantId: string, raw: Record<string, string>, userId?: string, userRole?: string) {
     const q = CallReviewsListQuerySchema.parse(raw);
-    await this.ensureSeeded(tenantId);
+    await this.ensureSeeded(tenantId, userId);
 
     const where: any = { tenantId };
+    
+    // Data Isolation: Filter by Sales Rep if applicable
+    if (userRole === 'sales_rep' && userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        where.OR = [
+          { salesRep: userId },
+          { salesRep: user.name },
+        ];
+      } else {
+        where.salesRep = userId;
+      }
+    }
+
     if (q.search) {
       const needle = q.search;
       where.OR = [
@@ -170,8 +208,8 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async getReviewDetail(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
+  async getReviewDetail(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     // Try to find a call record linked to this review
     const call = await this.prisma.callRecord.findFirst({
       where: { title: review.callTitle, tenantId },
@@ -184,17 +222,23 @@ export class M02FrontendCallReviewsService {
     return { scorecards: SCORECARDS };
   }
 
-  getUsers() {
-    return { users: USERS };
+  async getUsers(tenantId: string) {
+    const users = await this.prisma.user.findMany({
+      where: { tenantId },
+      select: { id: true, name: true }
+    });
+    return { 
+      users: users.map(u => ({ userId: u.id, userName: u.name }))
+    };
   }
 
   getCoachingTags() {
     return { tags: COACHING_TAGS };
   }
 
-  async patchReview(tenantId: string, reviewId: string, body: unknown) {
+  async patchReview(tenantId: string, reviewId: string, body: unknown, userId?: string, userRole?: string) {
     const dto = PatchReviewSchema.parse(body);
-    const review = await this.getReview(tenantId, reviewId);
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const data: any = {};
     const updated: string[] = [];
 
@@ -219,8 +263,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, reviewId, updatedFields: updated };
   }
 
-  async markNa(tenantId: string, reviewId: string) {
-    await this.getReview(tenantId, reviewId);
+  async markNa(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    await this.getReview(tenantId, reviewId, userId, userRole);
     await this.prisma.callReview.update({
       where: { reviewId },
       data: { status: 'Not Applicable' },
@@ -228,8 +272,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, status: 'Not Applicable', reviewId };
   }
 
-  async getScorecardForm(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
+  async getScorecardForm(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const questionsJson = review.questions as any;
     const answeredCount = Array.isArray(questionsJson) ? questionsJson.length : 0;
     const sections = scorecardSectionsTemplate();
@@ -240,8 +284,8 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async getTranscript(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
+  async getTranscript(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const call = await this.prisma.callRecord.findFirst({
       where: { title: review.callTitle, tenantId },
       include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
@@ -262,7 +306,7 @@ export class M02FrontendCallReviewsService {
     return { entries };
   }
 
-  getAiInsights() {
+  getAiInsights(userId?: string, userRole?: string) {
     return {
       insights: [
         { type: 'positive', title: 'Strong Discovery', description: 'Rep asked multiple open-ended questions.' },
@@ -272,9 +316,9 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async saveAnswer(tenantId: string, reviewId: string, body: unknown) {
+  async saveAnswer(tenantId: string, reviewId: string, body: unknown, userId?: string, userRole?: string) {
     const dto = SaveAnswerSchema.parse(body);
-    const review = await this.getReview(tenantId, reviewId);
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const questionsJson = Array.isArray(review.questions) ? (review.questions as any[]) : [];
 
     const existingIndex = questionsJson.findIndex((q) => q.questionId === dto.questionId);
@@ -301,8 +345,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, savedAt: new Date().toISOString(), score };
   }
 
-  async saveAnswersBatch(tenantId: string, reviewId: string, answers: any) {
-    const review = await this.getReview(tenantId, reviewId);
+  async saveAnswersBatch(tenantId: string, reviewId: string, answers: any, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const { score } = calculateCallReviewScore(answers);
     const updateData: any = {
       questions: answers,
@@ -318,8 +362,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, savedAt: new Date().toISOString(), score };
   }
 
-  async saveDraft(tenantId: string, reviewId: string, body: any) {
-    const review = await this.getReview(tenantId, reviewId);
+  async saveDraft(tenantId: string, reviewId: string, body: any, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const updateData: any = {};
     if (body?.answers) {
       updateData.questions = body.answers;
@@ -339,8 +383,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, savedAt: new Date().toISOString() };
   }
 
-  async getCoaching(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
+  async getCoaching(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const feedback = review.feedback as any;
     if (feedback && typeof feedback === 'object' && !Array.isArray(feedback) && Object.keys(feedback).length > 0) {
       return feedback;
@@ -356,9 +400,9 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async saveCoaching(tenantId: string, reviewId: string, body: unknown) {
+  async saveCoaching(tenantId: string, reviewId: string, body: unknown, userId?: string, userRole?: string) {
     const dto = CoachingBodySchema.parse(body);
-    await this.getReview(tenantId, reviewId);
+    await this.getReview(tenantId, reviewId, userId, userRole);
     await this.prisma.callReview.update({
       where: { reviewId },
       data: {
@@ -368,8 +412,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, savedAt: new Date().toISOString() };
   }
 
-  async getSummary(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
+  async getSummary(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const questionsJson = review.questions as any;
     const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
     const { score, sections } = calculateCallReviewScore(review.questions);
@@ -388,8 +432,8 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async submitReview(tenantId: string, reviewId: string, body?: any) {
-    const review = await this.getReview(tenantId, reviewId);
+  async submitReview(tenantId: string, reviewId: string, body?: any, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const updateData: any = {
       status: 'Completed',
     };
@@ -420,11 +464,23 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async getSubmitted(reviewId: string) {
+  async getSubmitted(reviewId: string, userId?: string, userRole?: string) {
+    const where: any = { reviewId };
+    if (userRole === 'sales_rep' && userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        where.OR = [
+          { salesRep: userId },
+          { salesRep: user.name },
+        ];
+      } else {
+        where.salesRep = userId;
+      }
+    }
     const review = await this.prisma.callReview.findFirst({
-      where: { reviewId },
+      where,
     });
-    if (!review) throw new NotFoundException('Review not found');
+    if (!review) throw new NotFoundException('Review not found or access denied');
 
     const feedback = review.feedback as any;
     const { score } = calculateCallReviewScore(review.questions);
@@ -440,9 +496,9 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  async getSubmittedView(tenantId: string, reviewId: string) {
-    const review = await this.getReview(tenantId, reviewId);
-    const submittedData = await this.getSubmitted(reviewId);
+  async getSubmittedView(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
+    const submittedData = await this.getSubmitted(reviewId, userId, userRole);
     const { sections } = calculateCallReviewScore(review.questions);
     return {
       ...submittedData,
@@ -454,7 +510,7 @@ export class M02FrontendCallReviewsService {
       coaching: review.feedback || {},
       auditTrail: [
         { event: 'Review Created', user: 'System', at: review.createdAt.toISOString() },
-        { event: 'Review Submitted', user: review.reviewer || 'Alex Martinez', at: review.updatedAt.toISOString() },
+        { event: 'Review Submitted', user: review.reviewer || 'usr_manager_001', at: review.updatedAt.toISOString() },
       ],
     };
   }
@@ -470,17 +526,40 @@ export class M02FrontendCallReviewsService {
     return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}` };
   }
 
-  getAnalyticsSummary() {
+  async getAnalyticsSummary(userId?: string, userRole?: string) {
+    const where: any = {};
+    if (userRole === 'sales_rep' && userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        where.OR = [
+          { salesRep: userId },
+          { salesRep: user.name },
+        ];
+      } else {
+        where.salesRep = userId;
+      }
+    }
+
+    const reviews = await this.prisma.callReview.findMany({ where });
+    const totalReviews = reviews.length;
+    const completedReviews = reviews.filter(r => r.status === 'Completed');
+    
+    let avgScore = 0;
+    if (completedReviews.length > 0) {
+      avgScore = Math.round(completedReviews.reduce((sum, r) => sum + (r.overallScore || 0), 0) / completedReviews.length);
+    }
+
     return {
-      repAverageScore: 82,
-      repAverageTrend: '+4%',
+      repAverageScore: avgScore,
+      repAverageTrend: '+2%', // Mock trend for now
       teamAverageScore: 78,
-      completionRate: 91,
-      totalReviews: 24,
+      completionRate: totalReviews > 0 ? Math.round((completedReviews.length / totalReviews) * 100) : 0,
+      totalReviews: totalReviews,
     };
   }
 
-  getScoreTrend() {
+  async getScoreTrend(userId?: string, userRole?: string) {
+    // In a real app, we'd group by week. For now, we'll return mock data but keep the signature
     return {
       data: [
         { week: 'Apr 1', score: 74 },
@@ -494,7 +573,7 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  getFocusAreas() {
+  async focusAreas(userId?: string, userRole?: string) {
     return {
       areas: [
         { sectionName: 'Objection Handling', percent: 68 },

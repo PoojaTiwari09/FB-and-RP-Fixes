@@ -13,13 +13,17 @@ export class SessionUserMiddleware implements NestMiddleware {
         const user = await this.authService.getUserBySession(req.session.id);
 
         if (user) {
+          let roleVal = String(user.role).toUpperCase();
+          if (roleVal === 'SALES_REP') {
+            roleVal = 'USER';
+          }
           // Attach user to request
           (req as any).user = {
             id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
-            role: user.role,
+            role: roleVal,
             isActive: user.isActive,
           };
         }
@@ -31,12 +35,16 @@ export class SessionUserMiddleware implements NestMiddleware {
 
     // Dev/API smoke: allow demo headers when no session (aligns with M01/M03 patterns)
     if (!(req as any).user && req.headers['x-user-id']) {
+      let roleVal = String(req.headers['x-user-role'] || req.headers['x-role'] || 'MANAGER').toUpperCase();
+      if (roleVal === 'SALES_REP') {
+        roleVal = 'USER';
+      }
       (req as any).user = {
         id: String(req.headers['x-user-id']),
         email: String(req.headers['x-email'] || 'dev@m04.local'),
         firstName: 'Dev',
         lastName: 'User',
-        role: String(req.headers['x-role'] || 'MANAGER'),
+        role: roleVal,
         isActive: true,
       };
     }

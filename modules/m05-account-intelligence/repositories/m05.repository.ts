@@ -5,9 +5,16 @@ import { PrismaService } from '../database/prisma.service';
 export class M05AccountIntelligenceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string) {
+  async findAll(tenantId: string, userId?: string, userRole?: string) {
+    const where: any = { tenantId };
+    
+    // Data Isolation: Sales Reps can only see their own accounts
+    if (userRole === 'sales_rep' && userId) {
+      where.ownerUserId = userId;
+    }
+
     return this.prisma.account.findMany({
-      where: { tenantId },
+      where,
       orderBy: { name: 'asc' },
       take: 100,
     });
