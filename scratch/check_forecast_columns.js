@@ -2,7 +2,7 @@ const { Client } = require('pg');
 
 async function main() {
   const client = new Client({
-    connectionString: 'postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public'
+    connectionString: 'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public'
   });
   try {
     await client.connect();

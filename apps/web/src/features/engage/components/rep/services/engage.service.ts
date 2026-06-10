@@ -1,3 +1,4 @@
+import { resolveApiBase } from '@shared/config/module-api';
 import { ENV } from '@shared/config/env';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import type {
@@ -13,7 +14,7 @@ import type {
   EmailTemplate,
 } from '../types/engage.types';
 
-const ENGAGE_BASE = `${ENV.M08_API_BASE_URL}/api/engage`;
+const ENGAGE_BASE = resolveApiBase() + '/api/v1/sales-engagement';
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${ENGAGE_BASE}${path}`;
@@ -128,7 +129,7 @@ export async function rephraseEmail(
     tone?: string;
   },
 ): Promise<{ rephrasedBody: string }> {
-  const res = await fetch('/api/engage/rephrase', {
+  const res = await fetch(resolveApiBase() + `/api/v1/sales-engagement/tasks/${taskId}/ai-rephrase`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ taskId, ...emailData }),

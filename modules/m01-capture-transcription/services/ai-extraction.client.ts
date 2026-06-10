@@ -3,7 +3,7 @@ import {
   computeTalkRatioLocal,
   extractHighlightsLocal,
   summarizeLocal,
-} from '../lib/ai-extraction-local';
+} from './ai-extraction-local';
 
 /**
  * AiExtractionClient — NestJS HTTP client for the Python ai-services.

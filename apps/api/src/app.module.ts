@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
@@ -46,12 +47,15 @@ const sharedBackendModules = [
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     // Make ConfigService available everywhere — many services (M05/AiService,
     // M09/LlmService, M10) inject it. Without a global ConfigModule, Nest
     // injects `undefined` and constructors crash with "Cannot read get of undefined".
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
     }),
     // EventEmitter2 — backbone of the domain event bus (`transcription.completed`,
     // `call.shared`, …). Registered once at the root so every module's

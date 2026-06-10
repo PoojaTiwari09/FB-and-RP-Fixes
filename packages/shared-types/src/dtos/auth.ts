@@ -15,5 +15,5 @@ export const registerDtoSchema = z.object({
   role: z.enum(["ADMIN", "MANAGER", "SALES_REP", "ANALYST"]).default("ADMIN"),
 });
 
-export type LoginDto = z.infer<typeof loginDtoSchema>;
-export type RegisterDto = z.infer<typeof registerDtoSchema>;
+export interface LoginDto extends z.infer<typeof loginDtoSchema> {}
+export interface RegisterDto extends z.infer<typeof registerDtoSchema> {}

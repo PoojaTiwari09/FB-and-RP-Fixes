@@ -3,7 +3,7 @@
 
 $Root = $PSScriptRoot
 $BackendRoot = $Root
-$dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
 Write-Host ""
 Write-Host "=== Seeding M06 forecast data ===" -ForegroundColor Cyan
@@ -14,7 +14,7 @@ $code = $LASTEXITCODE
 Pop-Location
 
 if ($code -ne 0) {
-  Write-Host "Seed failed (exit $code). Is Postgres running on port 5433?" -ForegroundColor Red
+  Write-Host "Seed failed (exit $code). Is Postgres running on port 5438?" -ForegroundColor Red
   exit $code
 }
 

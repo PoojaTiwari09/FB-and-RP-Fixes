@@ -13,7 +13,7 @@ export const CreateBoardSchema = z.object({
   endDate: z.string().optional(),
   description: z.string().optional(),
 }).refine((data) => data.scope || data.teamId, { message: 'scope or teamId is required' });
-export type CreateBoardDto = z.infer<typeof CreateBoardSchema>;
+export interface CreateBoardDto extends z.infer<typeof CreateBoardSchema> {}
 
 export const UpdateBoardSchema = z.object({
   name: z.string().optional(),
@@ -29,12 +29,12 @@ export const UpdateBoardSchema = z.object({
   description: z.string().optional(),
   status: z.string().optional(),
 });
-export type UpdateBoardDto = z.infer<typeof UpdateBoardSchema>;
+export interface UpdateBoardDto extends z.infer<typeof UpdateBoardSchema> {}
 
 export const ReorderColumnsSchema = z.object({
   columnIds: z.array(z.string()),
 });
-export type ReorderColumnsDto = z.infer<typeof ReorderColumnsSchema>;
+export interface ReorderColumnsDto extends z.infer<typeof ReorderColumnsSchema> {}
 
 export const UpdateColumnsSchema = z.object({
   columns: z.array(
@@ -49,7 +49,7 @@ export const UpdateColumnsSchema = z.object({
     })
   ),
 });
-export type UpdateColumnsDto = z.infer<typeof UpdateColumnsSchema>;
+export interface UpdateColumnsDto extends z.infer<typeof UpdateColumnsSchema> {}
 
 export const FromCrmFieldSchema = z.object({
   crmObject: z.enum(['Opportunity', 'Account', 'Contact']),
@@ -61,7 +61,7 @@ export const FromCrmFieldSchema = z.object({
 export const CreateColumnsFromCrmSchema = z.object({
   fields: z.array(FromCrmFieldSchema),
 });
-export type CreateColumnsFromCrmDto = z.infer<typeof CreateColumnsFromCrmSchema>;
+export interface CreateColumnsFromCrmDto extends z.infer<typeof CreateColumnsFromCrmSchema> {}
 
 export const UpdateColumnSchema = z.object({
   label: z.string().optional(),
@@ -70,17 +70,17 @@ export const UpdateColumnSchema = z.object({
   submissionMode: z.enum(['N/A', 'Auto', 'Manual']).optional(),
   isVisible: z.boolean().optional(),
 });
-export type UpdateColumnDto = z.infer<typeof UpdateColumnSchema>;
+export interface UpdateColumnDto extends z.infer<typeof UpdateColumnSchema> {}
 
 export const UpdateColumnVisibilitySchema = z.object({
   isVisible: z.boolean(),
 });
-export type UpdateColumnVisibilityDto = z.infer<typeof UpdateColumnVisibilitySchema>;
+export interface UpdateColumnVisibilityDto extends z.infer<typeof UpdateColumnVisibilitySchema> {}
 
 export const UpdateStageMappingSchema = z.object({
   stageMappings: z.record(z.any()),
 });
-export type UpdateStageMappingDto = z.infer<typeof UpdateStageMappingSchema>;
+export interface UpdateStageMappingDto extends z.infer<typeof UpdateStageMappingSchema> {}
 
 export const UpdateCrmMappingSchema = z.object({
   crmConnection: z.enum(['salesforce', 'hubspot', 'dynamics']),
@@ -92,7 +92,7 @@ export const UpdateCrmMappingSchema = z.object({
   columnMappings: z.record(z.any()).optional(),
   stageMappings: z.record(z.any()).optional(),
 });
-export type UpdateCrmMappingDto = z.infer<typeof UpdateCrmMappingSchema>;
+export interface UpdateCrmMappingDto extends z.infer<typeof UpdateCrmMappingSchema> {}
 
 export const UpdateReminderConfigSchema = z.object({
   frequency: z.string(),
@@ -104,7 +104,7 @@ export const UpdateReminderConfigSchema = z.object({
   autoDismiss: z.boolean(),
   messageTemplate: z.string().optional(),
 });
-export type UpdateReminderConfigDto = z.infer<typeof UpdateReminderConfigSchema>;
+export interface UpdateReminderConfigDto extends z.infer<typeof UpdateReminderConfigSchema> {}
 
 export const UpdateQuotasSchema = z.object({
   periodId: z.string(),
@@ -118,4 +118,4 @@ export const UpdateQuotasSchema = z.object({
     })
   ),
 });
-export type UpdateQuotasDto = z.infer<typeof UpdateQuotasSchema>;
+export interface UpdateQuotasDto extends z.infer<typeof UpdateQuotasSchema> {}

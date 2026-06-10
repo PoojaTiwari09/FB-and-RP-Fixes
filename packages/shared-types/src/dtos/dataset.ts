@@ -30,4 +30,4 @@ export const createDatasetDtoSchema = z.object({
   relationships: z.array(datasetRelationshipSchema),
 });
 
-export type CreateDatasetDto = z.infer<typeof createDatasetDtoSchema>;
+export interface CreateDatasetDto extends z.infer<typeof createDatasetDtoSchema> {}

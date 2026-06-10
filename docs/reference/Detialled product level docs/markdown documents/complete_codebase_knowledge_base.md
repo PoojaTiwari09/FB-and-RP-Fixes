@@ -1,7 +1,7 @@
 # R-Revenue Intelligence — Complete Codebase Knowledge Base
-**Version:** v3.0  
+**Version:** v3.1  
 **Status:** Approved  
-**Last Updated:** 2026-05-18  
+**Last Updated:** 2026-06-09  
 **Owner:** Technical Architecture Team & Relanto Engineering
 
 ---
@@ -56,8 +56,8 @@ The R-Revenue Intelligence platform is designed around four foundational, non-ne
 
 ### 2.1 Separation of Business Logic and AI Inference
 *   **TypeScript (NestJS) is the Product Brain:** Responsible for state management, authorization, multi-tenancy context, workflow orchestration, database updates, and external API integrations.
-*   **Python (FastAPI) is the AI Brain:** Restricts its scope strictly to model execution, high-performance transcription (ASR), vector embedding generation, sentiment mapping, and RAG pipelines.
-*   **Standard Boundary Rule (ADR-003):** No AI library imports (such as `openai`, `langchain`, or `transformers`) are permitted within the NestJS platform modules. All AI operations are made asynchronously or via private HTTP interfaces to the Python FastAPI microservices.
+*   **Python (FastAPI) is the AI Brain:** Restricts its scope strictly to model execution, high-performance transcription (ASR), vector embedding generation, sentiment mapping, and RAG pipelines for core async call records (M01).
+*   **Standard Boundary Rule & SDK Exceptions (ADR-003):** To keep the architecture modular and self-contained, core asynchronous transcription pipelines route requests to the Python FastAPI microservice (`apps/ai-services`). However, direct SDK or REST calls to Groq (`llama-3.1-8b-instant`, `llama-3.3-70b-versatile`, `whisper-large-v3`) and Gemini endpoints are utilized inside NestJS TypeScript services for specific modules, including M02 (CI Topic Ingestion and Translation), M09 (AI Roleplay and live turn evaluation), and M11 (AI Deep Researcher analysis).
 
 ### 2.2 Strict Multi-Tenancy & Layered Data Isolation
 The platform enforces a shared-database, isolated-schema tenancy model, secured by a three-tiered defense-in-depth framework:
@@ -93,51 +93,43 @@ The platform segregates storage technologies to match specific transactional and
 | **Full-Text Search** | Meilisearch (Stable) | Transcripts, conversation logs, email content, and deal driver tags. | Instant search UI, prefix matching, and spelling correction. |
 | **Queue / Cache** | Redis 7.x (Upstash) | Queue state persistence, rate-limiting, session states, and API result caching. | BullMQ backing store and low-latency volatile cache. |
 
-### 3.2 Decentralized Schema Governance & Table Design
-The platform operates under a **Decentralized Database Governance** model. Rather than utilizing a single centralized schema file, each module independently owns and manages its database migrations, seed data, and schema definitions under its local `/modules/m0X-<module-slug>/prisma/schema.prisma` configuration. 
+### 3.2 Database Schema Governance & Table Design
+The platform operates under a **Centralized Database Schema** design utilizing a single source of truth Prisma schema configuration at `packages/database/prisma/schema.prisma`. This schema defines and maps all tables and database extensions (such as `vector`) and enables cross-workspace compilation of modular client bindings.
 
-Every single table created in the Postgres database must follow this structure to satisfy automated syntax audits during CI/CD execution:
-1.  **Primary Key:** Must use `UUID PRIMARY KEY DEFAULT gen_random_uuid()`. Serial integers are completely prohibited.
-2.  **Tenant Scoping:** Must have `tenant_id UUID NOT NULL` as the second column. Pure join tables may omit this only if they enforce tenant separation transitively through foreign keys.
-3.  **Auditing Fields:** Must include `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`. 
-4.  **Default Indexing:** An index must be created on `(tenant_id, primary_lookup_column)` to prevent sequential table scans as tenant data scales.
-5.  **RLS Enforcement:** Must execute `ALTER TABLE schema.table ENABLE ROW LEVEL SECURITY;` and `ALTER TABLE schema.table FORCE ROW LEVEL SECURITY;`.
+To satisfy automated audits, the database tables must conform to the following conventions:
+1.  **Primary Key:** Must use standard text-based IDs (such as `uuid` or `cuid`). Serial integers are avoided.
+2.  **Tenant Scoping:** Must have `tenantId` (mapped as `tenantId TEXT NOT NULL` or `tenantid UUID NOT NULL`) as a core column. Join tables may omit this only if they enforce tenant separation transitively through foreign keys.
+3.  **Auditing Fields:** Must include `createdAt` (defaulting to current timestamp) and `updatedAt`.
+4.  **Indexing:** Indices must be created on lookup fields scoped by tenant (e.g. `@@index([tenantId, lookupField])`) to prevent slow sequential scans.
+5.  **RLS Enforcement:** PostgreSQL Row-Level Security (RLS) is applied on critical tables (such as dashboards, coaching recommendation schemas, etc.) using tenant isolation policies.
 
 ```sql
--- Standard Table Pattern Definition
-CREATE TABLE m01_capture_transcription.calls (
-    call_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES platform.tenants(tenant_id) ON DELETE CASCADE,
-    source_platform VARCHAR(50) NOT NULL,
-    status VARCHAR(30) NOT NULL,
-    duration INTEGER NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- Conceptual SQL Example of a Scoped Table with RLS (dashboards schema)
+CREATE SCHEMA IF NOT EXISTS dashboards;
+
+CREATE TABLE dashboards.trainerscenarios (
+    scenarioid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenantid UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    personadescription TEXT,
+    createdat TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Tenant Isolation and Index Policies
-CREATE INDEX idx_calls_tenant_lookup ON m01_capture_transcription.calls(tenant_id, status);
+-- Enable RLS and isolate by tenant session variable
+ALTER TABLE dashboards.trainerscenarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dashboards.trainerscenarios FORCE ROW LEVEL SECURITY;
 
-ALTER TABLE m01_capture_transcription.calls ENABLE ROW LEVEL SECURITY;
-ALTER TABLE m01_capture_transcription.calls FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY calls_isolation ON m01_capture_transcription.calls
-    FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+CREATE POLICY tenant_isolation ON dashboards.trainerscenarios
+    FOR ALL USING (tenantid = COALESCE(NULLIF(current_setting('app.current_tenant', true), '')::uuid, tenantid));
 ```
 
 ### 3.3 Schema Ownership Mapping
-Database isolation is enforced using strict schema-per-module namespace separation in PostgreSQL. Direct cross-schema write queries are blocked by database permissions:
+PostgreSQL database tables are organized into two main namespaces:
 
-*   `platform`: Core platform metadata (tenants, users, global roles, feature flags, global configurations).
-*   `m01_capture_transcription`: Managed by **M1** (`modules/m01-capture-transcription/`). Stores call records, transcripts, audio metadata, speaker segments, and vocabulary correction registries.
-*   `m02_conversation_intelligence`: Managed by **M2** (`modules/m02-conversation-intelligence/`). Scorecards, call reviews, themes, tags, and translation mappings.
-*   `m03_ai_summaries_genai`: Managed by **M3** (`modules/m03-ai-summaries-genai/`). Executive summaries, briefings, Q&A chat history, and research reports.
-*   `m04_deal_intelligence`: Managed by **M4** (`modules/m04-deal-intelligence/`). Deal boards, columns, custom views, and deal risk metrics.
-*   `m05_account_intelligence`: Managed by **M5** (`modules/m05-account-intelligence/`). Account boards, contact mapping, engagement scores, and renewal indicators.
-*   `m06_forecasting_prediction`: Managed by **M6** (`modules/m06-forecasting-prediction/`). Forecast periods, rep submission history, and snapshot entries.
-*   `m07_revenue_dashboards`: Managed by **M7** (`modules/m07-revenue-dashboards/`). Layout configurations and cached performance data.
-*   `m08_sales_engagement`: Managed by **M8** (`modules/m08-sales-engagement/`). Outbound tasks, compose records, automated playbooks, sequences, templates, and active workflows.
-*   `m09_coaching_training`: Managed by **M9** (`modules/m09-coaching-training/`). Coaching snapshots, roleplay scenarios, messages, results, and recommendations.
-*   `m10_data_compliance`: Managed by **M10** (`modules/m10-data-compliance/`). Revenue graph tables (accounts, contacts, deals, activities), compliance logs, policy config, and data-cloud sync history.
+*   `public` (Default Schema): Stores the core platform tables (Tenants, Users, Accounts, Deals) and module-specific data models for M1, M2, M3, M4, M5, M6, M8, and M10.
+*   `dashboards`: Managed by M07 (Revenue Dashboards) and M09 (Coaching & Training) to store cached snapshots, dashboard configs, widget definitions, recommendations, and training roleplay sessions.
+
+Conceptual data ownership remains divided by module boundaries, ensuring that each module handles queries for its domain logical layer (e.g. M1 handles call logs and transcripts, M6 handles forecasts, M10 handles revenue graphs).
 
 ### 3.4 Permitted Cross-Schema Read Contract Registry
 Direct PostgreSQL table joins across schemas in application code are strictly prohibited to ensure module decoupling. If a service requires read context from a different domain, it must query it via the corresponding module's public REST API. The approved synchronizations are:
@@ -168,7 +160,7 @@ Direct PostgreSQL table joins across schemas in application code are strictly pr
 ### 4.1 The 10 Golden Rules of R-Revenue Intelligence
 These rules are non-negotiable. Breaking any golden rule will result in an immediate merge blockage at the PR stage:
 
-1.  **Never Write AI Logic in TypeScript:** No `import OpenAI`, no LangChain, and no raw prompt string definitions in NestJS. All AI tasks live in the Python FastAPI service.
+1.  **Keep Core AI Inference in Python (with Specific NestJS Exceptions):** Core asynchronous transcription pipeline prompts and processing live in the Python FastAPI service. Specific interactive/logical modules (M02 Topic Tagging & Translation, M09 AI Trainer Roleplay & Evaluation, M11 AI Deep Researcher) are permitted to write targeted prompts and make direct Groq/Gemini SDK or REST requests inside NestJS TypeScript services to keep the modules self-contained.
 2.  **No Direct Cross-Module Imports:** You cannot import service classes or repositories directly across `/modules/m0X-*` workspaces. Communicate exclusively via BullMQ events or public API calls.
 3.  **Strict Secrets Governance:** Secrets must never reside in source code, committed `.env` files, or Docker images. Doppler is the exclusive secrets orchestrator.
 4.  **No Raw SQL in Services:** Database queries must use the local module's Prisma client instance to ensure automatic query verification and RLS enforcement.
@@ -262,7 +254,7 @@ This section maps all customer-facing product modules to their corresponding tec
 | :--- | :--- | :--- |
 | **M1** | Capture & Transcription | Call Transcription, Native Connectors, AI Data Extractor |
 | **M2** | Conversation Intelligence | AI Call Reviewer, AI Topic Tagger, AI Theme Spotter, Smart Tracker, AI Translator, AI Transcriber, Searchable Conversation Library, Real-Time Call guidance |
-| **M3** | AI Summaries & GenAI | AI Smart Summaries, Ask Anything, AI Deep Researcher |
+| **M3** | AI Summaries & GenAI | AI Smart Summaries, Ask Anything (RAG-based chat), AI Deep Researcher |
 | **M4** | Deal Intelligence | Deals Boards, View Deal Drivers |
 | **M5** | Account Intelligence | Account Boards |
 | **M6** | Forecasting & Prediction | AI Revenue Predictor, Forecast Boards |
@@ -500,7 +492,7 @@ To accommodate different developer machines and OS-level virtualization constrai
 
 ### 8.1 Setup Option A: Containerized Infrastructure (With Docker)
 This is the standard local engineering environment. Running `docker-compose up -d` boots:
-* **PostgreSQL 16 (with pgvector)** on port `5432` for transactional metadata and embedding search.
+* **PostgreSQL 16 (with pgvector)** on port `5438` (mapped to container port `5432`) for transactional metadata and embedding search.
 * **Redis 7 (via Upstash client compatibility)** on port `6379` for BullMQ backing.
 * **Meilisearch** on port `7700` and **ClickHouse** on port `8123/9000`.
 
@@ -543,6 +535,30 @@ Before submitting a Pull Request for integration into the `develop` branch, the 
 - [ ] **Coaching Metrics Constraint:** M9 updates ensure that coaching metrics recommendations are suppressed if the salesperson has fewer than 5 recorded calls in the current period.
 - [ ] **Event Envelope Compliance:** Emitted event messages carry the verified standard v1 envelope, including `eventId`, `tenantId`, `correlationId`, and `occurredAt`.
 - [ ] **Linting & Verification:** `npm run lint` and `python -m ruff check` compile with zero warnings. Automated unit and integration tests run successfully with a minimum coverage of 80%.
+
+---
+
+## 10. Technical Debt & Known Issues
+
+This section records open architectural mismatches, deferred clean-up items, and temporary workarounds that must be resolved before general availability. Each entry maps 1:1 to a corresponding item in [`docs/execution/implementation_plan.md` — Technical Debt Registry](file:///c:/Users/Relanto/Desktop/RevenueIntellegence/docs/execution/implementation_plan.md).
+
+| TD-ID | Severity | Status | Title | Affects |
+| :--- | :--- | :--- | :--- | :--- |
+| **TD-001** | Medium | 🔴 Open | M11 Physical Folder / M3 Logical Boundary Mismatch | `modules/m11-deep-researcher/`, `modules/m03-ai-summaries-genai/` |
+
+### TD-001 — M11 Physical Folder / M3 Logical Boundary Mismatch
+
+**Summary:** The platform is documented as a **10-module logical architecture** (M1–M10). However, a physical folder `modules/m11-deep-researcher/` exists in the repository and is registered as a standalone NestJS module in `apps/unified-api/src/app.module.ts`. The **AI Deep Researcher** feature it contains is logically and commercially owned by **M3 (AI Summaries & GenAI)**.
+
+**Temporary Workaround:** All documentation treats AI Deep Researcher as part of M3. The `modules/m11-deep-researcher/` folder is a layout artifact only. No new documentation should refer to it as a standalone M11 module.
+
+**Resolution:** See full resolution plan in `implementation_plan.md → TD-001`. Summary:
+1. Migrate source files into `modules/m03-ai-summaries-genai/deep-researcher/`.
+2. Merge `M11Module` into `M03Module`.
+3. Remove standalone `M11Module` registration from `app.module.ts`.
+4. Consolidate API routes under `/api/v1/m03-ai-summaries-genai/deep-researcher`.
+5. Delete `modules/m11-deep-researcher/` after migration.
+6. Raise a formal ADR for the consolidation.
 
 ---
 *End of Complete Codebase Knowledge Base. Maintain this standard to preserve architectural integrity.*

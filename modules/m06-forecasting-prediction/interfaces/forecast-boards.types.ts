@@ -1,6 +1,6 @@
 /** TDD §4 — Forecast Boards API response shapes (camelCase) */
 
-export type ForecastPeriodDto = {
+export interface ForecastPeriodDto {
   periodId: string;
   tenantId: string;
   name: string;
@@ -10,21 +10,21 @@ export type ForecastPeriodDto = {
   isLocked: boolean;
 };
 
-export type ForecastBoardAiPredictionDto = {
+export interface ForecastBoardAiPredictionDto {
   predictedAmount: number;
   confidenceRangeLow: number;
   confidenceRangeHigh: number;
   computedAt: string;
 };
 
-export type ForecastBoardCoverageDto = {
+export interface ForecastBoardCoverageDto {
   openPipelineValue: number;
   weightedPipelineValue: number;
   coverageRatio: number;
   computedAt: string;
 };
 
-export type ForecastBoardSubmissionDto = {
+export interface ForecastBoardSubmissionDto {
   submissionId: string;
   userId: string;
   submittedAmount: number;
@@ -34,7 +34,7 @@ export type ForecastBoardSubmissionDto = {
   submittedAt: string;
 };
 
-export type ForecastBoardDto = {
+export interface ForecastBoardDto {
   periodId: string;
   tenantId: string;
   name: string;
@@ -45,7 +45,7 @@ export type ForecastBoardDto = {
   submissions: ForecastBoardSubmissionDto[];
 };
 
-export type ForecastSubmitResponseDto = {
+export interface ForecastSubmitResponseDto {
   submissionId: string;
   periodId: string;
   tenantId: string;

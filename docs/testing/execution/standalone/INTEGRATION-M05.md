@@ -24,7 +24,7 @@ pnpm install
 **Terminal 1 — API**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m05-api
 ```
 

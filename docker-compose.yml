@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${DB_USER:-revenue_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-revenue_pass}
     ports:
-      - "5433:5432"
+      - "5438:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -30,7 +30,9 @@ services:
       - "9000:9000"
 
   api:
-    build: ./apps/api
+    build: 
+      context: .
+      dockerfile: ./apps/api/Dockerfile
     ports:
       - "3001:3001"
     depends_on:

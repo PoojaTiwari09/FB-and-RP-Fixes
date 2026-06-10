@@ -4,7 +4,7 @@ import { resolveAssemblyAIKey } from '../_lib/resolve-assemblyai-key';
 
 function normalizeAssemblySourceUrl(raw: string, seed = 'fallback'): string {
   let url = raw.trim();
-  if (url.includes('/api/calls/audio')) {
+  if (url.includes('/api/v1/conversation-intelligence/calls/audio')) {
     try {
       const parsed = new URL(url, 'http://localhost');
       const src = parsed.searchParams.get('src');

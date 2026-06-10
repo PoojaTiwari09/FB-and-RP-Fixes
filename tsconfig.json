@@ -19,6 +19,8 @@
     "**/node_modules",
     "**/modules/**/features/**",
     "**/EXAMPLE_ONLY*",
-    "**/r-ri/**"
+    "**/r-ri/**",
+    "**/*.spec.ts",
+    "**/*.test.ts"
   ]
 }

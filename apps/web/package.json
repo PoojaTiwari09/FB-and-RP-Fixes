@@ -10,6 +10,7 @@
     "test:notes": "node ../scratch/test_notes.js"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
     "clsx": "^2.1.1",
     "groq-sdk": "^1.2.1",
     "jspdf": "^4.2.1",
@@ -17,7 +18,9 @@
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "recharts": "^3.8.1"
+    "react-hook-form": "^7.78.0",
+    "recharts": "^3.8.1",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

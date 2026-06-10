@@ -5,13 +5,8 @@ RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
-# Copy root monorepo configuration files
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
-
-# Copy all packages, modules, and apps needed for the build
-COPY packages ./packages
-COPY modules ./modules
-COPY apps/api ./apps/api
+# Copy entire workspace to ensure all hoisted dependencies are available
+COPY . .
 
 # Install dependencies and build the API
 RUN pnpm install --frozen-lockfile

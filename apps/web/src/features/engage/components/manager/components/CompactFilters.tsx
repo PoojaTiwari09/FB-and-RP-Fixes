@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Search, Filter, ChevronDown, User, Check, X } from 'lucide-react';
+import type { GroupByOption, SortOption } from '../types/engage.types';
 interface CompactFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;

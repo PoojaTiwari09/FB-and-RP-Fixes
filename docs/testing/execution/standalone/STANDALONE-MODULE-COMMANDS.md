@@ -20,7 +20,7 @@ pnpm install
 Postgres (most modules):
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 ```
 
 Demo tenant (when using header auth):
@@ -63,7 +63,7 @@ Optional AI service (M03/M05 AI features):
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m01-api
 ```
 
@@ -98,7 +98,7 @@ pnpm run dev:m01-m02
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m02-api
 ```
 
@@ -125,7 +125,7 @@ pnpm run dev:m02-web
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m03-api
 ```
 
@@ -144,7 +144,7 @@ pnpm run dev:m03
 **Seed CRM data (accounts/deals for workspace UI)**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 node scripts/seed_m03_crm.cjs
 ```
 
@@ -172,7 +172,7 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:4010/api/v1/ai-summaries-g
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m05-api
 ```
 
@@ -228,7 +228,7 @@ Boards: http://localhost:5179/board/demo (4 accounts, 3 tabs) · http://localhos
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m07-api
 ```
 
@@ -284,7 +284,7 @@ pnpm run dev:m07-web
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m09-api
 ```
 
@@ -324,7 +324,7 @@ pnpm run dev:m09
 **Terminal 1 — backend**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m10-api
 ```
 
@@ -343,7 +343,7 @@ pnpm run dev:m10
 **Seed Revenue Graph + Data Cloud (Postgres)**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run seed:m10
 ```
 

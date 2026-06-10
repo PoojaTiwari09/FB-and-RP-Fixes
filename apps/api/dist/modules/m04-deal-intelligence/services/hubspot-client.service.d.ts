@@ -1,0 +1,31 @@
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
+import { HubSpotDeal, HubSpotContact, HubSpotActivity, HubSpotOwner, HubSpotPaginatedResponse, HubSpotAssociation } from '@/interfaces/hubspot-types.interface';
+export declare class HubSpotClientService {
+    private readonly httpService;
+    private readonly configService;
+    private readonly logger;
+    private readonly accessToken;
+    private readonly apiUrl;
+    private readonly rateLimit;
+    constructor(httpService: HttpService, configService: ConfigService);
+    isConfigured(): boolean;
+    private checkRateLimit;
+    private request;
+    private handleError;
+    getDeals(limit?: number, after?: string, properties?: string[]): Promise<HubSpotPaginatedResponse<HubSpotDeal>>;
+    getDealById(dealId: string, properties?: string[]): Promise<HubSpotDeal>;
+    createDeal(properties: Record<string, any>): Promise<HubSpotDeal>;
+    updateDeal(dealId: string, properties: Record<string, any>, idProperty?: string): Promise<HubSpotDeal>;
+    findDealsByExactName(dealName: string): Promise<HubSpotDeal[]>;
+    getDealAssociations(dealId: string, toObjectType: 'contacts' | 'companies'): Promise<HubSpotAssociation[]>;
+    getContacts(limit?: number, after?: string): Promise<HubSpotPaginatedResponse<HubSpotContact>>;
+    getContactById(contactId: string): Promise<HubSpotContact>;
+    getContactsByDeal(dealId: string): Promise<HubSpotContact[]>;
+    getCallsForDeal(dealId: string): Promise<HubSpotActivity[]>;
+    getEmailsForDeal(dealId: string): Promise<HubSpotActivity[]>;
+    getOwners(): Promise<HubSpotOwner[]>;
+    getOwnerById(ownerId: string): Promise<HubSpotOwner>;
+    searchDeals(filters: any): Promise<HubSpotDeal[]>;
+    batchGetDeals(dealIds: string[]): Promise<HubSpotDeal[]>;
+}

@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 

@@ -519,7 +519,7 @@ export class M04MemoryStore {
       value: board1.id,
       createdAt: now,
       updatedAt: now,
-    });
+    } as any);
 
     this.analyticsSnapshots.set(randomUUID(), {
       id: randomUUID(),

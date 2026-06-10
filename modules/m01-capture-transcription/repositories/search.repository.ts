@@ -14,7 +14,7 @@ export const ExtendedSearchQuerySchema = z.object({
   ownerId:  z.string().optional(),            // filter by call owner (rep)
   callType: z.enum(['inbound', 'outbound', 'meeting']).optional(),
 });
-export type ExtendedSearchQueryDto = z.infer<typeof ExtendedSearchQuerySchema>;
+export interface ExtendedSearchQueryDto extends z.infer<typeof ExtendedSearchQuerySchema> {}
 
 // Result shape returned by searchAcrossOrg
 export interface OrgSearchResult {
@@ -172,7 +172,7 @@ export class ShareRepository {
         },
       },
       update:  {},
-      create: { callId, tenantId, sharedByUserId, ...dto },
+      create: { callId, tenantId, sharedByUserId, ...dto } as any,
     });
   }
 

@@ -92,7 +92,7 @@ export default function EngageManagerView() {
   } = useEngage();
 
   const { session } = useRole();
-  const isReadOnly = selectedUserId !== session?.userId && selectedUserId !== 'me';
+  const isReadOnly = selectedUserId !== session?.id && selectedUserId !== 'me';
   const [snoozeModalOpen, setSnoozeModalOpen] = useState(false);
 
   return (

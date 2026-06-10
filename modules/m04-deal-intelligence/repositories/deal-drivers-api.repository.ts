@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { CreateDealDriverDto, UpdateDealDriverDto } from '../interfaces/deal-driver.types';

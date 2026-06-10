@@ -6,17 +6,17 @@ register({
   paths: require('../tsconfig.json').compilerOptions.paths,
 });
 import * as fs from 'fs';
-import * as dotenv from 'dotenv';
 
-// Load .env: app folder, then repo root (see README.md).
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
-dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
-
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { ZodExceptionFilter } from './zod-exception.filter';
+import { ResponseTransformInterceptor } from './response-transform.interceptor';
+import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
+import { JwtAuthGuard } from '../../../modules/platform-core/guards/jwt.guard';
+import { TenantThrottlerGuard } from './tenant-throttler.guard';
+import { TraceAndTenantMiddleware } from './trace-tenant.middleware';
 
 // ─── Upload directory ─────────────────────────────────────────────────────────
 // Some flows (M-01 audio upload) need a place to drop files before AssemblyAI
@@ -34,7 +34,13 @@ async function bootstrap() {
     bufferLogs: false,
   });
 
+  const reflector = app.get(Reflector);
+
   app.enableCors({ origin: true, credentials: true });
+  
+  // Register global middleware to inject trace_id and tenant_id
+  app.use(TraceAndTenantMiddleware);
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -42,8 +48,13 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
-  // Convert ZodError raised inside controllers into structured 400 responses.
-  app.useGlobalFilters(new ZodExceptionFilter());
+  // Transform successful response payloads into standardized success envelopes
+  app.useGlobalInterceptors(new ResponseTransformInterceptor());
+  // Convert HttpException and ZodError raised inside controllers into structured responses.
+  app.useGlobalFilters(new FrontendApiExceptionFilter(), new ZodExceptionFilter());
+  
+  // Register global auth guard and rate limiting (throttler) guard
+  app.useGlobalGuards(new JwtAuthGuard(reflector), new TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector));
 
   const port = parseInt(process.env.PORT || '3001', 10);
   await app.listen(port);

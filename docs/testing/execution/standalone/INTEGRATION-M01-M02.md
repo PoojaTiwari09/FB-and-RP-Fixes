@@ -22,7 +22,7 @@ Vite only provides a dev server + proxy; it renders the **same** React component
 | M01 Web (Vite) | http://localhost:5174 |
 | M02 Web (Vite) | http://localhost:5175 |
 | Next web (optional) | http://localhost:3005 |
-| Postgres | localhost:5433 |
+| Postgres | localhost:5438 |
 
 ## Flow
 
@@ -61,7 +61,7 @@ cd "<repo-root>"
 docker compose up -d postgres redis
 
 cd "r-revenue-intelligence-monorepo"
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 .\test_case\free_ports_m01_m02.ps1
 
 # Terminal 1 — binds :3001 (not PORT from .env)

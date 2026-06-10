@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 
 /**
- * Maps Nest HttpException → locked frontend error contract:
- * { error: true, code, message }
+ * Maps Nest HttpException → standard error contract:
+ * { success: false, error: { code, message, details } }
  */
 @Catch(HttpException)
 export class FrontendApiExceptionFilter implements ExceptionFilter {
@@ -37,9 +37,12 @@ export class FrontendApiExceptionFilter implements ExceptionFilter {
     }
 
     res.status(status).json({
-      error: true,
-      code,
-      message: text,
+      success: false,
+      error: {
+        code,
+        message: text,
+        details: typeof payload === 'object' ? payload : null,
+      },
     });
   }
 

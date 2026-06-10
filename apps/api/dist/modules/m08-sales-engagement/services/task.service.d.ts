@@ -1,0 +1,127 @@
+import { M08TaskRepository } from '../repositories/task.repository';
+import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { CreateTaskDto } from '../schemas/task.schema';
+export declare class M08TaskService {
+    private readonly repo;
+    private readonly events;
+    constructor(repo: M08TaskRepository, events: EventPublisherService);
+    createTask(dto: CreateTaskDto, tenantId: string, userId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    getTasks(tenantId: string, filters: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }[]>;
+    getMyTasks(tenantId: string, userId: string, status?: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }[]>;
+    getOverdueTasks(tenantId: string, userId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }[]>;
+    getTaskById(tenantId: string, taskId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    updateTaskStatus(taskId: string, status: string, tenantId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    reassignTask(taskId: string, targetUserId: string, tenantId: string, managerUserId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    handleCallTranscriptionCompleted(payload: {
+        tenantId: string;
+        eventId: string;
+        callId: string;
+        summary: string;
+        userId: string;
+    }): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    private calculateNextBusinessDay;
+}

@@ -1,78 +1,78 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { AiDeepResearcherService } from '../services/ai-deep-researcher.service';
 
-@Controller()
+@Controller('api/v1/ai-deep-researcher')
 export class AiDeepResearcherController {
   constructor(private readonly service: AiDeepResearcherService) {}
 
   // 1. GET Filters Defaults
-  @Get('api/ai-deep-researcher/filters/defaults')
+  @Get('filters/defaults')
   getFiltersDefaults() {
     return this.service.getFiltersDefaults();
   }
 
   // 2. GET Example Questions
-  @Get('api/ai-deep-researcher/example-questions')
+  @Get('example-questions')
   getExampleQuestions() {
     return this.service.getExampleQuestions();
   }
 
   // 3. POST Run Analysis
-  @Post('api/ai-deep-researcher/run')
+  @Post('run')
   runAnalysis(@Body() params: { query: string; filters: any }) {
     return this.service.runAnalysis(params);
   }
 
   // 4. GET Progress
-  @Get('api/ai-deep-researcher/progress/:jobId')
+  @Get('progress/:jobId')
   getProgress(@Param('jobId') jobId: string) {
     return this.service.getProgress(jobId);
   }
 
   // 5. GET Dashboard
-  @Get('api/ai-deep-researcher/dashboard')
+  @Get('dashboard')
   getDashboard(@Query('jobId') jobId: string) {
     return this.service.getDashboard(jobId);
   }
 
   // 6. GET Executive Summary
-  @Get('api/ai-deep-researcher/executive-summary')
+  @Get('executive-summary')
   getExecutiveSummary(@Query('jobId') jobId: string) {
     return this.service.getExecutiveSummary(jobId);
   }
 
   // 7. GET Key Findings
-  @Get('api/ai-deep-researcher/key-findings')
+  @Get('key-findings')
   getKeyFindings(@Query('jobId') jobId: string) {
     return this.service.getKeyFindings(jobId);
   }
 
   // 8. GET Objections
-  @Get('api/ai-deep-researcher/objections')
+  @Get('objections')
   getObjections(@Query('jobId') jobId: string) {
     return this.service.getObjections(jobId);
   }
 
   // 9. GET Trends
-  @Get('api/ai-deep-researcher/trends')
+  @Get('trends')
   getTrends(@Query('jobId') jobId: string) {
     return this.service.getTrends(jobId);
   }
 
   // 10. GET Risks & Opportunities
-  @Get('api/ai-deep-researcher/risks-opportunities')
+  @Get('risks-opportunities')
   getRisksOpportunities(@Query('jobId') jobId: string) {
     return this.service.getRisksOpportunities(jobId);
   }
 
   // 11. GET Recommendations
-  @Get('api/ai-deep-researcher/recommendations')
+  @Get('recommendations')
   getRecommendations(@Query('jobId') jobId: string) {
     return this.service.getRecommendations(jobId);
   }
 
   // 12. GET Evidence
-  @Get('api/ai-deep-researcher/evidence')
+  @Get('evidence')
   getEvidence(
     @Query('jobId') jobId: string,
     @Query('finding') finding?: string,
@@ -85,45 +85,45 @@ export class AiDeepResearcherController {
   }
 
   // 13. POST Escalation Submit
-  @Post('api/ai-deep-researcher/escalation')
+  @Post('escalation')
   submitEscalation(@Body() body: { jobId: string; question: string }) {
     return this.service.submitEscalation(body.jobId, body.question);
   }
 
   // 14. POST Recommendation Share
-  @Post('api/ai-deep-researcher/recommendation/share')
+  @Post('recommendation/share')
   shareRecommendation(@Body() body: { jobId: string; recommendationId: string; channel: string }) {
     return this.service.shareRecommendation(body.jobId, body.recommendationId, body.channel);
   }
 
   // --- Refactored REST Endpoints required by deep-researcher UI ---
 
-  @Get('api/reps')
+  @Get('reps')
   getReps() {
     return this.service.getReps();
   }
 
-  @Get('api/reps/:repId/calls')
+  @Get('reps/:repId/calls')
   getRepCalls(@Param('repId') repId: string) {
     return this.service.getRepCalls(repId);
   }
 
-  @Get('api/objections/:objectionId/rep-breakdown')
+  @Get('objections/:objectionId/rep-breakdown')
   getObjectionRepBreakdown(@Param('objectionId') objectionId: string) {
     return this.service.getObjectionRepBreakdown(objectionId);
   }
 
-  @Get('api/objections/:objectionId/evidence')
+  @Get('objections/:objectionId/evidence')
   getObjectionEvidence(@Param('objectionId') objectionId: string) {
     return this.service.getObjectionEvidence(objectionId);
   }
 
-  @Get('api/accounts/:accountId')
+  @Get('accounts/:accountId')
   getAccountDetails(@Param('accountId') accountId: string) {
     return this.service.getAccountDetails(accountId);
   }
 
-  @Get('api/recommendations/:recId')
+  @Get('recommendations/:recId')
   getRecommendationDetails(@Param('recId') recId: string) {
     return this.service.getRecommendationDetails(recId);
   }

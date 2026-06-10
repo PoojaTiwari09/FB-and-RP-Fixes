@@ -17,11 +17,12 @@ export default function CallsTopNav() {
       {/* Top tab row */}
       <div className="flex px-6 bg-white">
         {topTabs.map(({ label, href }) => {
-          const active =
+          const active = pathname && (
             href === '/calls/analytics'
               ? pathname.startsWith('/calls/analytics')
               : pathname.startsWith('/calls') &&
-                !pathname.startsWith('/calls/analytics');
+                !pathname.startsWith('/calls/analytics')
+          );
           return (
             <Link
               key={href}

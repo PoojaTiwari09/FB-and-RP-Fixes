@@ -367,7 +367,7 @@ export class M09Repository {
       selected_voice_id: data.selected_voice_id || 'Xb7hH8MSUJpSbSDYk0k2',
       is_practice: data.is_practice ?? false,
       hints_used: 0,
-      lifecycle_status: 'active',
+      lifecycle_status: 'active' as 'completed' | 'active' | 'paused',
       elapsed_seconds: 0,
       created_at: new Date(),
       completed_at: null,

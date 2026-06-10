@@ -113,7 +113,7 @@ export class M02ConversationIntelligenceService {
    */
   async createSavedSearch(dto: SavedSearchDto, tenantId: string, userId: string): Promise<SavedSearchRecord> {
     const parsedDto = SavedSearchSchema.parse(dto);
-    return this.repo.createSavedSearch(parsedDto, tenantId, userId);
+    return this.repo.createSavedSearch(parsedDto as any, tenantId, userId);
   }
 
   async getSavedSearches(tenantId: string, userId: string): Promise<SavedSearchRecord[]> {

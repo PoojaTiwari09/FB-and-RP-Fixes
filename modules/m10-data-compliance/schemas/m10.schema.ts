@@ -5,4 +5,4 @@ export const CreateM10DataComplianceSchema = z.object({
   name: z.string().min(1),
 });
 
-export type CreateM10DataComplianceDto = z.infer<typeof CreateM10DataComplianceSchema>;
+export interface CreateM10DataComplianceDto extends z.infer<typeof CreateM10DataComplianceSchema> {}

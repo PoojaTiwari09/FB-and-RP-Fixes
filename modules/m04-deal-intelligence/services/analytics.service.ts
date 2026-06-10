@@ -296,7 +296,7 @@ export class AnalyticsService {
     for (const metricType of metricTypes) {
       const dataPoints = snapshots.map(snapshot => ({
         date: snapshot.snapshotDate.toISOString().split('T')[0],
-        value: snapshot.metrics[metricType] || 0,
+        value: (snapshot as any).metrics[metricType] || 0,
       }));
 
       results.push({
@@ -325,7 +325,7 @@ export class AnalyticsService {
       metrics,
     });
 
-    await this.snapshotRepository.save(snapshot);
+    await this.snapshotRepository.save(snapshot as any);
   }
 
   // ============= Helper Methods =============

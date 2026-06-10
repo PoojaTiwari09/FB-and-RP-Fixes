@@ -473,7 +473,7 @@ export class HybridSearchService {
 
       if (response.ok) {
         const data = await response.json();
-        const hits = (data.hits || []) as Array<SearchResult & Record<string, any>>;
+        const hits = ((data as any).hits || []) as Array<SearchResult & Record<string, any>>;
         if (hits.length > 0) {
           this.logger.log(`[Meilisearch] ${hits.length} matches for "${query}"`);
           return hits.map((hit) => ({

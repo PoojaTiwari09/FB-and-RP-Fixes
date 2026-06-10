@@ -1,0 +1,67 @@
+export declare function formatMmSs(totalSeconds: number): string;
+export declare function scorecardSectionsTemplate(): {
+    sectionId: string;
+    sectionTitle: string;
+    totalQuestions: number;
+    questions: ({
+        questionId: string;
+        questionText: string;
+        required: boolean;
+        answerType: string;
+        aiSuggestion: boolean;
+        aiConfidence: number;
+        aiSuggestedAnswer: boolean;
+        transcriptRef: string;
+        transcriptSnippet: string;
+    } | {
+        questionId: string;
+        questionText: string;
+        required: boolean;
+        answerType: string;
+        aiSuggestion: boolean;
+        aiConfidence: number;
+        aiSuggestedAnswer: number;
+        transcriptRef: string;
+        transcriptSnippet: string;
+    })[];
+}[];
+export declare function mapReviewListItem(review: any): {
+    reviewId: any;
+    callTitle: any;
+    scorecardName: any;
+    account: any;
+    callDate: any;
+    callType: any;
+    duration: any;
+    priority: any;
+    status: any;
+    aiFlags: any;
+    dueDate: any;
+};
+export declare function mapReviewDetail(review: any, call: any): {
+    reviewId: any;
+    callTitle: any;
+    salesRep: any;
+    customer: any;
+    dateTime: any;
+    duration: any;
+    callType: any;
+    dealLinked: any;
+    callSource: any;
+    participants: any;
+    aiSummary: any;
+    keyHighlights: any;
+    talkRatio: any;
+    sentimentSummary: any;
+    sentimentScore: any;
+    risksDetected: any;
+    scorecardName: any;
+    scorecardVersion: any;
+    reviewMode: any;
+    dueDate: any;
+    status: any;
+    reviewer: any;
+    quickStats: any;
+    questions: any;
+    feedback: any;
+};

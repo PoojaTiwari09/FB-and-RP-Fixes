@@ -42,7 +42,7 @@ export class AccountsController {
     @Query('days') days?: string,
   ) {
     if (!board_slug) return { error: 'board_slug is required' };
-    return this.accountsService.getEngagementGap(req.tenantId, board_slug, days ? parseInt(days) : 21, req.userId, req.userRole);
+    return this.accountsService.getEngagementGap(board_slug, days ? parseInt(days) : 21);
   }
 
   @Get('sparklines')
@@ -53,11 +53,11 @@ export class AccountsController {
   ) {
     if (!board_slug) return { error: 'board_slug is required' };
     const ids = hubspot_ids ? hubspot_ids.split(',').map(s => s.trim()) : [];
-    return this.accountsService.getSparklineData(req.tenantId, board_slug, ids, req.userId, req.userRole);
+    return this.accountsService.getSparklineData(board_slug, ids);
   }
 
   @Get(':hubspotId')
   async getAccountDetail(@Req() req: any, @Param('hubspotId') hubspotId: string) {
-    return this.accountsService.getAccountDetail(req.tenantId, hubspotId, req.userId, req.userRole);
+    return this.accountsService.getAccountDetail(hubspotId);
   }
 }

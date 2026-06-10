@@ -1,7 +1,9 @@
+import { resolveApiBase } from '@shared/config/module-api';
+
 import { ENV } from '@shared/config/env';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 
-const API_BASE = ENV.M08_API_BASE_URL;
+const API_BASE = resolveApiBase() + '/api/v1/sales-engagement';
 import type { Task, FilterState, TaskType, SortOption, GroupByOption, StatusTab } from '../types/engage.types';
 
 // Normalize backend field names to match frontend Task model
@@ -92,7 +94,7 @@ export async function fetchTasks(query: {
     size: String(query.size || 50),
   });
   if (query.search) params.set('search', query.search);
-  const endpoint = `/api/tasks?${params.toString()}`;
+  const endpoint = `/tasks?${params.toString()}`;
 
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
@@ -118,7 +120,7 @@ export async function fetchSummary(assigneeId: string, date: string): Promise<{
   completionPercentage: number;
   headerAlert: string;
 }> {
-  const endpoint = `/api/tasks/summary?assigneeId=${assigneeId}&date=${date}`;
+  const endpoint = `/tasks/summary?assigneeId=${assigneeId}&date=${date}`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
@@ -134,7 +136,7 @@ export async function createTask(body: {
   description?: string;
   assigneeId?: string;
 }): Promise<{ taskId: string; status: string; createdAt: string }> {
-  const endpoint = '/api/tasks';
+  const endpoint = '/tasks';
   const res = await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -153,7 +155,7 @@ export async function searchLinkedEntities(search: string): Promise<{
   type: string;
   subLabel: string;
 }[]> {
-  const endpoint = `/api/search/linked-to?search=${encodeURIComponent(search)}`;
+  const endpoint = `/search/linked-to?search=${encodeURIComponent(search)}`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data.results;
@@ -163,7 +165,7 @@ export async function reassignTask(
   taskId: string,
   body: { newAssigneeId: string; scope: string; reason?: string }
 ): Promise<{ taskId: string; assigneeId: string; assigneeName: string; assigneeRole: string; updatedAt: string }> {
-  const endpoint = `/api/tasks/${taskId}/reassign`;
+  const endpoint = `/tasks/${taskId}/reassign`;
   const res = await apiFetch('PATCH', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -179,14 +181,14 @@ export async function reassignTask(
 }
 
 export async function fetchTaskDetail(taskId: string): Promise<Task> {
-  const endpoint = `/api/tasks/${taskId}/detail`;
+  const endpoint = `/tasks/${taskId}/detail`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return normalizeTask(payload.data);
 }
 
 export async function saveTaskNotes(taskId: string, notes: string): Promise<Task> {
-  const endpoint = `/api/tasks/${taskId}/notes`;
+  const endpoint = `/tasks/${taskId}/notes`;
   const res = await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ notes }),
@@ -196,7 +198,7 @@ export async function saveTaskNotes(taskId: string, notes: string): Promise<Task
 }
 
 export async function fetchEmailDraft(taskId: string): Promise<Task['emailDraft']> {
-  const endpoint = `/api/tasks/${taskId}/email-draft`;
+  const endpoint = `/tasks/${taskId}/email-draft`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
@@ -206,7 +208,7 @@ export async function sendEmail(
   taskId: string,
   body: { to: string; from: string; subject: string; body: string; notes?: string }
 ): Promise<void> {
-  const endpoint = `/api/tasks/${taskId}/send-email`;
+  const endpoint = `/tasks/${taskId}/send-email`;
   await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -217,7 +219,7 @@ export async function saveEmailDraft(
   taskId: string,
   body: { to: string; from: string; subject: string; body: string }
 ): Promise<void> {
-  const endpoint = `/api/tasks/${taskId}/save-draft`;
+  const endpoint = `/tasks/${taskId}/save-draft`;
   await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -234,7 +236,7 @@ export async function rephraseEmail(
     companyName?: string;
   }
 ): Promise<string> {
-  const endpoint = `/api/tasks/${taskId}/ai-rephrase`;
+  const endpoint = `/tasks/${taskId}/ai-rephrase`;
   const res = await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -244,21 +246,21 @@ export async function rephraseEmail(
 }
 
 export async function fetchEmailTemplates(): Promise<{ id: string; name: string; subject: string; body: string }[]> {
-  const endpoint = '/api/email-templates?assigneeId=me';
+  const endpoint = '/email-templates?assigneeId=me';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data.templates;
 }
 
 export async function fetchLinkedInScript(taskId: string): Promise<Task['linkedinScript'] & { mutualConnections?: number; linkedInProfileUrl?: string }> {
-  const endpoint = `/api/tasks/${taskId}/linkedin-script`;
+  const endpoint = `/tasks/${taskId}/linkedin-script`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
 }
 
 export async function markTaskComplete(taskId: string, notes?: string): Promise<void> {
-  const endpoint = `/api/tasks/${taskId}/mark-complete`;
+  const endpoint = `/tasks/${taskId}/mark-complete`;
   await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ notes }),
@@ -266,7 +268,7 @@ export async function markTaskComplete(taskId: string, notes?: string): Promise<
 }
 
 export async function snoozeTask(taskId: string, snoozedUntil: string): Promise<void> {
-  const endpoint = `/api/tasks/${taskId}`;
+  const endpoint = `/tasks/${taskId}`;
   await apiFetch('PATCH', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ snoozedUntil }),
@@ -281,7 +283,7 @@ export async function fetchContactDetail(contactId: string): Promise<any> {
 }
 
 export async function skipTask(taskId: string): Promise<{ taskId: string; status: string; action: string; updatedAt: string }> {
-  const endpoint = `/api/tasks/${taskId}/skip`;
+  const endpoint = `/tasks/${taskId}/skip`;
   const res = await apiFetch('POST', endpoint);
   const payload = await res.json();
   return {
@@ -293,7 +295,7 @@ export async function skipTask(taskId: string): Promise<{ taskId: string; status
 }
 
 export async function dismissTask(taskId: string): Promise<{ taskId: string; status: string; action: string; updatedAt: string }> {
-  const endpoint = `/api/tasks/${taskId}/dismiss`;
+  const endpoint = `/tasks/${taskId}/dismiss`;
   const res = await apiFetch('POST', endpoint);
   const payload = await res.json();
   return {
@@ -309,7 +311,7 @@ export async function logTaskAction(
   action: string,
   notes?: string
 ): Promise<{ taskId: string; action: string; loggedAt: string }> {
-  const endpoint = `/api/tasks/${taskId}/action`;
+  const endpoint = `/tasks/${taskId}/action`;
   const res = await apiFetch('POST', endpoint, {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, notes }),
@@ -323,21 +325,21 @@ export async function logTaskAction(
 }
 
 export async function fetchRecentActivity(): Promise<any[]> {
-  const endpoint = '/api/activities/recent';
+  const endpoint = '/activities/recent';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
 }
 
 export async function fetchFilterConfig(): Promise<{ flows: string[]; entityTypes: string[]; localTimes: string[] }> {
-  const endpoint = '/api/tasks/filters-config';
+  const endpoint = '/tasks/filters-config';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
 }
 
 export async function fetchTeamMembers(): Promise<any[]> {
-  const endpoint = '/api/team/members';
+  const endpoint = '/team/members';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;

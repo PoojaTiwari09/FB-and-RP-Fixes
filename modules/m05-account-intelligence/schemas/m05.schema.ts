@@ -5,4 +5,4 @@ export const CreateM05AccountIntelligenceSchema = z.object({
   name: z.string().min(1),
 });
 
-export type CreateM05AccountIntelligenceDto = z.infer<typeof CreateM05AccountIntelligenceSchema>;
+export interface CreateM05AccountIntelligenceDto extends z.infer<typeof CreateM05AccountIntelligenceSchema> {}

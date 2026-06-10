@@ -5,4 +5,4 @@ export const CreateM02ConversationIntelligenceSchema = z.object({
   name: z.string().min(1),
 });
 
-export type CreateM02ConversationIntelligenceDto = z.infer<typeof CreateM02ConversationIntelligenceSchema>;
+export interface CreateM02ConversationIntelligenceDto extends z.infer<typeof CreateM02ConversationIntelligenceSchema> {}

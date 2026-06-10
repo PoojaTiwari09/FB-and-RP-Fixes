@@ -153,7 +153,7 @@ export default function Sidebar() {
   };
 
   const isItemActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/');
+    pathname ? (pathname === href || pathname.startsWith(href + '/')) : false;
 
   const toggleMenu = (label: string) => {
     if (isCollapsed) {

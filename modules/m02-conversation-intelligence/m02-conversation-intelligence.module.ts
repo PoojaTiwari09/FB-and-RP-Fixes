@@ -11,7 +11,7 @@ import {
   M02FrontendFiltersController,
   M02FrontendSearchController,
   M02FrontendStreamsController,
-} from './frontend-api/m02-frontend-search.controller';
+} from './controllers/m02-frontend-search.controller';
 import {
   M02FrontendAnalyticsController,
   M02FrontendCallReviewsController,
@@ -19,11 +19,11 @@ import {
   M02FrontendManagerCallsController,
   M02FrontendScorecardsController,
   M02FrontendUsersController,
-} from './frontend-api/m02-frontend-call-reviews.controller';
-import { M02FrontendTrackersController } from './frontend-api/m02-frontend-trackers.controller';
-import { M02FrontendTrackersService } from './frontend-api/m02-frontend-trackers.service';
-import { M02FrontendCallReviewsService } from './frontend-api/m02-frontend-call-reviews.service';
-import { M02FrontendSearchService } from './frontend-api/m02-frontend-search.service';
+} from './controllers/m02-frontend-call-reviews.controller';
+import { M02FrontendTrackersController } from './controllers/m02-frontend-trackers.controller';
+import { M02FrontendTrackersService } from './services/m02-frontend-trackers.service';
+import { M02FrontendCallReviewsService } from './services/m02-frontend-call-reviews.service';
+import { M02FrontendSearchService } from './services/m02-frontend-search.service';
 import { ConversationIngestService } from './services/ingest.service';
 import { M02ConversationIntelligenceService } from './services/m02.service';
 import { HybridSearchService } from './services/hybrid-search.service';

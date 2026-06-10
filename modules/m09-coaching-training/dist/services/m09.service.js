@@ -1855,7 +1855,7 @@ let AnalyticsService = class AnalyticsService {
                     continue;
                 const rate = stats.assigned > 0 ? Math.round((stats.completed / stats.assigned) * 100) : 0;
                 const avgScore = stats.completed > 0 ? Math.round(stats.scoreSum / stats.completed) : 0;
-                csv += `"${rep.name}",${stats.assigned},${stats.completed},"${rate}%",${avgScore}\n`;
+                csv += `"${rep?.name || ''}",${stats.assigned},${stats.completed},"${rate}%",${avgScore}\n`;
             }
             return csv;
         }

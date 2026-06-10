@@ -6,7 +6,7 @@ Monorepo folder: **`r-revenue-intelligence-monorepo`**
 | :--- | :--- |
 | **Next.js UI Frontend** | `http://localhost:3000` |
 | **NestJS Monolith API** | `http://localhost:3001` |
-| **PostgreSQL Database** | `127.0.0.1:5433` |
+| **PostgreSQL Database** | `127.0.0.1:5438` |
 | **Redis Cache / Queue** | `127.0.0.1:6379` |
 | **Meilisearch Service** | `127.0.0.1:7700` |
 | **FastAPI Python AI** | `127.0.0.1:8000` |
@@ -44,9 +44,9 @@ copy .env.example .env
 
 Edit **`r-revenue-intelligence-monorepo\.env`** to configure local keys and database links:
 ```env
-DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public
-DIRECT_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public
-M10_DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public
+DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public
+DIRECT_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public
+M10_DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public
 
 REDIS_URL=redis://localhost:6379
 DISABLE_REDIS=false
@@ -123,7 +123,7 @@ docker compose down -v            # Stop and wipe database volumes
 
 ### Prisma ORM Commands
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
 pnpm run db:generate              # Regenerate client types (stop API first to prevent EPERM locks)
 pnpm run db:migrate               # Execute pending migrations
@@ -141,7 +141,7 @@ pnpm run db:migrate               # Execute pending migrations
 ### Launch Individual Apps manually
 ```powershell
 # Start central api only
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 $env:UNIFIED_API_PORT="3001"
 pnpm run dev:unified-api
 

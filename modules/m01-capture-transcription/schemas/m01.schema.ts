@@ -13,32 +13,32 @@ export const CreateCallSchema = z.object({
   opportunityId:  z.string().optional(),
   audioUrl:       z.string().url().optional(),
 });
-export type CreateCallDto = z.infer<typeof CreateCallSchema>;
+export interface CreateCallDto extends z.infer<typeof CreateCallSchema> {}
 
 // ── S3 catalog upload ───────────────────────────────────────────────────────
 export const UploadFromS3Schema = z.object({
   recordingId: z.enum(['2min_sales', '3mins_sales']),
 });
-export type UploadFromS3Dto = z.infer<typeof UploadFromS3Schema>;
+export interface UploadFromS3Dto extends z.infer<typeof UploadFromS3Schema> {}
 
 // ── CT-22: Create a note ───────────────────────────────────────────────────
 export const CreateNoteSchema = z.object({
   content: z.string().min(1).max(5000),
 });
-export type CreateNoteDto = z.infer<typeof CreateNoteSchema>;
+export interface CreateNoteDto extends z.infer<typeof CreateNoteSchema> {}
 
 // ── CT-22: Update a note ───────────────────────────────────────────────────
 export const UpdateNoteSchema = z.object({
   content: z.string().min(1).max(5000),
 });
-export type UpdateNoteDto = z.infer<typeof UpdateNoteSchema>;
+export interface UpdateNoteDto extends z.infer<typeof UpdateNoteSchema> {}
 
 // ── CT-23: Share a call ────────────────────────────────────────────────────
 export const ShareCallSchema = z.object({
   sharedWithId:   z.string().min(1),
   sharedWithType: z.enum(['user', 'team']),
 });
-export type ShareCallDto = z.infer<typeof ShareCallSchema>;
+export interface ShareCallDto extends z.infer<typeof ShareCallSchema> {}
 
 // ── CT-05 / CT-21: Search query ───────────────────────────────────────────
 export const SearchQuerySchema = z.object({
@@ -46,7 +46,7 @@ export const SearchQuerySchema = z.object({
   limit:  z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0),
 });
-export type SearchQueryDto = z.infer<typeof SearchQuerySchema>;
+export interface SearchQueryDto extends z.infer<typeof SearchQuerySchema> {}
 
 // ── List calls query ──────────────────────────────────────────────────────
 export const ListCallsQuerySchema = z.object({
@@ -57,7 +57,7 @@ export const ListCallsQuerySchema = z.object({
   limit:   z.coerce.number().int().min(1).max(100).default(20),
   offset:  z.coerce.number().int().min(0).default(0),
 });
-export type ListCallsQueryDto = z.infer<typeof ListCallsQuerySchema>;
+export interface ListCallsQueryDto extends z.infer<typeof ListCallsQuerySchema> {}
 
 // ── Admin settings ────────────────────────────────────────────────────────
 export const UpdateAdminSettingsSchema = z.object({
@@ -65,27 +65,27 @@ export const UpdateAdminSettingsSchema = z.object({
   minCallDurationSeconds:  z.number().int().min(0).optional(),
   piiRedactionEnabled:     z.boolean().optional(),
 });
-export type UpdateAdminSettingsDto = z.infer<typeof UpdateAdminSettingsSchema>;
+export interface UpdateAdminSettingsDto extends z.infer<typeof UpdateAdminSettingsSchema> {}
 
 // ── US-11: Next Steps CRUD ───────────────────────────────────────────
 export const AddNextStepSchema = z.object({
   step: z.string().min(1).max(1000),
 });
-export type AddNextStepDto = z.infer<typeof AddNextStepSchema>;
+export interface AddNextStepDto extends z.infer<typeof AddNextStepSchema> {}
 
 export const UpdateNextStepSchema = z.object({
   step:  z.string().min(1).max(1000),
   index: z.number().int().min(0),
 });
-export type UpdateNextStepDto = z.infer<typeof UpdateNextStepSchema>;
+export interface UpdateNextStepDto extends z.infer<typeof UpdateNextStepSchema> {}
 
 export const DeleteNextStepSchema = z.object({
   index: z.coerce.number().int().min(0),
 });
-export type DeleteNextStepDto = z.infer<typeof DeleteNextStepSchema>;
+export interface DeleteNextStepDto extends z.infer<typeof DeleteNextStepSchema> {}
 
 // ── Inline utterance edit (US-19 / CT-24) ──────────────────────────
 export const UpdateUtteranceSchema = z.object({
   text: z.string().min(1).max(5000),
 });
-export type UpdateUtteranceDto = z.infer<typeof UpdateUtteranceSchema>;
+export interface UpdateUtteranceDto extends z.infer<typeof UpdateUtteranceSchema> {}

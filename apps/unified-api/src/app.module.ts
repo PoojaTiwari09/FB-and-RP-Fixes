@@ -6,7 +6,7 @@ import { EventPublisherModule } from '../../../modules/platform-core/events/even
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
 import { M09CoachingTrainingModule } from '../../../modules/m09-coaching-training/m09-coaching-training.module';
-import { EngageBridgeModule } from '../../../modules/m08-sales-engagement/frontend-api/engage-bridge.module';
+import { M08SalesEngagementModule } from '../../../modules/m08-sales-engagement/m08-sales-engagement.module';
 import { M06ForecastingPredictionModule } from '../../../modules/m06-forecasting-prediction/m06-forecasting-prediction.module';
 import { M04DealIntelligenceModule } from '../../../modules/m04-deal-intelligence/m04-deal-intelligence.module';
 import { M11AiDeepResearcherModule } from '../../../modules/m11-ai-deep-researcher/m11-ai-deep-researcher.module';
@@ -42,7 +42,7 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://1
     M01CaptureTranscriptionModule,
     M02ConversationIntelligenceModule,
     M09CoachingTrainingModule,
-    EngageBridgeModule,
+    M08SalesEngagementModule,
     M06ForecastingPredictionModule,
     M04DealIntelligenceModule,
     M11AiDeepResearcherModule,

@@ -8,4 +8,4 @@ export const ForecastBoardSubmitSchema = z.object({
   committedDealIds: z.array(z.string().min(1)).default([]),
 });
 
-export type ForecastBoardSubmitDto = z.infer<typeof ForecastBoardSubmitSchema>;
+export interface ForecastBoardSubmitDto extends z.infer<typeof ForecastBoardSubmitSchema> {}

@@ -47,7 +47,7 @@ async function submitTranscript(audioUrl: string, speakersExpected = 2): Promise
     }),
   });
   if (!res.ok) {
-    throw new Error(`Submit failed: ${res.status} ${await res.text()}`);
+    throw new Error(`Submit failed: ${(res as any).status} ${await res.text()}`);
   }
   const json = (await res.json()) as { id: string };
   return json.id;
@@ -58,8 +58,8 @@ async function pollTranscript(id: string): Promise<any> {
     const res = await fetch(`https://api.assemblyai.com/v2/transcript/${id}`, {
       headers: { Authorization: API_KEY! },
     });
-    if (!res.ok) throw new Error(`Poll failed: ${res.status}`);
-    const json = await res.json();
+    if (!res.ok) throw new Error(`Poll failed: ${(res as any).status}`);
+    const json = await res.json() as any;
     if (json.status === 'completed') return json;
     if (json.status === 'error') throw new Error(json.error || 'Transcription error');
     process.stdout.write('.');

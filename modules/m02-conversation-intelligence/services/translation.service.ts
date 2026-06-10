@@ -46,8 +46,8 @@ export class TranslationService {
       
       const data = await response.json();
       
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        const translatedResult = data.choices[0].message.content.trim();
+      if ((data as any).choices && (data as any).choices[0] && (data as any).choices[0].message) {
+        const translatedResult = (data as any).choices[0].message.content.trim();
         this.logger.log(`[TRANSLATE RES] Translated Text: "${translatedResult.substring(0, 50)}..."`);
         console.log(`[Translation DEBUG] Success! Translation: ${translatedResult.substring(0, 50)}...`);
         return translatedResult;
@@ -91,8 +91,8 @@ export class TranslationService {
       if (!response.ok) throw new Error(`Groq API error: ${response.statusText}`);
       
       const data = await response.json();
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        let content = data.choices[0].message.content.trim();
+      if ((data as any).choices && (data as any).choices[0] && (data as any).choices[0].message) {
+        let content = (data as any).choices[0].message.content.trim();
         // clean markdown if llm ignored prompt
         if (content.startsWith('```json')) content = content.replace(/```json/g, '').replace(/```/g, '').trim();
         if (content.startsWith('```')) content = content.replace(/```/g, '').trim();

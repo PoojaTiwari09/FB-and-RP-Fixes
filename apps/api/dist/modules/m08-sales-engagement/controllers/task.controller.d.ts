@@ -1,0 +1,103 @@
+import { M08TaskService } from '../services/task.service';
+export declare class M08TaskController {
+    private readonly taskService;
+    constructor(taskService: M08TaskService);
+    getTasks(req: any, status?: string, priorityStr?: string, dueDateRange?: 'today' | 'overdue' | 'week', type?: string, source?: string, search?: string, queryUserId?: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }[]>;
+    getMyTasks(req: any, status?: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }[]>;
+    getOverdueTasks(req: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }[]>;
+    getTaskById(id: string, req: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    createTask(body: any, req: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    updateStatus(id: string, body: any, req: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+    reassignTask(id: string, body: any, req: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        priority: number;
+        dueDate: Date;
+        description: string;
+        type: string;
+        userId: string;
+        source: string;
+        sourceId: string | null;
+    }>;
+}

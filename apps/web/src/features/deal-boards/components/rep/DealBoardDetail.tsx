@@ -17,8 +17,8 @@ export default function DealBoardDetail() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const boardId = params.boardId as string
-  const urlDealId = searchParams.get('dealId')
+  const boardId = (params?.boardId as string) || ''
+  const urlDealId = searchParams?.get('dealId') || null
 
   const [board, setBoard] = useState<BoardDetail | null>(null)
   const [deals, setDeals] = useState<Deal[]>([])

@@ -3,23 +3,23 @@ import { BullModule } from '@nestjs/bullmq';
 
 // Controllers (real, production)
 import { CallsController }   from './controllers/calls.controller';
-import { M01FrontendCallsController } from './frontend-api/m01-frontend-calls.controller';
-import { M01FrontendCallsService } from './frontend-api/m01-frontend-calls.service';
+import { M01FrontendCallsController } from './controllers/m01-frontend-calls.controller';
+import { M01FrontendCallsService } from './services/m01-frontend-calls.service';
 import {
   M01FrontendBriefPeriodsController,
   M01FrontendBriefTemplatesController,
   M01FrontendCallDetailController,
-} from './frontend-api/m01-frontend-call-detail.controller';
-import { M01FrontendTranscriptService } from './frontend-api/m01-frontend-transcript.service';
-import { M01FrontendUploadController } from './frontend-api/m01-frontend-upload.controller';
-import { M01FrontendSmartCallController } from './frontend-api/m01-frontend-smart-call.controller';
-import { M01FrontendSmartCallService } from './frontend-api/m01-frontend-smart-call.service';
-import { M01FrontendSmartCallPersistenceService } from './frontend-api/m01-frontend-smart-call-persistence.service';
+} from './controllers/m01-frontend-call-detail.controller';
+import { M01FrontendTranscriptService } from './services/m01-frontend-transcript.service';
+import { M01FrontendUploadController } from './controllers/m01-frontend-upload.controller';
+import { M01FrontendSmartCallController } from './controllers/m01-frontend-smart-call.controller';
+import { M01FrontendSmartCallService } from './services/m01-frontend-smart-call.service';
+import { M01FrontendSmartCallPersistenceService } from './services/m01-frontend-smart-call-persistence.service';
 import {
   M01FrontendAiReviewerDetailController,
   M01FrontendCoachingInsightsController,
-} from './frontend-api/m01-frontend-ai-reviewer.controller';
-import { M01FrontendAiReviewerService } from './frontend-api/m01-frontend-ai-reviewer.service';
+} from './controllers/m01-frontend-ai-reviewer.controller';
+import { M01FrontendAiReviewerService } from './services/m01-frontend-ai-reviewer.service';
 import { UploadController }  from './controllers/upload.controller';
 import { WebhookController } from './controllers/webhook.controller';
 import { IntegrationsController } from './controllers/integrations.controller';
@@ -32,9 +32,10 @@ import { AuditLogService }          from './services/audit-log.service';
 import { AiExtractionClient }       from './services/ai-extraction.client';
 import { AiExtractionSubscriber }   from './services/ai-extraction.subscriber';
 import { CallAiPipelineService }    from './services/call-ai-pipeline.service';
-import { M01FrontendCallProcessingService } from './frontend-api/m01-frontend-call-processing.service';
+import { M01FrontendCallProcessingService } from './services/m01-frontend-call-processing.service';
 import { M02IngestClient }          from './services/m02-ingest.client';
 import { AiExtractorService }       from './services/ai-extractor.service';
+import { MalwareScannerService }    from './services/malware-scanner.service';
 
 // Repositories
 import { CallRepository }       from './repositories/call.repository';
@@ -110,6 +111,7 @@ import { M01CaptureTranscriptionWorker } from './workers/m01.worker';
     AiExtractionSubscriber,
     M02IngestClient,
     AiExtractorService,
+    MalwareScannerService,
     // Repositories
     CallRepository,
     TranscriptRepository,

@@ -232,6 +232,7 @@ export enum ActivityType {
   EMAIL = 'EMAIL',
   MEETING = 'MEETING',
   NOTE = 'NOTE',
+  TASK = 'TASK',
 }
 
 export class DealActivity {
@@ -240,6 +241,13 @@ export class DealActivity {
   type: ActivityType;
   title: string;
   description?: string;
+  subject?: string;
+  summary?: string;
+  contactId?: string;
+  contactName?: string;
+  durationMinutes?: number;
+  crmActivityId?: string;
+  crmData?: Record<string, any>;
   activityDate: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -429,10 +437,19 @@ export class UserPreference {
   updatedAt: Date;
 }
 
+export enum AnalyticsType {
+  EXECUTIVE = 'EXECUTIVE',
+  MANAGER = 'MANAGER',
+  AE = 'AE',
+}
+
 export class AnalyticsSnapshot {
   id: string;
+  type?: AnalyticsType | string;
   userId: string;
+  boardId?: string;
   snapshotDate: Date;
+  metrics?: Record<string, any>;
   data: Record<string, any>;
   createdAt: Date;
 }

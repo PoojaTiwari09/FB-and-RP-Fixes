@@ -133,7 +133,7 @@ Example format:
       }
 
       const data = await response.json();
-      const content = data.choices[0]?.message?.content;
+      const content = (data as any).choices[0]?.message?.content;
 
       if (!content) {
         this.logger.warn('No content from Groq response');
@@ -217,7 +217,7 @@ Example format:
       }
 
       const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const content = (data as any).candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!content) {
         this.logger.warn('No content from Gemini response');
@@ -403,7 +403,7 @@ Example format:
     if (!response.ok) return null;
 
     const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+    const content = (data as any).choices[0]?.message?.content;
     if (!content) return null;
 
     try {
@@ -450,7 +450,7 @@ Example format:
     if (!response.ok) return null;
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const content = (data as any).candidates?.[0]?.content?.parts?.[0]?.text;
     if (!content) return null;
 
     try {

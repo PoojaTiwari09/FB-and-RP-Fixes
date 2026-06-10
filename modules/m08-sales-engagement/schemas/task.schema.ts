@@ -17,6 +17,6 @@ export const ReassignTaskSchema = z.object({
   userId: z.string().uuid('Invalid User ID format'),
 });
 
-export type CreateTaskDto = z.infer<typeof CreateTaskSchema>;
-export type UpdateTaskStatusDto = z.infer<typeof UpdateTaskStatusSchema>;
-export type ReassignTaskDto = z.infer<typeof ReassignTaskSchema>;
+export interface CreateTaskDto extends z.infer<typeof CreateTaskSchema> {}
+export interface UpdateTaskStatusDto extends z.infer<typeof UpdateTaskStatusSchema> {}
+export interface ReassignTaskDto extends z.infer<typeof ReassignTaskSchema> {}

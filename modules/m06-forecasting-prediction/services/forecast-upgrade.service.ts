@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { EventPublisherService } from '../../platform-core/events/event-publisher.service';

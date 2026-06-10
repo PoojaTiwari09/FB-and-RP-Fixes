@@ -50,7 +50,7 @@ The codebase supports two dev topologies, with **Unified Monolith Mode** recomme
 ### 1. Unified Monolith Mode (Recommended)
 * **Unified UI (`:3000`)**: Next.js client serving all modules concurrently under a single port.
 * **Unified NestJS API (`:3001`)**: Single modular NestJS API bootstrap executing all modular backends and proxying database access.
-* **Database & Caches**: Binds PostgreSQL (`:5433`), Redis (`:6379`), Meilisearch (`:7700`), and Python AI Services (`:8000`) inside Docker.
+* **Database & Caches**: Binds PostgreSQL (`:5438`), Redis (`:6379`), Meilisearch (`:7700`), and Python AI Services (`:8000`) inside Docker.
 
 ### 2. Standalone Modules Mode
 * Allows developers to spin up specific modules (e.g. M01 API on `:3001` + Vite UI on `:5174`, M03 API on `:4010` + Vite UI on `:5177`) in absolute isolation.

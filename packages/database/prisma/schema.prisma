@@ -8,14 +8,14 @@ datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
   extensions = [vector]
-  schemas    = ["dashboards", "public"]
+  schemas    = ["dashboards", "public", "ingestion", "revenuegraph"]
 }
 
 // ─────────────────────────────────────────────────────────────
 // Platform Core
 // ─────────────────────────────────────────────────────────────
 model Tenant {
-  id         String      @id @default(cuid())
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   slug       String      @unique
   createdAt  DateTime    @default(now())
@@ -31,23 +31,23 @@ model Tenant {
 }
 
 model User {
-  id           String      @id @default(cuid())
-  tenantId     String
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   email        String
   passwordHash String
   name         String
   role         UserRole
   dashboards   Dashboard[] @relation("DashboardOwner")
-  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant       Tenant      @relation(fields: [tenantid], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, email])
-  @@index([tenantId, role])
+  @@unique([tenantid, email])
+  @@index([tenantid, role])
   @@schema("public")
 }
 
 model Account {
-  id               String   @id @default(cuid())
-  tenantId         String
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   externalId       String?
   name             String
   ownerName        String?
@@ -62,19 +62,19 @@ model Account {
   crmRecordId      String?  @map("crm_record_id")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant           Tenant   @relation(fields: [tenantid], references: [id], onDelete: Cascade)
   deals            Deal[]
 
-  @@index([tenantId, name])
-  @@index([tenantId, assignedRepId])
-  @@schema("public")
+  @@index([tenantid, name])
+  @@index([tenantid, assignedRepId])
+  @@schema("revenuegraph")
 }
 
 model Deal {
-  id              String    @id @default(cuid())
-  tenantId        String
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   externalId      String?
-  accountId       String?
+  accountId       String? @db.Uuid
   ownerId         String?
   name            String
   amount          Decimal   @db.Decimal(18, 2)
@@ -89,7 +89,7 @@ model Deal {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   account         Account?  @relation(fields: [accountId], references: [id])
-  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant          Tenant    @relation(fields: [tenantid], references: [id], onDelete: Cascade)
 
   // Deal boards integration fields
   ownerName        String?
@@ -105,51 +105,50 @@ model Deal {
   escalated        Boolean?  @default(false)
   warningsCount    Int?      @default(0)
 
-  @@index([tenantId, quarter, ownerId])
-  @@schema("public")
-}
-
-model Call {
-  id             String   @id @default(cuid())
-  tenantId       String
+  @@index([tenantid, quarter, ownerId])
+  @@schema("revenuegraph")
+  @@index([tenantid, quarter])
+}model Call {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   externalId     String?
-  dealId         String?
-  accountId      String?
+  dealId         String? @db.Uuid
+  accountId      String? @db.Uuid
   ownerName      String?
   durationSec    Int?
   occurredAt     DateTime
   transcriptText String?
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant         Tenant   @relation(fields: [tenantid], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, occurredAt])
-  @@schema("public")
+  @@index([tenantid, occurredAt])
+  @@schema("ingestion")
 }
 
 model Dataset {
-  id              String                @id @default(cuid())
-  tenantId        String
-  createdById     String
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  createdById     String @db.Uuid
   name            String
   description     String?
   sourceMode      String
-  dataSourceId    String?
+  dataSourceId    String? @db.Uuid
   selectedObjects Json
   selectedFields  Json
   mappingStatus   String
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
-  tenant          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant          Tenant                @relation(fields: [tenantid], references: [id], onDelete: Cascade)
   dataSource      DataSource?           @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
   relationships   DatasetRelationship[]
   datasetObjects  DatasetObject[]
   datasetFields   DatasetField[]
 
-  @@index([tenantId, createdById])
-  @@schema("public")
+  @@index([tenantid, createdById])
+  @@schema("revenuegraph")
 }
 
 model DatasetRelationship {
-  id                String             @id @default(cuid())
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   datasetId         String
   sourceObject      String
   sourceField       String
@@ -160,12 +159,12 @@ model DatasetRelationship {
   dataset           Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
   @@index([datasetId, status])
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model Dashboard {
-  id             String                   @id @default(cuid())
-  tenantId       String
+  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   ownerId        String
   datasetId      String?
   title          String
@@ -179,16 +178,16 @@ model Dashboard {
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   owner          User                     @relation("DashboardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  tenant         Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant         Tenant                   @relation(fields: [tenantid], references: [id], onDelete: Cascade)
   widgets        Widget[]
 
-  @@index([tenantId, ownerId])
+  @@index([tenantid, ownerId])
   @@schema("public")
 }
 
 model Widget {
-  id          String     @id @default(cuid())
-  dashboardId String
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dashboardId String @db.Uuid
   type        WidgetType
   title       String
   config      Json
@@ -199,6 +198,8 @@ model Widget {
 
   @@index([dashboardId, position])
   @@schema("public")
+  tenantid    String     @db.Uuid
+  @@index([tenantid, dashboardId])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -238,16 +239,16 @@ model coachingsnapshots {
 /// Per-user dashboard layout persistence (M07). Canonical model — maps to dashboards.dashboardconfigs.
 /// Former duplicate `dashboard_configs` table model removed (unused at runtime).
 model DashboardConfig {
-  configId         String   @id @default(dbgenerated("gen_random_uuid()")) @map("configid")
-  tenantId         String   @db.Uuid @map("tenantid")
+  configId         String   @id @default(dbgenerated("gen_random_uuid()")) @map("configid") @db.Uuid
+  tenantid         String   @db.Uuid @map("tenantid")
   userId           String   @db.Uuid @map("userid")
   layout           Json
   visibleWidgets   Json?    @map("visiblewidgets")
   dateRangeDefault String?  @map("daterangedefault")
   createdAt        DateTime @default(now()) @db.Timestamptz(6) @map("createdat")
 
-  @@unique([tenantId, userId], map: "uq_dashboardconfigs_tenant_user")
-  @@index([tenantId, userId], map: "idx_dashboardconfigs_tenant_user")
+  @@unique([tenantid, userId], map: "uq_dashboardconfigs_tenant_user")
+  @@index([tenantid, userId], map: "idx_dashboardconfigs_tenant_user")
   @@schema("dashboards")
   @@map("dashboardconfigs")
 }
@@ -255,7 +256,7 @@ model DashboardConfig {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model DashboardSnapshot {
   snapshotId       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid @map("snapshot_id")
-  tenantId         String   @db.Uuid @map("tenant_id")
+  tenantid         String   @db.Uuid @map("tenant_id")
   periodKey        String   @map("period_key")
   metricName       String   @map("metric_name")
   dimensionScopes  Json     @map("dimension_scopes")
@@ -264,8 +265,8 @@ model DashboardSnapshot {
   computedAt       DateTime @default(now()) @db.Timestamptz(6) @map("computed_at")
   updatedAt        DateTime @updatedAt @db.Timestamptz(6) @map("updated_at")
 
-  @@unique([tenantId, periodKey, metricName, dimensionKey], map: "uq_dashboard_snapshots_tenant_period_metric_dimkey")
-  @@index([tenantId, periodKey, metricName], map: "idx_dashboard_snapshots_tenant_period_metric")
+  @@unique([tenantid, periodKey, metricName, dimensionKey], map: "uq_dashboard_snapshots_tenant_period_metric_dimkey")
+  @@index([tenantid, periodKey, metricName], map: "idx_dashboard_snapshots_tenant_period_metric")
   @@schema("dashboards")
   @@map("dashboard_snapshots")
 }
@@ -303,8 +304,8 @@ model trainersessions {
 }
 
 model DataSource {
-  id           String   @id @default(cuid())
-  tenantId     String
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   sourceName   String
   sourceType   String
   accessToken  String?
@@ -314,12 +315,12 @@ model DataSource {
   objects  DataSourceObject[]
   datasets Dataset[]
 
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DataSourceObject {
-  id           String   @id @default(cuid())
-  dataSourceId String
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dataSourceId String @db.Uuid
   objectName   String
   displayName  String
   createdAt    DateTime @default(now())
@@ -328,13 +329,13 @@ model DataSourceObject {
   fields         DataSourceField[]
   datasetObjects DatasetObject[]
 
-  @@schema("public")
+  @@schema("revenuegraph")
   @@map("data_source_objects")
 }
 
 model DataSourceField {
-  id          String   @id @default(cuid())
-  objectId    String
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  objectId    String @db.Uuid
   fieldName   String
   displayName String
   fieldType   String
@@ -344,12 +345,12 @@ model DataSourceField {
   datasetFields DatasetField[]
 
   @@unique([objectId, fieldName])
-  @@schema("public")
+  @@schema("revenuegraph")
   @@map("data_source_fields")
 }
 
 model DataSourceRelationship {
-  id               String   @id @default(cuid())
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sourceObjectId   String
   targetObjectId   String
   relationshipType String
@@ -357,61 +358,61 @@ model DataSourceRelationship {
   targetField      String
   createdAt        DateTime @default(now())
 
-  @@schema("public")
+  @@schema("revenuegraph")
   @@map("data_source_relationships")
 }
 
 model DatasetObject {
-  id        String @id @default(cuid())
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   datasetId String
-  objectId  String
+  objectId  String @db.Uuid
 
   dataset          Dataset          @relation(fields: [datasetId], references: [id], onDelete: Cascade)
   dataSourceObject DataSourceObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
 
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DatasetField {
-  id        String @id @default(cuid())
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   datasetId String
-  fieldId   String
+  fieldId   String @db.Uuid
 
   dataset         Dataset         @relation(fields: [datasetId], references: [id], onDelete: Cascade)
   dataSourceField DataSourceField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model Team {
-  id        String   @id @default(uuid())
-  tenantId  String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   name      String
-  parentId  String?
+  parentId  String? @db.Uuid
   parent    Team?    @relation("TeamHierarchy", fields: [parentId], references: [id])
   children  Team[]   @relation("TeamHierarchy")
-  managerId String?
+  managerId String? @db.Uuid
   members   String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([tenantId])
-  @@schema("public")
+  @@index([tenantid])
+  @@schema("revenuegraph")
 }
 
 model DashboardAccess {
-  id          String   @id @default(uuid())
-  tenantId    String
-  dashboardId String
-  userId      String
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  dashboardId String @db.Uuid
+  userId      String @db.Uuid
   grantedBy   String
   canView     Boolean  @default(true)
   canEdit     Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   @@unique([dashboardId, userId])
-  @@index([tenantId, dashboardId])
-  @@schema("public")
+  @@index([tenantid, dashboardId])
+  @@schema("revenuegraph")
 }
 
 enum UserRole {
@@ -473,8 +474,8 @@ enum DashboardStatus {
 
 /// A recorded call or meeting registered in the platform (CT-01, CT-02, CT-13)
 model CallRecord {
-  id               String    @id @default(uuid())
-  tenantId         String
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
 
   // Metadata fields shown on Call Detail header (CT-13)
   title            String
@@ -484,8 +485,8 @@ model CallRecord {
   callSource       String    // zoom | teams | meet | dialer | manual
   participants     String[]  // display names / emails of all attendees
   callOwner        String    // userId of the rep who owns the call
-  accountId        String?   // linked CRM account
-  opportunityId    String?   // linked CRM opportunity
+  accountId        String? @db.Uuid   // linked CRM account
+  opportunityId    String? @db.Uuid   // linked CRM opportunity
 
   // Audio storage (CT-02, CT-17)
   audioUrl         String?   // signed URL to stored recording
@@ -504,18 +505,18 @@ model CallRecord {
   shares             CallShare[]
   extractionResults  AiExtractionResult[]
 
-  @@index([tenantId])
-  @@index([tenantId, callDate])
-  @@index([tenantId, transcriptStatus])
+  @@index([tenantid])
+  @@index([tenantid, callDate])
+  @@index([tenantid, transcriptStatus])
   @@map("call_records")
-  @@schema("public")
+  @@schema("ingestion")
 }
 
 /// Full transcript associated with a call (CT-03, CT-04, CT-18)
 model Transcript {
-  id             String    @id @default(uuid())
-  tenantId       String
-  callId         String    @unique
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  callId         String @db.Uuid    @unique
   call           CallRecord @relation(fields: [callId], references: [id], onDelete: Cascade)
 
   // Full text used for full-text search (CT-05)
@@ -537,22 +538,22 @@ model Transcript {
 
   utterances     Utterance[]
 
-  @@index([tenantId])
-  @@index([tenantId, callId])
+  @@index([tenantid])
+  @@index([tenantid, callId])
   // GIN index for full-text search (US-06) — requires PostgreSQL extension
   // Run: CREATE INDEX idx_transcripts_fulltext ON transcripts USING GIN(to_tsvector('english', "fullText"));
   @@map("transcripts")
-  @@schema("public")
+  @@schema("ingestion")
 }
 
 /// A single speaker turn within a transcript (CT-03, CT-11, CT-12, CT-18, CT-19, CT-20)
 model Utterance {
-  id              String    @id @default(uuid())
-  transcriptId    String
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transcriptId    String @db.Uuid
   transcript      Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
 
   // tenantId mirrors the parent transcript for RLS enforcement (US-32)
-  tenantId        String    @default("")
+  tenantid         String @db.Uuid    @default("")
 
   speaker         String    // "Rep" | "Customer" | "Speaker 1" | "Speaker 2" (US-03 fallback)
   text            String    // utterance text — PII-redacted before storage (US-04, US-16)
@@ -565,59 +566,59 @@ model Utterance {
 
   sequenceIndex   Int       // ordering within transcript
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@index([transcriptId])
   @@index([transcriptId, sequenceIndex])
   // GIN index for keyword search within utterances (US-06)
   // Run: CREATE INDEX idx_utterances_text ON utterances USING GIN(to_tsvector('english', "text"));
   @@map("utterances")
-  @@schema("public")
+  @@schema("ingestion")
 }
 
 /// Notes added by a rep or manager on a specific call (CT-22)
 model CallNote {
-  id         String    @id @default(uuid())
-  tenantId   String
-  callId     String
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  callId     String @db.Uuid
   call       CallRecord @relation(fields: [callId], references: [id], onDelete: Cascade)
-  authorId   String    // userId of the note author
+  authorId   String @db.Uuid    // userId of the note author
   content    String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([callId])
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("call_notes")
-  @@schema("public")
+  @@schema("ingestion")
 }
 
 /// Record of sharing a call with another user or team (CT-23)
 model CallShare {
-  id              String    @id @default(uuid())
-  tenantId        String
-  callId          String
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  callId          String @db.Uuid
   call            CallRecord @relation(fields: [callId], references: [id], onDelete: Cascade)
-  sharedByUserId  String
-  sharedWithId    String    // userId or teamId
+  sharedByUserId  String @db.Uuid
+  sharedWithId    String @db.Uuid    // userId or teamId
   sharedWithType  String    // "user" | "team"
   sharedAt        DateTime  @default(now())
 
   @@unique([callId, sharedWithId, sharedWithType])
-  @@index([tenantId])
+  @@index([tenantid])
   @@index([callId])
   @@map("call_shares")
-  @@schema("public")
+  @@schema("ingestion")
 }
 
 // ────────────────────────────────────────────────────────────
 /// Immutable audit trail of all significant system and user events (US-30)
 /// Records: config changes, job events, call shares, transcript edits
 model AuditLog {
-  id         String   @id @default(uuid())
-  tenantId   String
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
 
   // Who and what
-  actorId    String?  // userId of the person who triggered the action (null = system)
+  actorId    String? @db.Uuid  // userId of the person who triggered the action (null = system)
   actorType  String   @default("system") // "user" | "system" | "worker"
   action     String   // e.g. 'transcription.completed' | 'pii.redacted' | 'call.shared'
   entityType String   // e.g. 'CallRecord' | 'Transcript' | 'CallShare'
@@ -628,9 +629,9 @@ model AuditLog {
 
   createdAt  DateTime @default(now())
 
-  @@index([tenantId, createdAt(sort: Desc)])
-  @@index([tenantId, entityId])
-  @@index([tenantId, action])
+  @@index([tenantid, createdAt(sort: Desc)])
+  @@index([tenantid, entityId])
+  @@index([tenantid, action])
   @@map("audit_logs")
   @@schema("public")
 }
@@ -641,8 +642,8 @@ model AuditLog {
 
 /// OAuth integration record for external services (HubSpot, Google, Zoom, Teams, Gmail)
 model Integration {
-  id            String   @id @default(uuid())
-  tenantId      String
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   provider      String   // hubspot | google_calendar | zoom | teams | gmail
   status        String   @default("disconnected") // connected | disconnected | expired
   accountEmail  String?  // email/account used for this integration
@@ -656,8 +657,8 @@ model Integration {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([tenantId, provider])
-  @@index([tenantId])
+  @@unique([tenantid, provider])
+  @@index([tenantid])
   @@map("integrations")
   @@schema("public")
 }
@@ -667,8 +668,8 @@ model Integration {
 // ─────────────────────────────────────────────────────────────
 
 model AiBrief {
-  id               String   @id @default(uuid())
-  tenantId         String
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   briefType        String
   entityId         String
   generatedSummary String?  @db.Text
@@ -678,22 +679,22 @@ model AiBrief {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  @@unique([tenantId, briefType, entityId])
-  @@index([tenantId, briefType])
+  @@unique([tenantid, briefType, entityId])
+  @@index([tenantid, briefType])
   @@map("ai_briefs")
   @@schema("public")
 }
 
 model AiChatHistory {
-  id        String   @id @default(uuid())
-  tenantId  String
-  userId    String?
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  userId    String? @db.Uuid
   question  String   @db.Text
   answer    String   @db.Text
   citations Json?
   createdAt DateTime @default(now())
 
-  @@index([tenantId, createdAt])
+  @@index([tenantid, createdAt])
   @@map("ai_chat_history")
   @@schema("public")
 }
@@ -705,8 +706,8 @@ model AiChatHistory {
 /// Extraction field definition — a "question" the AI answers for every transcript
 /// Phase 1: Users create these in the Extraction Library
 model AiExtractionField {
-  id                   String   @id @default(uuid())
-  tenantId             String
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
 
   // The question / field definition
   question             String   // e.g. "What competitor was mentioned?"
@@ -730,8 +731,8 @@ model AiExtractionField {
 
   results              AiExtractionResult[]
 
-  @@index([tenantId])
-  @@index([tenantId, isActive])
+  @@index([tenantid])
+  @@index([tenantid, isActive])
   @@map("m18_ai_extraction_fields")
   @@schema("public")
 }
@@ -739,13 +740,13 @@ model AiExtractionField {
 /// Extraction result — the AI's answer to a field question for a specific call
 /// Phase 3: Auto-populated when transcription completes
 model AiExtractionResult {
-  id                     String    @id @default(uuid())
-  tenantId               String
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
 
-  fieldId                String
+  fieldId                String @db.Uuid
   field                  AiExtractionField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
-  callId                 String
+  callId                 String @db.Uuid
   call                   CallRecord @relation(fields: [callId], references: [id], onDelete: Cascade)
 
   // Extracted data
@@ -762,8 +763,8 @@ model AiExtractionResult {
   updatedAt              DateTime  @updatedAt
 
   @@unique([fieldId, callId])
-  @@index([tenantId, callId])
-  @@index([tenantId, fieldId])
+  @@index([tenantid, callId])
+  @@index([tenantid, fieldId])
   @@map("m18_ai_extraction_results")
   @@schema("public")
 }
@@ -773,8 +774,8 @@ model AiExtractionResult {
 // ─────────────────────────────────────────────────────────────
 
 model ForecastPeriod {
-  id                 String    @id @default(uuid())
-  tenantId           String
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   name               String
   startDate          DateTime
   endDate            DateTime
@@ -790,15 +791,15 @@ model ForecastPeriod {
   executiveSnapshots ForecastExecutiveSnapshot[]
   predictionJobs     M06PredictionJob[]
 
-  @@index([tenantId, status])
+  @@index([tenantid, status])
   @@map("forecast_periods")
   @@schema("public")
 }
 
 model AiForecastSnapshot {
-  snapshotId          String   @id @default(uuid())
-  tenantId            String
-  periodId            String
+  snapshotId          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  periodId            String @db.Uuid
   predictedAmount     Float
   confidenceRangeLow  Float
   confidenceRangeHigh Float
@@ -810,16 +811,16 @@ model AiForecastSnapshot {
 
   period              ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, periodId, computedAt])
+  @@index([tenantid, periodId, computedAt])
   @@map("ai_forecast_snapshots")
   @@schema("public")
 }
 
 model ForecastSubmission {
-  id               String    @id @default(uuid())
-  tenantId         String
-  periodId         String
-  repUserId        String
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  periodId         String @db.Uuid
+  repUserId        String @db.Uuid
   lob              String
   version          Int       @default(1)
   commitForecast   Float
@@ -829,14 +830,14 @@ model ForecastSubmission {
   submittedAt      DateTime?
   managerOverride  Float?
   managerComment   String?
-  managerId        String?
+  managerId        String? @db.Uuid
   managerName      String?
   approvedAt       DateTime?
   reopenedAt       DateTime?
   overriddenAt     DateTime?
   committedDealIds Json?
   idempotencyKey   String?   @unique
-  dealId           String?
+  dealId           String? @db.Uuid
   bestCaseState    String    @default("editable")
   commitState      String    @default("editable")
   approvedBestCase Float?
@@ -847,18 +848,18 @@ model ForecastSubmission {
 
   period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, periodId, repUserId])
-  @@index([tenantId, periodId, repUserId, dealId])
+  @@index([tenantid, periodId, repUserId])
+  @@index([tenantid, periodId, repUserId, dealId])
   @@map("forecast_submissions")
   @@schema("public")
 }
 
 model ForecastAuditLog {
-  id                   String   @id @default(uuid())
-  tenantId             String
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   forecastSubmissionId String
   action               String
-  actorId              String
+  actorId              String @db.Uuid
   actorName            String?
   actorRole            String
   metadata             Json?
@@ -869,27 +870,27 @@ model ForecastAuditLog {
 }
 
 model ForecastExecutiveSnapshot {
-  id               String   @id @default(uuid())
-  tenantId         String
-  periodId         String
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  periodId         String @db.Uuid
   baseline         String?
   region           String?
-  submissionId     String?
+  submissionId     String? @db.Uuid
   payload          Json
   computedAt       DateTime @default(now())
   idempotencyKey   String   @unique
 
   period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, periodId, computedAt])
+  @@index([tenantid, periodId, computedAt])
   @@map("forecast_executive_snapshots")
   @@schema("public")
 }
 
 model M06PredictionJob {
-  id               String    @id @default(uuid())
-  tenantId         String
-  periodId         String
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  periodId         String @db.Uuid
   status           String
   trigger          String
   idempotencyKey   String    @unique
@@ -900,15 +901,15 @@ model M06PredictionJob {
 
   period           ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, periodId, status])
+  @@index([tenantid, periodId, status])
   @@map("m06_prediction_jobs")
   @@schema("public")
 }
 
 model PipelineCoverageMetrics {
-  id                    String   @id @default(uuid())
-  tenantId              String
-  periodId              String
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  periodId              String @db.Uuid
   openPipelineValue     Float
   weightedPipelineValue Float
   closedWonAmount       Float
@@ -920,8 +921,8 @@ model PipelineCoverageMetrics {
 }
 
 model HistoricalConversionRate {
-  id                 String   @id @default(uuid())
-  tenantId           String
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   fromStage          String
   toStage            String
   conversionRate     Float
@@ -935,11 +936,11 @@ model HistoricalConversionRate {
 }
 
 model ForecastNotification {
-  id            String   @id @default(uuid())
-  tenantId      String
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   repId         String
   repName       String?
-  submissionId  String
+  submissionId  String @db.Uuid
   actionType    String   // 'approved' | 'reopened' | 'overridden'
   requestType   String?  // 'best_case' | 'commit' | 'both'
   dealName      String
@@ -949,30 +950,30 @@ model ForecastNotification {
   isSeen        Boolean  @default(false)
   createdAt     DateTime @default(now())
 
-  @@index([tenantId, repId, isSeen])
+  @@index([tenantid, repId, isSeen])
   @@map("forecast_notifications")
   @@schema("public")
 }
 
 model PipelineValuesCache {
-  id            String   @id @default(uuid())
-  tenantId      String
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   repId         String
-  dealId        String?
-  periodId      String
+  dealId        String? @db.Uuid
+  periodId      String @db.Uuid
   pipelineValue Float
   computedAt    DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([tenantId, periodId, repId, dealId])
+  @@unique([tenantid, periodId, repId, dealId])
   @@map("pipeline_values_cache")
   @@schema("public")
 }
 
 model CrmDeal {
-  id                      String    @id @default(uuid())
-  tenantId                String
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   dealName                String
   stage                   String
   amount                  Float
@@ -982,7 +983,7 @@ model CrmDeal {
   isClosedLost            Boolean   @default(false)
   region                  String?
   lob                     String?
-  repUserId               String?
+  repUserId               String? @db.Uuid
   hubspotId               String?
   lastActivityDate        DateTime?
   riskReason              String?
@@ -993,21 +994,21 @@ model CrmDeal {
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
-  @@index([tenantId, hubspotId])
+  @@index([tenantid, hubspotId])
   @@map("crm_deals")
   @@schema("public")
 }
 
 /// M06 forecast module users (table `users` — distinct from platform `User`)
 model ForecastUser {
-  id        String   @id @default(uuid())
-  tenantId  String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   name      String
   email     String   @unique
   password  String
   role      String
   repId     String?
-  managerId String?
+  managerId String? @db.Uuid
   region    String?
   teamName  String?
   createdAt DateTime @default(now())
@@ -1017,27 +1018,27 @@ model ForecastUser {
 }
 
 model Quota {
-  id         String   @id @default(uuid())
-  tenantId   String
-  periodId   String
-  repUserId  String
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  periodId   String @db.Uuid
+  repUserId  String @db.Uuid
   amount     Float
   aprTarget  Float?
   mayTarget  Float?
   junTarget  Float?
-  managerId  String?
+  managerId  String? @db.Uuid
   assignedAt DateTime @default(now())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([tenantId, periodId, repUserId])
+  @@unique([tenantid, periodId, repUserId])
   @@map("quotas")
   @@schema("public")
 }
 
 model ForecastBoard {
-  id              String    @id @default(uuid())
-  tenantId        String
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   name            String
   scope           String?
   periodType      String
@@ -1056,15 +1057,15 @@ model ForecastBoard {
   reminderConfig  BoardReminderConfig?
   exclusions      BoardExclusion[]
 
-  @@index([tenantId, activePeriod, status])
+  @@index([tenantid, activePeriod, status])
   @@map("forecast_boards")
   @@schema("public")
 }
 
 model BoardColumn {
-  id             String   @id @default(uuid())
-  tenantId       String
-  boardId        String
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  boardId        String @db.Uuid
   label          String
   type           String
   submissionMode String?
@@ -1077,16 +1078,16 @@ model BoardColumn {
 
   board          ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, boardId, sortOrder])
+  @@index([tenantid, boardId, sortOrder])
   @@map("m06_board_columns")
   @@schema("public")
 }
 
 model BoardExclusion {
-  id         String   @id @default(uuid())
-  tenantId   String
-  boardId    String
-  repUserId  String
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  boardId    String @db.Uuid
+  repUserId  String @db.Uuid
   excludedBy String?
   excludedAt DateTime @default(now())
   isActive   Boolean  @default(true)
@@ -1099,9 +1100,9 @@ model BoardExclusion {
 }
 
 model BoardCrmMapping {
-  id                    String   @id @default(uuid())
-  tenantId              String
-  boardId               String   @unique
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  boardId               String @db.Uuid   @unique
   crmConnection         String?
   forecastCategoryField String?
   pipelineSource        String?
@@ -1120,9 +1121,9 @@ model BoardCrmMapping {
 }
 
 model BoardReminderConfig {
-  id               String   @id @default(uuid())
-  tenantId         String
-  boardId          String   @unique
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  boardId          String @db.Uuid   @unique
   frequency        String?
   sendDay          String?
   sendTime         String?
@@ -1141,11 +1142,11 @@ model BoardReminderConfig {
 }
 
 model BoardSubmissionAnnotation {
-  id           String   @id @default(uuid())
-  tenantId     String
-  boardId      String
-  submissionId String
-  managerId    String
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  boardId      String @db.Uuid
+  submissionId String @db.Uuid
+  managerId    String @db.Uuid
   content      String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -1160,8 +1161,8 @@ model BoardSubmissionAnnotation {
 // ─────────────────────────────────────────────────────────────
 
 model SalesPlay {
-  id                String           @id @default(uuid()) @db.Uuid
-  tenantId          String           @db.Uuid
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String           @db.Uuid
   name              String
   steps             Json
   triggerConditions Json
@@ -1172,14 +1173,14 @@ model SalesPlay {
   enrollments       PlayEnrollment[]
   adherenceLogs     PlayAdherenceLog[]
 
-  @@index([tenantId, isActive])
+  @@index([tenantid, isActive])
   @@map("sales_plays")
   @@schema("public")
 }
 
 model PlayEnrollment {
-  id             String               @id @default(uuid()) @db.Uuid
-  tenantId       String               @db.Uuid
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String               @db.Uuid
   playId         String               @db.Uuid
   dealId         String               @db.Uuid
   userId         String               @db.Uuid
@@ -1193,16 +1194,16 @@ model PlayEnrollment {
   notes          PlayNote[]
   adherenceLogs  PlayAdherenceLog[]
 
-  @@unique([tenantId, playId, dealId, triggerEventId])
-  @@index([tenantId, dealId, status])
-  @@index([tenantId, userId, status])
+  @@unique([tenantid, playId, dealId, triggerEventId])
+  @@index([tenantid, dealId, status])
+  @@index([tenantid, userId, status])
   @@map("play_enrollments")
   @@schema("public")
 }
 
 model PlayStepCompletion {
-  id           String         @id @default(uuid()) @db.Uuid
-  tenantId     String         @db.Uuid
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String         @db.Uuid
   enrollmentId String         @db.Uuid
   stepId       Int
   completedBy  String         @db.Uuid
@@ -1215,8 +1216,8 @@ model PlayStepCompletion {
 }
 
 model PlayNote {
-  id           String         @id @default(uuid()) @db.Uuid
-  tenantId     String         @db.Uuid
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String         @db.Uuid
   enrollmentId String         @db.Uuid
   userId       String         @db.Uuid
   noteText     String
@@ -1228,8 +1229,8 @@ model PlayNote {
 }
 
 model PlayAdherenceLog {
-  id             String         @id @default(uuid()) @db.Uuid
-  tenantId       String         @db.Uuid
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String         @db.Uuid
   enrollmentId   String         @db.Uuid
   userId         String         @db.Uuid
   playId         String         @db.Uuid
@@ -1244,8 +1245,8 @@ model PlayAdherenceLog {
 
 /// M08 Engage To-Do task (table `tasks` — not M04 deal tasks)
 model Task {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @map("tenant_id") @db.Uuid
   userId      String   @map("user_id") @db.Uuid
   type        String
   description String
@@ -1257,15 +1258,15 @@ model Task {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@unique([tenantId, source, sourceId])
-  @@index([tenantId, userId, status, dueDate])
+  @@unique([tenantid, source, sourceId])
+  @@index([tenantid, userId, status, dueDate])
   @@map("tasks")
   @@schema("public")
 }
 
 model Workflow {
-  id                String   @id @default(uuid()) @db.Uuid
-  tenantId          String   @map("tenant_id") @db.Uuid
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @map("tenant_id") @db.Uuid
   name              String
   description       String?
   triggerType       String   @map("trigger_type")
@@ -1276,14 +1277,14 @@ model Workflow {
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@index([tenantId, isActive])
+  @@index([tenantid, isActive])
   @@map("workflows")
   @@schema("public")
 }
 
 model WorkflowRun {
-  id               String   @id @default(uuid()) @db.Uuid
-  tenantId         String   @map("tenant_id") @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @map("tenant_id") @db.Uuid
   workflowId       String   @map("workflow_id") @db.Uuid
   dealId           String?  @map("deal_id") @db.Uuid
   contactId        String?  @map("contact_id") @db.Uuid
@@ -1295,14 +1296,14 @@ model WorkflowRun {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@index([tenantId, workflowId, status])
+  @@index([tenantid, workflowId, status])
   @@map("workflow_runs")
   @@schema("public")
 }
 
 model Approval {
-  id               String   @id @default(uuid()) @db.Uuid
-  tenantId         String   @map("tenant_id") @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @map("tenant_id") @db.Uuid
   runId            String?  @map("run_id") @db.Uuid
   workflowId       String?  @map("workflow_id") @db.Uuid
   type             String
@@ -1314,14 +1315,14 @@ model Approval {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@index([tenantId, status])
+  @@index([tenantid, status])
   @@map("approvals")
   @@schema("public")
 }
 
 model WorkflowException {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @map("tenant_id") @db.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @map("tenant_id") @db.Uuid
   runId        String?   @map("run_id") @db.Uuid
   workflowId   String?   @map("workflow_id") @db.Uuid
   errorCode    String    @map("error_code")
@@ -1331,35 +1332,35 @@ model WorkflowException {
   resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz(6)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([tenantId, resolved])
+  @@index([tenantid, resolved])
   @@map("workflow_exceptions")
   @@schema("public")
 }
 
 model IntegrationState {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @map("tenant_id") @db.Uuid
   provider  String
   status    String   @default("connected")
   config    Json?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@unique([tenantId, provider])
+  @@unique([tenantid, provider])
   @@map("integration_states")
   @@schema("public")
 }
 
 model WorkflowAuditLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @map("tenant_id") @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @map("tenant_id") @db.Uuid
   workflowId String?  @map("workflow_id") @db.Uuid
   userId     String?  @map("user_id") @db.Uuid
   action     String
   metadata   Json?
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([tenantId, workflowId])
+  @@index([tenantid, workflowId])
   @@map("workflow_audit_logs")
   @@schema("public")
 }
@@ -1369,8 +1370,8 @@ model WorkflowAuditLog {
 // ─────────────────────────────────────────────────────────────
 
 model M10Account {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @db.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
   crmAccountId String?
   name         String
   domain       String?
@@ -1385,15 +1386,15 @@ model M10Account {
   activities       M10Activity[]
   interactionLinks M10InteractionLink[]
 
-  @@index([tenantId])
-  @@index([tenantId, domain])
+  @@index([tenantid])
+  @@index([tenantid, domain])
   @@map("m10_accounts")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10Contact {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @db.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
   crmContactId String?
   accountId    String?   @db.Uuid
   email        String
@@ -1408,14 +1409,14 @@ model M10Contact {
   interactionLinks M10InteractionLink[]
   activities       M10Activity[]
 
-  @@index([tenantId, email])
+  @@index([tenantid, email])
   @@map("m10_contacts")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10Deal {
-  id          String    @id @default(uuid()) @db.Uuid
-  tenantId    String    @db.Uuid
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
   crmDealId   String?
   accountId   String?   @db.Uuid
   name        String
@@ -1434,14 +1435,14 @@ model M10Deal {
   interactionLinks M10InteractionLink[]
   activities       M10Activity[]
 
-  @@index([tenantId, accountId, isActive])
+  @@index([tenantid, accountId, isActive])
   @@map("m10_deals")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10DealContact {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   dealId    String   @db.Uuid
   contactId String   @db.Uuid
   role      String?
@@ -1449,14 +1450,14 @@ model M10DealContact {
   deal    M10Deal    @relation(fields: [dealId], references: [id])
   contact M10Contact @relation(fields: [contactId], references: [id])
 
-  @@unique([tenantId, dealId, contactId])
+  @@unique([tenantid, dealId, contactId])
   @@map("m10_deal_contacts")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10Activity {
-  id              String   @id @default(uuid()) @db.Uuid
-  tenantId        String   @db.Uuid
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   idempotencyKey  String   @unique
   sourceType      String
   sourcePlatform  String?
@@ -1467,7 +1468,7 @@ model M10Activity {
   dealId          String?  @db.Uuid
   ownerId         String?
   status          String   @default("received")
-  transcriptId    String?
+  transcriptId    String? @db.Uuid
   calendarEventId String?
   emailThreadId   String?
   createdAt       DateTime @default(now()) @db.Timestamptz(6)
@@ -1477,14 +1478,14 @@ model M10Activity {
   deal             M10Deal?             @relation(fields: [dealId], references: [id])
   interactionLinks M10InteractionLink[]
 
-  @@index([tenantId, status])
+  @@index([tenantid, status])
   @@map("m10_activities")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10InteractionLink {
-  id              String   @id @default(uuid()) @db.Uuid
-  tenantId        String   @db.Uuid
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   activityId      String   @db.Uuid
   entityType      String
   entityId        String   @db.Uuid
@@ -1502,14 +1503,14 @@ model M10InteractionLink {
   contact  M10Contact?  @relation(fields: [linkedContactId], references: [id])
   deal     M10Deal?     @relation(fields: [linkedDealId], references: [id])
 
-  @@unique([tenantId, activityId, entityType, entityId])
+  @@unique([tenantid, activityId, entityType, entityId])
   @@map("m10_interaction_links")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10LinkDecisionLog {
-  id             String   @id @default(uuid()) @db.Uuid
-  tenantId       String   @db.Uuid
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   activityId     String   @db.Uuid
   idempotencyKey String
   candidatesJson Json
@@ -1522,14 +1523,14 @@ model M10LinkDecisionLog {
   failureReason  String?
   createdAt      DateTime @default(now()) @db.Timestamptz(6)
 
-  @@index([tenantId, activityId])
+  @@index([tenantid, activityId])
   @@map("m10_link_decision_logs")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10MappingRuleSet {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   name      String
   isActive  Boolean  @default(true)
   config    Json     @default("{}")
@@ -1537,14 +1538,14 @@ model M10MappingRuleSet {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
 
-  @@index([tenantId, isActive])
+  @@index([tenantid, isActive])
   @@map("m10_mapping_rule_sets")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10CrmSyncState {
-  id            String    @id @default(uuid()) @db.Uuid
-  tenantId      String    @db.Uuid
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
   crmSource     String
   entityType    String
   lastSyncedAt  DateTime? @db.Timestamptz(6)
@@ -1555,14 +1556,14 @@ model M10CrmSyncState {
   createdAt     DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime  @updatedAt @db.Timestamptz(6)
 
-  @@unique([tenantId, crmSource, entityType])
+  @@unique([tenantid, crmSource, entityType])
   @@map("m10_crm_sync_states")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10DataCloudConnection {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   destination String
   config      Json     @default("{}")
   isActive    Boolean  @default(true)
@@ -1570,14 +1571,14 @@ model M10DataCloudConnection {
   updatedAt   DateTime @updatedAt @db.Timestamptz(6)
   exportRuns  M10DataCloudExportRun[]
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("m10_data_cloud_connections")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10DataCloudExportRun {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @db.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
   connectionId String    @db.Uuid
   status       String    @default("pending")
   startedAt    DateTime  @default(now()) @db.Timestamptz(6)
@@ -1587,32 +1588,32 @@ model M10DataCloudExportRun {
   filePaths    Json?
   connection   M10DataCloudConnection @relation(fields: [connectionId], references: [id])
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("m10_data_cloud_export_runs")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M10DataCloudCheckpoint {
-  id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
   domain     String
   lastCursor String?
   updatedAt  DateTime @updatedAt @db.Timestamptz(6)
 
-  @@unique([tenantId, domain])
+  @@unique([tenantid, domain])
   @@map("m10_data_cloud_checkpoints")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 // ── Live Call Assist (Smart Call) — Postgres persistence (replaces Supabase) ──
 model LiveCallSession {
-  id            String            @id @default(uuid()) @db.Uuid
-  tenantId      String            @default("00000000-0000-0000-0000-000000000001") @db.Uuid
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String            @default("00000000-0000-0000-0000-000000000001") @db.Uuid
   sessionName   String?           @map("session_name")
   salesRepName  String?           @default("Sales Rep") @map("sales_rep_name")
   clientName    String?           @default("Client") @map("client_name")
   contactId     String?           @map("contact_id")
-  dealId        String?           @map("deal_id")
+  dealId        String? @db.Uuid           @map("deal_id")
   dealCompany   String?           @map("deal_company")
   status        String            @default("active")
   startedAt     DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
@@ -1623,13 +1624,13 @@ model LiveCallSession {
   createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   summaries     LiveCallSummary[]
 
-  @@index([tenantId, status])
+  @@index([tenantid, status])
   @@map("live_call_sessions")
-  @@schema("public")
+  @@schema("ingestion")
 }
 
 model LiveCallSummary {
-  id                   String          @id @default(uuid()) @db.Uuid
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sessionId            String          @map("session_id") @db.Uuid
   chunkIndex           Int             @map("chunk_index")
   timeStart            String          @map("time_start")
@@ -1644,12 +1645,14 @@ model LiveCallSummary {
 
   @@index([sessionId, chunkIndex])
   @@map("live_call_summaries")
-  @@schema("public")
+  @@schema("ingestion")
+  tenantid             String          @db.Uuid
+  @@index([tenantid, sessionId])
 }
 
 model EngageTask {
-  id              String   @id @default(uuid())
-  tenantId        String   @map("tenant_id")
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
   taskId          String   @unique @map("task_id")
   title           String   @default("")
   contactId       String?  @map("contact_id")
@@ -1686,14 +1689,14 @@ model EngageTask {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  @@index([tenantId, status])
+  @@index([tenantid, status])
   @@map("engage_tasks")
   @@schema("public")
 }
 
 model EngageContact {
-  id                 String   @id @default(uuid())
-  tenantId           String   @map("tenant_id")
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
   contactId          String   @unique @map("contact_id")
   contactName        String   @map("contact_name")
   jobTitle           String?  @map("job_title")
@@ -1707,14 +1710,14 @@ model EngageContact {
   notes              String?  @db.Text
   createdAt          DateTime @default(now()) @map("created_at")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("engage_contacts")
   @@schema("public")
 }
 
 model EmailDraft {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
   taskId       String   @unique @map("task_id")
   contactName  String?  @map("contact_name")
   contactEmail String?  @map("contact_email")
@@ -1725,14 +1728,14 @@ model EmailDraft {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("email_drafts")
   @@schema("public")
 }
 
 model EmailTemplate {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
   templateId   String   @unique @map("template_id")
   templateName String   @map("template_name")
   subject      String
@@ -1740,15 +1743,15 @@ model EmailTemplate {
   category     String?
   createdAt    DateTime @default(now()) @map("created_at")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("email_templates")
   @@schema("public")
 }
 
 model EngageActivity {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
-  activityId   String   @unique @map("activity_id")
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
+  activityId   String @db.Uuid   @unique @map("activity_id")
   contactId    String?  @map("contact_id")
   contactName  String   @map("contact_name")
   company      String?
@@ -1758,14 +1761,14 @@ model EngageActivity {
   timeAgoLabel String?  @map("time_ago_label")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("engage_activities")
   @@schema("public")
 }
 
 model CallReview {
-  id                 String   @id @default(uuid())
-  tenantId           String   @map("tenant_id")
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
   reviewId           String   @unique @map("review_id")
   callTitle          String   @map("call_title")
   salesRep           String?  @map("sales_rep")
@@ -1800,14 +1803,14 @@ model CallReview {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("call_reviews")
   @@schema("public")
 }
 
 model M02Tracker {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid   @map("tenant_id")
   slug      String   @map("slug")
   name      String
   keywords  String[] @default([])
@@ -1818,16 +1821,16 @@ model M02Tracker {
   updatedAt DateTime @updatedAt @map("updated_at")
   detections M02TrackerDetection[]
 
-  @@unique([tenantId, slug])
-  @@index([tenantId])
+  @@unique([tenantid, slug])
+  @@index([tenantid])
   @@map("m02_trackers")
   @@schema("public")
 }
 
 model M02TrackerDetection {
-  id               String     @id @default(uuid())
-  tenantId         String     @map("tenant_id")
-  trackerId        String     @map("tracker_id")
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid     @map("tenant_id")
+  trackerId        String @db.Uuid     @map("tracker_id")
   entityType       String     @map("entity_type")
   entityId         String     @map("entity_id")
   matchedKeyword   String     @map("matched_keyword")
@@ -1838,15 +1841,15 @@ model M02TrackerDetection {
   createdAt        DateTime   @default(now()) @map("created_at")
   tracker          M02Tracker @relation(fields: [trackerId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId, trackerId])
-  @@index([tenantId, entityId])
+  @@index([tenantid, trackerId])
+  @@index([tenantid, entityId])
   @@map("m02_tracker_detections")
   @@schema("public")
 }
 
 model ManagerAccount {
-  id               String    @id
-  tenantId         String    @map("tenant_id")
+  id               String    @id @db.Uuid
+  tenantid         String @db.Uuid    @map("tenant_id")
   name             String
   ownerId          String?   @map("owner_id")
   ownerName        String?   @map("owner_name")
@@ -1868,26 +1871,26 @@ model ManagerAccount {
   crmFields        Json?     @map("crm_fields")
   aiChatHistory    Json?     @map("ai_chat_history")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("manager_accounts")
   @@schema("public")
 }
 
 model ManagerAccountsConfig {
-  id          String @id
-  tenantId    String @map("tenant_id")
+  id          String @id @db.Uuid
+  tenantid         String @db.Uuid @map("tenant_id")
   alertBanner Json?  @map("alert_banner")
   kpiSummary  Json?  @map("kpi_summary")
   viewers     Json?  @map("viewers")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("manager_accounts_config")
   @@schema("public")
 }
 
 model ManagerCoachingConfig {
-  id              String @id
-  tenantId        String @map("tenant_id")
+  id              String @id @db.Uuid
+  tenantid         String @db.Uuid @map("tenant_id")
   filters         Json?  @map("filters")
   activity        Json?  @map("activity")
   interaction     Json?  @map("interaction")
@@ -1896,14 +1899,14 @@ model ManagerCoachingConfig {
   aiInsights      Json?  @map("ai_insights")
   teamVsBenchmark Json?  @map("team_vs_benchmark")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("manager_coaching_config")
   @@schema("public")
 }
 
 model ManagerCoachingRep {
-  id                 String @id
-  tenantId           String @map("tenant_id")
+  id                 String @id @db.Uuid
+  tenantid         String @db.Uuid @map("tenant_id")
   header             Json?  @map("header")
   kpis               Json?  @map("kpis")
   trend              Json?  @map("trend")
@@ -1912,14 +1915,14 @@ model ManagerCoachingRep {
   recommendedActions Json?  @map("recommended_actions")
   coachingHistory    Json?  @map("coaching_history")
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("manager_coaching_reps")
   @@schema("public")
 }
 
 model DealMeddpicc {
-  id                String   @id @default(cuid())
-  tenantId          String
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   dealExternalId    String   // HubSpot / CRM deal ID for direct lookup
 
   // Overall score (0-100)
@@ -1941,17 +1944,17 @@ model DealMeddpicc {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  @@index([tenantId])
+  @@index([tenantid])
   @@index([dealExternalId])
   @@map("deal_meddpicc")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model M04DealDriver {
-  id          String    @id @default(cuid())
-  tenantId    String    @default("default")
-  dealId      String
-  boardId     String?
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid    @default("default")
+  dealId      String @db.Uuid
+  boardId     String? @db.Uuid
   name        String
   type        String    @default("action")
   status      String    @default("active")
@@ -1965,27 +1968,27 @@ model M04DealDriver {
 
   @@index([dealId])
   @@index([boardId])
-  @@index([tenantId])
+  @@index([tenantid])
   @@map("m04_deal_drivers")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DealComment {
-  id        String   @id @default(cuid())
-  tenantId  String
-  dealId    String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  dealId    String @db.Uuid
   comment   String
   createdAt DateTime @default(now())
 
   @@index([dealId])
   @@map("m04_deal_comments")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DealTask {
-  id          String    @id @default(cuid())
-  tenantId    String
-  dealId      String
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  dealId      String @db.Uuid
   title       String
   description String?
   status      String    @default("pending")
@@ -1996,13 +1999,13 @@ model DealTask {
 
   @@index([dealId])
   @@map("m04_deal_tasks")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DealWarning {
-  id              String   @id @default(cuid())
-  tenantId        String
-  dealId          String
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  dealId          String @db.Uuid
   severity        String
   title           String
   description     String
@@ -2012,13 +2015,13 @@ model DealWarning {
 
   @@index([dealId])
   @@map("m04_deal_warnings")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DealPlaybook {
-  id              String   @id @default(cuid())
-  tenantId        String
-  dealId          String
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  dealId          String @db.Uuid
   criterionName   String
   question        String
   status          String   @default("Pending")
@@ -2028,13 +2031,13 @@ model DealPlaybook {
 
   @@index([dealId])
   @@map("m04_deal_playbooks")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DealActivityEvent {
-  id           String   @id @default(cuid())
-  tenantId     String
-  dealId       String
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
+  dealId       String @db.Uuid
   date         String
   type         String
   duration     Int
@@ -2045,12 +2048,12 @@ model DealActivityEvent {
 
   @@index([dealId])
   @@map("m04_deal_activity_events")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 
 model DealNotification {
-  id        String   @id @default(cuid())
-  tenantId  String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String @db.Uuid
   repName   String
   message   String
   type      String   @default("info")
@@ -2058,6 +2061,6 @@ model DealNotification {
   read      Boolean  @default(false)
 
   @@map("m04_deal_notifications")
-  @@schema("public")
+  @@schema("revenuegraph")
 }
 

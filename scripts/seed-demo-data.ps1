@@ -3,7 +3,7 @@
 
 $Root = $PSScriptRoot | Split-Path -Parent
 $BackendRoot = $Root
-$dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
 Write-Host ""
 Write-Host "=== Seeding demo data ===" -ForegroundColor Cyan
@@ -67,7 +67,7 @@ Pop-Location
 
 if ($code -ne 0) {
   Write-Host "Seed warning: pnpm run seed:m01 exited $code (often data already exists)." -ForegroundColor Yellow
-  Write-Host "If Docker Postgres is on 5433 and the API starts, you can ignore this." -ForegroundColor DarkGray
+  Write-Host "If Docker Postgres is on 5438 and the API starts, you can ignore this." -ForegroundColor DarkGray
 }
 
 Write-Host ""

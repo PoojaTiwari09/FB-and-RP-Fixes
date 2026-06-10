@@ -32,20 +32,24 @@ import type {
   CallProcessResponse,
 } from '../types/calls.types';
 
-import { ENV } from '@shared/config/env';
+import { resolveApiBase } from '@shared/config/module-api';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import { unwrapM01Payload } from '@shared/lib/m01-api-payload';
 
-// ─── Config (M01 bridge @ /api/calls) ───────────────────────
-
-const API_BASE_URL = ENV.M01_API_BASE_URL;
+// ─── Config (M01 bridge @ /api/v1/capture-transcription/calls) ───────────────────────
 
 const DEFAULT_HEADERS: HeadersInit = getBridgeHeaders();
 
 // ─── Helper ───────────────────────────────────────────────────
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${url}`, {
+  let fullUrl = '';
+  if (url.startsWith('/api/v1/')) {
+    fullUrl = `${resolveApiBase()}${url}`;
+  } else {
+    fullUrl = `${resolveApiBase()}/api/v1/capture-transcription${url.substring(4)}`;
+  }
+  const res = await fetch(fullUrl, {
     ...options,
     headers: { ...DEFAULT_HEADERS, ...options?.headers },
   });
@@ -54,7 +58,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   return unwrapM01Payload<T>(json);
 }
 
-// ─── 1. GET /api/calls ────────────────────────────────────────
+// ─── 1. GET /api/v1/capture-transcription/calls ────────────────────────────────────────
 
 export async function fetchCallsList(filters: Partial<CallsListFilters>): Promise<CallsListResponse> {
   const params = new URLSearchParams();
@@ -71,59 +75,61 @@ export async function fetchCallsList(filters: Partial<CallsListFilters>): Promis
   if (filters.startDate) params.set('startDate', filters.startDate);
   if (filters.endDate) params.set('endDate', filters.endDate);
 
-  return apiFetch<CallsListResponse>(`/api/calls?${params.toString()}`);
+  return apiFetch<CallsListResponse>(`/api/v1/capture-transcription/calls?${params.toString()}`);
 }
 
-// ─── 2. GET /api/calls/:callId ────────────────────────────────
+// ─── 2. GET /api/v1/capture-transcription/calls/:callId ────────────────────────────────
 
 export async function fetchCallDetail(callId: string): Promise<CallMetadata> {
-  return apiFetch<CallMetadata>(`/api/calls/${callId}`);
+  return apiFetch<CallMetadata>(`/api/v1/capture-transcription/calls/${callId}`);
 }
 
-// ─── 3. GET /api/calls/accounts ───────────────────────────────
+// ─── 3. GET /api/v1/capture-transcription/calls/accounts ───────────────────────────────
 
 export async function fetchAccounts(search?: string): Promise<AccountsResponse> {
   const params = search ? `?search=${encodeURIComponent(search)}` : '';
-  return apiFetch<AccountsResponse>(`/api/calls/accounts${params}`);
+  return apiFetch<AccountsResponse>(`/api/v1/capture-transcription/calls/accounts${params}`);
 }
 
-// ─── 4. GET /api/calls/participants ───────────────────────────
+// ─── 4. GET /api/v1/capture-transcription/calls/participants ───────────────────────────
 
 export async function fetchParticipants(search?: string, accountId?: string): Promise<ParticipantsResponse> {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
   if (accountId) params.set('accountId', accountId);
-  return apiFetch<ParticipantsResponse>(`/api/calls/participants?${params.toString()}`);
+  return apiFetch<ParticipantsResponse>(`/api/v1/capture-transcription/calls/participants?${params.toString()}`);
 }
 
 // ─── 5b. Call processing (transcribe + analyze on open) ───────
 
 export async function fetchCallProcessStatus(callId: string): Promise<CallProcessStatus> {
-  return apiFetch<CallProcessStatus>(`/api/calls/${callId}/process-status`);
+  return apiFetch<CallProcessStatus>(`/api/v1/capture-transcription/calls/${callId}/process-status`);
 }
 
+// ─── 5c. POST /api/v1/capture-transcription/calls/:callId/process ───────
+
 export async function triggerCallProcess(callId: string): Promise<CallProcessResponse> {
-  return apiFetch<CallProcessResponse>(`/api/calls/${callId}/process`, {
+  return apiFetch<CallProcessResponse>(`/api/v1/capture-transcription/calls/${callId}/process`, {
     method: 'POST',
   });
 }
 
-// ─── 6. GET /api/calls/:callId/metadata ──────────────────────
+// ─── 6. GET /api/v1/capture-transcription/calls/:callId/metadata ──────────────────────
 
 export async function fetchCallMetadata(callId: string): Promise<CallMetadata> {
-  return apiFetch<CallMetadata>(`/api/calls/${callId}/metadata`);
+  return apiFetch<CallMetadata>(`/api/v1/capture-transcription/calls/${callId}/metadata`);
 }
 
-// ─── 7. GET /api/calls/:callId/briefs ────────────────────────
+// ─── 7. GET /api/v1/capture-transcription/calls/:callId/briefs ────────────────────────
 
 export async function fetchBriefsList(callId: string, page = 1, size = 10): Promise<BriefsListResponse> {
-  return apiFetch<BriefsListResponse>(`/api/calls/${callId}/briefs?page=${page}&size=${size}`);
+  return apiFetch<BriefsListResponse>(`/api/v1/capture-transcription/calls/${callId}/briefs?page=${page}&size=${size}`);
 }
 
-// ─── 8. GET /api/calls/:callId/briefs/:briefId ───────────────
+// ─── 8. GET /api/v1/capture-transcription/calls/:callId/briefs/:briefId ───────────────
 
 export async function fetchBriefDetail(callId: string, briefId: string): Promise<BriefDetail> {
-  return apiFetch<BriefDetail>(`/api/calls/${callId}/briefs/${briefId}`);
+  return apiFetch<BriefDetail>(`/api/v1/capture-transcription/calls/${callId}/briefs/${briefId}`);
 }
 
 // ─── 9. GET /api/brief-templates ─────────────────────────────
@@ -138,59 +144,59 @@ export async function fetchBriefPeriods(): Promise<BriefPeriodsResponse> {
   return apiFetch<BriefPeriodsResponse>('/api/brief-periods');
 }
 
-// ─── 11. POST /api/calls/:callId/briefs ──────────────────────
+// ─── 11. POST /api/v1/capture-transcription/calls/:callId/briefs ──────────────────────
 
 export async function generateBrief(callId: string, body: GenerateBriefRequest): Promise<GenerateBriefResponse> {
-  const url = `/api/calls/${callId}/briefs`;
+  const url = `/api/v1/capture-transcription/calls/${callId}/briefs`;
   return apiFetch<GenerateBriefResponse>(url, {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
-// ─── 11b. POST /api/calls/:callId/briefs/:briefId/regenerate ─
+// ─── 11b. POST /api/v1/capture-transcription/calls/:callId/briefs/:briefId/regenerate ─
 
 export async function regenerateBrief(
   callId: string,
   briefId: string,
   body: GenerateBriefRequest,
 ): Promise<GenerateBriefResponse> {
-  const url = `/api/calls/${callId}/briefs/${briefId}/regenerate`;
+  const url = `/api/v1/capture-transcription/calls/${callId}/briefs/${briefId}/regenerate`;
   return apiFetch<GenerateBriefResponse>(url, {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
-// ─── 12. POST /api/calls/:callId/briefs/:briefId/share-link ──
+// ─── 12. POST /api/v1/capture-transcription/calls/:callId/briefs/:briefId/share-link ──
 
 export async function generateShareLink(callId: string, briefId: string): Promise<ShareLinkResponse> {
-  const url = `/api/calls/${callId}/briefs/${briefId}/share-link`;
+  const url = `/api/v1/capture-transcription/calls/${callId}/briefs/${briefId}/share-link`;
   return apiFetch<ShareLinkResponse>(url, { method: 'POST' });
 }
 
-// ─── 13. POST /api/calls/:callId/briefs/:briefId/share-internal
+// ─── 13. POST /api/v1/capture-transcription/calls/:callId/briefs/:briefId/share-internal
 
 export async function shareInternally(
   callId: string,
   briefId: string,
   body: ShareInternalRequest,
 ): Promise<ShareInternalResponse> {
-  const url = `/api/calls/${callId}/briefs/${briefId}/share-internal`;
+  const url = `/api/v1/capture-transcription/calls/${callId}/briefs/${briefId}/share-internal`;
   return apiFetch<ShareInternalResponse>(url, {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
-// ─── 15. GET /api/calls/:callId/briefs/:briefId/formatted-summary
+// ─── 15. GET /api/v1/capture-transcription/calls/:callId/briefs/:briefId/formatted-summary
 
 export async function fetchFormattedSummary(callId: string, briefId: string): Promise<FormattedSummaryResponse> {
-  const url = `/api/calls/${callId}/briefs/${briefId}/formatted-summary`;
+  const url = `/api/v1/capture-transcription/calls/${callId}/briefs/${briefId}/formatted-summary`;
   return apiFetch<FormattedSummaryResponse>(url);
 }
 
-// ─── 22. GET /api/calls/:callId/transcript ───────────────────
+// ─── 22. GET /api/v1/capture-transcription/calls/:callId/transcript ───────────────────
 
 export async function fetchTranscript(
   callId: string,
@@ -201,53 +207,53 @@ export async function fetchTranscript(
   if (params.size) qp.set('size', String(params.size));
   if (params.search) qp.set('search', params.search);
   if (params.showLowConfidenceOnly) qp.set('showLowConfidenceOnly', 'true');
-  return apiFetch<TranscriptResponse>(`/api/calls/${callId}/transcript?${qp.toString()}`);
+  return apiFetch<TranscriptResponse>(`/api/v1/capture-transcription/calls/${callId}/transcript?${qp.toString()}`);
 }
 
-// ─── 23. GET /api/calls/:callId/transcript/summary ───────────
+// ─── 23. GET /api/v1/capture-transcription/calls/:callId/transcript/summary ───────────
 
 export async function fetchTranscriptSummary(callId: string): Promise<TranscriptSummary> {
-  return apiFetch<TranscriptSummary>(`/api/calls/${callId}/transcript/summary`);
+  return apiFetch<TranscriptSummary>(`/api/v1/capture-transcription/calls/${callId}/transcript/summary`);
 }
 
-// ─── 24. GET /api/calls/:callId/transcript/talk-ratio ────────
+// ─── 24. GET /api/v1/capture-transcription/calls/:callId/transcript/talk-ratio ────────
 
 export async function fetchTalkRatio(callId: string): Promise<TalkRatio> {
-  return apiFetch<TalkRatio>(`/api/calls/${callId}/transcript/talk-ratio`);
+  return apiFetch<TalkRatio>(`/api/v1/capture-transcription/calls/${callId}/transcript/talk-ratio`);
 }
 
-// ─── 25. GET /api/calls/:callId/transcript/audio ─────────────
+// ─── 25. GET /api/v1/capture-transcription/calls/:callId/transcript/audio ─────────────
 
 export async function fetchAudio(callId: string): Promise<AudioMeta> {
-  return apiFetch<AudioMeta>(`/api/calls/${callId}/transcript/audio`);
+  return apiFetch<AudioMeta>(`/api/v1/capture-transcription/calls/${callId}/transcript/audio`);
 }
 
-// ─── 26. GET /api/calls/:callId/transcript/topics ────────────
+// ─── 26. GET /api/v1/capture-transcription/calls/:callId/transcript/topics ────────────
 
 export async function fetchTopics(callId: string): Promise<TopicsResponse> {
-  return apiFetch<TopicsResponse>(`/api/calls/${callId}/transcript/topics`);
+  return apiFetch<TopicsResponse>(`/api/v1/capture-transcription/calls/${callId}/transcript/topics`);
 }
 
-// ─── 27. GET /api/calls/:callId/next-steps ───────────────────
+// ─── 27. GET /api/v1/capture-transcription/calls/:callId/next-steps ───────────────────
 
 export async function fetchNextSteps(callId: string): Promise<NextStepsResponse> {
-  return apiFetch<NextStepsResponse>(`/api/calls/${callId}/next-steps`);
+  return apiFetch<NextStepsResponse>(`/api/v1/capture-transcription/calls/${callId}/next-steps`);
 }
 
-// ─── 28. PATCH /api/calls/:callId/next-steps/:stepId ─────────
+// ─── 28. PATCH /api/v1/capture-transcription/calls/:callId/next-steps/:stepId ─────────
 
 export async function updateNextStep(
   callId: string,
   stepId: string,
   completed: boolean,
 ): Promise<Pick<NextStep, 'stepId' | 'completed'> & { updatedAt: string }> {
-  return apiFetch(`/api/calls/${callId}/next-steps/${stepId}`, {
+  return apiFetch(`/api/v1/capture-transcription/calls/${callId}/next-steps/${stepId}`, {
     method: 'PATCH',
     body: JSON.stringify({ completed }),
   });
 }
 
-// ─── 29. POST /api/calls/:callId/notes ────────────────────────────
+// ─── 29. POST /api/v1/capture-transcription/calls/:callId/notes ────────────────────────────
 
 export async function saveCallNote(callId: string, note: string): Promise<NoteResponse> {
   const payload = {
@@ -256,27 +262,27 @@ export async function saveCallNote(callId: string, note: string): Promise<NoteRe
     userId: process.env.NEXT_PUBLIC_USER_ID || 'usr_001',
     timestamp: new Date().toISOString(),
   };
-  return apiFetch<NoteResponse>(`/api/calls/${callId}/notes`, {
+  return apiFetch<NoteResponse>(`/api/v1/capture-transcription/calls/${callId}/notes`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
 export async function fetchCallNotes(callId: string): Promise<NoteResponse[]> {
-  return apiFetch<NoteResponse[]>(`/api/calls/${callId}/notes`);
+  return apiFetch<NoteResponse[]>(`/api/v1/capture-transcription/calls/${callId}/notes`);
 }
 
-// ─── 30. POST /api/calls/:callId/share (full call share) ───────────
+// ─── 30. POST /api/v1/capture-transcription/calls/:callId/share (full call share) ───────────
 
 export async function shareFullCall(callId: string): Promise<CallShareResponse> {
-  return apiFetch<CallShareResponse>(`/api/calls/${callId}/share`, {
+  return apiFetch<CallShareResponse>(`/api/v1/capture-transcription/calls/${callId}/share`, {
     method: 'POST',
   });
 }
 
-// ─── 31. GET /api/calls/:callId/briefs/:briefId/export/pdf ─────────
+// ─── 31. GET /api/v1/capture-transcription/calls/:callId/briefs/:briefId/export/pdf ─────────
 
 export async function exportBriefAsPdf(callId: string, briefId: string): Promise<PdfExportResponse> {
-  const url = `/api/calls/${callId}/briefs/${briefId}/export/pdf`;
+  const url = `/api/v1/capture-transcription/calls/${callId}/briefs/${briefId}/export/pdf`;
   return apiFetch<PdfExportResponse>(url, { headers: { Accept: 'application/pdf' } });
 }

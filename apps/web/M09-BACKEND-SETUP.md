@@ -6,7 +6,7 @@ This UI calls the **M09 backend translation endpoints** under `/api/trainings` a
 
 ## 1. Backend Server Setup (Terminal 1)
 
-Make sure that your PostgreSQL container is running on port `5433`:
+Make sure that your PostgreSQL container is running on port `5438`:
 ```powershell
 # From the monorepo root
 docker compose up -d postgres
@@ -15,7 +15,7 @@ docker compose up -d postgres
 Launch the M09 API server. By default, it runs on port `4009` in standalone mode, or port `3001` under the unified API:
 ```powershell
 # From the monorepo root
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m09-api
 ```
 

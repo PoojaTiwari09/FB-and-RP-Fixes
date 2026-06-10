@@ -30,7 +30,7 @@ export default function ShareBriefModal({ isOpen, onClose, callId, briefId, pdfD
     setTimeout(() => setDone(null), 2000);
   };
 
-  // ── Copy Shareable Link ── POST /api/calls/:callId/briefs/:briefId/share-link
+  // ── Copy Shareable Link ── POST /api/v1/conversation-intelligence/calls/:callId/briefs/:briefId/share-link
   const handleCopyShareableLink = async () => {
     setLoading('link');
     try {
@@ -42,7 +42,7 @@ export default function ShareBriefModal({ isOpen, onClose, callId, briefId, pdfD
     }
   };
 
-  // ── Share Internally ── POST /api/calls/:callId/briefs/:briefId/share-internal
+  // ── Share Internally ── POST /api/v1/conversation-intelligence/calls/:callId/briefs/:briefId/share-internal
   const handleShareInternally = async () => {
     setLoading('internal');
     try {
@@ -68,7 +68,7 @@ export default function ShareBriefModal({ isOpen, onClose, callId, briefId, pdfD
     }
   };
 
-  // ── Copy Formatted Summary ── GET /api/calls/:callId/briefs/:briefId/formatted-summary
+  // ── Copy Formatted Summary ── GET /api/v1/conversation-intelligence/calls/:callId/briefs/:briefId/formatted-summary
   const handleCopyFormattedSummary = async () => {
     setLoading('text');
     try {

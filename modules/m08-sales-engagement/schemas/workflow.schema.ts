@@ -30,7 +30,7 @@ export const UpdateIntegrationSchema = z.object({
   config: z.any().optional(),
 });
 
-export type CreateWorkflowDto = z.infer<typeof CreateWorkflowSchema>;
-export type UpdateWorkflowDto = z.infer<typeof UpdateWorkflowSchema>;
-export type SubmitApprovalDto = z.infer<typeof SubmitApprovalSchema>;
-export type UpdateIntegrationDto = z.infer<typeof UpdateIntegrationSchema>;
+export interface CreateWorkflowDto extends z.infer<typeof CreateWorkflowSchema> {}
+export interface UpdateWorkflowDto extends z.infer<typeof UpdateWorkflowSchema> {}
+export interface SubmitApprovalDto extends z.infer<typeof SubmitApprovalSchema> {}
+export interface UpdateIntegrationDto extends z.infer<typeof UpdateIntegrationSchema> {}

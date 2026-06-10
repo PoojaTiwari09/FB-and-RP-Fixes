@@ -1,0 +1,53 @@
+import { OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
+import { Deal, ForecastCategory } from '@/entities';
+import { DealRepository, DealFilters } from '@/repositories/deal.repository';
+import { AuditLogService } from './audit-log.service';
+import { HubSpotClientService } from './hubspot-client.service';
+export declare class DealService implements OnModuleInit {
+    private readonly dealEntityRepository;
+    private readonly dealRepository;
+    private readonly auditLogService;
+    private readonly hubSpotClientService;
+    private readonly configService;
+    private readonly logger;
+    constructor(dealEntityRepository: Repository<Deal>, dealRepository: DealRepository, auditLogService: AuditLogService, hubSpotClientService: HubSpotClientService, configService: ConfigService);
+    onModuleInit(): Promise<void>;
+    findAll(filters: DealFilters, page?: number, limit?: number): Promise<{
+        deals: Deal[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
+    findById(id: string, userId: string): Promise<Deal>;
+    findByCrmId(crmDealId: string): Promise<Deal | null>;
+    findDealByIdWithoutLogging(id: string): Promise<Deal | null>;
+    update(id: string, updates: Partial<Deal>, userId: string): Promise<Deal>;
+    private syncDealUpdatesToHubSpot;
+    private resolveHubSpotDealTarget;
+    private shouldCreateMissingHubSpotDeals;
+    private getHubSpotErrorDetails;
+    private isHubSpotObjectId;
+    private mapDealUpdatesToHubSpotProperties;
+    private mapDealToHubSpotProperties;
+    private mapDealStageToHubSpot;
+    getDealsForBoard(boardFilters: any[], page?: number, limit?: number): Promise<{
+        deals: Deal[];
+        total: number;
+    }>;
+    getDealsForOwner(ownerId: string, limit?: number): Promise<Deal[]>;
+    getHighRiskDeals(limit?: number): Promise<Deal[]>;
+    getDealsClosingSoon(days?: number): Promise<Deal[]>;
+    getDealsByForecastCategory(category: ForecastCategory): Promise<Deal[]>;
+    calculateTotalValue(filters: DealFilters): Promise<number>;
+    countByStage(): Promise<Record<string, number>>;
+    updateAIScore(dealId: string, aiScore: number): Promise<void>;
+    updateWarningCount(dealId: string, warningCount: number): Promise<void>;
+    markAsHighRisk(dealId: string, reason: string): Promise<void>;
+    clearHighRisk(dealId: string): Promise<void>;
+    updateContactCount(dealId: string, contactCount: number): Promise<void>;
+    updateActivityStrength(dealId: string, activityStrength: number): Promise<void>;
+    updateLastActivityAt(dealId: string, lastActivityAt: Date): Promise<void>;
+    getRecentNotifications(userId: string, userRole: string): Promise<any[]>;
+}

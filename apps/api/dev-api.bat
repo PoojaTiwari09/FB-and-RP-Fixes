@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-set DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public
+set DATABASE_URL=postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public
 set DIRECT_URL=%DATABASE_URL%
 set M10_DATABASE_URL=%DATABASE_URL%
 set DISABLE_REDIS=true

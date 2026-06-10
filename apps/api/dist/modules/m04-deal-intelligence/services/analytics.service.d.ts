@@ -1,0 +1,35 @@
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
+import { Deal } from '@/entities/deal.entity';
+import { DealPlaybook } from '@/entities/deal-playbook.entity';
+import { DealActivity } from '@/entities/deal-activity.entity';
+import { DealTask } from '@/entities/deal-task.entity';
+import { DealWarning } from '@/entities/deal-warning.entity';
+import { User } from '@/entities/user.entity';
+import { AnalyticsSnapshot, AnalyticsType } from '@/entities/analytics-snapshot.entity';
+import { GetAnalyticsRequestDto, AEAnalyticsResponseDto, ManagerAnalyticsResponseDto, ExecutiveAnalyticsResponseDto, HistoricalMetricsRequestDto, HistoricalMetricsResponseDto } from '@/schemas/analytics.dto';
+export declare class AnalyticsService {
+    private readonly dealRepository;
+    private readonly playbookRepository;
+    private readonly activityRepository;
+    private readonly taskRepository;
+    private readonly warningRepository;
+    private readonly userRepository;
+    private readonly snapshotRepository;
+    constructor(dealRepository: Repository<Deal>, playbookRepository: Repository<DealPlaybook>, activityRepository: Repository<DealActivity>, taskRepository: Repository<DealTask>, warningRepository: Repository<DealWarning>, userRepository: Repository<User>, snapshotRepository: Repository<AnalyticsSnapshot>);
+    getAnalytics(dto: GetAnalyticsRequestDto, userId: string): Promise<AEAnalyticsResponseDto | ManagerAnalyticsResponseDto | ExecutiveAnalyticsResponseDto>;
+    private getAEAnalytics;
+    private getManagerAnalytics;
+    private getExecutiveAnalytics;
+    getHistoricalMetrics(userId: string, dto: HistoricalMetricsRequestDto): Promise<HistoricalMetricsResponseDto[]>;
+    saveAnalyticsSnapshot(userId: string, type: AnalyticsType, metrics: Record<string, any>, boardId?: string): Promise<void>;
+    private getDateRange;
+    private calculateTabRollups;
+    private getTopWarnings;
+    private getActivitySummary;
+    private getNextStepsSummary;
+    private getTeamDiagnostics;
+    private getCoachingActivity;
+    private calculateRiskDistribution;
+    private getTopRiskDeals;
+    private getTrendData;
+}

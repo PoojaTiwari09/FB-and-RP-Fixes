@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@rri/database';
 import Groq from 'groq-sdk';
 
 interface JobState {
@@ -77,7 +78,7 @@ export class AiDeepResearcherService {
       callStage?: string;
       region?: string;
     };
-  }) {
+  }): Promise<any> {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     const steps = [
@@ -116,7 +117,7 @@ export class AiDeepResearcherService {
     };
   }
 
-  async getProgress(jobId: string) {
+  async getProgress(jobId: string): Promise<any> {
     const job = this.jobs.get(jobId);
     if (!job) {
       return {
@@ -221,7 +222,7 @@ export class AiDeepResearcherService {
     };
   }
 
-  async getReps() {
+  async getReps(): Promise<any> {
     const users = await this.prisma.user.findMany({
       where: { role: 'SALES_REP' },
       select: { id: true, name: true },
@@ -236,7 +237,7 @@ export class AiDeepResearcherService {
     };
   }
 
-  async getRepCalls(repId: string) {
+  async getRepCalls(repId: string): Promise<any> {
     const rep = await this.prisma.user.findUnique({ where: { id: repId } });
     const calls = await this.prisma.callRecord.findMany({
       where: { callOwner: rep?.name || undefined },
@@ -245,7 +246,7 @@ export class AiDeepResearcherService {
     return { calls };
   }
 
-  async getObjectionRepBreakdown(objectionId: string) {
+  async getObjectionRepBreakdown(objectionId: string): Promise<any> {
     const reps = await this.prisma.user.findMany({ where: { role: 'SALES_REP' } });
     const breakdown = reps.map((r, i) => ({
       repId: r.id,
@@ -259,14 +260,14 @@ export class AiDeepResearcherService {
     return { breakdown };
   }
 
-  async getObjectionEvidence(objectionId: string) {
+  async getObjectionEvidence(objectionId: string): Promise<any> {
     const job = [...this.jobs.values()].find((j) => j.evidence);
     const allEvidence = job?.evidence?.evidence || [];
     const filtered = allEvidence.filter((e: any) => e.finding === objectionId);
     return { total: filtered.length, evidence: filtered };
   }
 
-  async getCallDetails(callId: string) {
+  async getCallDetails(callId: string): Promise<any> {
     const call = await this.prisma.callRecord.findUnique({
       where: { id: callId },
       include: { transcript: true },
@@ -274,14 +275,14 @@ export class AiDeepResearcherService {
     return call || { id: callId, title: 'Call not found', status: 'not_found' };
   }
 
-  async getAccountDetails(accountId: string) {
+  async getAccountDetails(accountId: string): Promise<any> {
     const account = await this.prisma.account.findFirst({
       where: { OR: [{ id: accountId }, { name: accountId }] },
     });
     return account || { id: accountId, name: accountId, status: 'not_found' };
   }
 
-  async getRecommendationDetails(recId: string) {
+  async getRecommendationDetails(recId: string): Promise<any> {
     const job = [...this.jobs.values()].find((j) => j.report);
     const rec = job?.report?.recommendations?.find((r: any) => r.recommendationId === recId);
     return rec || { recommendationId: recId, title: 'Recommendation not found' };
@@ -292,7 +293,7 @@ export class AiDeepResearcherService {
   }
 
   // ── Background job processing with real DB data + Groq LLM ──────────
-  private async processJob(jobId: string, params: any) {
+  private async processJob(jobId: string, params: any): Promise<any> {
     const job = this.jobs.get(jobId);
     if (!job) return;
 

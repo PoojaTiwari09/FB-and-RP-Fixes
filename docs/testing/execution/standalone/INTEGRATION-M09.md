@@ -8,7 +8,7 @@ Run the M09 backend and Next.js UI without the monolith.
 |-----------|-----|
 | m09-api   | http://localhost:4009 |
 | m09-web   | http://localhost:5176 |
-| Postgres  | `DATABASE_URL` in monorepo `.env` (typically `127.0.0.1:5433`) |
+| Postgres  | `DATABASE_URL` in monorepo `.env` (typically `127.0.0.1:5438`) |
 
 API base path (matches frontend `NEXT_PUBLIC_API_BASE_URL`):
 

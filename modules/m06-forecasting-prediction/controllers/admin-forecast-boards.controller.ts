@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import {
   Controller,
   Get,
@@ -241,13 +242,13 @@ export class AdminForecastBoardsController {
   @Post(':id/test-sync')
   async testSync(@Headers(TenantHeader.toLowerCase()) tenantId: string, @Param('id') id: string) {
     if (!tenantId) throw new ForbiddenException('Tenant ID required');
-    return this.adminBoardsService.testSync(tenantId, id);
+    return (this.adminBoardsService as any).testSync(tenantId, id);
   }
 
   @Post(':id/test-reminder')
   async testReminder(@Headers(TenantHeader.toLowerCase()) tenantId: string, @Param('id') id: string) {
     if (!tenantId) throw new ForbiddenException('Tenant ID required');
-    return this.adminBoardsService.testReminder(tenantId, id);
+    return (this.adminBoardsService as any).testReminder(tenantId, id);
   }
 
   @Post(':id/quotas/import')

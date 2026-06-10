@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import {
   Controller, Get, Post, Put, Patch, Delete,
   Body, Param, Query, Req, UseGuards, HttpCode, HttpStatus,
@@ -19,7 +20,7 @@ import {
   UpdateUtteranceSchema,
   UploadFromS3Schema,
 } from '../schemas/m01.schema';
-import { S3_RECORDINGS_CATALOG } from '../lib/s3-recordings-catalog';
+import { S3_RECORDINGS_CATALOG } from '../services/s3-recordings-catalog';
 
 @Controller('api/v1/capture-transcription')
 @UseGuards(TenantGuard)

@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { M09FrontendAuthGuard } from './m09-frontend-auth.guard';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@rri/database';
 
 @Controller('api/manager')
 @UseGuards(M09FrontendAuthGuard)
@@ -18,7 +19,7 @@ export class M09FrontendRevenueManagerController {
 
   // ─── Accounts Alert ──────────────────────────────────────────
   @Get('revenue/accounts/alert')
-  async getAlert() {
+  async getAlert(): Promise<any> {
     const config = await this.prisma.managerAccountsConfig.findUnique({
       where: { id: 'default' },
     });
@@ -27,7 +28,7 @@ export class M09FrontendRevenueManagerController {
 
   // ─── Accounts Summary ─────────────────────────────────────────
   @Get('revenue/accounts/summary')
-  async getSummary() {
+  async getSummary(): Promise<any> {
     const config = await this.prisma.managerAccountsConfig.findUnique({
       where: { id: 'default' },
     });
@@ -36,7 +37,7 @@ export class M09FrontendRevenueManagerController {
 
   // ─── Accounts Viewers ─────────────────────────────────────────
   @Get('revenue/accounts/viewers')
-  async getViewers() {
+  async getViewers(): Promise<any> {
     const config = await this.prisma.managerAccountsConfig.findUnique({
       where: { id: 'default' },
     });
@@ -351,7 +352,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── Coaching Filters ─────────────────────────────────────────
   @Get('coaching/filters')
-  async getCoachingFilters() {
+  async getCoachingFilters(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });
@@ -360,7 +361,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── Coaching Activity ────────────────────────────────────────
   @Get('coaching/activity')
-  async getCoachingActivity() {
+  async getCoachingActivity(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });
@@ -369,7 +370,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── Coaching Interaction ─────────────────────────────────────
   @Get('coaching/interaction')
-  async getCoachingInteraction() {
+  async getCoachingInteraction(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });
@@ -378,7 +379,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── Coaching Responsiveness ──────────────────────────────────
   @Get('coaching/responsiveness')
-  async getCoachingResponsiveness() {
+  async getCoachingResponsiveness(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });
@@ -387,7 +388,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── Coaching Scorecards ──────────────────────────────────────
   @Get('coaching/scorecards')
-  async getCoachingScorecards() {
+  async getCoachingScorecards(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });
@@ -396,7 +397,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── AI Insights ──────────────────────────────────────────────
   @Get('coaching/ai-insights')
-  async getCoachingAiInsights() {
+  async getCoachingAiInsights(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });
@@ -405,7 +406,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
 
   // ─── Team vs Benchmark ────────────────────────────────────────
   @Get('coaching/team-vs-benchmark')
-  async getCoachingTeamVsBenchmark() {
+  async getCoachingTeamVsBenchmark(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
       where: { id: 'default' },
     });

@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Controller, Get, Post, Patch, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ForecastUpgradeService } from '../services/forecast-upgrade.service';
 

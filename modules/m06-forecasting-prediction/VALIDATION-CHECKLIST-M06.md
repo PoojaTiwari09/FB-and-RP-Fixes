@@ -4,7 +4,7 @@ Use this before demos or PR review. Check each item and note pass/fail.
 
 ## Environment
 
-- [ ] Docker Postgres running on port **5433**
+- [ ] Docker Postgres running on port **5438**
 - [ ] Docker Redis running on port **6379** (or `DISABLE_REDIS=true` in `.env`)
 - [ ] `DATABASE_URL` / `DIRECT_URL` point to local Postgres
 - [ ] `pnpm install` completed at repo root without errors

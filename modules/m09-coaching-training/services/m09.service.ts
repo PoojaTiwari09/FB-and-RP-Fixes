@@ -2051,11 +2051,11 @@ export class AnalyticsService {
       });
 
       for (const [repId, stats] of Object.entries(userStats)) {
-        const rep = repMap.get(repId);
+        const rep = repMap.get(repId) as any;
         if (!rep) continue;
         const rate = stats.assigned > 0 ? Math.round((stats.completed / stats.assigned) * 100) : 0;
         const avgScore = stats.completed > 0 ? Math.round(stats.scoreSum / stats.completed) : 0;
-        csv += `"${rep.name}",${stats.assigned},${stats.completed},"${rate}%",${avgScore}\n`;
+        csv += `"${rep?.name || ''}",${stats.assigned},${stats.completed},"${rate}%",${avgScore}\n`;
       }
       return csv;
     }
@@ -2063,7 +2063,7 @@ export class AnalyticsService {
     // Default Training report
     let csv = 'Assignment ID,Rep Name,Rep Email,Scenario Name,Status,Priority,Attempts,Best Score,Manager Score,Assigned At,Completed At\n';
     assignments.forEach(a => { 
-      const rep = repMap.get(a.rep_id);
+      const rep = repMap.get(a.rep_id) as any;
       const scenarioName = a.scenario?.persona_name || a.scenario_id || '';
       const assignedAt = a.assigned_at ? new Date(a.assigned_at).toISOString() : '';
       const completedAt = a.completed_at ? new Date(a.completed_at).toISOString() : '';

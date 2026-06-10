@@ -11,8 +11,8 @@ export function useEngage(initialAssigneeId?: string) {
 
   // Dynamically resolve default assignee:
   const resolvedInitialId = useMemo(() => {
-    return initialAssigneeId || session?.userId || 'me';
-  }, [initialAssigneeId, session?.userId]);
+    return initialAssigneeId || session?.id || 'me';
+  }, [initialAssigneeId, session?.id]);
 
   // Master Date (matches local time/Figma specs)
   const getTodayDateStr = () => new Date().toISOString().split('T')[0];

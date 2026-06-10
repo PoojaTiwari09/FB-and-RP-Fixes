@@ -1,5 +1,6 @@
 import { mockSearchResponse, mockCallDetails, mockAiResponse, mockFilterOptions } from '@calls/mocks/calls.mock';
 import { SearchResponse, CallDetail, AiAskResponse, FilterOptions } from '@calls/types';
+import { resolveApiBase } from '@shared/config/module-api';
 import { ENV } from '@shared/config/env';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import { fetchApiOrMock, shouldUseMockData } from '@shared/lib/api-data-source';
@@ -51,12 +52,12 @@ function apiQueryParams(params: Record<string, string>): URLSearchParams {
 }
 
 export const callsService = {
-  // 1. GET /api/filters/options
+  // 1. GET /api/v1/conversation-intelligence/filters/options
   getFilterOptions: async (): Promise<FilterOptions> => {
     return fetchApiOrMock(
       'getFilterOptions',
       async () => {
-        const res = await fetch(`${ENV.M02_API_BASE_URL}/api/filters/options`, {
+        const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/filters/options`, {
           headers: bridgeHeaders(),
         });
         if (!res.ok) throw new Error(`Failed to fetch filter options: ${res.status}`);
@@ -66,7 +67,7 @@ export const callsService = {
     );
   },
 
-  // 2. GET /api/search/calls
+  // 2. GET /api/v1/conversation-intelligence/search/calls
   getSearchResponse: async (
     filters: Record<string, string>,
     sortConfig: { key: string; direction: string } | null,
@@ -86,7 +87,7 @@ export const callsService = {
       'getSearchResponse',
       async () => {
         const res = await fetch(
-          `${ENV.M02_API_BASE_URL}/api/search/calls?${queryParams.toString()}`,
+          `${resolveApiBase()}/api/v1/conversation-intelligence/search/calls?${queryParams.toString()}`,
           { headers: bridgeHeaders() },
         );
         if (!res.ok) throw new Error(`Failed to fetch calls search results: ${res.status}`);
@@ -97,12 +98,12 @@ export const callsService = {
     );
   },
   
-  // 3. GET /api/calls/:callId
+  // 3. GET /api/v1/conversation-intelligence/calls/:callId
   getCallDetail: async (id: string): Promise<CallDetail> => {
     return fetchApiOrMock(
       `getCallDetail:${id}`,
       async () => {
-        const res = await fetch(`${ENV.M02_API_BASE_URL}/api/search/calls/${id}`, {
+        const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/search/calls/${id}`, {
           headers: bridgeHeaders(),
         });
         if (!res.ok) throw new Error(`Failed to fetch call details: ${res.status}`);
@@ -112,12 +113,12 @@ export const callsService = {
     );
   },
 
-  // 4. POST /api/calls/ai-ask
+  // 4. POST /api/v1/conversation-intelligence/calls/ai-ask
   askAiQuestion: async (callId: string, question: string): Promise<AiAskResponse> => {
     return fetchApiOrMock(
       'askAiQuestion',
       async () => {
-        const res = await fetch(`${ENV.M02_API_BASE_URL}/api/calls/ai-ask`, {
+        const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/calls/ai-ask`, {
           method: 'POST',
           headers: bridgeHeaders(),
           body: JSON.stringify({ callId, question }),
@@ -136,7 +137,7 @@ export const callsService = {
     return fetchApiOrMock(
       'exportCsv',
       async () => {
-        const res = await fetch(`${ENV.M02_API_BASE_URL}/api/calls/export`, {
+        const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/calls/export`, {
           method: 'POST',
           headers: bridgeHeaders(),
           body: JSON.stringify({ filters, fields }),
@@ -161,7 +162,7 @@ export const callsService = {
     return fetchApiOrMock(
       'createStream',
       async () => {
-        const res = await fetch(`${ENV.M02_API_BASE_URL}/api/streams`, {
+        const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/streams`, {
           method: 'POST',
           headers: bridgeHeaders(),
           body: JSON.stringify({ name, filters, notifications, sharing }),

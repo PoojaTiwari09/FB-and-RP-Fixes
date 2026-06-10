@@ -16,7 +16,7 @@ export class M08WorkflowService {
 
   // --- WORKFLOW DRAFT & LIFECYCLE ---
 
-  async createWorkflow(tenantId: string, dto: CreateWorkflowDto, userId: string) {
+  async createWorkflow(tenantId: string, dto: CreateWorkflowDto, userId: string): Promise<any> {
     const definition = dto.definition as any;
     const steps = definition?.steps || [];
     if (steps.length > 20) {
@@ -32,23 +32,23 @@ export class M08WorkflowService {
     return wf;
   }
 
-  async updateWorkflow(tenantId: string, id: string, dto: UpdateWorkflowDto, userId: string) {
+  async updateWorkflow(tenantId: string, id: string, dto: UpdateWorkflowDto, userId: string): Promise<any> {
     const wf = await this.repo.updateWorkflow(tenantId, id, dto);
     await this.repo.logAction(tenantId, wf.id, userId, 'workflow.updated', { updates: dto });
     return wf;
   }
 
-  async getWorkflows(tenantId: string, isActive?: boolean) {
+  async getWorkflows(tenantId: string, isActive?: boolean): Promise<any> {
     return this.repo.findWorkflows(tenantId, { isActive });
   }
 
-  async getWorkflowById(tenantId: string, id: string) {
+  async getWorkflowById(tenantId: string, id: string): Promise<any> {
     return this.repo.findWorkflowById(tenantId, id);
   }
 
   // --- TRIGGER ENGINE & RUNS ORCHESTRATION ---
 
-  async triggerWorkflow(tenantId: string, eventType: string, payload: any) {
+  async triggerWorkflow(tenantId: string, eventType: string, payload: any): Promise<any> {
     const activeWorkflows = await this.repo.findWorkflows(tenantId, { isActive: true });
     const triggeredRuns = [];
 
@@ -74,7 +74,7 @@ export class M08WorkflowService {
     return triggeredRuns;
   }
 
-  async enqueueWorkflowRun(tenantId: string, runId: string) {
+  async enqueueWorkflowRun(tenantId: string, runId: string): Promise<any> {
     const jobId = `${tenantId}:${runId}`;
     await this.workflowRunsQueue.add(
       EXECUTE_WORKFLOW_RUN_JOB,
@@ -89,7 +89,7 @@ export class M08WorkflowService {
     );
   }
 
-  async getWorkflowRuns(tenantId: string, workflowId?: string) {
+  async getWorkflowRuns(tenantId: string, workflowId?: string): Promise<any> {
     return this.repo.findWorkflowRuns(tenantId, workflowId);
   }
 
@@ -111,7 +111,7 @@ export class M08WorkflowService {
     return true;
   }
 
-  async executeWorkflowRun(tenantId: string, runId: string) {
+  async executeWorkflowRun(tenantId: string, runId: string): Promise<any> {
     const run = await this.repo.findWorkflowRunById(tenantId, runId);
     const wf = await this.repo.findWorkflowById(tenantId, run.workflowId);
 
@@ -217,7 +217,7 @@ export class M08WorkflowService {
     await this.events.publish('workflow.run.completed', { runId: run.id, status: runStatus });
   }
 
-  private async executeStepAction(tenantId: string, run: any, step: any) {
+  private async executeStepAction(tenantId: string, run: any, step: any): Promise<any> {
     if (step.type === 'sync_crm') {
       const integration = await this.repo.findIntegrationStates(tenantId);
       const sf = integration.find(i => i.provider === 'salesforce');
@@ -268,11 +268,11 @@ export class M08WorkflowService {
 
   // --- APPROVAL ROUTING & ACTION ---
 
-  async getApprovals(tenantId: string, status?: string) {
+  async getApprovals(tenantId: string, status?: string): Promise<any> {
     return this.repo.findApprovals(tenantId, { status });
   }
 
-  async submitApproval(tenantId: string, id: string, dto: SubmitApprovalDto, userId: string) {
+  async submitApproval(tenantId: string, id: string, dto: SubmitApprovalDto, userId: string): Promise<any> {
     const approval = await this.repo.findApprovalById(tenantId, id);
 
     if (approval.status !== 'pending') {
@@ -305,7 +305,7 @@ export class M08WorkflowService {
 
   // --- ESCALATIONS & RETRY ENGINE ---
 
-  async handleEscalationJob(tenantId: string, approvalId: string) {
+  async handleEscalationJob(tenantId: string, approvalId: string): Promise<any> {
     const app = await this.repo.findApprovalById(tenantId, approvalId);
     if (app.status === 'pending') {
       console.warn(`[Escalation Alert] Paused approval step ${app.id} exceeded duration threshold. Escalating to executive admin.`);
@@ -316,27 +316,27 @@ export class M08WorkflowService {
 
   // --- EXCEPTIONS MONITORING & RESOLUTION ---
 
-  async getExceptions(tenantId: string, resolved?: boolean) {
+  async getExceptions(tenantId: string, resolved?: boolean): Promise<any> {
     return this.repo.findExceptions(tenantId, resolved);
   }
 
-  async resolveException(tenantId: string, id: string) {
+  async resolveException(tenantId: string, id: string): Promise<any> {
     return this.repo.resolveException(tenantId, id);
   }
 
   // --- INTEGRATION STATE ENGINE ---
 
-  async getIntegrations(tenantId: string) {
+  async getIntegrations(tenantId: string): Promise<any> {
     return this.repo.findIntegrationStates(tenantId);
   }
 
-  async updateIntegration(tenantId: string, provider: string, status: string, config?: any) {
+  async updateIntegration(tenantId: string, provider: string, status: string, config?: any): Promise<any> {
     return this.repo.upsertIntegrationState(tenantId, provider, status, config);
   }
 
   // --- AUDIT TRAIL LOGGING ---
 
-  async getAuditLogs(tenantId: string, workflowId?: string) {
+  async getAuditLogs(tenantId: string, workflowId?: string): Promise<any> {
     return this.repo.findAuditLogs(tenantId, workflowId);
   }
 }

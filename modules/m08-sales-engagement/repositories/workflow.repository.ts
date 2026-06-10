@@ -1,5 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@rri/database';
 import { CreateWorkflowDto, UpdateWorkflowDto } from '../schemas/workflow.schema';
 
 @Injectable()

@@ -217,10 +217,7 @@ export class BoardsService {
     const newBoardId = `board_${Date.now()}`;
     const baseSlug = `${original.slug}-copy`;
     // Ensure unique slug
-    const { data: slugCheck } = await this.supabase
-      .from('board_config')
-      .select('slug')
-      .like('slug', `${baseSlug}%`);
+    const { data: slugCheck } = await (this.supabase.from('board_config').select('slug') as any).like('slug', `${baseSlug}%`);
     const existingSlugs = (slugCheck || []).map((r: any) => r.slug);
     let newSlug = baseSlug;
     let counter = 2;
@@ -399,10 +396,7 @@ export class BoardsService {
       .replace(/^-+|-+$/g, '');
 
     // Ensure unique slug
-    const { data: slugCheck } = await this.supabase
-      .from('board_config')
-      .select('slug')
-      .like('slug', `${baseSlug}%`);
+    const { data: slugCheck } = await (this.supabase.from('board_config').select('slug') as any).like('slug', `${baseSlug}%`);
     const existingSlugs = (slugCheck || []).map((r: any) => r.slug);
     let newSlug = baseSlug;
     let counter = 2;
@@ -498,7 +492,7 @@ export class BoardsService {
     // Count existing columns
     const { count } = await this.supabase
       .from('board_columns')
-      .select('col_id', { count: 'exact', head: true })
+      .select('col_id', { count: 'exact', head: true } as any)
       .eq('board_id', board.board_id);
 
     if ((count || 0) >= MAX_COLUMNS) {

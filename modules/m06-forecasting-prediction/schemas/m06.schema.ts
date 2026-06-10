@@ -38,8 +38,8 @@ export const ApproveDtoSchema = z.object({
   managerName: z.string().min(1),
 });
 
-export type SubmitDto = z.infer<typeof SubmitDtoSchema>;
-export type CreateDealDto = z.infer<typeof CreateDealSchema>;
-export type OverrideDto = z.infer<typeof OverrideDtoSchema>;
-export type ReopenDto = z.infer<typeof ReopenDtoSchema>;
-export type ApproveDto = z.infer<typeof ApproveDtoSchema>;
+export interface SubmitDto extends z.infer<typeof SubmitDtoSchema> {}
+export interface CreateDealDto extends z.infer<typeof CreateDealSchema> {}
+export interface OverrideDto extends z.infer<typeof OverrideDtoSchema> {}
+export interface ReopenDto extends z.infer<typeof ReopenDtoSchema> {}
+export interface ApproveDto extends z.infer<typeof ApproveDtoSchema> {}

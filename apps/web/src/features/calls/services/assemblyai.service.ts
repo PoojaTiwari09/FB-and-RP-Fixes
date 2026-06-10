@@ -36,7 +36,7 @@ export interface ResolvedAudioUrls {
 
 function normalizeRemoteUrl(raw: string, sessionId: string): string {
   let url = raw.trim();
-  if (url.startsWith('/api/calls/audio')) {
+  if (url.startsWith('/api/v1/conversation-intelligence/calls/audio')) {
     try {
       const parsed = new URL(url, 'http://localhost');
       const src = parsed.searchParams.get('src');

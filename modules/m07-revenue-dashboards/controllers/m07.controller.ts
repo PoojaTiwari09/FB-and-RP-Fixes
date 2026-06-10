@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import {
   Body,
   Controller,

@@ -69,10 +69,17 @@ export class DealActivityService {
       .groupBy('activity.type')
       .getRawMany();
 
-    const byType = byTypeQuery.reduce((acc, item) => {
-      acc[item.type] = parseInt(item.count);
+    const byType = byTypeQuery.reduce((acc: any, item: any) => {
+      const type = item.type as ActivityType;
+      acc[type] = parseInt(item.count || '0', 10);
       return acc;
-    }, {} as Record<ActivityType, number>);
+    }, {
+      [ActivityType.CALL]: 0,
+      [ActivityType.EMAIL]: 0,
+      [ActivityType.MEETING]: 0,
+      [ActivityType.NOTE]: 0,
+      [ActivityType.TASK]: 0,
+    }) as any;
 
     // Get last activity date
     const lastActivity = await this.activityRepository.findOne({
@@ -189,11 +196,11 @@ export class DealActivityService {
     }
 
     if (dto.subject !== undefined) {
-      activity.subject = dto.subject;
+      (activity as any).subject = dto.subject;
     }
 
     if (dto.summary !== undefined) {
-      activity.summary = dto.summary;
+      (activity as any).summary = dto.summary;
     }
 
     if (dto.activityDate !== undefined) {
@@ -201,15 +208,15 @@ export class DealActivityService {
     }
 
     if (dto.contactId !== undefined) {
-      activity.contactId = dto.contactId;
+      (activity as any).contactId = dto.contactId;
     }
 
     if (dto.contactName !== undefined) {
-      activity.contactName = dto.contactName;
+      (activity as any).contactName = dto.contactName;
     }
 
     if (dto.durationMinutes !== undefined) {
-      activity.durationMinutes = dto.durationMinutes;
+      (activity as any).durationMinutes = dto.durationMinutes;
     }
 
     const updated = await this.activityRepository.save(activity);
@@ -279,6 +286,7 @@ export class DealActivityService {
       CALL: ActivityType.CALL,
       MEETING: ActivityType.MEETING,
       NOTE: ActivityType.NOTE,
+  
       TASK: ActivityType.TASK,
     };
 
@@ -293,14 +301,14 @@ export class DealActivityService {
       id: activity.id,
       dealId: activity.dealId,
       type: activity.type,
-      subject: activity.subject ?? undefined,
-      summary: activity.summary ?? undefined,
-      contactId: activity.contactId ?? undefined,
-      contactName: activity.contactName ?? undefined,
+      subject: (activity as any).subject ?? undefined,
+      summary: (activity as any).summary ?? undefined,
+      contactId: (activity as any).contactId ?? undefined,
+      contactName: (activity as any).contactName ?? undefined,
       activityDate: activity.activityDate,
-      durationMinutes: activity.durationMinutes ?? undefined,
-      crmActivityId: activity.crmActivityId,
-      crmData: activity.crmData ?? undefined,
+      durationMinutes: (activity as any).durationMinutes ?? undefined,
+      crmActivityId: (activity as any).crmActivityId,
+      crmData: (activity as any).crmData ?? undefined,
       createdAt: activity.createdAt,
     };
   }

@@ -57,11 +57,11 @@ export const CreateNoteSchema = z.object({
   noteText: z.string().min(1, 'Note content is required'),
 });
 
-export type CreatePlayDto = z.infer<typeof CreatePlaySchema>;
-export type UpdatePlayDto = z.infer<typeof UpdatePlaySchema>;
-export type ClonePlayDto = z.infer<typeof ClonePlaySchema>;
-export type DeactivatePlayDto = z.infer<typeof DeactivatePlaySchema>;
-export type EnrollPlayDto = z.infer<typeof EnrollPlaySchema>;
-export type CompleteStepDto = z.infer<typeof CompleteStepSchema>;
-export type SkipStepDto = z.infer<typeof SkipStepSchema>;
-export type CreateNoteDto = z.infer<typeof CreateNoteSchema>;
+export interface CreatePlayDto extends z.infer<typeof CreatePlaySchema> {}
+export interface UpdatePlayDto extends z.infer<typeof UpdatePlaySchema> {}
+export interface ClonePlayDto extends z.infer<typeof ClonePlaySchema> {}
+export interface DeactivatePlayDto extends z.infer<typeof DeactivatePlaySchema> {}
+export interface EnrollPlayDto extends z.infer<typeof EnrollPlaySchema> {}
+export interface CompleteStepDto extends z.infer<typeof CompleteStepSchema> {}
+export interface SkipStepDto extends z.infer<typeof SkipStepSchema> {}
+export interface CreateNoteDto extends z.infer<typeof CreateNoteSchema> {}

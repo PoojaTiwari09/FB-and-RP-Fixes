@@ -12,7 +12,7 @@ In the unified setup, the components reside in:
 | :--- | :--- | :---: |
 | **Backend** | `modules/m06-forecasting-prediction/` imported by **`apps/unified-api`** | **3001** |
 | **Frontend** | `apps/web/src/features/forecast-boards/` & `ai-revenue-predictor/` | **3000** |
-| **Database** | `packages/database/` (Prisma) | PostgreSQL **5433** (Docker) |
+| **Database** | `packages/database/` (Prisma) | PostgreSQL **5438** (Docker) |
 | **Queue** | BullMQ `m06-queue` (Redis **6379**) | Redis (Docker) |
 | **Python AI** | `apps/ai-services/` | **8000** (Docker) |
 

@@ -2,7 +2,7 @@
  * Seed Account + Deal rows for M03 Smart Summaries (demo tenant).
  * Run when m03-api has not been restarted yet (POST /test/seed-crm returns 404).
  *
- *   $env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+ *   $env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
  *   node scripts/seed_m03_crm.cjs
  */
 const { PrismaClient } = require('../packages/database');

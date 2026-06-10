@@ -108,7 +108,7 @@ Do not wrap it in markdown code blocks or add any comments or text. Return stric
         );
 
         if (response.ok) {
-          const resJson = await response.json();
+          const resJson = await response.json() as any;
           const content = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
           if (content) {
             const cleanContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();

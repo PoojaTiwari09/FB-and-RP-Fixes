@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {

@@ -163,6 +163,44 @@ export class M08SalesEngagementController {
     return this.service.getPlayDashboard(req.tenantId);
   }
 
+  
+  // --- BFF TASKS API ---
+
+  @Get('tasks')
+  async tasks(@Req() req: any, @Query() query: any) {
+    const userId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+    const userRole = req.headers['x-user-role'] || 'SALES_REP';
+    return this.service.fetchManagerTasks(req.tenantId, query, userId, userRole);
+  }
+
+  @Get('tasks/summary')
+  async summary(@Req() req: any, @Query('assigneeId') assigneeId = 'me', @Query('date') date?: string) {
+    const userId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+    const userRole = req.headers['x-user-role'] || 'SALES_REP';
+    const today = new Date().toISOString().split('T')[0];
+    return this.service.fetchSummary(req.tenantId, assigneeId, date || today, userId, userRole);
+  }
+
+  @Get('tasks/filters-config')
+  async filtersConfig(@Req() req: any) {
+    return this.service.fetchFiltersConfig(req.tenantId);
+  }
+
+  @Get('team/members')
+  async teamMembers(@Req() req: any) {
+    return this.service.fetchTeamMembers(req.tenantId);
+  }
+
+  @Get('search/linked-to')
+  async searchLinkedEntities(@Req() req: any, @Query('search') search = '') {
+    return this.service.searchLinkedEntities(req.tenantId, search);
+  }
+
+  @Get('email-templates')
+  async emailTemplates(@Req() req: any) {
+    return this.service.emailTemplates(req.tenantId);
+  }
+
   private enforceRole(req: any, allowedRoles: string[]) {
     const role = req.headers['x-user-role'] || 'representative';
     if (!allowedRoles.includes(role)) {

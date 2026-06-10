@@ -12,7 +12,7 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-@Controller('api/deals')
+@Controller('api/v1/deal-management')
 @UseGuards(TenantGuard)
 export class DealsController {
   private readonly logger = new Logger(DealsController.name);
@@ -791,7 +791,7 @@ export class DealsController {
   }
 }
 
-@Controller('api/deal-boards')
+@Controller('api/v1/deal-management/deal-boards')
 export class DealBoardsRepController {
   private readonly logger = new Logger(DealBoardsRepController.name);
 
@@ -974,7 +974,7 @@ export class DealBoardsRepController {
   }
 }
 
-@Controller('api/notifications')
+@Controller('api/v1/deal-management/notifications')
 export class NotificationsApiController {
   private readonly logger = new Logger(NotificationsApiController.name);
 

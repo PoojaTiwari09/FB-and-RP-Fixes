@@ -6,7 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { extname, basename } from 'path';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { CallService } from '../services/call.service';
-import { getUploadAudioDir, getPublicAudioUrl } from '../lib/upload-paths';
+import { getUploadAudioDir, getPublicAudioUrl } from '../services/upload-paths';
 import * as multer from 'multer';
 
 const UPLOAD_DIR = getUploadAudioDir();

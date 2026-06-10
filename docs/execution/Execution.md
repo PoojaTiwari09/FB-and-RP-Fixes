@@ -74,7 +74,7 @@ Shut down native dev processes and release ports `3000` and `3001`:
 | :--- | :---: | :---: | :--- |
 | **Next.js UI Frontend** | `3000` | Native / Terminal | Serves client pages under `http://localhost:3000/engage` |
 | **NestJS monolith API** | `3001` | Native / Terminal | Serves central backend endpoints under `http://localhost:3001` |
-| **PostgreSQL Database** | `5433` | Docker Container | Host relational data. Binds host port `5433` to container `5432` |
+| **PostgreSQL Database** | `5438` | Docker Container | Host relational data. Binds host port `5438` to container `5432` |
 | **Redis Queue / Cache** | `6379` | Docker Container | Binds BullMQ worker broker and caching queries |
 | **Meilisearch Service** | `7700` | Docker Container | Serves fast full-text document searches |
 | **FastAPI Python AI** | `8000` | Docker Container | Serves semantic processing & analytics snapshots |

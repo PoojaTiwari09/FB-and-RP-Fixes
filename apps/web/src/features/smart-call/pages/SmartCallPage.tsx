@@ -32,7 +32,7 @@ export default function SmartCallPage() {
   const [callSummary,     setCallSummary]     = useState<CallSummary | null>(null);
 
   const searchParams = useSearchParams();
-  const queryContactId = searchParams.get('contactId');
+  const queryContactId = searchParams?.get('contactId') || null;
 
   useEffect(() => {
     if (queryContactId) {

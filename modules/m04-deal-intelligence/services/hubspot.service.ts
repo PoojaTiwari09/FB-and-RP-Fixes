@@ -96,7 +96,7 @@ export class HubSpotService {
       const ownerMap = new Map(owners.map(o => [String(o.id), o]));
 
       // Collect unique owner IDs from deals for debugging
-      const dealOwnerIds = data.results
+      const dealOwnerIds = (data as any).results
         .map(d => d.properties.hubspot_owner_id)
         .filter(id => !!id)
         .map(id => String(id));
@@ -104,7 +104,7 @@ export class HubSpotService {
       this.logger.log(`Deals have ${uniqueDealOwnerIds.length} unique owner IDs: ${uniqueDealOwnerIds.slice(0, 5).join(', ')}`);
 
       // Transform deals (skip contact fetching to avoid rate limits)
-      const deals = await Promise.all(data.results.map(async (deal) => {
+      const deals = await Promise.all((data as any).results.map(async (deal) => {
         const rawOwnerId = deal.properties.hubspot_owner_id;
         const ownerId = rawOwnerId ? String(rawOwnerId) : '';
         let owner = ownerId ? ownerMap.get(ownerId) || null : null;
@@ -190,7 +190,7 @@ export class HubSpotService {
         }
 
         const data: any = await response.json();
-        const page = data.results || [];
+        const page = (data as any).results || [];
         allOwners.push(...page);
 
         after = data.paging?.next?.after;
@@ -218,7 +218,7 @@ export class HubSpotService {
         return null;
       }
 
-      return await response.json();
+      return await response.json() as HubSpotOwner;
     } catch (error) {
       this.logger.error(`Error fetching owner ${ownerId}:`, error);
       return null;
@@ -274,7 +274,7 @@ export class HubSpotService {
       }
 
       const data = await response.json();
-      return data.results?.map((p: any) => p.id) || ['default'];
+      return (data as any).results?.map((p: any) => p.id) || ['default'];
     } catch (error) {
       this.logger.error('Error fetching pipelines:', error);
       return ['default'];
@@ -541,7 +541,7 @@ export class HubSpotService {
     try {
       // Fetch pipeline stages from HubSpot
       const data = await this.fetchFromHubSpot('/pipelines/deals/default/stages');
-      const stages = data.results || [];
+      const stages = (data as any).results || [];
 
       this.logger.log(`Fetched ${stages.length} pipeline stages from HubSpot`);
 

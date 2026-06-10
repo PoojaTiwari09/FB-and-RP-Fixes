@@ -3,8 +3,8 @@ import { Logger }               from '@nestjs/common';
 import { Job }                  from 'bullmq';
 import * as fs                  from 'fs';
 import { CallService }          from '../services/call.service';
-import { getLocalAudioPath }    from '../lib/upload-paths';
-import { uploadAudioToAssemblyAI } from '../lib/assemblyai-upload';
+import { getLocalAudioPath }    from '../services/upload-paths';
+import { uploadAudioToAssemblyAI } from '../services/assemblyai-upload';
 
 interface TranscribeJobData {
   callId:   string;

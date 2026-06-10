@@ -24,7 +24,7 @@ pnpm install
 **Terminal 1 — API**
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run dev:m10-api
 ```
 
@@ -69,7 +69,7 @@ The Vite app sends these automatically.
 Populates `m10_accounts`, `m10_deals`, `m10_contacts`, activities, CRM sync state, export connections, and export runs for the demo tenant.
 
 ```powershell
-$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public"
+$env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 pnpm run seed:m10
 ```
 

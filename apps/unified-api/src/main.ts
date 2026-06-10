@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 import express from 'express';
-import { resolveUploadsRoot } from '../../../modules/m01-capture-transcription/lib/upload-paths';
+import { resolveUploadsRoot } from '../../../modules/m01-capture-transcription/services/upload-paths';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
@@ -38,7 +38,7 @@ async function bootstrap() {
       fallthrough: true,
     }),
   );
-  app.use('/uploads', (_req, res) => {
+  app.use('/uploads', (_req, res: any) => {
     res.status(404).json({ error: 'Upload not found' });
   });
 
@@ -64,11 +64,11 @@ async function bootstrap() {
   // Do not read monolith PORT from .env (often 3002) — unified demo is always :3001 unless overridden.
   const port = parseInt(process.env.UNIFIED_API_PORT ?? '3001', 10);
 
-  app.getHttpAdapter().get('/health', (_req, res) => {
+  app.getHttpAdapter().get('/health', (_req, res: any) => {
     res.json({ status: 'ok', service: 'unified-api' });
   });
 
-  app.getHttpAdapter().get('/', (_req, res) => {
+  app.getHttpAdapter().get('/', (_req, res: any) => {
     res.json({
       service: 'unified-api',
       status: 'ok',

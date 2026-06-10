@@ -183,7 +183,7 @@ export class SyncService {
         board: c.properties.board_assignment || null,
         hubspot_owner_id: c.properties.hubspot_owner_id || null,
         assigned_rep_id: assignedRepIdForHubSpotUpsert(
-          existingRepByHubspot.get(c.id),
+          existingRepByHubspot.get(c.id) as any,
           c.properties.hubspot_owner_id || null,
         ),
       }));
@@ -191,7 +191,7 @@ export class SyncService {
       if (rows.length > 0) {
         const { error } = await this.supabase
           .from('crm_companies')
-          .upsert(rows, { onConflict: 'hubspot_id' });
+          .upsert(rows as any, { onConflict: 'hubspot_id' });
         if (error) {
           this.logger.error(`[SYNC] Companies upsert error: ${error.message}`);
         } else {
@@ -234,7 +234,7 @@ export class SyncService {
       if (rows.length > 0) {
         const { error } = await this.supabase
           .from('crm_contacts')
-          .upsert(rows, { onConflict: 'hubspot_id' });
+          .upsert(rows as any, { onConflict: 'hubspot_id' });
         if (error) {
           this.logger.error(`[SYNC] Contacts upsert error: ${error.message}`);
         } else {
@@ -290,7 +290,7 @@ export class SyncService {
       if (rows.length > 0) {
         const { error } = await this.supabase
           .from('crm_deals')
-          .upsert(rows, { onConflict: 'hubspot_id' });
+          .upsert(rows as any, { onConflict: 'hubspot_id' });
         if (error) {
           this.logger.error(`[SYNC] Deals upsert error: ${error.message}`);
         } else {

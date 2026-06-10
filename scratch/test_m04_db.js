@@ -9,13 +9,13 @@ const { PrismaClient } = require('../boilerplate code/r-revenue-intelligence/pac
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public'
+      url: process.env.DATABASE_URL || 'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public'
     }
   }
 });
 
 async function main() {
-  console.log('Database URL:', process.env.DATABASE_URL || 'postgresql://revenue_user:revenue_pass@127.0.0.1:5433/revenue_intelligence?schema=public');
+  console.log('Database URL:', process.env.DATABASE_URL || 'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public');
   
   try {
     const dealsCount = await prisma.deal.count();

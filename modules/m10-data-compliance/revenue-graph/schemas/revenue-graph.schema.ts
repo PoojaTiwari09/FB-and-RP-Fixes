@@ -170,4 +170,4 @@ export const TriggerCrmSyncSchema = z.object({
     .default(['accounts', 'contacts', 'deals']),
   fullSync: z.boolean().default(false),
 });
-export type TriggerCrmSyncDto = z.infer<typeof TriggerCrmSyncSchema>;
+export interface TriggerCrmSyncDto extends z.infer<typeof TriggerCrmSyncSchema> {}

@@ -87,15 +87,15 @@ export class M06ForecastingPredictionWorker extends WorkerHost {
         });
         if (res.ok) {
           const prediction = await res.json();
-          predictedAmount = prediction.predictedAmount ?? predictedAmount;
+          predictedAmount = (prediction as any).predictedAmount ?? predictedAmount;
           await this.prisma.aiForecastSnapshot.create({
             data: {
               tenantId,
               periodId,
-              predictedAmount: prediction.predictedAmount ?? predictedAmount,
-              confidenceRangeLow: prediction.confidenceRangeLow ?? predictedAmount - spread / 2,
-              confidenceRangeHigh: prediction.confidenceRangeHigh ?? predictedAmount + spread / 2,
-              modelInputs: prediction.modelInputs ?? modelInputs,
+              predictedAmount: (prediction as any).predictedAmount ?? predictedAmount,
+              confidenceRangeLow: (prediction as any).confidenceRangeLow ?? predictedAmount - spread / 2,
+              confidenceRangeHigh: (prediction as any).confidenceRangeHigh ?? predictedAmount + spread / 2,
+              modelInputs: (prediction as any).modelInputs ?? modelInputs,
               idempotencyKey: job.id ?? randomUUID(),
             },
           });

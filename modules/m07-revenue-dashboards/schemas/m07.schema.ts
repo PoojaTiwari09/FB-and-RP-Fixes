@@ -5,4 +5,4 @@ export const CreateM07RevenueDashboardsSchema = z.object({
   name: z.string().min(1),
 });
 
-export type CreateM07RevenueDashboardsDto = z.infer<typeof CreateM07RevenueDashboardsSchema>;
+export interface CreateM07RevenueDashboardsDto extends z.infer<typeof CreateM07RevenueDashboardsSchema> {}

@@ -26,7 +26,7 @@ export class TodosService {
         content,
         completed: false,
       })
-      .select()
+      .select('*')
       .single();
 
     if (error) throw new Error(error.message);
@@ -46,7 +46,7 @@ export class TodosService {
       .from('todos_notes')
       .update(updateData)
       .eq('id', todoId)
-      .select()
+      .select('*')
       .single();
 
     if (error) throw new NotFoundException('Todo not found');

@@ -588,7 +588,7 @@ export class TestController {
   @Public()
   @Get('health')
   async health() {
-    await this.prisma.$queryRawUnsafe('SELECT 1');
+    await this.prisma.$queryRaw`SELECT 1`;
     const scenarios = await this.repository.findAllScenarios(
       '00000000-0000-0000-0000-000000000001',
     ).catch(() => []);

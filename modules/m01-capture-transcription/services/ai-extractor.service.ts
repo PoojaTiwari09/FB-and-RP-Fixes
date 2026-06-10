@@ -4,7 +4,7 @@ import { PrismaService } from '../database/prisma.service';
 
 import { TranscriptRepository } from '../repositories/transcript.repository';
 
-import { extractCustomField } from '../lib/custom-field-extraction';
+import { extractCustomField } from './custom-field-extraction';
 
 
 

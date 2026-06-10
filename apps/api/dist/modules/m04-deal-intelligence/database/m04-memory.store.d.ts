@@ -1,0 +1,30 @@
+import { AnalyticsSnapshot, AuditLog, BoardColumn, BoardFilter, BoardPermission, BoardTab, Deal, DealActivity, DealBoard, DealComment, DealPlaybook, DealSummary, DealTask, DealWarning, Session, SyncLog, User, UserPreference } from '../entities';
+export declare const M04_DEV_TENANT = "dev-tenant-m04-001";
+export declare const M04_DEV_USER = "00000000-0000-0000-0000-000000000004";
+export declare const M04_DEV_BOARD_1 = "00000000-0000-0000-0000-000000000101";
+export declare const M04_DEV_BOARD_2 = "00000000-0000-0000-0000-000000000102";
+export type M04CollectionKey = 'deals' | 'boards' | 'boardFilters' | 'boardTabs' | 'boardColumns' | 'boardPermissions' | 'dealWarnings' | 'dealPlaybooks' | 'dealActivities' | 'dealComments' | 'dealTasks' | 'auditLogs' | 'syncLogs' | 'dealSummaries' | 'users' | 'sessions' | 'userPreferences' | 'analyticsSnapshots';
+export declare class M04MemoryStore {
+    deals: Map<string, Deal>;
+    boards: Map<string, DealBoard>;
+    boardFilters: Map<string, BoardFilter>;
+    boardTabs: Map<string, BoardTab>;
+    boardColumns: Map<string, BoardColumn>;
+    boardPermissions: Map<string, BoardPermission>;
+    dealWarnings: Map<string, DealWarning>;
+    dealPlaybooks: Map<string, DealPlaybook>;
+    dealActivities: Map<string, DealActivity>;
+    dealComments: Map<string, DealComment>;
+    dealTasks: Map<string, DealTask>;
+    auditLogs: Map<string, AuditLog>;
+    syncLogs: Map<string, SyncLog>;
+    dealSummaries: Map<string, DealSummary>;
+    users: Map<string, User>;
+    sessions: Map<string, Session>;
+    userPreferences: Map<string, UserPreference>;
+    analyticsSnapshots: Map<string, AnalyticsSnapshot>;
+    constructor();
+    getCollection<K extends M04CollectionKey>(key: K): Map<string, unknown>;
+    private seed;
+}
+export declare const m04MemoryStore: M04MemoryStore;

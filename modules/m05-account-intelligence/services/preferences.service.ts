@@ -92,13 +92,13 @@ export class PreferencesService {
         .from('user_board_preferences')
         .update(payload)
         .eq('id', existing.id)
-        .select()
+        .select('*')
         .single();
     } else {
       result = await this.supabase
         .from('user_board_preferences')
         .insert(payload)
-        .select()
+        .select('*')
         .single();
     }
 

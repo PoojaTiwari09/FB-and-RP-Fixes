@@ -24,5 +24,5 @@ export const createWidgetDtoSchema = z.object({
   timeRange: timeRangeSchema.default("CURRENT_QUARTER"),
 });
 
-export type CreateDashboardDto = z.infer<typeof createDashboardDtoSchema>;
-export type CreateWidgetDto = z.infer<typeof createWidgetDtoSchema>;
+export interface CreateDashboardDto extends z.infer<typeof createDashboardDtoSchema> {}
+export interface CreateWidgetDto extends z.infer<typeof createWidgetDtoSchema> {}

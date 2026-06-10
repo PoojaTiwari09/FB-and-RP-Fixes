@@ -1,0 +1,41 @@
+import { ConfigService } from '@nestjs/config';
+import { TransformedDeal, DealBoard, HubSpotOwner } from '../interfaces/hubspot.types';
+export declare class HubSpotService {
+    private configService;
+    private readonly logger;
+    private readonly baseUrl;
+    private readonly accessToken;
+    private lastRequestTime;
+    private readonly minRequestInterval;
+    private readonly ownerColors;
+    private getOwnerColor;
+    private delay;
+    private rateLimitDelay;
+    constructor(configService: ConfigService);
+    private fetchFromHubSpot;
+    getAllDeals(limit?: number): Promise<TransformedDeal[]>;
+    getDealsByPipeline(pipeline: string): Promise<TransformedDeal[]>;
+    getDealById(dealId: string): Promise<TransformedDeal | null>;
+    getOwners(): Promise<HubSpotOwner[]>;
+    getOwnerById(ownerId: string): Promise<HubSpotOwner | null>;
+    getAssociatedContacts(dealId: string): Promise<any[]>;
+    getPipelines(): Promise<string[]>;
+    generateDealBoardsFromDeals(deals: TransformedDeal[]): DealBoard[];
+    private transformDeal;
+    private calculateAIScore;
+    private calculateWarnings;
+    private calculateMEDDPICCScore;
+    private mapDealStage;
+    private mapForecastCategory;
+    private getStageProbability;
+    private getPipelineDisplayName;
+    private stageIdCache;
+    private getPipelineStageMap;
+    updateDeal(dealId: string, updates: {
+        stage?: string;
+        forecastCategory?: string;
+        amount?: string;
+        nextStep?: string;
+        meddpiccPercent?: number;
+    }): Promise<any>;
+}

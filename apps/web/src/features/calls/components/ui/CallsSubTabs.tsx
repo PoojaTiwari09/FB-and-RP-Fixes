@@ -21,14 +21,15 @@ export default function CallsSubTabs({ tabs }: CallsSubTabsProps) {
   return (
     <div className="flex gap-1 border-b border-gray-200 bg-white px-6 pt-2">
       {tabs.map(({ label, href, count, icon }) => {
-        const active =
+        const active = pathname && (
           href === '/calls/reviews/list'
             ? pathname === '/calls/reviews/list'
             : href === '/calls/reviews'
             ? pathname === '/calls/reviews' ||
               (pathname.startsWith('/calls/reviews/') &&
                 !pathname.startsWith('/calls/reviews/list'))
-            : pathname === href;
+            : pathname === href
+        );
 
         const Icon = icon === 'phone' ? Phone : icon === 'file' ? FileText : null;
 

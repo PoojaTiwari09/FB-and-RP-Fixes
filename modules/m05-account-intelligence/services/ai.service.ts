@@ -222,7 +222,7 @@ export class AiService {
       }
 
       const data = await response.json();
-      return data.choices[0].message.content;
+      return (data as any).choices[0].message.content;
     } catch (e) {
       console.error(e);
       return "Error communicating with Groq API.";

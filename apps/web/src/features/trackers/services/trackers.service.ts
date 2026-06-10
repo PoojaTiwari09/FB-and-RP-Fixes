@@ -1,10 +1,11 @@
+import { resolveApiBase } from '@shared/config/module-api';
 import { ENV } from '@shared/config/env';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import type { Filters, Tracker, TrackerDetail } from '../types/tracker.types';
 
 function apiBase(): string {
   const root = ENV.M02_API_BASE_URL;
-  return root ? `${root}/api/trackers` : '/api/trackers';
+  return root ? `${root}/api/v1/conversation-intelligence/trackers` : '/api/v1/conversation-intelligence/trackers';
 }
 
 function unwrap<T>(json: Record<string, unknown>): T {

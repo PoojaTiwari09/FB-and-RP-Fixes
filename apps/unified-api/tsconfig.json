@@ -27,5 +27,5 @@
     "../../modules/m07-revenue-dashboards/**/*",
     "../../modules/platform-core/**/*"
   ],
-  "exclude": ["node_modules", "dist", "../../modules/**/features/**"]
+  "exclude": ["node_modules", "dist", "../../modules/**/features/**", "../../modules/**/*.spec.ts", "../../modules/**/*.test.ts"]
 }

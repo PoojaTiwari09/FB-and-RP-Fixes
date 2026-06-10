@@ -5,4 +5,4 @@ export const CreateM03AiSummariesGenaiSchema = z.object({
   name: z.string().min(1),
 });
 
-export type CreateM03AiSummariesGenaiDto = z.infer<typeof CreateM03AiSummariesGenaiSchema>;
+export interface CreateM03AiSummariesGenaiDto extends z.infer<typeof CreateM03AiSummariesGenaiSchema> {}

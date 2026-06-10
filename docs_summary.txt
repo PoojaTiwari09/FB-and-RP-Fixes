@@ -1,0 +1,87 @@
+File: API Design Standards.md (Size: 146186)
+Headings: # API Design Standards
+
+File: architectural_overview.md (Size: 4750)
+Headings: # Architectural Overview — Revenue Intelligence Monorepo
+
+File: Architecture Decision Records.md (Size: 22411)
+Headings: # Architecture Decision Records (ADRs)
+
+File: ARCHITECTURE.md (Size: 4023)
+Headings: # Architecture — Unified & Standalone Layouts
+
+File: boilerplate-architecture-and-contribution-guide.md (Size: 4988)
+Headings: # R-Revenue Intelligence: Boilerplate Architecture & Contribution Guide
+
+File: boilerplate-development-guide.md (Size: 7906)
+Headings: # R-Revenue Intelligence — Boilerplate & Testing Development Guide | # Start Postgres, Redis, Meilisearch, ClickHouse in the background | # Syntactical check on root files and packages | # Run Jest unit and integration tests
+
+File: codebase-explained.md (Size: 13274)
+Headings: # Revenue Intelligence Platform - Codebase Explained
+
+File: Coding standards.md (Size: 213390)
+Headings: # Doc #7 — Coding Standards & Style Guide | # Chapter 1 — Purpose & Scope | # Chapter 2 — The 10 Golden Rules | # ❌ WRONG | # ✅ CORRECT | # Chapter 3 — Project Structure & File Conventions | # Chapter 4 — TypeScript Standards | # ✅ CORRECT — create a new migration | # ❌ WRONG — never do this | # Manually editing a file in prisma/migrations/
+
+File: COMMANDS.md (Size: 1728)
+Headings: # Execution Command List
+
+File: complete_codebase_knowledge_base.md (Size: 41798)
+Headings: # R-Revenue Intelligence — Complete Codebase Knowledge Base
+
+File: Database Schema.md (Size: 150942)
+Headings: None
+
+File: developer-and-lead-playbook.md (Size: 7135)
+Headings: # 📖 Developer Onboarding & Tech Lead Review Playbook | # 1. Clone the repository and go to the boilerplate code directory | # 1. Start the local database infrastructure | # 2. Pull secure local configurations (Requires Doppler CLI) | # 3. Install dependencies and compile workspace typings sequentially | # 4. Synchronize schemas | # 1. Configure your local environment variables in `.env` | # Create a `.env` in the root containing your native connection URLs: | # DATABASE_URL="postgresql://postgres:postgres@localhost:5432/revenue_intel?schema=public" | # REDIS_HOST="localhost"
+
+File: Event Schema registry.md (Size: 103712)
+Headings: # M-03 Revenue Graph event contracts
+
+File: fix-checkout.md (Size: 4790)
+Headings: # Documentation Fix Checkout Log
+
+File: git-branching-strategy.md (Size: 177591)
+Headings: # Git Branching Strategy | # 1. Overview & Purpose | # 2. Repository Structure | # 3. Branch Architecture 🏗️ | # 4. Module Branch Strategy 🧩 | # 5. Branch Naming Conventions 🏷️ | # 6. Merge & Pull Request Rules 🤝 | # 7. Environment & Deployment Mapping 🌐 | # 8. Module Dependency & Integration Order 🔗 | # 9. Release Strategy 🚀
+
+File: github-spec-kit-guide.md (Size: 5495)
+Headings: # GitHub Spec Kit & Spec-Driven Development (SDD) Guide
+
+File: Local-Dev-Setup-Guide.md (Size: 35725)
+Headings: # PostgreSQL Connection URL | # Redis Server Configuration | # AI services link | # Sequential client compilation to prevent file lock conflict on Windows | # Sync models to native/cloud database | # Install root monorepo dependencies | # Start frontend and NestJS development servers in parallel | # Check API health | # Check AI services
+
+File: M02-ENDPOINTS.md (Size: 14734)
+Headings: # ⚡ M02 — Conversation Intelligence: Complete Endpoint Reference
+
+File: M02-LIVE-ASSIST-ENDPOINTS.md (Size: 3479)
+Headings: # ⚡ Live Call Assist (Co-Pilot) Endpoint Reference
+
+File: mermaid-system-design.md (Size: 5534)
+Headings: None
+
+File: Module boundary document.md (Size: 132976)
+Headings: None
+
+File: Non‑Functional Requirements (NFR) Specification.md (Size: 76802)
+Headings: # Non-Functional Requirements (NFR) Specification
+
+File: port_consolidation_report.md (Size: 4445)
+Headings: # Port Consolidation & Architecture Mapping Report
+
+File: RUN-DEMO.md (Size: 1687)
+Headings: # Running the Unified Demo
+
+File: RUNBOOK.md (Size: 11658)
+Headings: # Standalone module run commands
+
+File: Security architecture.md (Size: 252905)
+Headings: # Security Architecture Document
+
+File: System_architecture.md (Size: 628982)
+Headings: # R-Revenue Intelligence — System Architecture Document (SAD) | # Railway / Docker Compose Phase 1 | # All AI endpoints follow this contract | # ✅ Input: Structured JSON | # ✅ Output: Structured JSON | # ❌ Never: Raw model outputs, business logic, DB writes | # Example: POST /summarize | # ADR-XXX: [Decision Title] | # Every PR must pass ALL gates before merge | # litellm_config.py
+
+File: team-handover-launchpad.md (Size: 3770)
+Headings: # 🚀 R-Revenue Intelligence Platform: Team Handover Launchpad | # 🛠️ 1. SPIN UP LOCAL DATABASES & CACHES | # 🔗 2. PULL CONFIGS & SECRETS (Ensure Doppler CLI is installed) | # 💾 3. SYNC SCHEMA & RUN INITIAL DATA SEEDS | # 🧪 4. RUN ALL TEST SUITES
+
+File: tooling-and-services-inventory.md (Size: 246978)
+Headings: None
+

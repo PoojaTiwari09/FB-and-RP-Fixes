@@ -1,19 +1,20 @@
 import { Global, Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { EventPublisherService } from './event-publisher.service';
+import { PlatformEventsWorker } from './platform-events.worker';
 
 /**
  * EventPublisherModule
  *
  * Marked @Global so any module can inject EventPublisherService without
- * needing to import this module explicitly. The underlying EventEmitter2
- * is initialised once at the AppModule root (see apps/api/src/app.module.ts)
- * with EventEmitterModule.forRoot(). That keeps the registration to a single
- * call across the whole process and lets @OnEvent subscribers fire in every
- * module that participates in the domain event bus (M01 → M02/M03/M05/M10).
+ * needing to import this module explicitly.
  */
 @Global()
 @Module({
-  providers: [EventPublisherService],
+  imports: [
+    BullModule.registerQueue({ name: 'platform-events' }),
+  ],
+  providers: [EventPublisherService, PlatformEventsWorker],
   exports: [EventPublisherService],
 })
 export class EventPublisherModule {}

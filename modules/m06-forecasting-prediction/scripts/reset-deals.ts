@@ -47,10 +47,10 @@ async function resetDeals() {
         data: {
           tenantId,
           periodId: period.id,
-          predictedAmount: prediction.predictedAmount,
-          confidenceRangeLow: prediction.confidenceRangeLow,
-          confidenceRangeHigh: prediction.confidenceRangeHigh,
-          modelInputs: prediction.modelInputs,
+          predictedAmount: (prediction as any).predictedAmount,
+          confidenceRangeLow: (prediction as any).confidenceRangeLow,
+          confidenceRangeHigh: (prediction as any).confidenceRangeHigh,
+          modelInputs: (prediction as any).modelInputs,
           idempotencyKey: 'reset-' + Date.now(),
         }
       });

@@ -1,5 +1,6 @@
 import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@rri/database';
 import { CreatePlayDto, UpdatePlayDto } from '../schemas/m08.schema';
 
 @Injectable()

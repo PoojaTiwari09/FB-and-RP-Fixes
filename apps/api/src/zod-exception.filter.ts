@@ -3,12 +3,6 @@ import {
 } from '@nestjs/common';
 import { ZodError } from 'zod';
 
-/**
- * ZodExceptionFilter — converts ZodError raised by `schema.parse(body)` calls
- * inside controllers into RFC-7807-style 400 responses. Previously these
- * bubbled up as 500s, which made request validation indistinguishable from
- * server bugs in client error logs.
- */
 @Catch(ZodError)
 export class ZodExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(ZodExceptionFilter.name);
@@ -31,12 +25,12 @@ export class ZodExceptionFilter implements ExceptionFilter {
     );
 
     res.status(HttpStatus.BAD_REQUEST).json({
-      statusCode: HttpStatus.BAD_REQUEST,
-      error:      'Bad Request',
-      message:    'Request payload failed validation',
-      details:    issues,
-      path:       req.url,
-      timestamp:  new Date().toISOString(),
+      success: false,
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request payload failed validation',
+        details: issues,
+      },
     });
   }
 }

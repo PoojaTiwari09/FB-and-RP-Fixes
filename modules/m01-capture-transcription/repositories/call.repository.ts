@@ -9,7 +9,7 @@ export class CallRepository {
 
   // ── CT-01: create call record ─────────────────────────────────────────
   async create(data: CreateCallDto & { tenantId: string }) {
-    return this.prisma.callRecord.create({ data });
+    return this.prisma.callRecord.create({ data: data as any });
   }
 
   // ── Sortable list with transcript status (CT sortable list) ──────────

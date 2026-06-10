@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Optional } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../database/prisma.service';

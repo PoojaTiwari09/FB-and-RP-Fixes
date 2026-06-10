@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { CreateDatasetDto, CreateDashboardDto, CreateWidgetDto } from "@rri/shared-types";
@@ -234,12 +235,12 @@ export class M07DealAccountService {
       );
     };
 
-    const competitorAccountSlugs: string[] = [
-      ...new Set(competitorDetections.map((d: any) => d.accountName as string).filter(Boolean)),
-    ];
-    const pricingAccountSlugs: string[] = [
-      ...new Set(pricingDetections.map((d: any) => d.accountName as string).filter(Boolean)),
-    ];
+    const competitorAccountSlugs: string[] = Array.from(
+      new Set(competitorDetections.map((d: any) => d.accountName as string).filter(Boolean)),
+    );
+    const pricingAccountSlugs: string[] = Array.from(
+      new Set(pricingDetections.map((d: any) => d.accountName as string).filter(Boolean)),
+    );
 
     const hasCompetitor = (deal: any): boolean => {
       const name = deal.account?.name ?? deal.name ?? "";

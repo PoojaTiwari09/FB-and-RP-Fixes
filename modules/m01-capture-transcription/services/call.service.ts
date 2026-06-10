@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -16,14 +17,14 @@ import {
   ListCallsQueryDto,
   UploadFromS3Dto,
 } from '../schemas/m01.schema';
-import { getS3RecordingById } from '../lib/s3-recordings-catalog';
-import { downloadRemoteAudioToLocal } from '../lib/fetch-remote-audio';
-import { getPublicAudioUrl } from '../lib/upload-paths';
-import { resolvePublicTranscriptionUrl } from '../lib/public-audio-url';
+import { getS3RecordingById } from './s3-recordings-catalog';
+import { downloadRemoteAudioToLocal } from './fetch-remote-audio';
+import { getPublicAudioUrl } from './upload-paths';
+import { resolvePublicTranscriptionUrl } from './public-audio-url';
 import {
   durationSecondsFromUtterances,
   uniqueSpeakersFromUtterances,
-} from '../lib/call-duration.util';
+} from './call-duration.util';
 
 @Injectable()
 export class CallService {

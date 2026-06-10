@@ -141,7 +141,7 @@ export class AuthService {
       return null;
     }
 
-    return session.user;
+    return (session as any).user;
   }
 
   /**

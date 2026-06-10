@@ -1085,7 +1085,7 @@ OVERVIEW: This is a generated fallback summary.`,
 export const MOCK_AUDIO = undefined as any;
 
 // ─── Regenerate Brief ─────────────────────────────────────────
-// Mock for: POST /api/calls/:callId/briefs/:briefId/regenerate
+// Mock for: POST /api/v1/conversation-intelligence/calls/:callId/briefs/:briefId/regenerate
 
 export const MOCK_REGENERATE_BRIEF: GenerateBriefResponse = {
   briefId: 'brief_x1y2z3a4b5',
@@ -1096,7 +1096,7 @@ export const MOCK_REGENERATE_BRIEF: GenerateBriefResponse = {
 };
 
 // ─── Note Response ────────────────────────────────────────────
-// Mock for: POST /api/calls/:callId/notes
+// Mock for: POST /api/v1/conversation-intelligence/calls/:callId/notes
 
 export const MOCK_NOTE_RESPONSE: NoteResponse = {
   noteId: 'note_a1b2c3d4e5',
@@ -1108,7 +1108,7 @@ export const MOCK_NOTE_RESPONSE: NoteResponse = {
 };
 
 // ─── Call Share Response ──────────────────────────────────────
-// Mock for: POST /api/calls/:callId/share
+// Mock for: POST /api/v1/conversation-intelligence/calls/:callId/share
 
 export const MOCK_CALL_SHARE_RESPONSE: CallShareResponse = {
   shareableLink: 'https://app.callintel.io/shared/call/call_a1b2c3d4e5f6?token=tkn_9f8e7d6c5b4a',

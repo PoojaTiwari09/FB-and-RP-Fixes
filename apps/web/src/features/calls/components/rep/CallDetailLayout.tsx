@@ -54,7 +54,7 @@ export default function CallDetailLayout({ callId, children }: CallDetailLayoutP
     { label: 'Feedback', href: `/calls/ai-reviewer/${callId}/feedback` },
   ];
 
-  const activeTab = tabs.find((t) => pathname.startsWith(t.href))?.label ?? 'Overview';
+  const activeTab = tabs.find((t) => pathname?.startsWith(t.href))?.label ?? 'Overview';
 
   return (
     <div className="flex flex-col flex-1 min-h-0">

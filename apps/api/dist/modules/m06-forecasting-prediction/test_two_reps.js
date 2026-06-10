@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+async function runTests() {
+    const openPeriod = await prisma.forecastPeriod.findFirst({ where: { status: 'open' } });
+    const boardRep1 = await fetch(`http://localhost:3001/api/v1/forecasting/periods/${openPeriod?.id}/board?repUserId=rep-01`, {
+        headers: { 'X-Tenant-ID': 'demo-tenant-01', 'x-user-id': 'rep-01' }
+    }).then(res => res.json());
+    console.log(`\n--- Rep-01 Math ---`);
+    console.log(`Pipeline Deals: ${boardRep1.aiPrediction.explainability.deals.length}`);
+    console.log(`Total Projected: ₹${boardRep1.aiPrediction.predictedAmount}`);
+    const boardRep2 = await fetch(`http://localhost:3001/api/v1/forecasting/periods/${openPeriod?.id}/board?repUserId=rep-02`, {
+        headers: { 'X-Tenant-ID': 'demo-tenant-01', 'x-user-id': 'rep-02' }
+    }).then(res => res.json());
+    console.log(`\n--- Rep-02 Math ---`);
+    console.log(`Pipeline Deals: ${boardRep2.aiPrediction.explainability.deals.length}`);
+    console.log(`Total Projected: ₹${boardRep2.aiPrediction.predictedAmount}`);
+}
+runTests().catch(console.error).finally(() => prisma.$disconnect());
+//# sourceMappingURL=test_two_reps.js.map

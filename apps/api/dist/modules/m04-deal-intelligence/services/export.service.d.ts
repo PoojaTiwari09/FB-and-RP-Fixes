@@ -1,0 +1,40 @@
+import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
+import { Deal } from '@/entities/deal.entity';
+import { DealBoard } from '@/entities/deal-board.entity';
+import { DealActivity } from '@/entities/deal-activity.entity';
+import { DealTask } from '@/entities/deal-task.entity';
+import { DealPlaybook } from '@/entities/deal-playbook.entity';
+import { DealWarning } from '@/entities/deal-warning.entity';
+import { User } from '@/entities/user.entity';
+import { ExportRequestDto, ExportResponseDto } from '@/schemas/export.dto';
+export declare class ExportService {
+    private readonly dealRepository;
+    private readonly boardRepository;
+    private readonly activityRepository;
+    private readonly taskRepository;
+    private readonly playbookRepository;
+    private readonly warningRepository;
+    private readonly userRepository;
+    private readonly exportsDir;
+    constructor(dealRepository: Repository<Deal>, boardRepository: Repository<DealBoard>, activityRepository: Repository<DealActivity>, taskRepository: Repository<DealTask>, playbookRepository: Repository<DealPlaybook>, warningRepository: Repository<DealWarning>, userRepository: Repository<User>);
+    createExport(dto: ExportRequestDto, userId: string): Promise<ExportResponseDto>;
+    getExportFile(exportId: string): Promise<{
+        filePath: string;
+        mimeType: string;
+    }>;
+    private fetchDeals;
+    private fetchBoardDeals;
+    private fetchActivities;
+    private fetchTasks;
+    private fetchPlaybook;
+    private generateCSV;
+    private generateExcel;
+    private generatePDF;
+    cleanupOldExports(): Promise<number>;
+    private fetchTeamDiagnostics;
+    private fetchCoachingActivity;
+    private fetchForecastSummary;
+    private fetchTopRiskDeals;
+    private fetchAnalyticsReport;
+    private groupByField;
+}

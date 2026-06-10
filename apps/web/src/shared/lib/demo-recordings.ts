@@ -24,7 +24,7 @@ export function pickDemoRecordingUrl(seed: string): string {
 }
 
 export function toProxiedAudioUrl(remoteUrl: string): string {
-  return `/api/calls/audio?src=${encodeURIComponent(remoteUrl)}`;
+  return `/api/v1/conversation-intelligence/calls/audio?src=${encodeURIComponent(remoteUrl)}`;
 }
 
 export function isLocalUploadUrl(url: string): boolean {

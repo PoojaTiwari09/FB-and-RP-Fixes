@@ -15,9 +15,10 @@ export type ReviewData = any;
 export type FeedbackData = any;
 export type CoachingInsights = any;
 
+import { resolveApiBase } from '@shared/config/module-api';
+
 const BASE_URL = () => {
-  const root = ENV.M01_API_BASE_URL;
-  return root ? `${root}/api` : '/api';
+  return `${resolveApiBase()}/api/v1/capture-transcription`;
 };
 
 function unwrapApiPayload<T>(json: Record<string, unknown>): T {

@@ -1,3 +1,4 @@
+import { Prisma } from '@rri/database';
 import { Controller, Get, Post, Patch, Param, Body, Headers, Query, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBody } from '@nestjs/swagger';
 import { M06ForecastingPredictionService } from '../services/m06.service';
