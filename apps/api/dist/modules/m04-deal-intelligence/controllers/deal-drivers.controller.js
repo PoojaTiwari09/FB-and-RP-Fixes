@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealDriversController = void 0;
+const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
 const common_1 = require("@nestjs/common");
 const jwt_guard_1 = require("../interfaces/jwt.guard");
 const deal_drivers_service_1 = require("../services/deal-drivers.service");
@@ -260,7 +261,7 @@ __decorate([
 ], DealDriversController.prototype, "getDrillDown", null);
 __decorate([
     (0, common_1.Get)('board-comparison'),
-    (0, jwt_guard_1.Roles)('cro', 'revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -284,7 +285,7 @@ __decorate([
 ], DealDriversController.prototype, "getBoards", null);
 __decorate([
     (0, common_1.Get)('managers'),
-    (0, jwt_guard_1.Roles)('cro', 'revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -340,7 +341,7 @@ __decorate([
 ], DealDriversController.prototype, "bulkCreateWarningEvents", null);
 __decorate([
     (0, common_1.Post)('lifecycle'),
-    (0, jwt_guard_1.Roles)('revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [deal_drivers_dto_1.OpenDealLifecycleDto]),
@@ -348,7 +349,7 @@ __decorate([
 ], DealDriversController.prototype, "openDealLifecycle", null);
 __decorate([
     (0, common_1.Patch)('lifecycle/:id/close'),
-    (0, jwt_guard_1.Roles)('revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -357,7 +358,7 @@ __decorate([
 ], DealDriversController.prototype, "closeDealLifecycle", null);
 __decorate([
     (0, common_1.Post)('reassignments'),
-    (0, jwt_guard_1.Roles)('revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [deal_drivers_dto_1.CreateDealReassignmentDto]),
@@ -365,7 +366,7 @@ __decorate([
 ], DealDriversController.prototype, "createDealReassignment", null);
 exports.DealDriversController = DealDriversController = __decorate([
     (0, common_1.Controller)('deal-drivers'),
-    (0, jwt_guard_1.Roles)('sales_manager', 'cro', 'revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __metadata("design:paramtypes", [deal_drivers_service_1.DealDriversService,
         database_service_1.DatabaseService,
         matrix_cache_1.MatrixCache])

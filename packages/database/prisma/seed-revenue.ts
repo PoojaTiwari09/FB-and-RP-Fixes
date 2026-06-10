@@ -12,7 +12,7 @@ async function main() {
     update: {},
     create: {
       id: 'default',
-      tenantid: TENANT_ID,
+      tenantId: TENANT_ID,
       alertBanner: {
         totalARR: 2100000,
         accountCount: 18,
@@ -257,7 +257,7 @@ async function main() {
         aiChatHistory: acc.aiChatHistory
       },
       create: {
-        tenantid: TENANT_ID,
+        tenantId: TENANT_ID,
         ...acc
       }
     });
@@ -270,7 +270,7 @@ async function main() {
     update: {},
     create: {
       id: 'default',
-      tenantid: TENANT_ID,
+      tenantId: TENANT_ID,
       filters: {
         periods: ['Last 7 days', 'Last 30 days', 'Last quarter', 'This quarter'],
         teams: [
@@ -452,7 +452,7 @@ async function main() {
         coachingHistory: rep.coachingHistory
       },
       create: {
-        tenantid: TENANT_ID,
+        tenantId: TENANT_ID,
         ...rep
       }
     });

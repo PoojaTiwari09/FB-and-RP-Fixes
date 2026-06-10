@@ -43,7 +43,7 @@ let M06ForecastingPredictionWorker = class M06ForecastingPredictionWorker extend
             });
         }
         const lastSnapshot = await this.prisma.aiForecastSnapshot.findFirst({
-            where: { tenantid: tenantId, periodId },
+            where: { tenantId: tenantId, periodId },
             orderBy: { computedAt: 'desc' },
         });
         if (lastSnapshot) {
@@ -54,7 +54,7 @@ let M06ForecastingPredictionWorker = class M06ForecastingPredictionWorker extend
         }
         try {
             const period = await this.prisma.forecastPeriod.findFirst({
-                where: { id: periodId, tenantid: tenantId },
+                where: { id: periodId, tenantId: tenantId },
             });
             if (!period)
                 throw new Error('Period not found');
@@ -76,7 +76,7 @@ let M06ForecastingPredictionWorker = class M06ForecastingPredictionWorker extend
                     predictedAmount = prediction.predictedAmount ?? predictedAmount;
                     await this.prisma.aiForecastSnapshot.create({
                         data: {
-                            tenantid: tenantId,
+                            tenantId: tenantId,
                             periodId,
                             predictedAmount: prediction.predictedAmount ?? predictedAmount,
                             confidenceRangeLow: prediction.confidenceRangeLow ?? predictedAmount - spread / 2,
@@ -98,7 +98,7 @@ let M06ForecastingPredictionWorker = class M06ForecastingPredictionWorker extend
             }
             await this.prisma.aiForecastSnapshot.create({
                 data: {
-                    tenantid: tenantId,
+                    tenantId: tenantId,
                     periodId,
                     predictedAmount,
                     confidenceRangeLow: Math.round(predictedAmount - spread / 2),
@@ -135,7 +135,7 @@ let M06ForecastingPredictionWorker = class M06ForecastingPredictionWorker extend
         const dashboard = await this.forecastingService.getExecutiveDashboard(tenantId, undefined, undefined, periodId, { skipSnapshot: true });
         await this.prisma.forecastExecutiveSnapshot.create({
             data: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 periodId,
                 submissionId,
                 payload: dashboard,

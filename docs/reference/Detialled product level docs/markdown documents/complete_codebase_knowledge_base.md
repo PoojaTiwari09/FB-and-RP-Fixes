@@ -1,7 +1,7 @@
 # R-Revenue Intelligence — Complete Codebase Knowledge Base
-**Version:** v3.1  
+**Version:** v3.2  
 **Status:** Approved  
-**Last Updated:** 2026-06-09  
+**Last Updated:** 2026-06-10  
 **Owner:** Technical Architecture Team & Relanto Engineering
 
 ---
@@ -124,9 +124,11 @@ CREATE POLICY tenant_isolation ON dashboards.trainerscenarios
 ```
 
 ### 3.3 Schema Ownership Mapping
-PostgreSQL database tables are organized into two main namespaces:
+PostgreSQL database tables are organized into four main namespaces:
 
-*   `public` (Default Schema): Stores the core platform tables (Tenants, Users, Accounts, Deals) and module-specific data models for M1, M2, M3, M4, M5, M6, M8, and M10.
+*   `public` (Default Schema): Stores core platform tables (Tenants, Users, Forecasts) and module-specific data models for M3, M6, M8, M10.
+*   `ingestion`: Managed by M01 (Capture & Transcription) to store raw Call Records, Transcripts, and Utterances.
+*   `revenuegraph`: Stores CRM-synchronized entities like Accounts, Deals, Datasets, and Teams.
 *   `dashboards`: Managed by M07 (Revenue Dashboards) and M09 (Coaching & Training) to store cached snapshots, dashboard configs, widget definitions, recommendations, and training roleplay sessions.
 
 Conceptual data ownership remains divided by module boundaries, ensuring that each module handles queries for its domain logical layer (e.g. M1 handles call logs and transcripts, M6 handles forecasts, M10 handles revenue graphs).
@@ -141,11 +143,11 @@ Direct PostgreSQL table joins across schemas in application code are strictly pr
 └───────────────────────────────────────┘              └───────────────────────────────────────┘
 ┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
 │       M2 Conversation Intelligence    │ ────API─────> │       M10 Data & Compliance           │
-│       (modules/m02-conv-intel)        │              │       (modules/m10-data-compliance)   │
+│(modules/m02-conversation-intelligence)│              │       (modules/m10-data-compliance)   │
 └───────────────────────────────────────┘              └───────────────────────────────────────┘
 ┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
 │       M3 AI Summaries & GenAI         │ ────API─────> │       M2 Conversation Intelligence    │
-│       (modules/m03-ai-summaries-genai)│              │       (modules/m02-conv-intel)        │
+│       (modules/m03-ai-summaries-genai)│              │(modules/m02-conversation-intelligence)│
 └───────────────────────────────────────┘              └───────────────────────────────────────┘
 ┌───────────────────────────────────────┐              ┌───────────────────────────────────────┐
 │       M4 Deal Intelligence            │ ────API─────> │       M3 AI Summaries & GenAI         │
@@ -544,20 +546,20 @@ This section records open architectural mismatches, deferred clean-up items, and
 
 | TD-ID | Severity | Status | Title | Affects |
 | :--- | :--- | :--- | :--- | :--- |
-| **TD-001** | Medium | 🔴 Open | M11 Physical Folder / M3 Logical Boundary Mismatch | `modules/m11-deep-researcher/`, `modules/m03-ai-summaries-genai/` |
+| **TD-001** | Medium | 🔴 Open | M11 Physical Folder / M3 Logical Boundary Mismatch | `modules/m11-ai-deep-researcher/`, `modules/m03-ai-summaries-genai/` |
 
 ### TD-001 — M11 Physical Folder / M3 Logical Boundary Mismatch
 
-**Summary:** The platform is documented as a **10-module logical architecture** (M1–M10). However, a physical folder `modules/m11-deep-researcher/` exists in the repository and is registered as a standalone NestJS module in `apps/unified-api/src/app.module.ts`. The **AI Deep Researcher** feature it contains is logically and commercially owned by **M3 (AI Summaries & GenAI)**.
+**Summary:** The platform is documented as a **10-module logical architecture** (M1–M10). However, a physical folder `modules/m11-ai-deep-researcher/` exists in the repository and is registered as a standalone NestJS module in `apps/unified-api/src/app.module.ts`. The **AI Deep Researcher** feature it contains is logically and commercially owned by **M3 (AI Summaries & GenAI)**.
 
-**Temporary Workaround:** All documentation treats AI Deep Researcher as part of M3. The `modules/m11-deep-researcher/` folder is a layout artifact only. No new documentation should refer to it as a standalone M11 module.
+**Temporary Workaround:** All documentation treats AI Deep Researcher as part of M3. The `modules/m11-ai-deep-researcher/` folder is a layout artifact only. No new documentation should refer to it as a standalone M11 module.
 
 **Resolution:** See full resolution plan in `implementation_plan.md → TD-001`. Summary:
 1. Migrate source files into `modules/m03-ai-summaries-genai/deep-researcher/`.
 2. Merge `M11Module` into `M03Module`.
 3. Remove standalone `M11Module` registration from `app.module.ts`.
 4. Consolidate API routes under `/api/v1/m03-ai-summaries-genai/deep-researcher`.
-5. Delete `modules/m11-deep-researcher/` after migration.
+5. Delete `modules/m11-ai-deep-researcher/` after migration.
 6. Raise a formal ADR for the consolidation.
 
 ---

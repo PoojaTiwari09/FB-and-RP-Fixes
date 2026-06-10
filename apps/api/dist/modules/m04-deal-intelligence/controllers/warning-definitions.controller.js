@@ -14,7 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WarningDefinitionsController = void 0;
 const common_1 = require("@nestjs/common");
-const jwt_guard_1 = require("../interfaces/jwt.guard");
+const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
 const database_service_1 = require("../database/database.service");
 const deal_drivers_dto_1 = require("../schemas/deal-drivers.dto");
 const uuid_1 = require("uuid");
@@ -130,7 +130,7 @@ __decorate([
 ], WarningDefinitionsController.prototype, "updateWarningDefinition", null);
 exports.WarningDefinitionsController = WarningDefinitionsController = __decorate([
     (0, common_1.Controller)('deal-drivers/warning-definitions'),
-    (0, jwt_guard_1.Roles)('revops', 'admin'),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], WarningDefinitionsController);
 //# sourceMappingURL=warning-definitions.controller.js.map

@@ -115,7 +115,7 @@ let HubSpotService = class HubSpotService {
         ].join(',');
         const data = await this.hubspotClient.getCrmDealsPage(accessToken, properties.split(','), '50');
         const hsDeals = data.results ?? [];
-        const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
+        const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantId: tenantId, status: 'open' } });
         const imported = [];
         for (const hsDeal of hsDeals) {
             const props = hsDeal.properties ?? {};
@@ -135,7 +135,7 @@ let HubSpotService = class HubSpotService {
             const isClosedWon = mappedStage === 'Closed Won';
             const isClosedLost = false;
             const existing = await this.prisma.crmDeal.findFirst({
-                where: { tenantid: tenantId, dealName, hubspotId: hsDeal.id },
+                where: { tenantId: tenantId, dealName, hubspotId: hsDeal.id },
             }).catch(() => null);
             if (existing) {
                 const updated = await this.prisma.crmDeal.update({
@@ -147,7 +147,7 @@ let HubSpotService = class HubSpotService {
             else {
                 const created = await this.prisma.crmDeal.create({
                     data: {
-                        tenantid: tenantId,
+                        tenantId: tenantId,
                         dealName,
                         stage: mappedStage,
                         amount,

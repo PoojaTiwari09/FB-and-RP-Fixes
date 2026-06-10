@@ -1,11 +1,21 @@
 import 'reflect-metadata';
 import { register } from 'tsconfig-paths';
 import * as path from 'path';
-register({
-  baseUrl: path.join(__dirname, '..'),
-  paths: require('../tsconfig.json').compilerOptions.paths,
-});
 import * as fs from 'fs';
+
+const tsConfigPath = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
+  ? path.join(__dirname, '../tsconfig.json')
+  : path.join(__dirname, '../../../../tsconfig.json');
+
+const baseUrl = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
+  ? path.join(__dirname, '..')
+  : path.join(__dirname, '../../../..'); // in dist/apps/api/src, go up 4 levels to root, but wait. The compiled files are inside dist/. So baseUrl for paths should point to dist/ ?
+  
+// Actually, if we're in dist, baseUrl should be `__dirname/../../` which is `dist/apps/api`
+register({
+  baseUrl: fs.existsSync(path.join(__dirname, '../tsconfig.json')) ? path.join(__dirname, '..') : path.join(__dirname, '../..'),
+  paths: require(tsConfigPath).compilerOptions.paths,
+});
 
 import { NestFactory, Reflector } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -49,12 +59,19 @@ async function bootstrap() {
     }),
   );
   // Transform successful response payloads into standardized success envelopes
-  app.useGlobalInterceptors(new ResponseTransformInterceptor());
+  // Also inject AsyncLocalStorage tenant context for RLS
+  const { TenantContextInterceptor } = require('../../../modules/platform-core/interceptors/tenant-context.interceptor');
+  app.useGlobalInterceptors(new ResponseTransformInterceptor(), new TenantContextInterceptor());
   // Convert HttpException and ZodError raised inside controllers into structured responses.
   app.useGlobalFilters(new FrontendApiExceptionFilter(), new ZodExceptionFilter());
   
-  // Register global auth guard and rate limiting (throttler) guard
-  app.useGlobalGuards(new JwtAuthGuard(reflector), new TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector));
+  // Register global auth guard, permissions guard, and rate limiting (throttler) guard
+  const { PermissionsGuard } = require('../../../modules/platform-core/guards/permissions.guard');
+  app.useGlobalGuards(
+    new JwtAuthGuard(reflector), 
+    new PermissionsGuard(reflector),
+    new TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector)
+  );
 
   const port = parseInt(process.env.PORT || '3001', 10);
   await app.listen(port);

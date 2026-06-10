@@ -19,7 +19,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
     }
     async getBoards(tenantId) {
         return this.prisma.forecastBoard.findMany({
-            where: { tenantid: tenantId },
+            where: { tenantId: tenantId },
             orderBy: { updatedAt: 'desc' },
             include: {
                 columns: true,
@@ -28,7 +28,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
     }
     async getBoard(tenantId, boardId) {
         const board = await this.prisma.forecastBoard.findUnique({
-            where: { id: boardId, tenantid: tenantId },
+            where: { id: boardId, tenantId: tenantId },
             include: {
                 columns: { where: { isDeleted: false }, orderBy: { sortOrder: 'asc' } },
                 crmMapping: true,
@@ -57,7 +57,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
         }
         return this.prisma.forecastBoard.create({
             data: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 name: data.name,
                 scope: data.teamId || data.scope || 'Global Sales Org',
                 periodType: data.periodType.toLowerCase() === 'monthly' ? 'Monthly' : 'Quarterly',
@@ -120,12 +120,12 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
         const board = await this.getBoard(tenantId, boardId);
         return this.prisma.$transaction(async (tx) => {
             await tx.boardColumn.updateMany({
-                where: { boardId, tenantid: tenantId, isDeleted: false },
+                where: { boardId, tenantId: tenantId, isDeleted: false },
                 data: { isDeleted: true },
             });
             const newColumns = data.columns.map((col) => ({
                 boardId,
-                tenantid: tenantId,
+                tenantId: tenantId,
                 label: col.label,
                 type: col.columnType || col.type || 'Metric',
                 submissionMode: col.submissionMode,
@@ -144,14 +144,14 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
     async createColumnsFromCrm(tenantId, boardId, data) {
         const board = await this.getBoard(tenantId, boardId);
         const existingColumns = await this.prisma.boardColumn.findMany({
-            where: { boardId, tenantid: tenantId, isDeleted: false },
+            where: { boardId, tenantId: tenantId, isDeleted: false },
             orderBy: { sortOrder: 'asc' },
         });
         const baseSort = existingColumns.length > 0 ? Math.max(...existingColumns.map((col) => col.sortOrder)) : 0;
         const createdColumns = await Promise.all(data.fields.map((field, idx) => this.prisma.boardColumn.create({
             data: {
                 boardId,
-                tenantid: tenantId,
+                tenantId: tenantId,
                 label: field.label,
                 type: field.columnType,
                 submissionMode: field.submissionMode,
@@ -188,7 +188,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
             where: { boardId },
             create: {
                 boardId,
-                tenantid: tenantId,
+                tenantId: tenantId,
                 crmConnection: data.crmConnection,
                 forecastCategoryField: data.forecastCategoryField,
                 pipelineSource: data.pipelineSource,
@@ -216,7 +216,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
             where: { boardId },
             create: {
                 boardId,
-                tenantid: tenantId,
+                tenantId: tenantId,
                 frequency: data.frequency,
                 sendDay: data.sendDay,
                 sendTime: data.sendTime,
@@ -243,14 +243,14 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
             for (const q of data.quotas) {
                 await tx.quota.upsert({
                     where: {
-                        tenantid_periodId_repUserId: {
-                            tenantid: tenantId,
+                        tenantId_periodId_repUserId: {
+                            tenantId: tenantId,
                             periodId: data.periodId,
                             repUserId: q.repUserId,
                         }
                     },
                     create: {
-                        tenantid: tenantId,
+                        tenantId: tenantId,
                         periodId: data.periodId,
                         repUserId: q.repUserId,
                         amount: q.amount,
@@ -334,7 +334,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
             where: { boardId },
             create: {
                 boardId,
-                tenantid: tenantId,
+                tenantId: tenantId,
                 crmConnection: 'salesforce',
                 forecastCategoryField: null,
                 pipelineSource: null,
@@ -401,7 +401,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
             });
         }
         const allRepIds = quotaUpdates.map((entry) => entry.repUserId);
-        const validReps = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, id: { in: allRepIds } }, select: { id: true } });
+        const validReps = await this.prisma.forecastUser.findMany({ where: { tenantId: tenantId, id: { in: allRepIds } }, select: { id: true } });
         const validRepSet = new Set(validReps.map((rep) => rep.id));
         let imported = 0;
         let skipped = 0;
@@ -415,14 +415,14 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
                 }
                 await tx.quota.upsert({
                     where: {
-                        tenantid_periodId_repUserId: {
-                            tenantid: tenantId,
+                        tenantId_periodId_repUserId: {
+                            tenantId: tenantId,
                             periodId,
                             repUserId: entry.repUserId,
                         },
                     },
                     create: {
-                        tenantid: tenantId,
+                        tenantId: tenantId,
                         periodId,
                         repUserId: entry.repUserId,
                         amount: entry.amount,
@@ -444,7 +444,7 @@ let AdminForecastBoardsService = class AdminForecastBoardsService {
     }
     async getPermissions(tenantId, boardId) {
         const board = await this.getBoard(tenantId, boardId);
-        const users = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId } });
+        const users = await this.prisma.forecastUser.findMany({ where: { tenantId: tenantId } });
         const exclusions = new Set(board.exclusions.filter((exclusion) => exclusion.isActive).map((exclusion) => exclusion.repUserId));
         return users.map((u) => ({
             userId: u.id,

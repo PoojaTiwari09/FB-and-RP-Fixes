@@ -154,7 +154,7 @@ let M09Repository = class M09Repository {
         const delegate = this.scenarioDelegate();
         if (delegate) {
             const rows = await delegate.findMany({
-                where: { tenantid: orgId },
+                where: { tenantId: orgId },
                 orderBy: { createdat: 'desc' },
             });
             return rows.map(m09_prisma_mappers_1.scenarioFromUnified);
@@ -173,7 +173,7 @@ let M09Repository = class M09Repository {
             return mem;
         const delegate = this.scenarioDelegate();
         if (delegate) {
-            const row = await delegate.findFirst({ where: { scenarioid: id, tenantid: orgId } });
+            const row = await delegate.findFirst({ where: { scenarioid: id, tenantId: orgId } });
             if (!row)
                 throw new common_1.NotFoundException('Scenario not found');
             return (0, m09_prisma_mappers_1.scenarioFromUnified)(row);
@@ -232,7 +232,7 @@ let M09Repository = class M09Repository {
         this.store.scenarios.delete(id);
         const delegate = this.scenarioDelegate();
         if (delegate) {
-            await delegate.deleteMany({ where: { scenarioid: id, tenantid: orgId } });
+            await delegate.deleteMany({ where: { scenarioid: id, tenantId: orgId } });
         }
         else if (this.hasLegacyModels()) {
             return this.prisma.trainingScenario.delete({ where: { id } });
@@ -265,7 +265,7 @@ let M09Repository = class M09Repository {
         const delegate = this.sessionDelegate();
         if (delegate) {
             const rows = await delegate.findMany({
-                where: { userid: repId, tenantid: orgId },
+                where: { userid: repId, tenantId: orgId },
                 orderBy: { createdat: 'desc' },
             });
             return Promise.all(rows.map(async (r) => {
@@ -299,7 +299,7 @@ let M09Repository = class M09Repository {
         }
         const delegate = this.sessionDelegate();
         if (delegate) {
-            const row = await delegate.findFirst({ where: { sessionid: id, tenantid: orgId } });
+            const row = await delegate.findFirst({ where: { sessionid: id, tenantId: orgId } });
             if (!row)
                 throw new common_1.NotFoundException('Session not found');
             const sc = await this.findScenarioById(row.scenarioid, orgId);

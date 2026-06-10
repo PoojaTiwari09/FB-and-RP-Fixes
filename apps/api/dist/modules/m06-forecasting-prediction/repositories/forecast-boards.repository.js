@@ -19,32 +19,32 @@ let ForecastBoardsRepository = class ForecastBoardsRepository {
     }
     findPeriodsByTenant(tenantId) {
         return this.prisma.forecastPeriod.findMany({
-            where: { tenantid: tenantId },
+            where: { tenantId: tenantId },
             orderBy: { startDate: 'desc' },
         });
     }
     resolvePeriod(tenantId, periodId) {
         const where = periodId === 'current'
-            ? { tenantid: tenantId, status: 'open' }
-            : { id: periodId, tenantid: tenantId };
+            ? { tenantId: tenantId, status: 'open' }
+            : { id: periodId, tenantId: tenantId };
         return this.prisma.forecastPeriod.findFirst({ where });
     }
     findLatestAiSnapshot(tenantId, periodId) {
         return this.prisma.aiForecastSnapshot.findFirst({
-            where: { tenantid: tenantId, periodId },
+            where: { tenantId: tenantId, periodId },
             orderBy: { computedAt: 'desc' },
         });
     }
     findLatestCoverageMetrics(tenantId, periodId) {
         return this.prisma.pipelineCoverageMetrics.findFirst({
-            where: { tenantid: tenantId, periodId },
+            where: { tenantId: tenantId, periodId },
             orderBy: { computedAt: 'desc' },
         });
     }
     findOpenPipelineDeals(tenantId, startDate, endDate) {
         return this.prisma.crmDeal.findMany({
             where: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 isClosedWon: false,
                 isClosedLost: false,
                 closeDate: { gte: startDate, lte: endDate },
@@ -53,7 +53,7 @@ let ForecastBoardsRepository = class ForecastBoardsRepository {
     }
     findSubmissionsForPeriod(tenantId, periodId) {
         return this.prisma.forecastSubmission.findMany({
-            where: { tenantid: tenantId, periodId },
+            where: { tenantId: tenantId, periodId },
             orderBy: [{ repUserId: 'asc' }, { version: 'desc' }],
         });
     }
@@ -64,7 +64,7 @@ let ForecastBoardsRepository = class ForecastBoardsRepository {
     }
     findMaxVersionForUser(tenantId, periodId, userId) {
         return this.prisma.forecastSubmission.findFirst({
-            where: { tenantid: tenantId, periodId, repUserId: userId },
+            where: { tenantId: tenantId, periodId, repUserId: userId },
             orderBy: { version: 'desc' },
         });
     }

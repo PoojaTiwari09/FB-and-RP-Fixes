@@ -12,6 +12,7 @@
     "@nestjs/passport": "^10.0.0",
     "passport": "^0.7.0",
     "@nestjs/config": "^3.0.0",
-    "@rri/shared-types": "workspace:*"
+    "@rri/shared-types": "workspace:*",
+    "@rri/database": "workspace:*"
   }
 }

@@ -21,30 +21,30 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     }
     async createConnection(tenantId, data) {
         return this.prisma.m10DataCloudConnection.create({
-            data: { tenantid: tenantId, destination: data.destination, config: data.config },
+            data: { tenantId: tenantId, destination: data.destination, config: data.config },
         });
     }
     async findConnections(tenantId) {
         return this.prisma.m10DataCloudConnection.findMany({
-            where: { tenantid: tenantId },
+            where: { tenantId: tenantId },
             orderBy: { createdAt: 'desc' },
         });
     }
     async findConnectionById(tenantId, connectionId) {
         return this.prisma.m10DataCloudConnection.findFirst({
-            where: { id: connectionId, tenantid: tenantId },
+            where: { id: connectionId, tenantId: tenantId },
         });
     }
     async setConnectionActive(tenantId, connectionId, isActive) {
         return this.prisma.m10DataCloudConnection.updateMany({
-            where: { id: connectionId, tenantid: tenantId },
+            where: { id: connectionId, tenantId: tenantId },
             data: { isActive, updatedAt: new Date() },
         });
     }
     async createExportRun(data) {
         return this.prisma.m10DataCloudExportRun.create({
             data: {
-                tenantid: data.tenantId,
+                tenantId: data.tenantId,
                 connectionId: data.connectionId,
                 status: data.status,
             },
@@ -58,14 +58,14 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     }
     async findExportRunById(tenantId, runId) {
         return this.prisma.m10DataCloudExportRun.findFirst({
-            where: { id: runId, tenantid: tenantId },
+            where: { id: runId, tenantId: tenantId },
             include: { connection: true },
         });
     }
     async findExportRuns(tenantId, connectionId) {
         return this.prisma.m10DataCloudExportRun.findMany({
             where: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 ...(connectionId ? { connectionId } : {}),
             },
             orderBy: { startedAt: 'desc' },
@@ -75,20 +75,20 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     }
     async getCheckpoint(tenantId, domain) {
         return this.prisma.m10DataCloudCheckpoint.findUnique({
-            where: { tenantid_domain: { tenantid: tenantId, domain } },
+            where: { tenantId_domain: { tenantId: tenantId, domain } },
         });
     }
     async upsertCheckpoint(tenantId, domain, lastCursor) {
         return this.prisma.m10DataCloudCheckpoint.upsert({
-            where: { tenantid_domain: { tenantid: tenantId, domain } },
+            where: { tenantId_domain: { tenantId: tenantId, domain } },
             update: { lastCursor, updatedAt: new Date() },
-            create: { tenantid: tenantId, domain, lastCursor },
+            create: { tenantId: tenantId, domain, lastCursor },
         });
     }
     async extractAccounts(tenantId, since) {
         return this.prisma.m10Account.findMany({
             where: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
             orderBy: { updatedAt: 'asc' },
@@ -97,7 +97,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     async extractContacts(tenantId, since) {
         return this.prisma.m10Contact.findMany({
             where: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
             orderBy: { updatedAt: 'asc' },
@@ -106,7 +106,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     async extractDeals(tenantId, since) {
         return this.prisma.m10Deal.findMany({
             where: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
             orderBy: { updatedAt: 'asc' },
@@ -115,7 +115,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     async extractActivities(tenantId, since) {
         return this.prisma.m10Activity.findMany({
             where: {
-                tenantid: tenantId,
+                tenantId: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
             orderBy: { updatedAt: 'asc' },

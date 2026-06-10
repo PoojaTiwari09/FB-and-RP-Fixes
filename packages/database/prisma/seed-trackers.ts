@@ -101,11 +101,11 @@ function findSnippet(text: string, keyword: string): string {
 
 async function main() {
   console.log('M02 trackers seed — cleaning previous data for', TENANT_ID);
-  await prisma.m02TrackerDetection.deleteMany({ where: { tenantid: TENANT_ID } });
-  await prisma.m02Tracker.deleteMany({ where: { tenantid: TENANT_ID } });
+  await prisma.m02TrackerDetection.deleteMany({ where: { tenantId: TENANT_ID } });
+  await prisma.m02Tracker.deleteMany({ where: { tenantId: TENANT_ID } });
 
   const calls = await prisma.callRecord.findMany({
-    where: { tenantid: TENANT_ID, transcriptStatus: 'completed' },
+    where: { tenantId: TENANT_ID, transcriptStatus: 'completed' },
     include: { transcript: { include: { utterances: true } } },
   });
 
@@ -114,7 +114,7 @@ async function main() {
   for (const def of TRACKER_DEFS) {
     const tracker = await prisma.m02Tracker.create({
       data: {
-        tenantid: TENANT_ID,
+        tenantId: TENANT_ID,
         slug: def.slug,
         name: def.name,
         keywords: def.keywords,
@@ -143,7 +143,7 @@ async function main() {
 
         await prisma.m02TrackerDetection.create({
           data: {
-            tenantid: TENANT_ID,
+            tenantId: TENANT_ID,
             trackerId: tracker.id,
             entityType: 'call',
             entityId: call.id,
@@ -159,8 +159,8 @@ async function main() {
     }
   }
 
-  const count = await prisma.m02Tracker.count({ where: { tenantid: TENANT_ID } });
-  const detections = await prisma.m02TrackerDetection.count({ where: { tenantid: TENANT_ID } });
+  const count = await prisma.m02Tracker.count({ where: { tenantId: TENANT_ID } });
+  const detections = await prisma.m02TrackerDetection.count({ where: { tenantId: TENANT_ID } });
   console.log(`M02 trackers seed — done (${count} trackers, ${detections} detections)`);
 }
 

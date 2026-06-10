@@ -19,7 +19,7 @@ let NotesRepository = class NotesRepository {
     }
     async create(callId, tenantId, authorId, dto) {
         return this.prisma.callNote.create({
-            data: { callId, tenantid: tenantId, authorId, content: dto.content },
+            data: { callId, tenantId: tenantId, authorId, content: dto.content },
         });
     }
     async update(noteId, tenantId, dto) {
@@ -32,7 +32,7 @@ let NotesRepository = class NotesRepository {
         return this.prisma.callNote.delete({ where: { id: noteId } });
     }
     async findByCallId(callId, tenantId, authorId) {
-        const where = { callId, tenantid: tenantId };
+        const where = { callId, tenantId: tenantId };
         if (authorId) {
             where.authorId = authorId;
         }

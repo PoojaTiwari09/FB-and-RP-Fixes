@@ -89,7 +89,7 @@ let M01FrontendTranscriptService = class M01FrontendTranscriptService {
             throw new common_1.NotFoundException('Next step not found');
         steps[idx].completed = dto.completed;
         await this.prisma.transcript.updateMany({
-            where: { callId, tenantid: tenantId },
+            where: { callId, tenantId: tenantId },
             data: { nextSteps: (0, m01_frontend_next_steps_util_1.serializeNextSteps)(steps) },
         });
         return {

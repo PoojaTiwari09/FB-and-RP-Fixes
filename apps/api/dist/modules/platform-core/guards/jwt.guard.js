@@ -29,7 +29,6 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
             return true;
         }
         const request = context.switchToHttp().getRequest();
-        console.log(`[JwtAuthGuard] Request Path: ${request.url}, Headers:`, request.headers);
         if (request.headers?.['x-tenant-id'] || request.headers?.['X-Tenant-ID'] || request.headers?.['tenant-id']) {
             return true;
         }

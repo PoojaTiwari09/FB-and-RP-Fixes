@@ -18,7 +18,7 @@ let M05AccountIntelligenceRepository = class M05AccountIntelligenceRepository {
         this.prisma = prisma;
     }
     async findAll(tenantId, userId, userRole) {
-        const where = { tenantid: tenantId };
+        const where = { tenantId: tenantId };
         if (userRole === 'sales_rep' && userId) {
             where.ownerUserId = userId;
         }
@@ -31,7 +31,7 @@ let M05AccountIntelligenceRepository = class M05AccountIntelligenceRepository {
     async create(data) {
         return this.prisma.account.create({
             data: {
-                tenantid: data.tenantId,
+                tenantId: data.tenantId,
                 name: data.name,
                 assignedRepId: data.assignedRepId,
             },

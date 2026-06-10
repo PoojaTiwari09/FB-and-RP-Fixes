@@ -33,7 +33,7 @@ const CALLS = [
 ];
 function transcriptCreate(tenantId, bundle) {
     return {
-        tenantid: tenantId,
+        tenantId: tenantId,
         fullText: bundle.fullText,
         summary: bundle.summary,
         keyHighlights: bundle.keyHighlights,
@@ -41,7 +41,7 @@ function transcriptCreate(tenantId, bundle) {
         talkRatio: bundle.talkRatio,
         utterances: {
             create: bundle.utterances.map((u) => ({
-                tenantid: tenantId,
+                tenantId: tenantId,
                 speaker: u.speaker,
                 text: u.text,
                 startMs: u.startMs,

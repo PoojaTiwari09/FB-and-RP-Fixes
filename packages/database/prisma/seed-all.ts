@@ -250,7 +250,7 @@ async function main() {
       where: { scenarioid: s.scenarioid },
       update: s,
       create: {
-        tenantid: TENANT_ID,
+        tenantId: TENANT_ID,
         ...s,
       },
     });

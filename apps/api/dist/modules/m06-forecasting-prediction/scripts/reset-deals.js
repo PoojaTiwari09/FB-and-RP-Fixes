@@ -15,12 +15,12 @@ async function resetDeals() {
         )
     `;
         console.log(`Deleted manual deals`);
-        const period = await prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
+        const period = await prisma.forecastPeriod.findFirst({ where: { tenantId: tenantId, status: 'open' } });
         if (!period) {
             console.log('No open period');
             return;
         }
-        const activeDeals = await prisma.crmDeal.findMany({ where: { tenantid: tenantId, isClosedWon: false, isClosedLost: false } });
+        const activeDeals = await prisma.crmDeal.findMany({ where: { tenantId: tenantId, isClosedWon: false, isClosedLost: false } });
         const response = await fetch('http://localhost:8000/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -38,7 +38,7 @@ async function resetDeals() {
             const prediction = await response.json();
             await prisma.aiForecastSnapshot.create({
                 data: {
-                    tenantid: tenantId,
+                    tenantId: tenantId,
                     periodId: period.id,
                     predictedAmount: prediction.predictedAmount,
                     confidenceRangeLow: prediction.confidenceRangeLow,

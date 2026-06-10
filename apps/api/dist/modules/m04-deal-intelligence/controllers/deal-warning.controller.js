@@ -17,9 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const deal_warning_service_1 = require("@/services/deal-warning.service");
 const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
+const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
 const deal_warning_dto_1 = require("@/schemas/deal-warning.dto");
 let DealWarningController = class DealWarningController {
     warningService;
@@ -49,7 +47,7 @@ let DealWarningController = class DealWarningController {
 exports.DealWarningController = DealWarningController;
 __decorate([
     (0, common_1.Post)('generate'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Generate AI warnings for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -69,7 +67,7 @@ __decorate([
 ], DealWarningController.prototype, "generateWarnings", null);
 __decorate([
     (0, common_1.Get)('active'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get active warnings for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -84,7 +82,7 @@ __decorate([
 ], DealWarningController.prototype, "getActiveWarnings", null);
 __decorate([
     (0, common_1.Get)('history'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get warning history for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -100,7 +98,7 @@ __decorate([
 ], DealWarningController.prototype, "getWarningHistory", null);
 __decorate([
     (0, common_1.Patch)(':warningId/resolve'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Resolve a warning' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiParam)({ name: 'warningId', description: 'Warning ID' }),
@@ -123,7 +121,7 @@ exports.DealWarningController = DealWarningController = __decorate([
     (0, swagger_1.ApiTags)('Deal Warnings'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('deals/:dealId/warnings'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __metadata("design:paramtypes", [deal_warning_service_1.DealWarningService])
 ], DealWarningController);
 let WarningManagementController = class WarningManagementController {
@@ -153,7 +151,7 @@ let WarningManagementController = class WarningManagementController {
 exports.WarningManagementController = WarningManagementController;
 __decorate([
     (0, common_1.Get)('critical'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all critical warnings' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -167,7 +165,7 @@ __decorate([
 ], WarningManagementController.prototype, "getCriticalWarnings", null);
 __decorate([
     (0, common_1.Get)('by-type'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get warnings by type' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -181,7 +179,7 @@ __decorate([
 ], WarningManagementController.prototype, "getWarningsByType", null);
 __decorate([
     (0, common_1.Get)('by-severity'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get warnings by severity' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -197,7 +195,7 @@ exports.WarningManagementController = WarningManagementController = __decorate([
     (0, swagger_1.ApiTags)('Deal Warnings'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('warnings'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __metadata("design:paramtypes", [deal_warning_service_1.DealWarningService])
 ], WarningManagementController);
 //# sourceMappingURL=deal-warning.controller.js.map

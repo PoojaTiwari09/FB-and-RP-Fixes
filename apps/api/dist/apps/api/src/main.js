@@ -36,9 +36,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
 const tsconfig_paths_1 = require("tsconfig-paths");
 const path = __importStar(require("path"));
+const tsConfigPath = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
+    ? path.join(__dirname, '../tsconfig.json')
+    : path.join(__dirname, '../../../../tsconfig.json');
+const baseUrl = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
+    ? path.join(__dirname, '..')
+    : path.join(__dirname, '../../../..');
 (0, tsconfig_paths_1.register)({
-    baseUrl: path.join(__dirname, '..'),
-    paths: require('../tsconfig.json').compilerOptions.paths,
+    baseUrl: fs.existsSync(path.join(__dirname, '../tsconfig.json')) ? path.join(__dirname, '..') : path.join(__dirname, '../..'),
+    paths: require(tsConfigPath).compilerOptions.paths,
 });
 const fs = __importStar(require("fs"));
 const core_1 = require("@nestjs/core");
@@ -67,9 +73,11 @@ async function bootstrap() {
         transform: true,
         forbidUnknownValues: false,
     }));
-    app.useGlobalInterceptors(new response_transform_interceptor_1.ResponseTransformInterceptor());
+    const { TenantContextInterceptor } = require('../../../modules/platform-core/interceptors/tenant-context.interceptor');
+    app.useGlobalInterceptors(new response_transform_interceptor_1.ResponseTransformInterceptor(), new TenantContextInterceptor());
     app.useGlobalFilters(new frontend_api_exception_filter_1.FrontendApiExceptionFilter(), new zod_exception_filter_1.ZodExceptionFilter());
-    app.useGlobalGuards(new jwt_guard_1.JwtAuthGuard(reflector), new tenant_throttler_guard_1.TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector));
+    const { PermissionsGuard } = require('../../../modules/platform-core/guards/permissions.guard');
+    app.useGlobalGuards(new jwt_guard_1.JwtAuthGuard(reflector), new PermissionsGuard(reflector), new tenant_throttler_guard_1.TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector));
     const port = parseInt(process.env.PORT || '3001', 10);
     await app.listen(port);
     logger.log(`API listening on http://localhost:${port}`);

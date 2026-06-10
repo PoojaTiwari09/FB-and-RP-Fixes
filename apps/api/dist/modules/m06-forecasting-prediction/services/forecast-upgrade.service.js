@@ -96,7 +96,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         const commitForecast = !isBestCase ? value : (latest?.commitForecast ?? 0);
         const sub = await this.prisma.forecastSubmission.create({
             data: {
-                tenantid: latest?.tenantid ?? '00000000-0000-0000-0000-000000000001',
+                tenantId: latest?.tenantid ?? '00000000-0000-0000-0000-000000000001',
                 periodId,
                 repUserId: repId,
                 dealId,
@@ -127,7 +127,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         const nextCommitState = (field === 'commit' || field === 'both') ? 'submitted' : latest.commitState;
         const sub = await this.prisma.forecastSubmission.create({
             data: {
-                tenantid: latest.tenantid,
+                tenantId: latest.tenantid,
                 periodId: latest.periodId,
                 repUserId: latest.repUserId,
                 dealId: latest.dealId,
@@ -144,7 +144,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         });
         await this.logActivity(sub.id, 'submitted', repId, `Submitted ${field} forecast for deal: ${latest.dealId}`);
         this.eventPublisher?.publish('forecast.submitted', {
-            tenantid: sub.tenantid,
+            tenantId: sub.tenantid,
             correlationId: crypto.randomUUID(),
             payload: {
                 submissionId: sub.id,
@@ -167,7 +167,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         const approvedCommit = (field === 'commit' || field === 'both') ? latest.commitForecast : latest.approvedCommit;
         const sub = await this.prisma.forecastSubmission.create({
             data: {
-                tenantid: latest.tenantid,
+                tenantId: latest.tenantid,
                 periodId: latest.periodId,
                 repUserId: latest.repUserId,
                 dealId: latest.dealId,
@@ -204,7 +204,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
             throw new common_1.NotFoundException('Submission not found');
         const sub = await this.prisma.forecastSubmission.create({
             data: {
-                tenantid: latest.tenantid,
+                tenantId: latest.tenantid,
                 periodId: latest.periodId,
                 repUserId: latest.repUserId,
                 dealId: latest.dealId,
@@ -236,7 +236,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         const approvedCommit = (field === 'commit' || field === 'both') ? overrideValue : latest.approvedCommit;
         const sub = await this.prisma.forecastSubmission.create({
             data: {
-                tenantid: latest.tenantid,
+                tenantId: latest.tenantid,
                 periodId: latest.periodId,
                 repUserId: latest.repUserId,
                 dealId: latest.dealId,
@@ -313,7 +313,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         const actor = await this.prisma.forecastUser.findFirst({ where: { id: performedByUserId } });
         await this.prisma.forecastAuditLog.create({
             data: {
-                tenantid: '00000000-0000-0000-0000-000000000001',
+                tenantId: '00000000-0000-0000-0000-000000000001',
                 forecastSubmissionId: submissionId,
                 action: status,
                 actorId: performedByUserId,
@@ -326,7 +326,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
     async createNotification(repId, repName, submissionId, actionType, requestType, dealName, bestCaseValue, commitValue) {
         await this.prisma.forecastNotification.create({
             data: {
-                tenantid: '00000000-0000-0000-0000-000000000001',
+                tenantId: '00000000-0000-0000-0000-000000000001',
                 repId,
                 repName,
                 submissionId,
@@ -357,14 +357,14 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         for (const assign of assignments) {
             await this.prisma.quota.upsert({
                 where: {
-                    tenantid_periodId_repUserId: {
-                        tenantid: '00000000-0000-0000-0000-000000000001',
+                    tenantId_periodId_repUserId: {
+                        tenantId: '00000000-0000-0000-0000-000000000001',
                         periodId,
                         repUserId: assign.rep_id,
                     },
                 },
                 create: {
-                    tenantid: '00000000-0000-0000-0000-000000000001',
+                    tenantId: '00000000-0000-0000-0000-000000000001',
                     periodId,
                     repUserId: assign.rep_id,
                     amount: assign.target_value,
@@ -433,8 +433,8 @@ let ForecastUpgradeService = class ForecastUpgradeService {
     async getPipelineTotal(repId, periodId) {
         const row = await this.prisma.pipelineValuesCache.findUnique({
             where: {
-                tenantid_periodId_repId_dealId: {
-                    tenantid: '00000000-0000-0000-0000-000000000001',
+                tenantId_periodId_repId_dealId: {
+                    tenantId: '00000000-0000-0000-0000-000000000001',
                     periodId,
                     repId,
                     dealId: '',
@@ -445,8 +445,8 @@ let ForecastUpgradeService = class ForecastUpgradeService {
             await this.recomputePipeline(repId, '', periodId);
             const recomputed = await this.prisma.pipelineValuesCache.findUnique({
                 where: {
-                    tenantid_periodId_repId_dealId: {
-                        tenantid: '00000000-0000-0000-0000-000000000001',
+                    tenantId_periodId_repId_dealId: {
+                        tenantId: '00000000-0000-0000-0000-000000000001',
                         periodId,
                         repId,
                         dealId: '',
@@ -460,8 +460,8 @@ let ForecastUpgradeService = class ForecastUpgradeService {
     async getPipelineDealValue(repId, dealId, periodId) {
         const row = await this.prisma.pipelineValuesCache.findUnique({
             where: {
-                tenantid_periodId_repId_dealId: {
-                    tenantid: '00000000-0000-0000-0000-000000000001',
+                tenantId_periodId_repId_dealId: {
+                    tenantId: '00000000-0000-0000-0000-000000000001',
                     periodId,
                     repId,
                     dealId,
@@ -472,8 +472,8 @@ let ForecastUpgradeService = class ForecastUpgradeService {
             await this.recomputePipeline(repId, dealId, periodId);
             const recomputed = await this.prisma.pipelineValuesCache.findUnique({
                 where: {
-                    tenantid_periodId_repId_dealId: {
-                        tenantid: '00000000-0000-0000-0000-000000000001',
+                    tenantId_periodId_repId_dealId: {
+                        tenantId: '00000000-0000-0000-0000-000000000001',
                         periodId,
                         repId,
                         dealId,
@@ -494,15 +494,15 @@ let ForecastUpgradeService = class ForecastUpgradeService {
                 const val = deal.amount * (deal.probability ?? 0.4);
                 await this.prisma.pipelineValuesCache.upsert({
                     where: {
-                        tenantid_periodId_repId_dealId: {
-                            tenantid: '00000000-0000-0000-0000-000000000001',
+                        tenantId_periodId_repId_dealId: {
+                            tenantId: '00000000-0000-0000-0000-000000000001',
                             periodId,
                             repId,
                             dealId,
                         },
                     },
                     create: {
-                        tenantid: '00000000-0000-0000-0000-000000000001',
+                        tenantId: '00000000-0000-0000-0000-000000000001',
                         periodId,
                         repId,
                         dealId,
@@ -523,15 +523,15 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         const totalVal = allDeals.reduce((sum, d) => sum + (d.amount * (d.probability ?? 0.4)), 0);
         await this.prisma.pipelineValuesCache.upsert({
             where: {
-                tenantid_periodId_repId_dealId: {
-                    tenantid: '00000000-0000-0000-0000-000000000001',
+                tenantId_periodId_repId_dealId: {
+                    tenantId: '00000000-0000-0000-0000-000000000001',
                     periodId,
                     repId,
                     dealId: '',
                 },
             },
             create: {
-                tenantid: '00000000-0000-0000-0000-000000000001',
+                tenantId: '00000000-0000-0000-0000-000000000001',
                 periodId,
                 repId,
                 dealId: '',
@@ -634,7 +634,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
     }
     async getManagerBoard(managerId, periodId) {
         const reps = await this.prisma.forecastUser.findMany({
-            where: { tenantid: '00000000-0000-0000-0000-000000000001', role: 'sales_rep' },
+            where: { tenantId: '00000000-0000-0000-0000-000000000001', role: 'sales_rep' },
         });
         const result = [];
         for (const rep of reps) {

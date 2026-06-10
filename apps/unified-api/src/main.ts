@@ -60,11 +60,17 @@ async function bootstrap() {
     }),
   );
   // Transform successful response payloads into standardized success envelopes
-  app.useGlobalInterceptors(new ResponseTransformInterceptor());
+  // Also inject AsyncLocalStorage tenant context for RLS
+  const { TenantContextInterceptor } = require('../../../modules/platform-core/interceptors/tenant-context.interceptor');
+  app.useGlobalInterceptors(new ResponseTransformInterceptor(), new TenantContextInterceptor());
   app.useGlobalFilters(new FrontendApiExceptionFilter(), new ZodExceptionFilter());
 
-  // Register global auth guard
-  app.useGlobalGuards(new JwtAuthGuard(reflector));
+  // Register global auth guard and permissions guard
+  const { PermissionsGuard } = require('../../../modules/platform-core/guards/permissions.guard');
+  app.useGlobalGuards(
+    new JwtAuthGuard(reflector),
+    new PermissionsGuard(reflector)
+  );
 
 
   // Do not read monolith PORT from .env (often 3002) — unified demo is always :3001 unless overridden.

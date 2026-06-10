@@ -18,9 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const coaching_service_1 = require("@/services/coaching.service");
 const coaching_dto_1 = require("@/schemas/coaching.dto");
 const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
+const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
 let CoachingController = class CoachingController {
     coachingService;
     constructor(coachingService) {
@@ -52,7 +50,7 @@ __decorate([
         status: 404,
         description: 'Deal not found',
     }),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.ADMIN),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [coaching_dto_1.GenerateCoachingPromptsDto]),
@@ -78,7 +76,7 @@ __decorate([
         status: 404,
         description: 'Deal not found',
     }),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.ADMIN),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Param)('dealId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -95,7 +93,7 @@ __decorate([
         description: 'Coaching opportunities retrieved successfully',
         type: [coaching_dto_1.CoachingPromptsResponseDto],
     }),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.ADMIN),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -104,7 +102,7 @@ __decorate([
 exports.CoachingController = CoachingController = __decorate([
     (0, swagger_1.ApiTags)('Coaching'),
     (0, common_1.Controller)('coaching'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, swagger_1.ApiCookieAuth)(),
     __metadata("design:paramtypes", [coaching_service_1.CoachingService])
 ], CoachingController);

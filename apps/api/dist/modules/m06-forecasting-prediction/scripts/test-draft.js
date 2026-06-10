@@ -12,7 +12,7 @@ async function main() {
     try {
         const newSub = await prisma.forecastSubmission.create({
             data: {
-                tenantid: latestSub.tenantid,
+                tenantId: latestSub.tenantid,
                 periodId: latestSub.periodId,
                 repUserId: latestSub.repUserId,
                 lob: latestSub.lob,

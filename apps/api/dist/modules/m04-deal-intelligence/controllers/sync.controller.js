@@ -17,9 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const deal_sync_service_1 = require("@/services/deal-sync.service");
 const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
+const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
 const entities_1 = require("@/entities");
 let SyncController = class SyncController {
     syncService;
@@ -46,7 +44,7 @@ let SyncController = class SyncController {
 exports.SyncController = SyncController;
 __decorate([
     (0, common_1.Post)('deals/full'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Trigger full deal sync from HubSpot' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.CREATED,
@@ -58,7 +56,7 @@ __decorate([
 ], SyncController.prototype, "triggerFullSync", null);
 __decorate([
     (0, common_1.Post)('deals/incremental'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Trigger incremental deal sync from HubSpot' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.CREATED,
@@ -70,7 +68,7 @@ __decorate([
 ], SyncController.prototype, "triggerIncrementalSync", null);
 __decorate([
     (0, common_1.Get)('logs'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get sync logs' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -83,7 +81,7 @@ __decorate([
 ], SyncController.prototype, "getSyncLogs", null);
 __decorate([
     (0, common_1.Get)('status'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get last sync status' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -97,7 +95,7 @@ exports.SyncController = SyncController = __decorate([
     (0, swagger_1.ApiTags)('Sync'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('sync'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __metadata("design:paramtypes", [deal_sync_service_1.DealSyncService])
 ], SyncController);
 //# sourceMappingURL=sync.controller.js.map
