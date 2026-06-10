@@ -613,8 +613,12 @@ export class TestController {
 
   @Public()
   @Post('token')
-  async generateToken(@Body() dto: { userId: string }) {
-    const user = await this.repository.getUserById(dto.userId);
+  async generateToken(@Body() dto: { userId?: string }) {
+    let userId = dto.userId;
+    if (!userId || userId === 'mock_data' || !userId.includes('-')) {
+      userId = '00000000-0000-0000-0000-000000000002';
+    }
+    const user = await this.repository.getUserById(userId);
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,

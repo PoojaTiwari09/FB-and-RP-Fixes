@@ -1,4 +1,4 @@
-﻿import { PrismaClient } from '../node_modules/.prisma/client';
+import { PrismaClient } from '../node_modules/.prisma/client';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -245,7 +245,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { contactId: c.contactId },
       update: c,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...c,
       },
     });
@@ -725,7 +725,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { taskId: t.taskId },
       update: dataObj,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         taskId: t.taskId,
         ...dataObj,
       },
@@ -789,7 +789,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { taskId: d.taskId },
       update: d,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...d,
       },
     });
@@ -833,7 +833,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { templateId: t.templateId },
       update: t,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...t,
       },
     });
@@ -843,7 +843,7 @@ export async function seedEngageData(prisma: PrismaClient) {
   console.log('Seeding Engage Activities...');
   const activitiesData = [
     {
-      activityId: 'act-001',
+      activityId: '00000000-0000-0000-0000-000000000081',
       contactId: 'contact-001',
       contactName: 'Sarah Chen',
       company: 'Acme Corp',
@@ -853,7 +853,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       timeAgoLabel: '2h ago',
     },
     {
-      activityId: 'act-002',
+      activityId: '00000000-0000-0000-0000-000000000082',
       contactId: 'contact-002',
       contactName: 'Michael Rodriguez',
       company: 'TechFlow Inc',
@@ -863,7 +863,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       timeAgoLabel: '5h ago',
     },
     {
-      activityId: 'act_003',
+      activityId: '00000000-0000-0000-0000-000000000083',
       contactId: 'contact-003',
       contactName: 'Jennifer Kim',
       company: 'DataStream Solutions',
@@ -879,7 +879,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { activityId: a.activityId },
       update: a,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...a,
       },
     });

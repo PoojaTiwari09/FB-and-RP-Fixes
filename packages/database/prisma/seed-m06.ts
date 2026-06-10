@@ -47,25 +47,25 @@ async function main() {
   const tenantId = TENANT_ID;
 
   // Clean up existing data to ensure idempotent seeding
-  await prisma.boardSubmissionAnnotation.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.boardExclusion.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.boardCrmMapping.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.boardReminderConfig.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.boardColumn.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.forecastBoard.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.quota.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.forecastAuditLog.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.forecastSubmission.deleteMany({ where: { tenantId: tenantId } });
+  await prisma.boardSubmissionAnnotation.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.boardExclusion.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.boardCrmMapping.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.boardReminderConfig.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.boardColumn.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.forecastBoard.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.quota.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.forecastAuditLog.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.forecastSubmission.deleteMany({ where: { tenantid: tenantId } });
   await prisma.aiForecastSnapshot.deleteMany({
-    where: { OR: [ { tenantId: tenantId },
+    where: { OR: [ { tenantid: tenantId },
         { idempotencyKey: { startsWith: 'seed-' } },
       ],
     },
   });
-  await prisma.crmDeal.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.forecastUser.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.forecastPeriod.deleteMany({ where: { tenantId: tenantId } });
-  await prisma.historicalConversionRate.deleteMany({ where: { tenantId: tenantId } });
+  await prisma.crmDeal.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.forecastUser.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.forecastPeriod.deleteMany({ where: { tenantid: tenantId } });
+  await prisma.historicalConversionRate.deleteMany({ where: { tenantid: tenantId } });
 
   const DEMO_PERIOD_IDS = ['q1-fy26-demo', 'q2-fy26-demo', 'q4-fy25-demo', 'q2-fy25-demo'];
   const DEMO_BOARD_IDS = ['board-q1', 'board-q2'];
@@ -75,22 +75,22 @@ async function main() {
   // 1. Seed Users (Manager + 5 Reps)
   const manager = await prisma.forecastUser.upsert({
     where: { email: 'manager@example.com' },
-    update: { tenantId: tenantId, name: 'Sarah Johnson', role: 'manager', region: 'Company', managerId: null },
+    update: { tenantid: tenantid: tenantId, name: 'Sarah Johnson', role: 'manager', region: 'Company', managerId: null },
     create: { id: MANAGER_ID, tenantId, name: 'Sarah Johnson', email: 'manager@example.com', password: 'password123', role: 'manager', region: 'Company' }
   });
   console.log('Manager seeded:', manager.name);
 
   const cro = await prisma.forecastUser.upsert({
     where: { email: 'cro@demo.com' },
-    update: { tenantId: tenantId },
-    create: { tenantId: tenantId, name: 'Sarah Executive', email: 'cro@demo.com', password: 'cro123', role: 'executive', region: 'Company' }
+    update: { tenantid: tenantid: tenantId },
+    create: { tenantid: tenantid: tenantId, name: 'Sarah Executive', email: 'cro@demo.com', password: 'cro123', role: 'executive', region: 'Company' }
   });
   console.log('CRO seeded:', cro.name);
 
   for (const rep of TEAM) {
     await prisma.forecastUser.upsert({
       where: { email: rep.email },
-      update: { tenantId: tenantId, name: rep.name, repId: rep.repId, region: rep.region, managerId: manager.id },
+      update: { tenantid: tenantid: tenantId, name: rep.name, repId: rep.repId, region: rep.region, managerId: manager.id },
       create: { 
         id: rep.id,
         tenantId, 
@@ -110,7 +110,7 @@ async function main() {
   const q1 = await prisma.forecastPeriod.create({
     data: {
       id: 'q1-fy26-demo',
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       name: 'Q1 FY26',
       startDate: new Date('2026-01-01T00:00:00Z'),
       endDate: new Date('2026-03-31T23:59:59Z'),
@@ -122,7 +122,7 @@ async function main() {
   const q2 = await prisma.forecastPeriod.create({
     data: {
       id: 'q2-fy26-demo',
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       name: 'Q2 FY26',
       startDate: new Date('2026-04-01T00:00:00Z'),
       endDate: new Date('2026-06-30T23:59:59Z'),
@@ -135,7 +135,7 @@ async function main() {
   await prisma.forecastBoard.create({
     data: {
       id: 'board-q1',
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       name: 'Q1 FY26 Forecast Board',
       scope: 'Global Sales Org',
       periodType: 'Quarterly',
@@ -156,7 +156,7 @@ async function main() {
   await prisma.forecastBoard.create({
     data: {
       id: 'board-q2',
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       name: 'Q2 FY26 Forecast Board',
       scope: 'Global Sales Org',
       periodType: 'Quarterly',
@@ -165,10 +165,10 @@ async function main() {
       isPublished: true,
       columns: {
         create: [
-          { id: 'col-pipeline', tenantId: tenantId, label: 'Pipeline', type: 'Metric', submissionMode: 'Auto', sortOrder: 1 },
-          { id: 'col-best-case', tenantId: tenantId, label: 'Best Case', type: 'Submission', submissionMode: 'Manual', sortOrder: 2 },
-          { id: 'col-commit', tenantId: tenantId, label: 'Commit', type: 'Submission', submissionMode: 'Manual', sortOrder: 3 },
-          { id: 'col-closed', tenantId: tenantId, label: 'Closed Won', type: 'Metric', submissionMode: 'Auto', sortOrder: 4 },
+          { id: 'col-pipeline', tenantid: tenantId, label: 'Pipeline', type: 'Metric', submissionMode: 'Auto', sortOrder: 1 },
+          { id: 'col-best-case', tenantid: tenantId, label: 'Best Case', type: 'Submission', submissionMode: 'Manual', sortOrder: 2 },
+          { id: 'col-commit', tenantid: tenantId, label: 'Commit', type: 'Submission', submissionMode: 'Manual', sortOrder: 3 },
+          { id: 'col-closed', tenantid: tenantId, label: 'Closed Won', type: 'Metric', submissionMode: 'Auto', sortOrder: 4 },
         ]
       }
     }
@@ -178,7 +178,7 @@ async function main() {
   const q4fy25 = await prisma.forecastPeriod.create({
     data: {
       id: 'q4-fy25-demo',
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       name: 'Q4 FY25',
       startDate: new Date('2025-10-01T00:00:00Z'),
       endDate: new Date('2025-12-31T23:59:59Z'),
@@ -190,7 +190,7 @@ async function main() {
   const q2fy25 = await prisma.forecastPeriod.create({
     data: {
       id: 'q2-fy25-demo',
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       name: 'Q2 FY25',
       startDate: new Date('2025-04-01T00:00:00Z'),
       endDate: new Date('2025-06-30T23:59:59Z'),
@@ -234,7 +234,7 @@ async function main() {
   // 5. Create forecast submissions for the demo team
   const olderDraft = await prisma.forecastSubmission.create({
     data: {
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       periodId: q2.id,
       repUserId: TEAM[0].id,
       lob: 'Enterprise Software',
@@ -249,7 +249,7 @@ async function main() {
 
   const submission = await prisma.forecastSubmission.create({
     data: {
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       periodId: q2.id,
       repUserId: TEAM[0].id,
       lob: 'Enterprise Software',
@@ -264,7 +264,7 @@ async function main() {
   for (const rep of TEAM.filter((item) => item.repId !== 'rep-01')) {
     const repSubmission = await prisma.forecastSubmission.create({
       data: {
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
       periodId: q2.id,
         repUserId: rep.id,
         lob: 'Enterprise Software',
@@ -279,7 +279,7 @@ async function main() {
 
     await prisma.forecastAuditLog.create({
       data: {
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
         forecastSubmissionId: repSubmission.id,
         action: rep.status === 'approved' ? 'Approved' : rep.status === 'submitted' ? 'Submitted' : 'Draft created',
         actorId: rep.status === 'approved' ? manager.id : rep.id,
@@ -291,7 +291,7 @@ async function main() {
   // 6. Audit Log
   await prisma.forecastAuditLog.create({
     data: {
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
         forecastSubmissionId: submission.id,
       action: 'Draft created',
       actorId: TEAM[0].id,
@@ -302,7 +302,7 @@ async function main() {
   // 7. Initial AI snapshot for Q2
   await prisma.aiForecastSnapshot.create({
     data: {
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       periodId: q2.id,
       predictedAmount: 142600000,
       confidenceRangeLow: 130000000,
@@ -335,7 +335,7 @@ async function main() {
   for (const pid of historicalPeriods) {
     await prisma.aiForecastSnapshot.create({
       data: {
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
       periodId: pid,
         predictedAmount: 95000000,
         confidenceRangeLow: 90000000,
@@ -370,7 +370,7 @@ async function main() {
     const closeDate = periodDates[i % 4];
 
     return {
-      tenantId: tenantId,
+      tenantId: tenantid: tenantId,
       dealName: `Historical Deal ${i + 1}`,
       stage,
       // Larger realistic amounts: 1Cr to 5Cr
@@ -387,7 +387,7 @@ async function main() {
     data: [
       // Rep-01 Closed Won deals (attributed to Rahul Kumar)
       ...CLOSED_WON_REP01.map((deal, index) => ({
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
       dealName: deal.name,
         stage: 'Closed Won',
         amount: deal.amount,
@@ -400,7 +400,7 @@ async function main() {
       })),
       // Rep-02 Closed Won deals (attributed to Priya Mehta)
       ...CLOSED_WON_REP02.map((deal, index) => ({
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
       dealName: deal.name,
         stage: 'Closed Won',
         amount: deal.amount,
@@ -413,7 +413,7 @@ async function main() {
       })),
       // Active open deals (rep-01 gets first 4, rep-02 gets last 2)
       ...ACTIVE_DEALS.map((deal, index) => ({
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
       dealName: deal.deal,
         stage: deal.stage,
         amount: deal.amount,
@@ -433,7 +433,7 @@ async function main() {
   for (const rep of TEAM) {
     await prisma.quota.create({
       data: {
-        tenantId: tenantId,
+        tenantId: tenantid: tenantId,
       periodId: q2.id,
         repUserId: rep.id,
         amount: rep.quota,

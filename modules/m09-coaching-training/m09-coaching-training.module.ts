@@ -45,11 +45,12 @@ import { M09Worker } from './workers/m09.worker';
     ConfigModule.forRoot({ isGlobal: true }),       // Environment variables for LLM keys
     JwtModule.register({
       global: true,
-      // No hardcoded fallback_secret — dev-only default; set JWT_SECRET in production.
+      // Must match the secret used by platform-core JwtStrategy so tokens are cross-verifiable.
+      // Both fall back to 'local-dev-secret' when JWT_SECRET is not set.
       secret:
         process.env.JWT_SECRET ||
         process.env.M09_JWT_SECRET ||
-        'dev-only-m09-jwt-secret-change-me',
+        'local-dev-secret',
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
     }),
     PrismaModule,       // Database access via Prisma

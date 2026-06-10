@@ -275,7 +275,7 @@ export class M08SalesEngagementService {
       targetAssigneeId = userId;
     }
 
-    const whereClause: any = { tenantId };
+    const whereClause: any = { tenantid: tenantId };
     if (targetAssigneeId && targetAssigneeId !== 'all') {
       whereClause.userId = targetAssigneeId;
     }
@@ -375,7 +375,7 @@ export class M08SalesEngagementService {
     if (userRole === 'SALES_REP' || userRole === 'sales_rep') targetAssigneeId = userId;
     else if (targetAssigneeId === 'me') targetAssigneeId = userId;
 
-    const whereClause: any = { tenantId };
+    const whereClause: any = { tenantid: tenantId };
     if (targetAssigneeId && targetAssigneeId !== 'all') whereClause.userId = targetAssigneeId;
 
     // @ts-ignore
@@ -415,10 +415,10 @@ export class M08SalesEngagementService {
 
   async fetchTeamMembers(tenantId: string) {
     // @ts-ignore
-    const users = await this.repo.prisma.user.findMany({ where: { tenantId } });
+    const users = await this.repo.prisma.user.findMany({ where: { tenantid: tenantId } });
     return {
       status: 'success',
-      data: users.map((u: any) => ({ id: u.id, name: u.name, role: u.role })),
+      data: users.map((u: any) => ({ id: u.id, name: u.name ?? u.email, role: u.role })),
     };
   }
 

@@ -149,7 +149,7 @@ async function main() {
         ownerId: dealData.ownerName === 'David Park' ? 'david' : dealData.ownerName === 'Sarah Chen' ? 'sarah' : dealData.ownerName === 'Michael Rodriguez' ? 'michael' : dealData.ownerName === 'Jennifer Kim' ? 'jennifer' : dealData.ownerName === 'Emily Thompson' ? 'emily' : 'me',
       },
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...dealData,
         ownerId: dealData.ownerName === 'David Park' ? 'david' : dealData.ownerName === 'Sarah Chen' ? 'sarah' : dealData.ownerName === 'Michael Rodriguez' ? 'michael' : dealData.ownerName === 'Jennifer Kim' ? 'jennifer' : dealData.ownerName === 'Emily Thompson' ? 'emily' : 'me',
       },
@@ -281,7 +281,7 @@ async function main() {
       where: { id: dealData.id },
       update: dealData,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...dealData,
       },
     });
@@ -341,7 +341,7 @@ async function main() {
   for (const w of warnings) {
     await prisma.dealWarning.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         dealId: w.dealId,
         severity: w.severity,
         title: w.title,
@@ -395,7 +395,7 @@ async function main() {
   for (const c of playbookCriteria) {
     await prisma.dealPlaybook.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         dealId: c.dealId,
         criterionName: c.criterionName,
         question: c.question,
@@ -446,7 +446,7 @@ async function main() {
   for (const a of activities) {
     await prisma.dealActivityEvent.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         dealId: a.dealId,
         date: a.date,
         type: a.type,
@@ -495,7 +495,7 @@ async function main() {
   for (const n of notifications) {
     await prisma.dealNotification.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...n,
       },
     });

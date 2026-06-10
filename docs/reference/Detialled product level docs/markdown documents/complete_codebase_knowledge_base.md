@@ -61,8 +61,8 @@ The R-Revenue Intelligence platform is designed around four foundational, non-ne
 
 ### 2.2 Strict Multi-Tenancy & Layered Data Isolation
 The platform enforces a shared-database, isolated-schema tenancy model, secured by a three-tiered defense-in-depth framework:
-1.  **Layer 1: Application Middleware (Prisma Middleware):** A global query interceptor captures the verified `tenant_id` from the request context and automatically appends it to all queries, updates, deletes, and insertions. It rejects any operation lacking a valid tenant context with a `ForbiddenException`.
-2.  **Layer 2: Database Storage (PostgreSQL Row-Level Security - RLS):** RLS is enabled and forced on all tenant-scoped tables. The NestJS API sets the `app.current_tenant_id` session variable at the start of every connection, ensuring that PostgreSQL enforces tenant separation even if application code is bypassed.
+1.  **Layer 1: Application Context (AsyncLocalStorage & Interceptors):** A global `TenantContextInterceptor` captures the verified `tenantId` from the request context (JWT or headers) and stores it using Node's `AsyncLocalStorage` for the duration of the request lifecycle.
+2.  **Layer 2: Database Storage (Prisma Client Extension & PostgreSQL RLS):** RLS is enabled and forced on all tenant-scoped tables. A Prisma Client extension intercepts all database operations, retrieves the `tenantId` from `AsyncLocalStorage`, and executes queries within an interactive transaction that first sets the local session variable `app.current_tenant` using `set_config('app.current_tenant', $1, true)`. PostgreSQL RLS policies then enforce strict tenant isolation by checking this session variable.
 3.  **Layer 3: Secure JWT Verification:** The tenant context is extracted from RS256 cryptographically signed Supabase JWT claims, preventing client-side spoofing or ID tampering.
 
 ### 2.3 Async by Default for Heavy Workloads
@@ -119,8 +119,9 @@ CREATE TABLE dashboards.trainerscenarios (
 ALTER TABLE dashboards.trainerscenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dashboards.trainerscenarios FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation ON dashboards.trainerscenarios
-    FOR ALL USING (tenantid = COALESCE(NULLIF(current_setting('app.current_tenant', true), '')::uuid, tenantid));
+CREATE POLICY "tenant_isolation_policy" ON dashboards.trainerscenarios
+    AS PERMISSIVE FOR ALL
+    USING ("tenantid" = current_setting('app.current_tenant', true)::uuid);
 ```
 
 ### 3.3 Schema Ownership Mapping
@@ -173,7 +174,11 @@ These rules are non-negotiable. Breaking any golden rule will result in an immed
 9.  **Scope All Database Queries by Tenant:** Every database operation must contain a `tenant_id` filter at the service layer, acting as a redundant guard alongside RLS.
 10. **Zero Bypasses for Merge to Main:** All 7 automated CI validation gates must be completely green, and manual Tech Lead sign-off is mandatory.
 
-### 4.2 Naming Conventions & Code Style
+### 4.2 Authentication & Role-Based Access Control (RBAC)
+*   **Global Permissions Guard:** A global `PermissionsGuard` intercepts requests to validate that the authenticated user possesses the correct permissions to access specific route handlers.
+*   **Decorator Usage:** Developers must use the `@RequirePermissions('permission:name')` decorator on controllers or route handlers to enforce RBAC. The guard cross-references these requirements against the `user.permissions` array provided by the validated JWT payload to ensure compliance.
+
+### 4.3 Naming Conventions & Code Style
 
 #### Case Standardization
 *   **Database Objects:** Schemas, tables, columns, indexes, and constraints must use `snake_case`. (e.g. `tenant_id`, `created_at`, `call_id`).
