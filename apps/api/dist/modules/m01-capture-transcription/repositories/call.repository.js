@@ -18,12 +18,18 @@ let CallRepository = class CallRepository {
         this.prisma = prisma;
     }
     async create(data) {
-        return this.prisma.callRecord.create({ data: data });
+        const { tenantId, ...rest } = data;
+        return this.prisma.callRecord.create({
+            data: {
+                ...rest,
+                tenantid: tenantId,
+            },
+        });
     }
     async findAll(tenantId, query, extra) {
         const { status, source, sortBy, order, limit, offset } = query;
         const where = {
-            tenantId,
+            tenantid: tenantId,
             ...(status ? { transcriptStatus: status } : {}),
             ...(source ? { callSource: source } : {}),
             ...extra,
@@ -56,7 +62,7 @@ let CallRepository = class CallRepository {
     }
     async findById(id, tenantId) {
         return this.prisma.callRecord.findFirst({
-            where: { id, tenantId },
+            where: { id, tenantid: tenantId },
             include: {
                 transcript: {
                     include: {
@@ -70,7 +76,7 @@ let CallRepository = class CallRepository {
     }
     async updateStatus(id, tenantId, status, failureReason) {
         return this.prisma.callRecord.updateMany({
-            where: { id, tenantId },
+            where: { id, tenantid: tenantId },
             data: { transcriptStatus: status, failureReason },
         });
     }
@@ -78,24 +84,24 @@ let CallRepository = class CallRepository {
         if (durationSeconds <= 0)
             return { count: 0 };
         return this.prisma.callRecord.updateMany({
-            where: { id, tenantId },
+            where: { id, tenantid: tenantId },
             data: { durationSeconds },
         });
     }
     async updateParticipants(id, tenantId, participants) {
         return this.prisma.callRecord.updateMany({
-            where: { id, tenantId },
+            where: { id, tenantid: tenantId },
             data: { participants },
         });
     }
     async updateSkipped(id, tenantId, skipReason) {
         return this.prisma.callRecord.updateMany({
-            where: { id, tenantId },
+            where: { id, tenantid: tenantId },
             data: { transcriptStatus: 'skipped', skipReason },
         });
     }
     async deleteById(id, tenantId) {
-        return this.prisma.callRecord.deleteMany({ where: { id, tenantId } });
+        return this.prisma.callRecord.deleteMany({ where: { id, tenantid: tenantId } });
     }
 };
 exports.CallRepository = CallRepository;

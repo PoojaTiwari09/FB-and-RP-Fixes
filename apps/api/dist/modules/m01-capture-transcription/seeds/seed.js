@@ -61,7 +61,7 @@ const CALLS = [
 ];
 function transcriptCreate(tenantId, bundle) {
     return {
-        tenantId,
+        tenantid: tenantId,
         fullText: bundle.fullText,
         summary: bundle.summary,
         keyHighlights: bundle.keyHighlights,
@@ -69,7 +69,7 @@ function transcriptCreate(tenantId, bundle) {
         talkRatio: bundle.talkRatio,
         utterances: {
             create: bundle.utterances.map((u) => ({
-                tenantId,
+                tenantid: tenantId,
                 speaker: u.speaker,
                 text: u.text,
                 startMs: u.startMs,
@@ -93,7 +93,7 @@ async function upsertCall(c) {
     await prisma.callRecord.create({
         data: {
             id: c.id,
-            tenantId: TENANT_ID,
+            tenantid: TENANT_ID,
             title: c.title,
             callDate: new Date(c.callDate),
             durationSeconds: c.bundle.durationSeconds,
@@ -115,7 +115,7 @@ async function main() {
         await upsertCall(c);
     }
     const total = await prisma.callRecord.count({
-        where: { tenantId: TENANT_ID, id: { in: [...demo_transcript_data_1.DEMO_CALL_IDS] } },
+        where: { tenantid: TENANT_ID, id: { in: [...demo_transcript_data_1.DEMO_CALL_IDS] } },
     });
     console.log(`M01 seed — done (${total} demo calls in DB)`);
 }

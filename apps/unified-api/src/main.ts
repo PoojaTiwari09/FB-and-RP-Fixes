@@ -1,18 +1,10 @@
 import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as dotenv from 'dotenv';
 import express from 'express';
 import { resolveUploadsRoot } from '../../../modules/m01-capture-transcription/services/upload-paths';
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
-dotenv.config({ path: path.join(__dirname, '../../../../.env') });
-dotenv.config({ path: path.join(__dirname, '../../../../../.env') });
-
-process.env.M07_STANDALONE_AUTH = process.env.M07_STANDALONE_AUTH ?? 'true';
-
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
@@ -21,10 +13,15 @@ import { UnifiedAppModule } from './app.module';
 import { ZodExceptionFilter } from './zod-exception.filter';
 import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
 import { M09Repository } from '../../../modules/m09-coaching-training/repositories/m09.repository';
+import { TraceAndTenantMiddleware } from '../../../modules/platform-core/middleware/trace-tenant.middleware';
+import { ResponseTransformInterceptor } from '../../../modules/platform-core/interceptors/response-transform.interceptor';
+import { JwtAuthGuard } from '../../../modules/platform-core/guards/jwt.guard';
 
 async function bootstrap() {
   const logger = new Logger('Unified-API');
   const app = await NestFactory.create<NestExpressApplication>(UnifiedAppModule);
+
+  const reflector = app.get(Reflector);
 
   const uploadsRoot = resolveUploadsRoot();
   logger.log(`Uploads directory: ${uploadsRoot}`);
@@ -41,6 +38,9 @@ async function bootstrap() {
   app.use('/uploads', (_req, res: any) => {
     res.status(404).json({ error: 'Upload not found' });
   });
+
+  // Register global middleware to inject trace_id and tenant_id
+  app.use(TraceAndTenantMiddleware);
 
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
@@ -59,7 +59,13 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
-  app.useGlobalFilters(new ZodExceptionFilter(), new FrontendApiExceptionFilter());
+  // Transform successful response payloads into standardized success envelopes
+  app.useGlobalInterceptors(new ResponseTransformInterceptor());
+  app.useGlobalFilters(new FrontendApiExceptionFilter(), new ZodExceptionFilter());
+
+  // Register global auth guard
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
+
 
   // Do not read monolith PORT from .env (often 3002) — unified demo is always :3001 unless overridden.
   const port = parseInt(process.env.UNIFIED_API_PORT ?? '3001', 10);

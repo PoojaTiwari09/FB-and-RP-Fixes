@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../packages/database/node_modules/@prisma/client';
+import { PrismaClient } from '@rri/database';
 import { ForecastBoardsService } from './services/forecast-boards.service';
 
 const prisma = new PrismaClient();
@@ -13,13 +13,13 @@ async function runTests() {
   
   const rep1 = await prisma.forecastUser.upsert({
     where: { id: 'rep-test-1' },
-    create: { id: 'rep-test-1', tenantId, email: 'rep1@test.com', name: 'Rep 1', role: 'sales_rep', region: 'NA', isActive: true },
+    create: { id: 'rep-test-1', tenantid: tenantId, email: 'rep1@test.com', name: 'Rep 1', role: 'sales_rep', region: 'NA', password: 'placeholder-hash' },
     update: {}
   });
 
   const manager = await prisma.forecastUser.upsert({
     where: { id: 'mgr-test-1' },
-    create: { id: 'mgr-test-1', tenantId, email: 'mgr1@test.com', name: 'Manager 1', role: 'manager', region: 'NA', isActive: true },
+    create: { id: 'mgr-test-1', tenantid: tenantId, email: 'mgr1@test.com', name: 'Manager 1', role: 'manager', region: 'NA', password: 'placeholder-hash' },
     update: {}
   });
 
@@ -33,7 +33,7 @@ async function runTests() {
     where: { id: 'board-test-1' },
     create: {
       id: 'board-test-1',
-      tenantId,
+      tenantid: tenantId,
       name: 'Test Board',
       activePeriod: 'Q1-2026',
       periodType: 'Quarterly',
@@ -47,7 +47,7 @@ async function runTests() {
     where: { id: 'col-test-commit' },
     create: {
       id: 'col-test-commit',
-      tenantId,
+      tenantid: tenantId,
       boardId: board.id,
       label: 'Commit',
       type: 'Submission',

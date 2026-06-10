@@ -639,6 +639,9 @@ importers:
       '@nestjs/serve-static':
         specifier: ^4.0.2
         version: 4.0.2(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)(express@4.22.1)
+      '@nestjs/throttler':
+        specifier: ^5.2.0
+        version: 5.2.0(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)(reflect-metadata@0.2.2)
       '@r-revenue/m01-capture-transcription':
         specifier: workspace:*
         version: link:../../modules/m01-capture-transcription
@@ -712,9 +715,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      groq-sdk:
-        specifier: ^1.2.1
-        version: 1.2.1
       jspdf:
         specifier: ^4.2.1
         version: 4.2.1
@@ -1413,6 +1413,9 @@ importers:
       '@nestjs/passport':
         specifier: ^10.0.0
         version: 10.0.3(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0)
+      '@nestjs/throttler':
+        specifier: ^5.2.0
+        version: 5.2.0(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)(reflect-metadata@0.2.2)
       '@rri/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -1422,6 +1425,9 @@ importers:
       passport:
         specifier: ^0.7.0
         version: 0.7.0
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       zod:
         specifier: ^3.0.0
         version: 3.25.76
@@ -4772,10 +4778,6 @@ packages:
 
   groq-sdk@1.2.0:
     resolution: {integrity: sha512-pMhSYXWcjiqvbOeKdv2zjci1BYjGdp04a40hnmQmJpKJyB6oa+gRndAqE128gwR0NLgYO+Wt1fIF46KNHcplsw==}
-    hasBin: true
-
-  groq-sdk@1.2.1:
-    resolution: {integrity: sha512-dsDSWJRJf+n2dPiCv7zU3IsJbrh7jfSPqi6vc1q0TTK1oUF6bn+wv4P2VFdynkHpuJ0TTJ57vlpT87judPgVPA==}
     hasBin: true
 
   handlebars@4.7.9:
@@ -11223,8 +11225,6 @@ snapshots:
       - encoding
 
   groq-sdk@1.2.0: {}
-
-  groq-sdk@1.2.1: {}
 
   handlebars@4.7.9:
     dependencies:

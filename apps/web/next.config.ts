@@ -11,7 +11,6 @@ const m07ApiUrl =
   `http://127.0.0.1:${process.env.M07_API_PORT ?? '3001'}`;
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['groq-sdk'],
   async rewrites() {
     return {
       beforeFiles: [
@@ -22,7 +21,7 @@ const nextConfig: NextConfig = {
         },
       ],
       afterFiles: [
-        { source: '/api/v1/hubspot/:path*',   destination: `${backendUrl}/api/v1/hubspot/:path*` },
+        { source: '/api/v1/:path*',           destination: `${backendUrl}/api/v1/:path*` },
         { source: '/api/forecast/:path*',     destination: `${backendUrl}/api/forecast/:path*` },
         { source: '/api/deals/:path*',        destination: `${backendUrl}/api/deals/:path*` },
         { source: '/api/deal-boards/:path*',  destination: `${backendUrl}/api/deal-boards/:path*` },

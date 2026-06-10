@@ -41,7 +41,12 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   if (!text.trim()) {
     return undefined as T;
   }
-  return JSON.parse(text) as T;
+  
+  const parsed = JSON.parse(text);
+  if (parsed && typeof parsed === 'object' && 'success' in parsed && 'data' in parsed) {
+    return parsed.data as T;
+  }
+  return parsed as T;
 }
 
 export async function getTasks(): Promise<Task[]> {

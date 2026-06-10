@@ -108,18 +108,19 @@ export class M07DealAccountService {
 
   async createDashboard(tenantId: string, ownerId: string, payload: CreateDashboardDto) {
     return this.prisma.dashboard.create({
-      data: { tenantId, ownerId, datasetId: payload.datasetId, title: payload.title },
+      data: { tenantid: tenantId, ownerId, datasetId: payload.datasetId, title: payload.title },
     });
   }
 
   async createWidget(tenantId: string, payload: CreateWidgetDto) {
     const dashboard = await this.prisma.dashboard.findFirst({
-      where: { id: payload.dashboardId, tenantId },
+      where: { id: payload.dashboardId, tenantid: tenantId },
     });
     if (!dashboard) throw new NotFoundException("Dashboard not found for tenant");
     const position = await this.prisma.widget.count({ where: { dashboardId: dashboard.id } });
     return this.prisma.widget.create({
       data: {
+        tenantid: tenantId,
         dashboardId: payload.dashboardId,
         type: payload.type,
         title: payload.title,
@@ -136,7 +137,7 @@ export class M07DealAccountService {
   }
 
   async shareDashboard(tenantId: string, dashboardId: string, visibility: "PRIVATE" | "TEAM" | "LINK") {
-    const dashboard = await this.prisma.dashboard.findFirst({ where: { id: dashboardId, tenantId } });
+    const dashboard = await this.prisma.dashboard.findFirst({ where: { id: dashboardId, tenantid: tenantId } });
     if (!dashboard) throw new NotFoundException("Dashboard not found for tenant");
     return this.prisma.dashboard.update({
       where: { id: dashboardId },
@@ -146,7 +147,7 @@ export class M07DealAccountService {
 
   async exportSnapshot(tenantId: string, dashboardId: string) {
     const dashboard = await this.prisma.dashboard.findFirst({
-      where: { id: dashboardId, tenantId },
+      where: { id: dashboardId, tenantid: tenantId },
       include: { widgets: true },
     });
     if (!dashboard) throw new NotFoundException("Dashboard not found for tenant");
@@ -191,7 +192,7 @@ export class M07DealAccountService {
 
     const activeStages = ["Discovery", "Proposal", "Negotiation"];
     let deals = await this.prisma.deal.findMany({
-      where: { tenantId, stage: { in: activeStages } },
+      where: { tenantid: tenantId, stage: { in: activeStages } },
       include: { account: true },
       orderBy: { amount: "desc" },
     });
@@ -199,7 +200,7 @@ export class M07DealAccountService {
     // Fall back to demo tenant if the current tenant has insufficient deals for a dashboard view (< 5)
     if (deals.length < 5) {
       deals = await this.prisma.deal.findMany({
-        where: { tenantId: DEALS_DEMO_TENANT, stage: { in: activeStages } },
+        where: { tenantid: DEALS_DEMO_TENANT, stage: { in: activeStages } },
         include: { account: true },
         orderBy: { amount: "desc" },
       });
@@ -208,7 +209,7 @@ export class M07DealAccountService {
     // ── fetch M02 tracker detections (competitor + pricing) ──────────────────
     // Tracker data is always under the demo tenant (seeded by seed-trackers.ts)
     const competitorDetections = await (this.prisma as any).m02TrackerDetection.findMany({
-      where: { tenantId: TRACKER_TENANT },
+      where: { tenantid: TRACKER_TENANT },
       include: { tracker: true },
     }).then((all: any[]) =>
       all.filter((d: any) =>
@@ -217,7 +218,7 @@ export class M07DealAccountService {
     );
 
     const pricingDetections = await (this.prisma as any).m02TrackerDetection.findMany({
-      where: { tenantId: TRACKER_TENANT },
+      where: { tenantid: TRACKER_TENANT },
       include: { tracker: true },
     }).then((all: any[]) =>
       all.filter((d: any) =>
@@ -390,13 +391,13 @@ export class M07DealAccountService {
 
     // Fetch ALL deals (active + closed won/lost) to compute win rates
     let allDeals = await this.prisma.deal.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       include: { account: true },
       orderBy: { amount: 'desc' },
     });
     if (allDeals.length < 5) {
       allDeals = await this.prisma.deal.findMany({
-        where: { tenantId: DEALS_DEMO_TENANT },
+        where: { tenantid: DEALS_DEMO_TENANT },
         include: { account: true },
         orderBy: { amount: 'desc' },
       });
@@ -410,7 +411,7 @@ export class M07DealAccountService {
 
     // ── fetch competitor tracker detections ──────────────────────────────────
     const allDetections = await (this.prisma as any).m02TrackerDetection.findMany({
-      where: { tenantId: TRACKER_TENANT },
+      where: { tenantid: TRACKER_TENANT },
       include: { tracker: true },
     });
     const competitorDetections: any[] = allDetections.filter((d: any) =>
@@ -692,23 +693,23 @@ export class M07DealAccountService {
 
     // ── 1. CallReview records — primary scorecard source ─────────────────────
     let reviews = await (this.prisma as any).callReview.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { createdAt: 'desc' },
     });
     if (reviews.length === 0) {
       reviews = await (this.prisma as any).callReview.findMany({
-        where: { tenantId: DEMO_TENANT },
+        where: { tenantid: DEMO_TENANT },
         orderBy: { createdAt: 'desc' },
       });
     }
 
     // ── 2. ManagerCoachingConfig — per-rep scorecard overallScore + categories
     let coachingConfig: any = await (this.prisma as any).managerCoachingConfig.findFirst({
-      where: { tenantId },
+      where: { tenantid: tenantId },
     });
     if (!coachingConfig) {
       coachingConfig = await (this.prisma as any).managerCoachingConfig.findFirst({
-        where: { tenantId: DEMO_TENANT },
+        where: { tenantid: DEMO_TENANT },
       });
     }
     const repScorecards: any[] = coachingConfig?.scorecards ?? [];
@@ -951,7 +952,7 @@ export class M07DealAccountService {
         reviewCount: reviews.length,
         recentCount: recent.length,
         repScorecardCount: repScorecards.length,
-        tenantUsed: reviews[0]?.tenantId ?? tenantId,
+        tenantUsed: reviews[0]?.tenantid ?? tenantId,
       },
       kpis: {
         totalScorecards,
@@ -1004,18 +1005,18 @@ export class M07DealAccountService {
 
     // ── 1. Load deals (prefer caller tenant, fallback to demo) ────────────────
     let allDeals = await this.prisma.deal.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       include: { account: true },
       orderBy: { amount: 'desc' },
     });
     if (allDeals.length < 5) {
       allDeals = await this.prisma.deal.findMany({
-        where: { tenantId: DEALS_DEMO_TENANT },
+        where: { tenantid: DEALS_DEMO_TENANT },
         include: { account: true },
         orderBy: { amount: 'desc' },
       });
     }
-    const dealsTenant = allDeals.length > 0 ? (allDeals[0].tenantId) : DEALS_DEMO_TENANT;
+    const dealsTenant = allDeals.length > 0 ? (allDeals[0].tenantid) : DEALS_DEMO_TENANT;
 
     const activeStages = ['Discovery', 'Proposal', 'Negotiation', 'Commit'];
     const activeDeals = allDeals.filter((d) => activeStages.includes(d.stage));
@@ -1027,7 +1028,7 @@ export class M07DealAccountService {
     let epDetections: any[] = [];
     try {
       const allDetections = await (this.prisma as any).m02TrackerDetection.findMany({
-        where: { tenantId: TRACKER_TENANT },
+        where: { tenantid: TRACKER_TENANT },
         include: { tracker: true },
       });
       // Match on keyword OR tracker name containing economic-signal words
@@ -1091,11 +1092,11 @@ export class M07DealAccountService {
       prevQStart.setMonth(prevQStart.getMonth() - 3);
 
       const callsThisQ = await this.prisma.call.findMany({
-        where: { tenantId: dealsTenant, occurredAt: { gte: currentQStart } },
+        where: { tenantid: dealsTenant, occurredAt: { gte: currentQStart } },
         select: { id: true },
       });
       const callsPrevQ = await this.prisma.call.findMany({
-        where: { tenantId: dealsTenant, occurredAt: { gte: prevQStart, lt: currentQStart } },
+        where: { tenantid: dealsTenant, occurredAt: { gte: prevQStart, lt: currentQStart } },
         select: { id: true },
       });
 
@@ -1374,8 +1375,8 @@ export class M07DealAccountService {
   async getKpis(tenantId: string, userId: string, timeRange: "CURRENT_QUARTER" | "LAST_QUARTER", role: string) {
     const quarter = this.resolveQuarter(timeRange);
     const where = role === "SALES_REP"
-      ? { tenantId, quarter, ownerId: userId }
-      : { tenantId, quarter };
+      ? { tenantid: tenantId, quarter, ownerId: userId }
+      : { tenantid: tenantId, quarter };
     const deals = await this.prisma.deal.findMany({ where });
     const bookings = deals.reduce((sum, deal) => sum + Number(deal.amount), 0);
     const wonDeals = deals.filter((deal) => deal.isWon).length;
@@ -1543,7 +1544,7 @@ export class M07DealAccountService {
 
     return this.prisma.dataset.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         createdById: userId,
         name: payload.name,
         sourceMode: payload.sourceMode,
@@ -1567,7 +1568,7 @@ export class M07DealAccountService {
 
   previewSample(tenantId: string) {
     return this.prisma.deal.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       take: 10,
       include: { account: true },
       orderBy: { updatedAt: "desc" },
@@ -1848,7 +1849,7 @@ export class M07DealAccountService {
 
     if (yAxis && xAxis) {
       const snapshots = await this.prisma.dashboardSnapshot.findMany({
-        where: { tenantId, metricName: yAxis, dimensionKey: xAxis },
+        where: { tenantid: tenantId, metricName: yAxis, dimensionKey: xAxis },
       });
       if (snapshots.length > 0) {
         return {
@@ -1866,7 +1867,7 @@ export class M07DealAccountService {
 
     const selectClause = `${xAxis}, ${aggregation}(${yAxis || "*"}) AS value`;
     const fromClause = datasetId === "REVENUE_DEALS" ? "deals" : "accounts";
-    const whereClauses = [`tenantId = '${tenantId}'`];
+    const whereClauses = [`tenantid = '${tenantId}'`];
     if (filters) {
       for (const [k, v] of Object.entries(filters)) {
         whereClauses.push(`${k} = '${v}'`);
@@ -1880,7 +1881,7 @@ export class M07DealAccountService {
 
     if (datasetId === "REVENUE_DEALS") {
         const rows = await this.prisma.deal.findMany({
-          where: { tenantId },
+          where: { tenantid: tenantId },
           include: { account: true },
         });
 
@@ -1931,7 +1932,7 @@ export class M07DealAccountService {
         });
       } else {
         const rows = await this.prisma.account.findMany({
-          where: { tenantId },
+          where: { tenantid: tenantId },
         });
 
         const mappedRows = rows.map((acc) => ({
@@ -2006,7 +2007,7 @@ export class M07DealAccountService {
   }
 
   async updateDashboardStatus(tenantId: string, dashboardId: string, status: "DRAFT" | "PUBLISHED") {
-    const dashboard = await this.prisma.dashboard.findFirst({ where: { id: dashboardId, tenantId } });
+    const dashboard = await this.prisma.dashboard.findFirst({ where: { id: dashboardId, tenantid: tenantId } });
     if (!dashboard) throw new NotFoundException("Dashboard not found");
     return this.prisma.dashboard.update({
       where: { id: dashboardId },
@@ -2016,21 +2017,21 @@ export class M07DealAccountService {
 
   async getTemplates(tenantId: string) {
     return this.prisma.dashboard.findMany({
-      where: { tenantId, isTemplate: true },
+      where: { tenantid: tenantId, isTemplate: true },
       include: { widgets: { orderBy: { position: "asc" } } },
     });
   }
 
   async createDashboardFromTemplate(tenantId: string, userId: string, templateId: string) {
     const template = await this.prisma.dashboard.findFirst({
-      where: { id: templateId, tenantId, isTemplate: true },
+      where: { id: templateId, tenantid: tenantId, isTemplate: true },
       include: { widgets: true },
     });
     if (!template) throw new NotFoundException("Template not found");
 
     return this.prisma.dashboard.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         ownerId: userId,
         title: `${template.title} (Copy)`,
         description: template.description,
@@ -2039,6 +2040,7 @@ export class M07DealAccountService {
         snapshot: template.snapshot || {},
         widgets: {
           create: template.widgets.map(w => ({
+            tenantid: tenantId,
             type: w.type,
             title: w.title,
             config: w.config || {},
@@ -2092,12 +2094,12 @@ export class M07DealAccountService {
     const seeded: string[] = [];
     for (const t of templates) {
       const existing = await this.prisma.dashboard.findFirst({
-        where: { tenantId, isTemplate: true, title: t.title },
+        where: { tenantid: tenantId, isTemplate: true, title: t.title },
       });
       if (!existing) {
         await this.prisma.dashboard.create({
           data: {
-            tenantId,
+            tenantid: tenantId,
             ownerId,
             title: t.title,
             description: t.description,
@@ -2105,9 +2107,10 @@ export class M07DealAccountService {
             status: "PUBLISHED" as any,
             widgets: {
               create: t.widgets.map((w) => ({
+                tenantid: tenantId,
                 type: w.type,
                 title: w.title,
-                config: w.config,
+                config: w.config as any,
                 position: w.position,
               })),
             },
@@ -2127,7 +2130,7 @@ export class M07DealAccountService {
 
   async getWorkspaces(tenantId: string, userId: string) {
     const dashboards = await this.prisma.dashboard.findMany({
-      where: { tenantId, ownerId: userId, isTemplate: false },
+      where: { tenantid: tenantId, ownerId: userId, isTemplate: false },
       include: { widgets: { orderBy: { position: "asc" } } },
     });
 
@@ -2165,7 +2168,7 @@ export class M07DealAccountService {
 
     if (workspaceId) {
       dashboard = await this.prisma.dashboard.findFirst({
-        where: { id: workspaceId, tenantId, ownerId: userId },
+        where: { id: workspaceId, tenantid: tenantId, ownerId: userId },
       });
       if (!dashboard) {
         throw new BadRequestException("Workspace not found or unauthorized");
@@ -2180,7 +2183,7 @@ export class M07DealAccountService {
     } else {
       dashboard = await this.prisma.dashboard.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           ownerId: userId,
           title: title || "New Workspace Dashboard",
           snapshot: { gridColumns: gridColumns || 12 },
@@ -2215,6 +2218,7 @@ export class M07DealAccountService {
         }
 
         return {
+          tenantid: tenantId,
           dashboardId: dashboard.id,
           type: mappedType,
           title: w.title || `${w.type} Widget`,

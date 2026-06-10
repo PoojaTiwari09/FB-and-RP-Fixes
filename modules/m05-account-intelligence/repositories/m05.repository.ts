@@ -6,7 +6,7 @@ export class M05AccountIntelligenceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(tenantId: string, userId?: string, userRole?: string) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     
     // Data Isolation: Sales Reps can only see their own accounts
     if (userRole === 'sales_rep' && userId) {
@@ -23,7 +23,7 @@ export class M05AccountIntelligenceRepository {
   async create(data: { tenantId: string; name: string; assignedRepId?: string }) {
     return this.prisma.account.create({
       data: {
-        tenantId: data.tenantId,
+        tenantid: data.tenantId,
         name: data.name,
         assignedRepId: data.assignedRepId,
       },

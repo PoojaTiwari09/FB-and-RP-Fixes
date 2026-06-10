@@ -1,6 +1,5 @@
-import Groq from "groq-sdk";
-
 // ── Groq API Service ────────────────────────────────────────
+
 // Using Groq's OpenAI-compatible API with high-speed inference.
 // Models:
 //   llama-3.1-8b-instant → Fast, efficient LLM for chat ✅
@@ -44,11 +43,54 @@ function getGroqClient(apiKey) {
     return groqClientByKey.get(normalizedKey);
   }
 
-  const client = new Groq({
-    apiKey: normalizedKey,
-    dangerouslyAllowBrowser: true,
-    maxRetries: 0 // Disable SDK's internal retry loop so we can fail-fast to OpenRouter
-  });
+  // Create a minimal client-mimicking object that performs direct HTTP requests
+  const client = {
+    chat: {
+      completions: {
+        create: async (body) => {
+          const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${normalizedKey}`
+            },
+            body: JSON.stringify(body)
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw { error: { message: err.error?.message || `Status ${resp.status}` } };
+          }
+          return resp.json();
+        }
+      }
+    },
+    audio: {
+      transcriptions: {
+        create: async (body) => {
+          const formData = new FormData();
+          formData.append("file", body.file);
+          formData.append("model", body.model);
+          if (body.response_format) formData.append("response_format", body.response_format);
+          if (body.language) formData.append("language", body.language);
+          if (body.temperature !== undefined) formData.append("temperature", String(body.temperature));
+          if (body.prompt) formData.append("prompt", body.prompt);
+
+          const resp = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${normalizedKey}`
+            },
+            body: formData
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw { error: { message: err.error?.message || `Status ${resp.status}` } };
+          }
+          return resp.json();
+        }
+      }
+    }
+  };
   groqClientByKey.set(normalizedKey, client);
   return client;
 }

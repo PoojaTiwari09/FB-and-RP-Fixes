@@ -38,7 +38,7 @@ export class TranscriptRepository {
     const redactedUtterances = this.pii.redactUtterances(data.utterances);
 
     const utteranceRows = redactedUtterances.map((u) => ({
-      tenantId:        data.tenantId,
+      tenantid:        data.tenantId,
       speaker:         u.speaker,
       text:            u.text,
       originalText:    u.originalText,
@@ -73,7 +73,7 @@ export class TranscriptRepository {
 
       return tx.transcript.create({
         data: {
-          tenantId:        data.tenantId,
+          tenantid:        data.tenantId,
           callId:          data.callId,
           fullText:        redactedFullText,
           assemblyAiJobId: data.assemblyAiJobId,
@@ -97,7 +97,7 @@ export class TranscriptRepository {
     },
   ) {
     return this.prisma.transcript.updateMany({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       data:  fields,
     });
   }
@@ -105,7 +105,7 @@ export class TranscriptRepository {
   // ── Fetch transcript with ordered utterances ──────────────────────────
   async findByCallId(callId: string, tenantId: string) {
     return this.prisma.transcript.findFirst({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       include: { utterances: { orderBy: { sequenceIndex: 'asc' } } },
     });
   }
@@ -114,7 +114,7 @@ export class TranscriptRepository {
   async updateUtterance(utteranceId: string, tenantId: string, text: string) {
     // Verify the utterance belongs to this tenant via its transcript
     const utterance = await this.prisma.utterance.findFirst({
-      where: { id: utteranceId, transcript: { tenantId } },
+      where: { id: utteranceId, transcript: { tenantid: tenantId } },
     });
     if (!utterance) throw new Error(`Utterance ${utteranceId} not found`);
 

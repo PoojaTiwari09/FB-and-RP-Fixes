@@ -57,7 +57,7 @@ let M01FrontendCallsService = class M01FrontendCallsService {
                 extra.AND = andClauses;
             const { records, total } = await this.callRepo.findAll(tenantId, { sortBy: 'callDate', order: 'desc', limit: q.size, offset }, extra);
             const callReviews = await this.prisma.callReview.findMany({
-                where: { tenantId },
+                where: { tenantid: tenantId },
             });
             const reviewMap = new Map(callReviews.map((cr) => [cr.callTitle, cr]));
             const calls = records.map((r) => (0, m01_frontend_mapper_1.mapAiReviewerCallRow)(r, reviewMap.get(r.title)));
@@ -184,7 +184,7 @@ let M01FrontendCallsService = class M01FrontendCallsService {
         }
         if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
             const matchingReview = await this.prisma.callReview.findFirst({
-                where: { callTitle: record.title, tenantId },
+                where: { callTitle: record.title, tenantid: tenantId },
             });
             const row = (0, m01_frontend_mapper_1.mapAiReviewerCallRow)(record, matchingReview);
             const participants = Array.isArray(record.participants)
@@ -226,7 +226,7 @@ let M01FrontendCallsService = class M01FrontendCallsService {
     }
     async listAccounts(tenantId, rawQuery, userId, userRole) {
         const { search } = m01_frontend_calls_schema_1.FrontendFilterSearchSchema.parse(rawQuery);
-        const where = { tenantId };
+        const where = { tenantid: tenantId };
         if (userRole === 'sales_rep' && userId) {
             where.callOwner = userId;
         }
@@ -255,7 +255,7 @@ let M01FrontendCallsService = class M01FrontendCallsService {
     }
     async listParticipants(tenantId, rawQuery, userId, userRole) {
         const { search, accountId } = m01_frontend_calls_schema_1.FrontendFilterSearchSchema.parse(rawQuery);
-        const where = { tenantId };
+        const where = { tenantid: tenantId };
         if (accountId)
             where.accountId = accountId;
         if (userRole === 'sales_rep' && userId) {

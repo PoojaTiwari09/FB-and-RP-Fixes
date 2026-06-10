@@ -49,7 +49,7 @@ export class M06ForecastingPredictionWorker extends WorkerHost {
     }
 
     const lastSnapshot = await this.prisma.aiForecastSnapshot.findFirst({
-      where: { tenantId, periodId },
+      where: { tenantid: tenantId, periodId },
       orderBy: { computedAt: 'desc' },
     });
 
@@ -62,7 +62,7 @@ export class M06ForecastingPredictionWorker extends WorkerHost {
 
     try {
       const period = await this.prisma.forecastPeriod.findFirst({
-        where: { id: periodId, tenantId },
+        where: { id: periodId, tenantid: tenantId },
       });
       if (!period) throw new Error('Period not found');
 
@@ -90,7 +90,7 @@ export class M06ForecastingPredictionWorker extends WorkerHost {
           predictedAmount = (prediction as any).predictedAmount ?? predictedAmount;
           await this.prisma.aiForecastSnapshot.create({
             data: {
-              tenantId,
+              tenantid: tenantId,
               periodId,
               predictedAmount: (prediction as any).predictedAmount ?? predictedAmount,
               confidenceRangeLow: (prediction as any).confidenceRangeLow ?? predictedAmount - spread / 2,
@@ -113,7 +113,7 @@ export class M06ForecastingPredictionWorker extends WorkerHost {
 
       await this.prisma.aiForecastSnapshot.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           periodId,
           predictedAmount,
           confidenceRangeLow: Math.round(predictedAmount - spread / 2),
@@ -159,7 +159,7 @@ export class M06ForecastingPredictionWorker extends WorkerHost {
 
     await this.prisma.forecastExecutiveSnapshot.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         periodId,
         submissionId,
         payload: dashboard as any,

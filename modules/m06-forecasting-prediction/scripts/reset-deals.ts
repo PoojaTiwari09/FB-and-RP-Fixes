@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rri/database';
 
 const prisma = new PrismaClient();
 
@@ -19,14 +19,14 @@ async function resetDeals() {
     console.log(`Deleted manual deals`);
 
     // Get period
-    const period = await prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
+    const period = await prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
     if (!period) {
       console.log('No open period');
       return;
     }
 
     // Call python prediction service to recalculate AiForecastSnapshot
-    const activeDeals = await prisma.crmDeal.findMany({ where: { tenantId, isClosedWon: false, isClosedLost: false } });
+    const activeDeals = await prisma.crmDeal.findMany({ where: { tenantid: tenantId, isClosedWon: false, isClosedLost: false } });
     const response = await fetch('http://localhost:8000/predict', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -45,7 +45,7 @@ async function resetDeals() {
       const prediction = await response.json();
       await prisma.aiForecastSnapshot.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           periodId: period.id,
           predictedAmount: (prediction as any).predictedAmount,
           confidenceRangeLow: (prediction as any).confidenceRangeLow,
@@ -66,3 +66,4 @@ async function resetDeals() {
 }
 
 resetDeals();
+

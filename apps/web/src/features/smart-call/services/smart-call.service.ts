@@ -14,7 +14,7 @@ import { resolveApiBase } from '@shared/config/module-api';
 
 const SC_BASE = `${resolveApiBase()}/api/v1/capture-transcription/smart-call`;
 
-async function fetchWithAuth(url: string, init?: RequestInit): Promise<Response> {
+async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -28,29 +28,30 @@ async function fetchWithAuth(url: string, init?: RequestInit): Promise<Response>
   if (!res.ok) {
     throw new Error(`API_ERROR: HTTP ${res.status}`);
   }
-  return res;
+  const parsed = await res.json();
+  if (parsed && typeof parsed === 'object' && 'success' in parsed && 'data' in parsed) {
+    return parsed.data as T;
+  }
+  return parsed as T;
 }
 
 export async function fetchSmartCalls(): Promise<SmartCall[]> {
-  const res = await fetchWithAuth(`${SC_BASE}/calls`, { cache: 'no-store' });
-  return res.json() as Promise<SmartCall[]>;
+  return apiFetch<SmartCall[]>(`${SC_BASE}/calls`, { cache: 'no-store' });
 }
 
 // ─── 1. GET /api/smart-call/contacts ──────────────────────────────────────
 
 export async function fetchContacts(query = '', limit = 20): Promise<ContactsResponse> {
   const params = new URLSearchParams({ q: query, limit: String(limit), offset: '0' });
-  const res = await fetchWithAuth(`${SC_BASE}/contacts?${params}`, { cache: 'no-store' });
-  return res.json() as Promise<ContactsResponse>;
+  return apiFetch<ContactsResponse>(`${SC_BASE}/contacts?${params}`, { cache: 'no-store' });
 }
 
 // ─── 2. GET /api/smart-call/contacts/{contactId}/pre-call-brief ───────────
 
 export async function fetchPreCallBrief(contactId: string): Promise<PreCallBrief> {
-  const res = await fetchWithAuth(`${SC_BASE}/contacts/${contactId}/pre-call-brief`, {
+  return apiFetch<PreCallBrief>(`${SC_BASE}/contacts/${contactId}/pre-call-brief`, {
     cache: 'no-store',
   });
-  return res.json() as Promise<PreCallBrief>;
 }
 
 // ─── 3. POST /api/smart-call/sessions/start ───────────────────────────────
@@ -59,7 +60,7 @@ export async function startSession(
   contactId: string,
   taskId?: string
 ): Promise<SessionStartResponse> {
-  const res = await fetchWithAuth(`${SC_BASE}/sessions/start`, {
+  return apiFetch<SessionStartResponse>(`${SC_BASE}/sessions/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -69,13 +70,12 @@ export async function startSession(
       integration: 'ZOOM',
     }),
   });
-  return res.json() as Promise<SessionStartResponse>;
 }
 
 // ─── 4. POST /api/smart-call/sessions/{sessionId}/end ─────────────────────
 
 export async function endSession(sessionId: string): Promise<SessionEndResponse> {
-  const res = await fetchWithAuth(`${SC_BASE}/sessions/${sessionId}/end`, {
+  return apiFetch<SessionEndResponse>(`${SC_BASE}/sessions/${sessionId}/end`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -83,16 +83,14 @@ export async function endSession(sessionId: string): Promise<SessionEndResponse>
       generateSummary: true,
     }),
   });
-  return res.json() as Promise<SessionEndResponse>;
 }
 
 // ─── 5. GET /api/smart-call/sessions/{sessionId}/summary ──────────────────
 
 export async function fetchCallSummary(sessionId: string): Promise<CallSummary> {
-  const res = await fetchWithAuth(`${SC_BASE}/sessions/${sessionId}/summary`, {
+  return apiFetch<CallSummary>(`${SC_BASE}/sessions/${sessionId}/summary`, {
     cache: 'no-store',
   });
-  return res.json() as Promise<CallSummary>;
 }
 
 // ─── Live call chunk summaries (Postgres) ───────────────────────────────────
@@ -111,17 +109,15 @@ export type LiveCallChunkSummary = {
 export async function fetchSessionSummaries(
   sessionId: string,
 ): Promise<LiveCallChunkSummary[]> {
-  const res = await fetchWithAuth(`${SC_BASE}/sessions/${sessionId}/summaries`, {
+  return apiFetch<LiveCallChunkSummary[]>(`${SC_BASE}/sessions/${sessionId}/summaries`, {
     cache: 'no-store',
   });
-  return res.json() as Promise<LiveCallChunkSummary[]>;
 }
 
 // ─── 6. GET /api/smart-call/sessions/{sessionId}/transcript ───────────────
 
 export async function fetchTranscript(sessionId: string): Promise<TranscriptData> {
-  const res = await fetchWithAuth(`${SC_BASE}/sessions/${sessionId}/transcript`, {
+  return apiFetch<TranscriptData>(`${SC_BASE}/sessions/${sessionId}/transcript`, {
     cache: 'no-store',
   });
-  return res.json() as Promise<TranscriptData>;
 }

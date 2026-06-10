@@ -35,12 +35,12 @@ export class M06ForecastingPredictionController {
   async listPeriods(@Headers(TenantHeader.toLowerCase()) tenantId: string) {
     if (!tenantId) throw new ForbiddenException('Tenant ID required');
     const periods = await this.service['prisma'].forecastPeriod.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { startDate: 'desc' },
     });
     return periods.map((period: any) => ({
       periodId: period.id,
-      tenantId: period.tenantId,
+      tenantId: period.tenantid,
       name: period.name,
       startDate: period.startDate.toISOString().slice(0, 10),
       endDate: period.endDate.toISOString().slice(0, 10),

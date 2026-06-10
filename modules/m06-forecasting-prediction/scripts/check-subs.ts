@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rri/database';
 const prisma = new PrismaClient();
 async function main() {
   const subs = await prisma.forecastSubmission.findMany({
@@ -8,3 +8,4 @@ async function main() {
   console.log(JSON.stringify(subs, null, 2));
 }
 main().catch(console.error).finally(() => prisma.$disconnect());
+

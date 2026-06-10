@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
+const database_1 = require("@rri/database");
 const m06_service_1 = require("./services/m06.service");
-const prisma = new client_1.PrismaClient();
+const prisma = new database_1.PrismaClient();
 const service = new m06_service_1.M06ForecastingPredictionService(prisma, { publish: () => { } });
 async function run() {
     try {

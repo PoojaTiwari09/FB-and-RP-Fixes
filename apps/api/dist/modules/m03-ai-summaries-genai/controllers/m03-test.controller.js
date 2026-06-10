@@ -33,7 +33,7 @@ let M03TestController = class M03TestController {
     }
     async health() {
         try {
-            await this.prisma.$queryRawUnsafe('SELECT 1');
+            await this.prisma.$queryRaw `SELECT 1`;
         }
         catch {
         }

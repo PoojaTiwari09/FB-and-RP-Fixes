@@ -14,7 +14,7 @@ export class M08WorkflowRepository {
   async createWorkflow(tenantId: string, dto: CreateWorkflowDto) {
     return this.prisma.workflow.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         name: dto.name,
         description: dto.description || null,
         triggerType: dto.triggerType,
@@ -45,7 +45,7 @@ export class M08WorkflowRepository {
 
   async findWorkflowById(tenantId: string, id: string) {
     const wf = await this.prisma.workflow.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
     });
     if (!wf) {
       throw new NotFoundException(`Workflow with ID ${id} not found`);
@@ -54,7 +54,7 @@ export class M08WorkflowRepository {
   }
 
   async findWorkflows(tenantId: string, filters: { isActive?: boolean } = {}) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (filters.isActive !== undefined) {
       where.isActive = filters.isActive;
     }
@@ -74,7 +74,7 @@ export class M08WorkflowRepository {
     const triggerPayload = data.triggerPayload ?? data.variables ?? {};
     return this.prisma.workflowRun.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         workflowId,
         dealId: data.dealId || null,
         contactId: data.contactId || null,
@@ -101,7 +101,7 @@ export class M08WorkflowRepository {
 
   async findWorkflowRunById(tenantId: string, id: string) {
     const run = await this.prisma.workflowRun.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
     });
     if (!run) {
       throw new NotFoundException(`Workflow Run with ID ${id} not found`);
@@ -110,7 +110,7 @@ export class M08WorkflowRepository {
   }
 
   async findWorkflowRuns(tenantId: string, workflowId?: string) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (workflowId) {
       where.workflowId = workflowId;
     }
@@ -125,7 +125,7 @@ export class M08WorkflowRepository {
   async createApproval(tenantId: string, data: { runId?: string; workflowId?: string; type: string; title: string; description: string; thresholdDetails?: any; approverId?: string }) {
     return this.prisma.approval.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         runId: data.runId || null,
         workflowId: data.workflowId || null,
         type: data.type,
@@ -150,7 +150,7 @@ export class M08WorkflowRepository {
 
   async findApprovalById(tenantId: string, id: string) {
     const app = await this.prisma.approval.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
     });
     if (!app) {
       throw new NotFoundException(`Approval with ID ${id} not found`);
@@ -159,7 +159,7 @@ export class M08WorkflowRepository {
   }
 
   async findApprovals(tenantId: string, filters: { status?: string } = {}) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (filters.status) {
       where.status = filters.status;
     }
@@ -174,7 +174,7 @@ export class M08WorkflowRepository {
   async logException(tenantId: string, data: { runId?: string; workflowId?: string; errorCode: string; errorMessage: string; stackTrace?: string }) {
     return this.prisma.workflowException.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         runId: data.runId || null,
         workflowId: data.workflowId || null,
         errorCode: data.errorCode,
@@ -196,7 +196,7 @@ export class M08WorkflowRepository {
   }
 
   async findExceptions(tenantId: string, resolved?: boolean) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (resolved !== undefined) {
       where.resolved = resolved;
     }
@@ -210,7 +210,7 @@ export class M08WorkflowRepository {
 
   async upsertIntegrationState(tenantId: string, provider: string, status: string, config?: any) {
     const existing = await this.prisma.integrationState.findFirst({
-      where: { tenantId, provider },
+      where: { tenantid: tenantId, provider },
     });
 
     if (existing) {
@@ -222,7 +222,7 @@ export class M08WorkflowRepository {
 
     return this.prisma.integrationState.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         provider,
         status,
         config: config || {},
@@ -232,7 +232,7 @@ export class M08WorkflowRepository {
 
   async findIntegrationStates(tenantId: string) {
     return this.prisma.integrationState.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
     });
   }
 
@@ -241,7 +241,7 @@ export class M08WorkflowRepository {
   async logAction(tenantId: string, workflowId: string | null, userId: string | null, action: string, metadata?: any) {
     return this.prisma.workflowAuditLog.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         workflowId,
         userId,
         action,
@@ -251,7 +251,7 @@ export class M08WorkflowRepository {
   }
 
   async findAuditLogs(tenantId: string, workflowId?: string) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (workflowId) {
       where.workflowId = workflowId;
     }

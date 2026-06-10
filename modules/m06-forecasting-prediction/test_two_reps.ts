@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rri/database';
 const prisma = new PrismaClient();
 
 async function runTests() {

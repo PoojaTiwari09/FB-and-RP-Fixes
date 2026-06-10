@@ -24,7 +24,7 @@ class DealDriverEntity {
     static fromPrisma(row) {
         return new DealDriverEntity({
             id: row.id,
-            tenantId: row.tenantId,
+            tenantId: row.tenantid,
             dealId: row.dealId,
             boardId: row.boardId,
             name: row.name,

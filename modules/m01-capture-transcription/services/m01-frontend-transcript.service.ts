@@ -120,7 +120,7 @@ export class M01FrontendTranscriptService {
 
     steps[idx].completed = dto.completed;
     await this.prisma.transcript.updateMany({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       data: { nextSteps: serializeNextSteps(steps) },
     });
 

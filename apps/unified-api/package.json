@@ -14,6 +14,7 @@
     "@nestjs/event-emitter": "^2.1.1",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/serve-static": "^4.0.2",
+    "@nestjs/throttler": "^5.2.0",
     "@r-revenue/m01-capture-transcription": "workspace:*",
     "@r-revenue/m02-conversation-intelligence": "workspace:*",
     "@r-revenue/m06-forecasting-prediction": "workspace:*",

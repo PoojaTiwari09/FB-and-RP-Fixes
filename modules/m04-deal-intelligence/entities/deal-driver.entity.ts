@@ -30,7 +30,7 @@ export class DealDriverEntity implements DealDriverRecord {
 
   static fromPrisma(row: {
     id: string;
-    tenantId: string;
+    tenantid: string;
     dealId: string;
     boardId: string | null;
     name: string;
@@ -46,7 +46,7 @@ export class DealDriverEntity implements DealDriverRecord {
   }): DealDriverEntity {
     return new DealDriverEntity({
       id: row.id,
-      tenantId: row.tenantId,
+      tenantId: row.tenantid,
       dealId: row.dealId,
       boardId: row.boardId,
       name: row.name,

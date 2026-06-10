@@ -239,26 +239,24 @@ export class HybridSearchService {
   ): Promise<SearchResult[]> {
     if (!query) return [];
     try {
-      const rows: any[] = await this.prisma.$queryRawUnsafe(
-        `SELECT t.id              AS "transcriptId",
+      const rows: any[] = await this.prisma.$queryRaw`
+        SELECT t.id              AS "transcriptId",
                 t."callId"        AS "callId",
                 cr.title          AS "title",
                 cr."callDate"     AS "callDate",
                 ts_headline('english', t."fullText",
-                            plainto_tsquery('english', $2),
+                            plainto_tsquery('english', ${query}),
                             'StartSel=<<,StopSel=>>,MaxFragments=2,MaxWords=18,MinWords=6')
                                 AS "snippet",
                 ts_rank(to_tsvector('english', t."fullText"),
-                        plainto_tsquery('english', $2)) AS "rank"
+                        plainto_tsquery('english', ${query})) AS "rank"
            FROM transcripts t
            JOIN call_records cr ON cr.id = t."callId"
-          WHERE cr."tenantId" = $1
-            AND to_tsvector('english', t."fullText") @@ plainto_tsquery('english', $2)
+          WHERE cr."tenantid" = ${tenantId}::uuid
+            AND to_tsvector('english', t."fullText") @@ plainto_tsquery('english', ${query})
           ORDER BY "rank" DESC
-          LIMIT 100`,
-        tenantId,
-        query,
-      );
+          LIMIT 100
+      `;
 
       return rows.map((r) => ({
         entityId: r.callId,
@@ -274,6 +272,7 @@ export class HybridSearchService {
       return [];
     }
   }
+
 
   /**
    * Synonym/concept-mapped semantic scorer — universal fallback.
@@ -404,19 +403,18 @@ export class HybridSearchService {
     if (!query) return [];
     try {
       // Use raw SQL because Prisma doesn't natively support the `vector` type.
-      const rows: any[] = await this.prisma.$queryRawUnsafe(
-        `SELECT id           AS "entityId",
+      const rows: any[] = await this.prisma.$queryRaw`
+        SELECT id           AS "entityId",
                 "entityType"  AS "entityType",
                 "contentChunk" AS "snippet",
                 1 - (vector <=> (SELECT vector FROM semantic_embeddings
-                                  WHERE "tenantId" = $1
+                                  WHERE "tenantid" = ${tenantId}::uuid
                                   ORDER BY vector <=> vector LIMIT 1)) AS score
            FROM semantic_embeddings
-          WHERE "tenantId" = $1
+          WHERE "tenantid" = ${tenantId}::uuid
           ORDER BY score DESC
-          LIMIT 100`,
-        tenantId,
-      );
+          LIMIT 100
+      `;
       if (!Array.isArray(rows) || rows.length === 0) return [];
       return rows.map((r) => ({
         entityId: r.entityId,

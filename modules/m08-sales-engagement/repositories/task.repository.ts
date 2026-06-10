@@ -11,8 +11,8 @@ export class M08TaskRepository {
   async checkIdempotency(tenantId: string, source: string, sourceId: string) {
     return this.prisma.task.findUnique({
       where: {
-        tenantId_source_sourceId: {
-          tenantId,
+        tenantid_source_sourceId: {
+          tenantid: tenantId,
           source,
           sourceId,
         },
@@ -31,7 +31,7 @@ export class M08TaskRepository {
 
     return this.prisma.task.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         userId,
         type: dto.type,
         description: dto.description,
@@ -46,7 +46,7 @@ export class M08TaskRepository {
 
   async findTaskById(tenantId: string, taskId: string) {
     const task = await this.prisma.task.findFirst({
-      where: { id: taskId, tenantId },
+      where: { id: taskId, tenantid: tenantId },
     });
     if (!task) {
       throw new NotFoundException(`Task with ID ${taskId} not found`);
@@ -66,7 +66,7 @@ export class M08TaskRepository {
       search?: string;
     }
   ) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
 
     if (filters.userId) {
       where.userId = filters.userId;

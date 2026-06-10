@@ -9,7 +9,7 @@ export class NotesRepository {
   // ── CT-22: Create note ────────────────────────────────────────────────
   async create(callId: string, tenantId: string, authorId: string, dto: CreateNoteDto) {
     return this.prisma.callNote.create({
-      data: { callId, tenantId, authorId, content: dto.content },
+      data: { callId, tenantid: tenantId, authorId, content: dto.content },
     });
   }
 
@@ -28,7 +28,7 @@ export class NotesRepository {
 
   // ── List notes for a call ─────────────────────────────────────────────
   async findByCallId(callId: string, tenantId: string, authorId?: string) {
-    const where: any = { callId, tenantId };
+    const where: any = { callId, tenantid: tenantId };
     if (authorId) {
       where.authorId = authorId;
     }

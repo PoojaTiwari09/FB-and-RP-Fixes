@@ -14,7 +14,7 @@ async function main() {
   // Seed Manager Deals (1 to 9)
   const managerDeals = [
     {
-      id: '1',
+      id: '00000000-0000-0000-0000-000000000011',
       name: 'StartupX - Growth Plan',
       ownerName: 'David Park',
       ownerEmail: 'david.park@company.com',
@@ -28,7 +28,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '2',
+      id: '00000000-0000-0000-0000-000000000012',
       name: 'TechStart - Annual Subscription',
       ownerName: 'Michael Rodriguez',
       ownerEmail: 'michael.rod@company.com',
@@ -42,7 +42,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '3',
+      id: '00000000-0000-0000-0000-000000000013',
       name: 'MidMarket Co - Standard Package',
       ownerName: 'Sarah Chen',
       ownerEmail: 'sarah.chen@company.com',
@@ -56,7 +56,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '4',
+      id: '00000000-0000-0000-0000-000000000014',
       name: 'Acme Corp - Enterprise Platform',
       ownerName: 'Sarah Chen',
       ownerEmail: 'sarah.chen@company.com',
@@ -70,7 +70,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '5',
+      id: '00000000-0000-0000-0000-000000000015',
       name: 'Global Enterprises - Multi-Year Deal',
       ownerName: 'Jennifer Kim',
       ownerEmail: 'jennifer.kim@company.com',
@@ -84,7 +84,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '6',
+      id: '00000000-0000-0000-0000-000000000016',
       name: 'Enterprise Inc - Platform Upgrade',
       ownerName: 'Emily Thompson',
       ownerEmail: 'emily.thompson@company.com',
@@ -98,7 +98,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '7',
+      id: '00000000-0000-0000-0000-000000000017',
       name: 'BluePeak Retail - Regional Rollout',
       ownerName: 'David Park',
       ownerEmail: 'david.park@company.com',
@@ -112,7 +112,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '8',
+      id: '00000000-0000-0000-0000-000000000018',
       name: 'Northwind Health - Analytics Suite',
       ownerName: 'Michael Rodriguez',
       ownerEmail: 'michael.rod@company.com',
@@ -126,7 +126,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: '9',
+      id: '00000000-0000-0000-0000-000000000019',
       name: 'Orbit Fintech - Renewal Expansion',
       ownerName: 'David Park',
       ownerEmail: 'david.park@company.com',
@@ -149,7 +149,7 @@ async function main() {
         ownerId: dealData.ownerName === 'David Park' ? 'david' : dealData.ownerName === 'Sarah Chen' ? 'sarah' : dealData.ownerName === 'Michael Rodriguez' ? 'michael' : dealData.ownerName === 'Jennifer Kim' ? 'jennifer' : dealData.ownerName === 'Emily Thompson' ? 'emily' : 'me',
       },
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...dealData,
         ownerId: dealData.ownerName === 'David Park' ? 'david' : dealData.ownerName === 'Sarah Chen' ? 'sarah' : dealData.ownerName === 'Michael Rodriguez' ? 'michael' : dealData.ownerName === 'Jennifer Kim' ? 'jennifer' : dealData.ownerName === 'Emily Thompson' ? 'emily' : 'me',
       },
@@ -159,7 +159,7 @@ async function main() {
   // Seed Rep Deals (deal-1 to deal-8)
   const repDeals = [
     {
-      id: 'deal-1',
+      id: '00000000-0000-0000-0000-000000000021',
       name: 'Acme Corp - Enterprise Platform',
       ownerName: 'Lakshmi Prasanna Dara',
       ownerEmail: 'lakshmi@company.com',
@@ -174,7 +174,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-2',
+      id: '00000000-0000-0000-0000-000000000022',
       name: 'TechStart Inc - Growth Package',
       ownerName: 'Lakshmi Prasanna Dara',
       ownerEmail: 'lakshmi@company.com',
@@ -188,7 +188,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-3',
+      id: '00000000-0000-0000-0000-000000000023',
       name: 'Global Solutions - Multi-Year Deal',
       ownerName: 'Lakshmi Prasanna Dara',
       ownerEmail: 'lakshmi@company.com',
@@ -203,7 +203,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-4',
+      id: '00000000-0000-0000-0000-000000000024',
       name: 'NextGen Enterprises - Pilot',
       ownerName: 'Lakshmi Prasanna Dara',
       ownerEmail: 'lakshmi@company.com',
@@ -217,7 +217,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-5',
+      id: '00000000-0000-0000-0000-000000000025',
       name: 'MegaCorp - Cloud Migration',
       ownerName: 'Revenue Intelligence Demo',
       ownerEmail: 'demo@company.com',
@@ -232,7 +232,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-6',
+      id: '00000000-0000-0000-0000-000000000026',
       name: 'Horizon Labs - Analytics Suite',
       ownerName: 'Revenue Intelligence Demo',
       ownerEmail: 'demo@company.com',
@@ -246,7 +246,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-7',
+      id: '00000000-0000-0000-0000-000000000027',
       name: 'Pinnacle Group - Security Platform',
       ownerName: 'Revenue Intelligence Demo',
       ownerEmail: 'demo@company.com',
@@ -260,7 +260,7 @@ async function main() {
       quarter: '2026-Q2',
     },
     {
-      id: 'deal-8',
+      id: '00000000-0000-0000-0000-000000000028',
       name: 'Vertex Capital - Enterprise Suite',
       ownerName: 'Lakshmi Prasanna Dara',
       ownerEmail: 'lakshmi@company.com',
@@ -281,7 +281,7 @@ async function main() {
       where: { id: dealData.id },
       update: dealData,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...dealData,
       },
     });
@@ -291,42 +291,42 @@ async function main() {
   console.log('Seeding warnings...');
   const warnings = [
     {
-      dealId: 'deal-1',
+      dealId: '00000000-0000-0000-0000-000000000021',
       severity: 'HIGH',
       title: 'Decision maker not engaged',
       description: 'CFO has not appeared on any recorded interaction. Only John (Manager) engaged.',
       suggestedAction: 'Request introduction to CFO through champion',
     },
     {
-      dealId: 'deal-1',
+      dealId: '00000000-0000-0000-0000-000000000021',
       severity: 'HIGH',
       title: 'Close date in the past',
       description: 'CRM close date was Apr 28. Deal is still open. Update or escalate.',
       suggestedAction: 'Update close date or escalate to manager',
     },
     {
-      dealId: 'deal-3',
+      dealId: '00000000-0000-0000-0000-000000000023',
       severity: 'HIGH',
       title: 'Primary contact changed',
       description: 'Jane Lee moved to a different division. No replacement assigned in CRM.',
       suggestedAction: 'Identify and reach out to new primary contact',
     },
     {
-      dealId: 'deal-3',
+      dealId: '00000000-0000-0000-0000-000000000023',
       severity: 'MEDIUM',
       title: 'No executive sponsor',
       description: 'No VP or C-suite contact recorded for a $500K deal.',
       suggestedAction: 'Request exec sponsor introduction from champion',
     },
     {
-      dealId: 'deal-4',
+      dealId: '00000000-0000-0000-0000-000000000024',
       severity: 'MEDIUM',
       title: 'No economic buyer identified',
       description: 'Deal is in Qualification. Economic buyer field is empty in CRM.',
       suggestedAction: 'Ask champion to identify budget owner',
     },
     {
-      dealId: 'deal-5',
+      dealId: '00000000-0000-0000-0000-000000000025',
       severity: 'MEDIUM',
       title: 'Competing vendor identified',
       description: 'Procurement mentioned shortlisting two vendors. Competitor not named.',
@@ -335,13 +335,13 @@ async function main() {
   ];
 
   await prisma.dealWarning.deleteMany({
-    where: { dealId: { in: ['deal-1', 'deal-2', 'deal-3', 'deal-4', 'deal-5', 'deal-6', 'deal-7', 'deal-8'] } },
+    where: { dealId: { in: ['00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000028'] } },
   });
 
   for (const w of warnings) {
     await prisma.dealWarning.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         dealId: w.dealId,
         severity: w.severity,
         title: w.title,
@@ -356,46 +356,46 @@ async function main() {
   console.log('Seeding playbook criteria...');
   const playbookCriteria = [
     // deal-1
-    { dealId: 'deal-1', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: 'Increase sales productivity by 30%, reduce sales cycle by 2 weeks' },
-    { dealId: 'deal-1', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Pending', notes: 'Robert Davis (CFO) - meeting scheduled', aiSuggestedNote: 'Confirm budget amount and approval timeline in upcoming CFO meeting' },
-    { dealId: 'deal-1', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Completed', notes: 'Ease of use, integration with HubSpot, pricing, implementation timeline' },
-    { dealId: 'deal-1', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Completed', notes: 'Technical eval → Budget approval → Legal review → Final decision' },
-    { dealId: 'deal-1', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Completed', notes: 'Current CRM causing low adoption rates, losing deals due to poor tracking' },
-    { dealId: 'deal-1', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Pending', notes: 'Sarah (VP Sales) - strong advocate but limited exec influence', aiSuggestedNote: 'Validate champion\'s access to CFO before next meeting' },
+    { dealId: '00000000-0000-0000-0000-000000000021', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: 'Increase sales productivity by 30%, reduce sales cycle by 2 weeks' },
+    { dealId: '00000000-0000-0000-0000-000000000021', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Pending', notes: 'Robert Davis (CFO) - meeting scheduled', aiSuggestedNote: 'Confirm budget amount and approval timeline in upcoming CFO meeting' },
+    { dealId: '00000000-0000-0000-0000-000000000021', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Completed', notes: 'Ease of use, integration with HubSpot, pricing, implementation timeline' },
+    { dealId: '00000000-0000-0000-0000-000000000021', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Completed', notes: 'Technical eval → Budget approval → Legal review → Final decision' },
+    { dealId: '00000000-0000-0000-0000-000000000021', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Completed', notes: 'Current CRM causing low adoption rates, losing deals due to poor tracking' },
+    { dealId: '00000000-0000-0000-0000-000000000021', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Pending', notes: 'Sarah (VP Sales) - strong advocate but limited exec influence', aiSuggestedNote: 'Validate champion\'s access to CFO before next meeting' },
 
     // deal-2
-    { dealId: 'deal-2', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: '15% reduction in churn, 20% increase in upsell revenue' },
-    { dealId: 'deal-2', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Completed', notes: 'Mark Chen (CTO) — confirmed on May 18 call' },
-    { dealId: 'deal-2', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Completed', notes: 'API reliability, onboarding speed, pricing flexibility' },
-    { dealId: 'deal-2', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Completed', notes: 'Legal review → Sign-off by CTO → PO issued' },
-    { dealId: 'deal-2', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Completed', notes: 'Current tool contract expires Jun 30. Must switch before renewal.' },
-    { dealId: 'deal-2', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Completed', notes: 'Lisa Park (Head of RevOps) — full authority to push deal through' },
+    { dealId: '00000000-0000-0000-0000-000000000022', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: '15% reduction in churn, 20% increase in upsell revenue' },
+    { dealId: '00000000-0000-0000-0000-000000000022', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Completed', notes: 'Mark Chen (CTO) — confirmed on May 18 call' },
+    { dealId: '00000000-0000-0000-0000-000000000022', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Completed', notes: 'API reliability, onboarding speed, pricing flexibility' },
+    { dealId: '00000000-0000-0000-0000-000000000022', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Completed', notes: 'Legal review → Sign-off by CTO → PO issued' },
+    { dealId: '00000000-0000-0000-0000-000000000022', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Completed', notes: 'Current tool contract expires Jun 30. Must switch before renewal.' },
+    { dealId: '00000000-0000-0000-0000-000000000022', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Completed', notes: 'Lisa Park (Head of RevOps) — full authority to push deal through' },
 
     // deal-3
-    { dealId: 'deal-3', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: 'Reduce manual reporting time by 40%' },
-    { dealId: 'deal-3', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Pending', notes: 'Unknown — contact change disrupted access', aiSuggestedNote: 'Re-identify economic buyer after contact reassignment' },
-    { dealId: 'deal-3', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Pending', notes: 'Not fully defined yet', aiSuggestedNote: 'Ask new contact to share evaluation criteria checklist' },
-    { dealId: 'deal-3', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Pending', notes: 'Unknown', aiSuggestedNote: 'Map buying committee and approval chain with new contact' },
-    { dealId: 'deal-3', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Completed', notes: 'Multi-site reporting is fully manual, causing weekly errors' },
-    { dealId: 'deal-3', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Pending', notes: 'Jane Lee — now in different division, no replacement identified', aiSuggestedNote: 'Identify new champion after contact change' },
+    { dealId: '00000000-0000-0000-0000-000000000023', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: 'Reduce manual reporting time by 40%' },
+    { dealId: '00000000-0000-0000-0000-000000000023', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Pending', notes: 'Unknown — contact change disrupted access', aiSuggestedNote: 'Re-identify economic buyer after contact reassignment' },
+    { dealId: '00000000-0000-0000-0000-000000000023', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Pending', notes: 'Not fully defined yet', aiSuggestedNote: 'Ask new contact to share evaluation criteria checklist' },
+    { dealId: '00000000-0000-0000-0000-000000000023', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Pending', notes: 'Unknown', aiSuggestedNote: 'Map buying committee and approval chain with new contact' },
+    { dealId: '00000000-0000-0000-0000-000000000023', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Completed', notes: 'Multi-site reporting is fully manual, causing weekly errors' },
+    { dealId: '00000000-0000-0000-0000-000000000023', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Pending', notes: 'Jane Lee — now in different division, no replacement identified', aiSuggestedNote: 'Identify new champion after contact change' },
 
     // deal-4
-    { dealId: 'deal-4', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: 'Reduce sales cycle by 20%, improve pipeline visibility' },
-    { dealId: 'deal-4', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Pending', notes: 'Not identified yet', aiSuggestedNote: 'Ask champion to introduce budget owner before next call' },
-    { dealId: 'deal-4', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Completed', notes: 'Ease of onboarding, CRM integrations, reporting dashboards' },
-    { dealId: 'deal-4', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Completed', notes: 'IT review → VP approval → Procurement sign-off' },
-    { dealId: 'deal-4', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Pending', notes: 'Stated general dissatisfaction — no compelling event confirmed' },
-    { dealId: 'deal-4', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Pending', notes: 'Tom (Sales Ops) — engaged but no budget authority', aiSuggestedNote: 'Multi-thread to VP and IT as agreed in last call' },
+    { dealId: '00000000-0000-0000-0000-000000000024', criterionName: 'METRICS', question: 'What are the quantifiable business metrics driving this purchase?', status: 'Completed', notes: 'Reduce sales cycle by 20%, improve pipeline visibility' },
+    { dealId: '00000000-0000-0000-0000-000000000024', criterionName: 'ECONOMIC BUYER', question: 'Who has budget authority and final approval?', status: 'Pending', notes: 'Not identified yet', aiSuggestedNote: 'Ask champion to introduce budget owner before next call' },
+    { dealId: '00000000-0000-0000-0000-000000000024', criterionName: 'DECISION CRITERIA', question: 'What are the formal decision criteria?', status: 'Completed', notes: 'Ease of onboarding, CRM integrations, reporting dashboards' },
+    { dealId: '00000000-0000-0000-0000-000000000024', criterionName: 'DECISION PROCESS', question: 'What is the formal decision-making process?', status: 'Completed', notes: 'IT review → VP approval → Procurement sign-off' },
+    { dealId: '00000000-0000-0000-0000-000000000024', criterionName: 'IDENTIFY PAIN', question: 'What is the compelling event or pain?', status: 'Pending', notes: 'Stated general dissatisfaction — no compelling event confirmed' },
+    { dealId: '00000000-0000-0000-0000-000000000024', criterionName: 'CHAMPION', question: 'Who is your internal champion and how influential are they?', status: 'Pending', notes: 'Tom (Sales Ops) — engaged but no budget authority', aiSuggestedNote: 'Multi-thread to VP and IT as agreed in last call' },
   ];
 
   await prisma.dealPlaybook.deleteMany({
-    where: { dealId: { in: ['deal-1', 'deal-2', 'deal-3', 'deal-4'] } },
+    where: { dealId: { in: ['00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024'] } },
   });
 
   for (const c of playbookCriteria) {
     await prisma.dealPlaybook.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         dealId: c.dealId,
         criterionName: c.criterionName,
         question: c.question,
@@ -409,44 +409,44 @@ async function main() {
   // Seed Activity Events
   console.log('Seeding activity events...');
   const activities = [
-    { dealId: 'deal-1', date: '2026-05-05', type: 'Quick Update', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent pricing summary via email' },
-    { dealId: 'deal-1', date: '2026-05-08', type: 'Discovery Call', duration: 45, direction: 'outbound', participants: ['John Smith', 'Sarah (Champion)'], notes: 'Discussed integration requirements and timeline' },
-    { dealId: 'deal-1', date: '2026-05-10', type: 'Technical Demo', duration: 60, direction: 'outbound', participants: ['John Smith', 'Sarah (Champion)', 'IT Team'], notes: 'Full product demo — positive reception from IT' },
-    { dealId: 'deal-1', date: '2026-05-13', type: 'Follow-up Email', duration: 5, direction: 'outbound', participants: ['John Smith'], notes: 'Sent follow-up with proposal deck' },
-    { dealId: 'deal-1', date: '2026-05-14', type: 'Inbound Call', duration: 30, direction: 'inbound', participants: ['Sarah (Champion)', 'John Smith'], notes: 'Champion called with pricing questions' },
-    { dealId: 'deal-1', date: '2026-05-15', type: 'Email Reply', duration: 5, direction: 'inbound', participants: ['Sarah (Champion)'], notes: 'Requested revised proposal with multi-year option' },
-    { dealId: 'deal-1', date: '2026-05-15', type: 'Proposal Sent', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent multi-year proposal with 3-year discount' },
-    { dealId: 'deal-1', date: '2026-05-15', type: 'Inbound Email', duration: 5, direction: 'inbound', participants: ['Sarah (Champion)'], notes: 'Acknowledged receipt, escalating to CFO' },
-    { dealId: 'deal-1', date: '2026-05-15', type: 'Internal Note', duration: 95, direction: 'outbound', participants: ['John Smith'], notes: 'CFO introduction expected next week' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-05', type: 'Quick Update', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent pricing summary via email' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-08', type: 'Discovery Call', duration: 45, direction: 'outbound', participants: ['John Smith', 'Sarah (Champion)'], notes: 'Discussed integration requirements and timeline' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-10', type: 'Technical Demo', duration: 60, direction: 'outbound', participants: ['John Smith', 'Sarah (Champion)', 'IT Team'], notes: 'Full product demo — positive reception from IT' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-13', type: 'Follow-up Email', duration: 5, direction: 'outbound', participants: ['John Smith'], notes: 'Sent follow-up with proposal deck' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-14', type: 'Inbound Call', duration: 30, direction: 'inbound', participants: ['Sarah (Champion)', 'John Smith'], notes: 'Champion called with pricing questions' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-15', type: 'Email Reply', duration: 5, direction: 'inbound', participants: ['Sarah (Champion)'], notes: 'Requested revised proposal with multi-year option' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-15', type: 'Proposal Sent', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent multi-year proposal with 3-year discount' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-15', type: 'Inbound Email', duration: 5, direction: 'inbound', participants: ['Sarah (Champion)'], notes: 'Acknowledged receipt, escalating to CFO' },
+    { dealId: '00000000-0000-0000-0000-000000000021', date: '2026-05-15', type: 'Internal Note', duration: 95, direction: 'outbound', participants: ['John Smith'], notes: 'CFO introduction expected next week' },
 
-    { dealId: 'deal-2', date: '2026-05-18', type: 'Discovery Call', duration: 45, direction: 'outbound', participants: ['John Smith', 'Lisa Park'], notes: 'Confirmed technical requirements and timeline' },
-    { dealId: 'deal-2', date: '2026-05-20', type: 'Contract Sent', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent MSA and order form for legal review' },
-    { dealId: 'deal-2', date: '2026-05-22', type: 'Champion Call', duration: 30, direction: 'inbound', participants: ['Lisa Park', 'John Smith'], notes: 'Confirmed budget approval, awaiting legal sign-off' },
-    { dealId: 'deal-2', date: '2026-05-22', type: 'Follow-up Email', duration: 5, direction: 'outbound', participants: ['John Smith'], notes: 'Sent revised order form with updated terms' },
-    { dealId: 'deal-2', date: '2026-05-23', type: 'Inbound Email', duration: 10, direction: 'inbound', participants: ['Lisa Park'], notes: 'Legal has two minor redlines — will share by May 25' },
-    { dealId: 'deal-2', date: '2026-05-25', type: 'Inbound Email', duration: 20, direction: 'inbound', participants: ['Lisa Park'], notes: 'Redlines received — minor, accepting both' },
+    { dealId: '00000000-0000-0000-0000-000000000022', date: '2026-05-18', type: 'Discovery Call', duration: 45, direction: 'outbound', participants: ['John Smith', 'Lisa Park'], notes: 'Confirmed technical requirements and timeline' },
+    { dealId: '00000000-0000-0000-0000-000000000022', date: '2026-05-20', type: 'Contract Sent', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent MSA and order form for legal review' },
+    { dealId: '00000000-0000-0000-0000-000000000022', date: '2026-05-22', type: 'Champion Call', duration: 30, direction: 'inbound', participants: ['Lisa Park', 'John Smith'], notes: 'Confirmed budget approval, awaiting legal sign-off' },
+    { dealId: '00000000-0000-0000-0000-000000000022', date: '2026-05-22', type: 'Follow-up Email', duration: 5, direction: 'outbound', participants: ['John Smith'], notes: 'Sent revised order form with updated terms' },
+    { dealId: '00000000-0000-0000-0000-000000000022', date: '2026-05-23', type: 'Inbound Email', duration: 10, direction: 'inbound', participants: ['Lisa Park'], notes: 'Legal has two minor redlines — will share by May 25' },
+    { dealId: '00000000-0000-0000-0000-000000000022', date: '2026-05-25', type: 'Inbound Email', duration: 20, direction: 'inbound', participants: ['Lisa Park'], notes: 'Redlines received — minor, accepting both' },
 
-    { dealId: 'deal-3', date: '2026-05-05', type: 'Intro Call', duration: 30, direction: 'outbound', participants: ['John Smith', 'Jane Lee'], notes: 'Initial discovery with primary contact' },
-    { dealId: 'deal-3', date: '2026-05-10', type: 'Intro Call', duration: 20, direction: 'outbound', participants: ['John Smith', 'New Contact (TBD)'], notes: 'Intro call with replacement contact — limited context' },
-    { dealId: 'deal-3', date: '2026-05-10', type: 'Inbound Email', duration: 10, direction: 'inbound', participants: ['New Contact (TBD)'], notes: 'Said they would review the deck and follow up' },
-    { dealId: 'deal-3', date: '2026-05-12', type: 'Follow-up Email', duration: 5, direction: 'outbound', participants: ['John Smith'], notes: 'Sent follow-up — no response yet' },
-    { dealId: 'deal-3', date: '2026-05-15', type: 'Inbound Email', duration: 15, direction: 'inbound', participants: ['New Contact (TBD)'], notes: 'Brief reply — contact still getting up to speed' },
+    { dealId: '00000000-0000-0000-0000-000000000023', date: '2026-05-05', type: 'Intro Call', duration: 30, direction: 'outbound', participants: ['John Smith', 'Jane Lee'], notes: 'Initial discovery with primary contact' },
+    { dealId: '00000000-0000-0000-0000-000000000023', date: '2026-05-10', type: 'Intro Call', duration: 20, direction: 'outbound', participants: ['John Smith', 'New Contact (TBD)'], notes: 'Intro call with replacement contact — limited context' },
+    { dealId: '00000000-0000-0000-0000-000000000023', date: '2026-05-10', type: 'Inbound Email', duration: 10, direction: 'inbound', participants: ['New Contact (TBD)'], notes: 'Said they would review the deck and follow up' },
+    { dealId: '00000000-0000-0000-0000-000000000023', date: '2026-05-12', type: 'Follow-up Email', duration: 5, direction: 'outbound', participants: ['John Smith'], notes: 'Sent follow-up — no response yet' },
+    { dealId: '00000000-0000-0000-0000-000000000023', date: '2026-05-15', type: 'Inbound Email', duration: 15, direction: 'inbound', participants: ['New Contact (TBD)'], notes: 'Brief reply — contact still getting up to speed' },
 
-    { dealId: 'deal-4', date: '2026-05-20', type: 'Intro Call', duration: 30, direction: 'outbound', participants: ['John Smith', 'Tom (Sales Ops)'], notes: 'Initial qualification call — strong interest from champion' },
-    { dealId: 'deal-4', date: '2026-05-22', type: 'Inbound Email', duration: 5, direction: 'inbound', participants: ['Tom (Sales Ops)'], notes: 'Requested product overview deck' },
-    { dealId: 'deal-4', date: '2026-05-23', type: 'Email Sent', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent product overview and pricing guide' },
-    { dealId: 'deal-4', date: '2026-05-24', type: 'Email Exchange', duration: 10, direction: 'inbound', participants: ['Tom (Sales Ops)'], notes: 'Asked about IT integration support — replied same day' },
-    { dealId: 'deal-4', date: '2026-05-24', type: 'Email Reply', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Confirmed IT integration details, proposed technical deep-dive' },
+    { dealId: '00000000-0000-0000-0000-000000000024', date: '2026-05-20', type: 'Intro Call', duration: 30, direction: 'outbound', participants: ['John Smith', 'Tom (Sales Ops)'], notes: 'Initial qualification call — strong interest from champion' },
+    { dealId: '00000000-0000-0000-0000-000000000024', date: '2026-05-22', type: 'Inbound Email', duration: 5, direction: 'inbound', participants: ['Tom (Sales Ops)'], notes: 'Requested product overview deck' },
+    { dealId: '00000000-0000-0000-0000-000000000024', date: '2026-05-23', type: 'Email Sent', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Sent product overview and pricing guide' },
+    { dealId: '00000000-0000-0000-0000-000000000024', date: '2026-05-24', type: 'Email Exchange', duration: 10, direction: 'inbound', participants: ['Tom (Sales Ops)'], notes: 'Asked about IT integration support — replied same day' },
+    { dealId: '00000000-0000-0000-0000-000000000024', date: '2026-05-24', type: 'Email Reply', duration: 10, direction: 'outbound', participants: ['John Smith'], notes: 'Confirmed IT integration details, proposed technical deep-dive' },
   ];
 
   await prisma.dealActivityEvent.deleteMany({
-    where: { dealId: { in: ['deal-1', 'deal-2', 'deal-3', 'deal-4'] } },
+    where: { dealId: { in: ['00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024'] } },
   });
 
   for (const a of activities) {
     await prisma.dealActivityEvent.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         dealId: a.dealId,
         date: a.date,
         type: a.type,
@@ -495,7 +495,7 @@ async function main() {
   for (const n of notifications) {
     await prisma.dealNotification.create({
       data: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...n,
       },
     });

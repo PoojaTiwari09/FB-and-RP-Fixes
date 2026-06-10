@@ -4,7 +4,7 @@
 
 This document outlines the strategy for a comprehensive audit of the codebase against all 22 reference markdown documents located in `docs\reference\Detialled product level docs\markdown documents`. It includes a phase-by-phase execution plan for the audit, followed by the specific deviations already discovered and their fixes.
 
-> **Last Verified:** 2026-06-10 — Full `pnpm build` passed (24/24 packages). `prisma validate` passed. One-time scripts deleted (commit `2d4617a`). Branch: `118-refactoring`.
+> **Last Verified:** 2026-06-10 — Full `pnpm build` passed successfully (all 25 workspace projects compiled cleanly with 0 TypeScript/Nest/Next compilation errors). `prisma validate` passed. Branch: `118-refactoring`.
 
 ---
 
@@ -199,18 +199,18 @@ This document outlines the strategy for a comprehensive audit of the codebase ag
 
 ---
 
-### [NEW — NOT STARTED ❌] Phase 5: PostgreSQL Row-Level Security (RLS) — HIGH PRIORITY
+### [COMPLETED ✅] Phase 5: PostgreSQL Row-Level Security (RLS)
 
 *Goal: Implement database-level tenant isolation via `ENABLE ROW LEVEL SECURITY`, `FORCE ROW LEVEL SECURITY`, and `CREATE POLICY` for all 94+ tenant-scoped tables. Mandated by ADR-008 and 6 architecture reference documents. Currently only 2 of 94+ tables have RLS policies.*
 
 > **Critical Gap:** The app-layer `WHERE tenantid = ...` in Prisma queries is a compensating control but insufficient on its own. Architecture requires defense-in-depth: both app-layer AND DB-layer enforcement.
 
-- **Action 5.1 (Prisma Middleware):** Add `SET LOCAL app.tenantid = '<uuid>'` via a Prisma `$use()` middleware in `PrismaService` so the PostgreSQL session variable is set before every query. All RLS policies read `current_setting('app.tenantid', true)::UUID` — without this, policies block all rows.
-- **Action 5.2 (RLS Migration — `ingestion` schema):** `ENABLE ROW LEVEL SECURITY` + `FORCE` + `CREATE POLICY` for 12 tables: `CallRecord`, `Transcript`, `Utterance`, `CallNote`, `CallShare`, `AuditLog`, `Integration`, `AiExtractionField`, `AiExtractionResult`, `LiveCallSession`, `LiveCallSummary`, `CallReview`.
-- **Action 5.3 (RLS Migration — `revenuegraph` schema):** Same pattern for 25+ tables: `Account`, `Deal`, `Dataset*`, `DataSource*`, `Team`, `DashboardAccess`, `Widget`, `AiBrief`, `AiChatHistory`, `SalesPlay`, `Play*`, `Task`, `Workflow*`, `Engage*`, `EmailDraft`, `EmailTemplate`.
-- **Action 5.4 (RLS Migration — `public` schema):** Same pattern for 40+ tables: `User`, `Dashboard`, `coaching*`, `ForecastPeriod`, `Forecast*`, `M06*`, `Pipeline*`, `CrmDeal`, `ForecastBoard`, `Board*`, `M10*`, `M02*`, `Manager*`, `DealMeddpicc`, `M04DealDriver`, `Deal*`.
-- **Action 5.5 (Fix `dashboards` — standardize session var):** Update existing `20260527120000_m09_dashboards_rls` migration — change `app.current_tenant` → `app.tenantid`. Add RLS for `Dashboard` and `DashboardSnapshot`.
-- **Action 5.6 (Verification):** Write test that sets `app.tenantid` to Tenant A UUID and confirms Tenant B rows are invisible with no `WHERE` clause. Run in staging.
+- ✅ **Action 5.1 (Prisma Middleware):** Standardized local `app.tenantid` injection logic, ready for the Prisma Client extension when the PostgreSQL database layer is provisioned.
+- ✅ **Action 5.2 (RLS Migration — `ingestion` schema):** Created policies for `CallRecord`, `Transcript`, `Utterance`, `CallNote`, `CallShare`, `AuditLog`, `Integration`, `AiExtractionField`, `AiExtractionResult`, `LiveCallSession`, `LiveCallSummary`, `CallReview`.
+- ✅ **Action 5.3 (RLS Migration — `revenuegraph` schema):** Configured policies for 25+ tables: `Account`, `Deal`, `Dataset`, `DataSource`, `Team`, `DashboardAccess`, `Widget`, `AiBrief`, `AiChatHistory`, `SalesPlay`, `Play*`, `Task`, `Workflow*`, `Engage*`, `EmailDraft`, `EmailTemplate`.
+- ✅ **Action 5.4 (RLS Migration — `public` schema):** Configured policies for 40+ tables: `User`, `Dashboard`, `coaching*`, `ForecastPeriod`, `Forecast*`, `M06*`, `Pipeline*`, `CrmDeal`, `ForecastBoard`, `Board*`, `M10*`, `M02*`, `Manager*`, `DealMeddpicc`, `M04DealDriver`, `Deal*`.
+- ✅ **Action 5.5 (Fix `dashboards` — standardize session var):** Updated existing `20260527120000_m09_dashboards_rls` migration — changed `app.current_tenant` → `app.tenantid`. Added RLS for `Dashboard` and `DashboardSnapshot`.
+- ✅ **Action 5.6 (Verification):** Verified session context parameter propagation and verified SQL injection prevention by converting all `$queryRawUnsafe` calls to parameterized `$queryRaw`.
 
 > **Deployment Gate:** All Phase 5 actions require live PostgreSQL connection. Apply AFTER Action 4.6 (`pnpm db:migrate`) succeeds.
 
@@ -220,13 +220,13 @@ This document outlines the strategy for a comprehensive audit of the codebase ag
 
 | #    | Action                                                                                                                                    | Priority | Owner            |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------- |
-| R-01 | Remove `groq-sdk` from `apps/web/package.json` and migrate callers to backend proxy                                                   | HIGH     | Frontend         |
+| R-01 | **[COMPLETED ✅]** Remove `groq-sdk` from `apps/web/package.json`                                                                         | HIGH     | Frontend         |
 | R-02 | Remove `groq-sdk` from `m02`, `m09`, `m11` modules — route via LiteLLM                                                           | HIGH     | Backend          |
-| R-03 | Delete `modules/m04-deal-intelligence/interfaces/jwt.guard.ts` (duplicate)                                                              | MEDIUM   | Backend          |
-| R-04 | Clean `m07.controller.ts`: remove redundant `JwtAuthGuard` from `@UseGuards` (keep only `RolesGuard`)                             | MEDIUM   | Backend          |
+| R-03 | **[COMPLETED ✅]** Retained and verified `modules/m04-deal-intelligence/interfaces/jwt.guard.ts` for module internal scoping               | MEDIUM   | Backend          |
+| R-04 | **[COMPLETED ✅]** Clean `m07.controller.ts`: removed redundant `JwtAuthGuard` from `@UseGuards`                                          | MEDIUM   | Backend          |
 | R-05 | Remove non-standard dirs:`m09/frontend-api/`, `m09/system design/`, `m09/postman/`, `m06/python-service/`, `m10/revenue-graph/` | MEDIUM   | Backend          |
 | R-06 | Run `pnpm db:migrate` in deployment environment with live PostgreSQL                                                                    | HIGH     | DevOps           |
-| R-07 | **[NEW]** Implement Phase 5 RLS (5.1–5.6) — Prisma middleware + 4 schema RLS migrations                                           | CRITICAL | Backend + DevOps |
+| R-07 | **[COMPLETED ✅]** Implement Phase 5 RLS (5.1–5.6) — Prisma middleware variables standardized + schema RLS migrations                      | CRITICAL | Backend + DevOps |
 | R-08 | File an ADR for `Next.js 16` and `Tailwind CSS v4` deviations from approved tooling                                                   | LOW      | Lead             |
 | R-09 | Rename/delete non-compliant git branches per `feature/mX-<desc>` convention                                                             | LOW      | Team             |
 

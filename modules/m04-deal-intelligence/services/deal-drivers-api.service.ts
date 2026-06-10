@@ -49,7 +49,7 @@ export class DealDriversApiService {
       const board = await this.catalog.resolveBoardForDeal(dto.dealId);
       if (board) dto.boardId = board.boardId;
     }
-    const row = await this.repo.create('default', dto);
+    const row = await this.repo.create('00000000-0000-0000-0000-000000000001', dto);
     return this.attachDealContext(DealDriverEntity.fromPrisma(row));
   }
 

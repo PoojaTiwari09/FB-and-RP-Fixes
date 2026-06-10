@@ -25,7 +25,7 @@ function buildReview(tenantId: string, c: any, index: number) {
   const statuses = ['Pending', 'In Progress', 'Completed', 'Completed'];
   const priorities = ['High', 'Medium', 'High', 'Medium'];
   return {
-    tenantId,
+    tenantid: tenantId,
     reviewId: `rv_${String(index + 1).padStart(3, '0')}`,
     callTitle: c.title,
     scorecardName:
@@ -59,7 +59,7 @@ function buildReview(tenantId: string, c: any, index: number) {
 
 async function main() {
   const calls = await prisma.callRecord.findMany({
-    where: { tenantId: TENANT_ID, id: { in: DEMO_CALL_IDS }, transcriptStatus: 'completed' },
+    where: { tenantid: TENANT_ID, id: { in: DEMO_CALL_IDS }, transcriptStatus: 'completed' },
     orderBy: { id: 'asc' },
     include: { transcript: true },
   });
@@ -86,7 +86,7 @@ async function main() {
     console.log(`  ${payload.reviewId} — ${payload.callTitle}`);
   }
 
-  const count = await prisma.callReview.count({ where: { tenantId: TENANT_ID } });
+  const count = await prisma.callReview.count({ where: { tenantid: TENANT_ID } });
   console.log(`Done (${count} call reviews)`);
 }
 

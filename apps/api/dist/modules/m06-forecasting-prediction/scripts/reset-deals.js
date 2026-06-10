@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const database_1 = require("@rri/database");
+const prisma = new database_1.PrismaClient();
 async function resetDeals() {
     try {
         const tenantId = 'demo-tenant-01';
@@ -15,12 +15,12 @@ async function resetDeals() {
         )
     `;
         console.log(`Deleted manual deals`);
-        const period = await prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
+        const period = await prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
         if (!period) {
             console.log('No open period');
             return;
         }
-        const activeDeals = await prisma.crmDeal.findMany({ where: { tenantId, isClosedWon: false, isClosedLost: false } });
+        const activeDeals = await prisma.crmDeal.findMany({ where: { tenantid: tenantId, isClosedWon: false, isClosedLost: false } });
         const response = await fetch('http://localhost:8000/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -38,7 +38,7 @@ async function resetDeals() {
             const prediction = await response.json();
             await prisma.aiForecastSnapshot.create({
                 data: {
-                    tenantId,
+                    tenantid: tenantId,
                     periodId: period.id,
                     predictedAmount: prediction.predictedAmount,
                     confidenceRangeLow: prediction.confidenceRangeLow,

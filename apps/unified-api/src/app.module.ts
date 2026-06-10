@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { TenantThrottlerGuard } from './tenant-throttler.guard';
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
 import { M02ConversationIntelligenceModule } from '../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module';
@@ -12,6 +14,8 @@ import { M04DealIntelligenceModule } from '../../../modules/m04-deal-intelligenc
 import { M11AiDeepResearcherModule } from '../../../modules/m11-ai-deep-researcher/m11-ai-deep-researcher.module';
 import { M07RevenueDashboardsModule } from '../../../modules/m07-revenue-dashboards/m07-revenue-dashboards.module';
 
+import { ThrottlerModule } from '@nestjs/throttler';
+
 const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000')
   .split(',')
   .map((s) => s.trim())
@@ -19,9 +23,12 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://1
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
     }),
     EventEmitterModule.forRoot({
       wildcard: true,
@@ -47,6 +54,12 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://1
     M04DealIntelligenceModule,
     M11AiDeepResearcherModule,
     M07RevenueDashboardsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: TenantThrottlerGuard,
+    },
   ],
 })
 export class UnifiedAppModule {

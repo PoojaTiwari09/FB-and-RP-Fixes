@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rri/database';
 import { M06ForecastingPredictionService } from '../services/m06.service';
 
 const prisma = new PrismaClient();
@@ -23,3 +23,4 @@ async function main() {
   }
 }
 main().catch(console.error).finally(() => prisma.$disconnect());
+

@@ -245,7 +245,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { contactId: c.contactId },
       update: c,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...c,
       },
     });
@@ -725,7 +725,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { taskId: t.taskId },
       update: dataObj,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         taskId: t.taskId,
         ...dataObj,
       },
@@ -789,7 +789,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { taskId: d.taskId },
       update: d,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...d,
       },
     });
@@ -833,7 +833,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { templateId: t.templateId },
       update: t,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...t,
       },
     });
@@ -879,7 +879,7 @@ export async function seedEngageData(prisma: PrismaClient) {
       where: { activityId: a.activityId },
       update: a,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...a,
       },
     });

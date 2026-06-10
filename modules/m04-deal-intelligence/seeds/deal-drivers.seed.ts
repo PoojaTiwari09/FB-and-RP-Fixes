@@ -9,8 +9,8 @@ const prisma = new PrismaClient();
 
 const SEED_DRIVERS = [
   {
-    dealId: 'deal-1',
-    boardId: '1',
+    dealId: '00000000-0000-0000-0000-000000000021', // deal-1
+    boardId: '00000000-0000-0000-0000-000000000001',
     name: 'Resolve no next step — Acme Corp',
     type: 'action',
     priority: 'high',
@@ -18,8 +18,8 @@ const SEED_DRIVERS = [
     owner: 'Lakshmi Prasanna Dara',
   },
   {
-    dealId: 'deal-2',
-    boardId: '1',
+    dealId: '00000000-0000-0000-0000-000000000022', // deal-2
+    boardId: '00000000-0000-0000-0000-000000000001',
     name: 'Multi-thread TechStart stakeholders',
     type: 'coaching',
     priority: 'medium',
@@ -27,8 +27,8 @@ const SEED_DRIVERS = [
     owner: 'Lakshmi Prasanna Dara',
   },
   {
-    dealId: 'deal-4',
-    boardId: '1',
+    dealId: '00000000-0000-0000-0000-000000000024', // deal-4
+    boardId: '00000000-0000-0000-0000-000000000001',
     name: 'Build close plan — MidMarket Co',
     type: 'risk',
     priority: 'high',
@@ -45,7 +45,7 @@ async function main() {
     if (existing) continue;
     await prisma.m04DealDriver.create({
       data: {
-        tenantId: 'default',
+        tenantid: '00000000-0000-0000-0000-000000000001',
         dealId: d.dealId,
         boardId: d.boardId,
         name: d.name,

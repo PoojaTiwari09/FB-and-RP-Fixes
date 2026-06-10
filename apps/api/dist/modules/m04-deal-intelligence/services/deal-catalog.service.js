@@ -341,7 +341,7 @@ let DealCatalogService = DealCatalogService_1 = class DealCatalogService {
             for (const cat of ['metrics', 'economicBuyer', 'decisionCriteria', 'decisionProcess', 'identifyPain', 'champion']) {
                 categoryAnswers[cat] = this.extractAnswerForCategory(realTexts, cat);
             }
-            await this.meddpiccService.upsertMeddpicc(dealExternalId, deal.tenantId || 'default', {
+            await this.meddpiccService.upsertMeddpicc(dealExternalId, deal.tenantid || deal.tenantId || '00000000-0000-0000-0000-000000000001', {
                 score: meddpiccScore,
                 matchedCategories,
                 contacts,

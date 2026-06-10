@@ -36,10 +36,6 @@ import { resolveApiBase } from '@shared/config/module-api';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import { unwrapM01Payload } from '@shared/lib/m01-api-payload';
 
-// ─── Config (M01 bridge @ /api/v1/capture-transcription/calls) ───────────────────────
-
-const DEFAULT_HEADERS: HeadersInit = getBridgeHeaders();
-
 // ─── Helper ───────────────────────────────────────────────────
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -51,7 +47,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   }
   const res = await fetch(fullUrl, {
     ...options,
-    headers: { ...DEFAULT_HEADERS, ...options?.headers },
+    headers: { ...getBridgeHeaders(), ...options?.headers },
   });
   if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
   const json = (await res.json()) as Record<string, unknown>;

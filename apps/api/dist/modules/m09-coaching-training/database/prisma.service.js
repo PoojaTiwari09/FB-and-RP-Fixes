@@ -18,7 +18,7 @@ let PrismaService = class PrismaService extends database_1.PrismaClient {
     }
     async withTenantContext(tenantId, fn) {
         return this.$transaction(async (tx) => {
-            await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant', $1, true)`, tenantId);
+            await tx.$executeRawUnsafe(`SELECT set_config('app.tenantid', $1, true)`, tenantId);
             return fn(tx);
         });
     }

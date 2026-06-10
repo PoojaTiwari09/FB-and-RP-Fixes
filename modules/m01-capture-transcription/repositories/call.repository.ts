@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateCallDto, ListCallsQueryDto } from '../schemas/m01.schema';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@rri/database';
 
 @Injectable()
 export class CallRepository {
@@ -9,7 +9,13 @@ export class CallRepository {
 
   // ── CT-01: create call record ─────────────────────────────────────────
   async create(data: CreateCallDto & { tenantId: string }) {
-    return this.prisma.callRecord.create({ data: data as any });
+    const { tenantId, ...rest } = data;
+    return this.prisma.callRecord.create({
+      data: {
+        ...rest,
+        tenantid: tenantId,
+      } as any,
+    });
   }
 
   // ── Sortable list with transcript status (CT sortable list) ──────────
@@ -21,7 +27,7 @@ export class CallRepository {
     const { status, source, sortBy, order, limit, offset } = query;
 
     const where: Record<string, unknown> = {
-      tenantId,
+      tenantid: tenantId,
       ...(status ? { transcriptStatus: status } : {}),
       ...(source ? { callSource: source } : {}),
       ...extra,
@@ -58,7 +64,7 @@ export class CallRepository {
   // ── Full call detail (CT-13) ──────────────────────────────────────────
   async findById(id: string, tenantId: string) {
     return this.prisma.callRecord.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
       include: {
         transcript: {
           include: {
@@ -80,7 +86,7 @@ export class CallRepository {
     failureReason?: string,
   ) {
     return this.prisma.callRecord.updateMany({
-      where: { id, tenantId },                   // ✅ tenantId scoped
+      where: { id, tenantid: tenantId },                   // ✅ tenantid scoped
       data:  { transcriptStatus: status, failureReason },
     });
   }
@@ -88,14 +94,14 @@ export class CallRepository {
   async updateDurationSeconds(id: string, tenantId: string, durationSeconds: number) {
     if (durationSeconds <= 0) return { count: 0 };
     return this.prisma.callRecord.updateMany({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
       data: { durationSeconds },
     });
   }
 
   async updateParticipants(id: string, tenantId: string, participants: string[]) {
     return this.prisma.callRecord.updateMany({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
       data: { participants },
     });
   }
@@ -103,7 +109,7 @@ export class CallRepository {
   // ── Mark call as skipped with a human-readable reason (US-09 / US-31) ─
   async updateSkipped(id: string, tenantId: string, skipReason: string) {
     return this.prisma.callRecord.updateMany({
-      where: { id, tenantId },
+      where: { id, tenantid: tenantId },
       data:  { transcriptStatus: 'skipped', skipReason },
     });
   }
@@ -111,6 +117,6 @@ export class CallRepository {
   // ── Hard delete a call + its transcripts/utterances/notes/shares (cascade) ──
   // Golden Rule #9: tenantId is part of the where clause to prevent cross-tenant delete.
   async deleteById(id: string, tenantId: string) {
-    return this.prisma.callRecord.deleteMany({ where: { id, tenantId } });
+    return this.prisma.callRecord.deleteMany({ where: { id, tenantid: tenantId } });
   }
 }

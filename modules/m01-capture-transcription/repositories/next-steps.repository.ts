@@ -25,7 +25,7 @@ export class NextStepsRepository {
   // ── Get current next steps for a call ─────────────────────────────────
   async findByCallId(callId: string, tenantId: string): Promise<string[]> {
     const transcript = await this.prisma.transcript.findFirst({
-      where:  { callId, tenantId },
+      where:  { callId, tenantid: tenantId },
       select: { nextSteps: true },
     });
     return transcript?.nextSteps ?? [];
@@ -40,7 +40,7 @@ export class NextStepsRepository {
     const current = await this.findByCallId(callId, tenantId);
 
     const updated = await this.prisma.transcript.updateMany({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       data:  { nextSteps: [...current, step] },
     });
 
@@ -72,7 +72,7 @@ export class NextStepsRepository {
     updated[index] = step;
 
     await this.prisma.transcript.updateMany({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       data:  { nextSteps: updated },
     });
 
@@ -96,7 +96,7 @@ export class NextStepsRepository {
     const updated = current.filter((_, i) => i !== index);
 
     await this.prisma.transcript.updateMany({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       data:  { nextSteps: updated },
     });
 
@@ -110,7 +110,7 @@ export class NextStepsRepository {
     nextSteps: string[],
   ): Promise<string[]> {
     await this.prisma.transcript.updateMany({
-      where: { callId, tenantId },
+      where: { callId, tenantid: tenantId },
       data:  { nextSteps },
     });
     return nextSteps;

@@ -27,11 +27,11 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
     async validate(payload) {
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
-            select: { id: true, tenantId: true, role: true, email: true, name: true },
+            select: { id: true, tenantid: true, role: true, email: true, name: true },
         });
         if (!user)
             throw new common_1.UnauthorizedException("User no longer exists");
-        return { sub: user.id, tenantId: user.tenantId, role: user.role, email: user.email, name: user.name };
+        return { sub: user.id, tenantId: user.tenantid, role: user.role, email: user.email, name: user.name };
     }
 };
 exports.JwtStrategy = JwtStrategy;

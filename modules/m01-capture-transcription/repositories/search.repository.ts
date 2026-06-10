@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ShareCallDto }  from '../schemas/m01.schema';
+import { Prisma } from '@rri/database';
 
 // ── Extended search query schema (US-22) ──────────────────────────────────────
 export const ExtendedSearchQuerySchema = z.object({
@@ -83,8 +84,9 @@ export class SearchRepository {
     const filterSQL = dateClauses.join('\n        ');
 
     // Main search query — GIN-accelerated via to_tsvector (US-06 GIN index)
-    const results = await this.prisma.$queryRawUnsafe<OrgSearchResult[]>(
-      `
+    // We construct the dynamic query safely using Prisma.sql and parameterize the variable inputs
+    const filterSQLPart = filterSQL ? Prisma.sql`AND ${Prisma.raw(filterSQL.replace(/AND /g, ''))}` : Prisma.empty;
+    const results = await this.prisma.$queryRaw<OrgSearchResult[]>`
       SELECT
         u.id              AS "utteranceId",
         t."callId"        AS "callId",
@@ -96,28 +98,23 @@ export class SearchRepository {
       FROM utterances u
       JOIN transcripts   t  ON t.id = u."transcriptId"
       JOIN call_records  cr ON cr.id = t."callId"
-      WHERE cr."tenantId" = $1
-        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', $2)
-        ${filterSQL}
+      WHERE cr."tenantid" = ${params[0]}::uuid
+        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', ${params[1]})
+        ${filterSQLPart}
       ORDER BY cr."callDate" DESC
-      LIMIT $3 OFFSET $4
-      `,
-      ...params,
-    );
+      LIMIT ${params[params.length - 2]} OFFSET ${params[params.length - 1]}
+    `;
 
     // Count query for US-19 matchCount
-    const countResult = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
-      `
+    const countResult = await this.prisma.$queryRaw<[{ count: bigint }]>`
       SELECT COUNT(*) AS count
       FROM utterances u
       JOIN transcripts   t  ON t.id = u."transcriptId"
       JOIN call_records  cr ON cr.id = t."callId"
-      WHERE cr."tenantId" = $1
-        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', $2)
-        ${filterSQL}
-      `,
-      ...params.slice(0, paramIdx - 1),  // same params minus limit/offset
-    );
+      WHERE cr."tenantid" = ${params[0]}::uuid
+        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', ${params[1]})
+        ${filterSQLPart}
+    `;
 
     const total = Number(countResult[0]?.count ?? 0);
 
@@ -136,7 +133,7 @@ export class SearchRepository {
   ) {
     const utterances = await this.prisma.utterance.findMany({
       where: {
-        transcript: { callId, tenantId },
+        transcript: { callId, tenantid: tenantId },
         text:       { contains: q, mode: 'insensitive' },
       },
       orderBy: { sequenceIndex: 'asc' },
@@ -172,11 +169,11 @@ export class ShareRepository {
         },
       },
       update:  {},
-      create: { callId, tenantId, sharedByUserId, ...dto } as any,
+      create: { callId, tenantid: tenantId, sharedByUserId, ...dto } as any,
     });
   }
 
   async findByCallId(callId: string, tenantId: string) {
-    return this.prisma.callShare.findMany({ where: { callId, tenantId } });
+    return this.prisma.callShare.findMany({ where: { callId, tenantid: tenantId } });
   }
 }

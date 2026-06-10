@@ -31,6 +31,7 @@ import type {
 } from '../types/calls.types';
 
 import { resolveApiBase } from '@shared/config/module-api';
+import { getBridgeHeaders } from '@shared/lib/backend-headers';
 
 // ─── Config (M01 bridge @ /api/v1/capture-transcription/calls) ───────────────────────
 
@@ -45,10 +46,14 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   }
   const res = await fetch(fullUrl, {
     ...options,
-    headers: { ...options?.headers },
+    headers: { ...getBridgeHeaders(), ...options?.headers },
   });
   if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
-  return res.json() as Promise<T>;
+  const parsed = await res.json();
+  if (parsed && typeof parsed === 'object' && 'success' in parsed && 'data' in parsed) {
+    return parsed.data as T;
+  }
+  return parsed as T;
 }
 
 // ─── 1. GET /api/v1/capture-transcription/calls ────────────────────────────────────────

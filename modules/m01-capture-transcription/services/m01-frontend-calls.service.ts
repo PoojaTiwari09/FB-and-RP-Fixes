@@ -64,7 +64,7 @@ export class M01FrontendCallsService {
       );
 
       const callReviews = await this.prisma.callReview.findMany({
-        where: { tenantId },
+        where: { tenantid: tenantId },
       });
       const reviewMap = new Map(callReviews.map((cr) => [cr.callTitle, cr]));
 
@@ -216,7 +216,7 @@ export class M01FrontendCallsService {
 
     if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
       const matchingReview = await this.prisma.callReview.findFirst({
-        where: { callTitle: record.title, tenantId },
+        where: { callTitle: record.title, tenantid: tenantId },
       });
       const row = mapAiReviewerCallRow(record, matchingReview);
       const participants = Array.isArray(record.participants)
@@ -269,7 +269,7 @@ export class M01FrontendCallsService {
 
   async listAccounts(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
     const { search } = FrontendFilterSearchSchema.parse(rawQuery);
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
 
     // Data Isolation: Sales Reps can only see accounts for their own calls
     if (userRole === 'sales_rep' && userId) {
@@ -308,7 +308,7 @@ export class M01FrontendCallsService {
 
   async listParticipants(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
     const { search, accountId } = FrontendFilterSearchSchema.parse(rawQuery);
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (accountId) where.accountId = accountId;
 
     // Data Isolation: Sales Reps can only see participants for their own calls

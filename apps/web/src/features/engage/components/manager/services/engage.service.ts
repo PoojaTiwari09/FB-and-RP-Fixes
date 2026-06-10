@@ -94,7 +94,7 @@ export async function fetchTasks(query: {
     size: String(query.size || 50),
   });
   if (query.search) params.set('search', query.search);
-  const endpoint = `/tasks?${params.toString()}`;
+  const endpoint = `/manager/tasks?${params.toString()}`;
 
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
@@ -120,7 +120,7 @@ export async function fetchSummary(assigneeId: string, date: string): Promise<{
   completionPercentage: number;
   headerAlert: string;
 }> {
-  const endpoint = `/tasks/summary?assigneeId=${assigneeId}&date=${date}`;
+  const endpoint = `/manager/tasks/summary?assigneeId=${assigneeId}&date=${date}`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
@@ -155,7 +155,7 @@ export async function searchLinkedEntities(search: string): Promise<{
   type: string;
   subLabel: string;
 }[]> {
-  const endpoint = `/search/linked-to?search=${encodeURIComponent(search)}`;
+  const endpoint = `/manager/search/linked-to?search=${encodeURIComponent(search)}`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data.results;
@@ -325,21 +325,21 @@ export async function logTaskAction(
 }
 
 export async function fetchRecentActivity(): Promise<any[]> {
-  const endpoint = '/activities/recent';
+  const endpoint = '/manager/activities/recent';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
 }
 
 export async function fetchFilterConfig(): Promise<{ flows: string[]; entityTypes: string[]; localTimes: string[] }> {
-  const endpoint = '/tasks/filters-config';
+  const endpoint = '/manager/tasks/filters-config';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
 }
 
 export async function fetchTeamMembers(): Promise<any[]> {
-  const endpoint = '/team/members';
+  const endpoint = '/manager/team/members';
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;

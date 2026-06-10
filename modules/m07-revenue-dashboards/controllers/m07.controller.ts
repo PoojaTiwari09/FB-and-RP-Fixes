@@ -56,7 +56,7 @@ export class M07DealAccountController {
 
   @Post("dashboards")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   createDashboard(@Req() req: TenantRequest, @Body() body: CreateDashboardDto) {
     return this.service.createDashboard(
@@ -68,7 +68,7 @@ export class M07DealAccountController {
 
   @Get("pipeline-analysis")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getPipelineAnalysis(
     @Req() req: TenantRequest,
@@ -79,7 +79,7 @@ export class M07DealAccountController {
 
   @Get("competitive-analysis")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getCompetitiveAnalysis(
     @Req() req: TenantRequest,
@@ -90,7 +90,7 @@ export class M07DealAccountController {
 
   @Get("scorecards-analysis")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getScorecardsAnalysis(
     @Req() req: TenantRequest,
@@ -101,7 +101,7 @@ export class M07DealAccountController {
 
   @Get("economic-pulse")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getEconomicPulse(
     @Req() req: TenantRequest,
@@ -111,13 +111,12 @@ export class M07DealAccountController {
   }
 
   @Get("widgets/catalog")
-  @UseGuards(JwtAuthGuard)
   getWidgetCatalog() {
     return this.service.getWidgetCatalog();
   }
 
   @Get("dashboards/templates")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getTemplates(@Req() req: TenantRequest) {
     return this.service.getTemplates(req.tenantContext.tenantId);
@@ -125,7 +124,7 @@ export class M07DealAccountController {
 
   @Post("dashboards/seed-templates")
   @Roles("ADMIN", "MANAGER")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   seedTemplates(@Req() req: TenantRequest) {
     return this.service.seedTemplates(req.tenantContext.tenantId, req.tenantContext.userId);
@@ -133,7 +132,7 @@ export class M07DealAccountController {
 
   @Post("dashboards/from-template/:templateId")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   createFromTemplate(@Req() req: TenantRequest, @Param("templateId") templateId: string) {
     return this.service.createDashboardFromTemplate(req.tenantContext.tenantId, req.tenantContext.userId, templateId);
@@ -141,7 +140,7 @@ export class M07DealAccountController {
 
   @Post("dashboards/:id/publish")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   publishDashboard(@Req() req: TenantRequest, @Param("id") id: string) {
     return this.service.updateDashboardStatus(req.tenantContext.tenantId, id, "PUBLISHED");
@@ -149,7 +148,7 @@ export class M07DealAccountController {
 
   @Post("dashboards/:id/unpublish")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   unpublishDashboard(@Req() req: TenantRequest, @Param("id") id: string) {
     return this.service.updateDashboardStatus(req.tenantContext.tenantId, id, "DRAFT");
@@ -157,7 +156,7 @@ export class M07DealAccountController {
 
   @Post("widgets")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   createWidget(@Req() req: TenantRequest, @Body() body: CreateWidgetDto) {
     return this.service.createWidget(
@@ -168,7 +167,7 @@ export class M07DealAccountController {
 
   @Get("kpis")
   @Roles("ADMIN", "MANAGER", "SALES_REP", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getKpis(
     @Req() req: TenantRequest,
@@ -184,7 +183,7 @@ export class M07DealAccountController {
 
   @Get("sample-dashboard")
   @Roles("ADMIN", "MANAGER", "SALES_REP", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   getSampleDashboard(
     @Query("timeRange") timeRange: "CURRENT_QUARTER" | "LAST_QUARTER" = "CURRENT_QUARTER",
   ) {
@@ -193,14 +192,14 @@ export class M07DealAccountController {
 
   @Get("sample-dashboard-builder/config")
   @Roles("ADMIN", "MANAGER", "SALES_REP", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   getSampleDashboardBuilderConfig() {
     return this.service.getSampleDashboardBuilderConfig();
   }
 
   @Post("sample-dashboard-builder/widgets")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   addSampleWidget(
     @Body() body: {
       title: string;
@@ -215,7 +214,7 @@ export class M07DealAccountController {
 
   @Post("sample-dashboard-builder/render")
   @Roles("ADMIN", "MANAGER", "SALES_REP", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   renderSampleDashboard(
     @Body() body: {
       timeRange: "CURRENT_QUARTER" | "LAST_QUARTER";
@@ -237,7 +236,7 @@ export class M07DealAccountController {
 
   @Post("sample-dashboard-builder/export")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   exportSampleDashboard(
     @Body() body: {
       timeRange: "CURRENT_QUARTER" | "LAST_QUARTER";
@@ -259,21 +258,21 @@ export class M07DealAccountController {
 
   @Post("sample-dashboard-builder/share")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   shareSampleDashboard(@Body() body: { visibility: "PRIVATE" | "TEAM" | "LINK" }) {
     return this.service.shareSampleDashboard(body.visibility);
   }
 
   @Post("sample-dashboard-builder/widgets/:widgetId/delete")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   removeSampleWidget(@Param("widgetId") widgetId: string) {
     return this.service.removeSampleWidget(widgetId);
   }
 
   @Post("dashboards/:id/share")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   async shareDashboard(
     @Req() req: TenantRequest,
@@ -285,7 +284,7 @@ export class M07DealAccountController {
 
   @Post("dashboards/:dashboardId/export")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   exportDashboard(@Req() req: TenantRequest, @Param("dashboardId") dashboardId: string) {
     return this.service.exportSnapshot(req.tenantContext.tenantId, dashboardId);
@@ -295,7 +294,7 @@ export class M07DealAccountController {
 
   @Post("datasets")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   createDataset(
     @Req() req: { tenantContext: { tenantId: string; userId: string } },
@@ -310,7 +309,7 @@ export class M07DealAccountController {
 
   @Get("datasets/preview")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   preview(@Req() req: { tenantContext: { tenantId: string } }) {
     return this.service.previewSample(req.tenantContext.tenantId);
@@ -338,7 +337,7 @@ export class M07DealAccountController {
 
   @Get("datasets")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getDatasets() {
     return this.service.getDatasets();
@@ -346,7 +345,7 @@ export class M07DealAccountController {
 
   @Get("workspaces")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   getWorkspaces(
     @Req() req: { tenantContext: { tenantId: string; userId: string } },
@@ -359,7 +358,7 @@ export class M07DealAccountController {
 
   @Post("workspaces")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   saveWorkspace(
     @Req() req: { tenantContext: { tenantId: string; userId: string } },
@@ -374,7 +373,7 @@ export class M07DealAccountController {
 
   @Post("workspaces/validate-widget")
   @Roles("ADMIN", "MANAGER", "ANALYST")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   validateWidget(@Body() body: any) {
     return this.service.validateWidget(body);
@@ -382,7 +381,7 @@ export class M07DealAccountController {
 
   @Post("workspaces/query")
   @Roles("ADMIN", "MANAGER", "ANALYST", "SALES_REP")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @UseInterceptors(TenantInterceptor)
   queryWorkspace(
     @Req() req: { tenantContext: { tenantId: string } },

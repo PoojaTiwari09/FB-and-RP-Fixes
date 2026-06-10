@@ -51,7 +51,7 @@ export class ForecastBoardsService {
     if (platformUser) {
       const fUser = await this.prisma.forecastUser.findFirst({
         where: {
-          tenantId,
+          tenantid: tenantId,
           OR: [
             { email: platformUser.email },
             { name: platformUser.name },
@@ -105,7 +105,7 @@ export class ForecastBoardsService {
 
   private async loadBoard(tenantId: string, boardId: string) {
     const board = await this.prisma.forecastBoard.findFirst({
-      where: { id: boardId, tenantId },
+      where: { id: boardId, tenantid: tenantId },
       include: {
         columns: { where: { isDeleted: false }, orderBy: { sortOrder: 'asc' } },
         exclusions: true,
@@ -128,10 +128,10 @@ export class ForecastBoardsService {
         isLocked: period.isLocked,
       }));
     }
-    const periods = await this.prisma.forecastPeriod.findMany({ where: { tenantId }, orderBy: { startDate: 'desc' } });
+    const periods = await this.prisma.forecastPeriod.findMany({ where: { tenantid: tenantId }, orderBy: { startDate: 'desc' } });
     return periods.map((period) => ({
       periodId: period.id,
-      tenantId: period.tenantId,
+      tenantId: period.tenantid,
       name: period.name,
       startDate: period.startDate.toISOString().slice(0, 10),
       endDate: period.endDate.toISOString().slice(0, 10),
@@ -154,8 +154,8 @@ export class ForecastBoardsService {
     const period = await this.loadPeriod(tenantId, periodId);
     if (!period) throw new NotFoundException('Period not found');
     const [aiPrediction, submissions] = await Promise.all([
-      this.prisma.aiForecastSnapshot.findFirst({ where: { tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } }),
-      this.prisma.forecastSubmission.findMany({ where: { tenantId, periodId: period.id } }),
+      this.prisma.aiForecastSnapshot.findFirst({ where: { tenantid: tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } }),
+      this.prisma.forecastSubmission.findMany({ where: { tenantid: tenantId, periodId: period.id } }),
     ]);
     return { period, aiPrediction, coverageMetrics: null, submissions };
   }
@@ -178,7 +178,7 @@ export class ForecastBoardsService {
       const previous = await (this.repo as any).findMaxVersionForUser(tenantId, period.id, userId, data.lob ?? 'Enterprise Software');
       const version = (previous?.version ?? 0) + 1;
       const submission = await this.repo.appendSubmission({
-        tenantId,
+        tenantid: tenantId,
         periodId: period.id,
         repUserId: userId,
         lob: data.lob ?? previous?.lob ?? 'Enterprise Software',
@@ -192,7 +192,7 @@ export class ForecastBoardsService {
         submittedAt: new Date(),
       });
       await this.repo.appendAuditLog({
-        tenantId,
+        tenantid: tenantId,
         forecastSubmissionId: submission.id,
         action: 'Submitted',
         actorId: userId,
@@ -209,7 +209,7 @@ export class ForecastBoardsService {
     }
     const submission = await this.prisma.forecastSubmission.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         periodId,
         repUserId: userId,
         lob: data.lob ?? 'Enterprise',
@@ -227,7 +227,7 @@ export class ForecastBoardsService {
   }
 
   private async loadPeriod(tenantId: string, periodId: string) {
-    return this.prisma.forecastPeriod.findFirst({ where: { id: periodId, tenantId } });
+    return this.prisma.forecastPeriod.findFirst({ where: { id: periodId, tenantid: tenantId } });
   }
 
   private inPeriodWhere(period: any) {
@@ -297,7 +297,7 @@ export class ForecastBoardsService {
 
   async listBoards(tenantId: string) {
     const boards = await this.prisma.forecastBoard.findMany({
-      where: { tenantId, status: 'active' },
+      where: { tenantid: tenantId, status: 'active' },
       orderBy: { createdAt: 'desc' },
     });
     return boards.map((board) => ({
@@ -313,7 +313,7 @@ export class ForecastBoardsService {
 
   async getBoardByPeriod(tenantId: string, periodId: string) {
     const board = await this.prisma.forecastBoard.findFirst({
-      where: { tenantId, activePeriod: periodId, status: 'active' },
+      where: { tenantid: tenantId, activePeriod: periodId, status: 'active' },
       include: { columns: { where: { isDeleted: false }, orderBy: { sortOrder: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -349,8 +349,8 @@ export class ForecastBoardsService {
     const forecastUserId = await this.resolveForecastUserId(tenantId, userId) ?? userId;
 
     let users = isManager
-      ? await this.prisma.forecastUser.findMany({ where: { tenantId, OR: [{ managerId: forecastUserId }, { id: forecastUserId }] } })
-      : await this.prisma.forecastUser.findMany({ where: { tenantId, id: forecastUserId } });
+      ? await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, OR: [{ managerId: forecastUserId }, { id: forecastUserId }] } })
+      : await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, id: forecastUserId } });
 
     if (!includeInactive) users = users.filter((user) => user.role !== 'inactive');
     users.sort((a, b) => (a.id === userId ? -1 : b.id === userId ? 1 : a.name.localeCompare(b.name)));
@@ -361,13 +361,13 @@ export class ForecastBoardsService {
 
     const [submissions, quotas, deals, snapshots, annotations] = await Promise.all([
       this.prisma.forecastSubmission.findMany({
-        where: { tenantId, periodId: this.periodId(board), repUserId: { in: userIds } },
+        where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: { in: userIds } },
         orderBy: [{ repUserId: 'asc' }, { version: 'desc' }, { createdAt: 'desc' }],
       }),
-      this.prisma.quota.findMany({ where: { tenantId, periodId: this.periodId(board), repUserId: { in: userIds } } }),
-      this.prisma.crmDeal.findMany({ where: { tenantId, repUserId: { in: userIds }, ...this.inPeriodWhere(period) } }),
-      this.prisma.aiForecastSnapshot.findMany({ where: { tenantId, periodId: this.periodId(board) }, orderBy: { predictedAmount: 'desc' } }),
-      this.prisma.boardSubmissionAnnotation.findMany({ where: { tenantId, boardId } }),
+      this.prisma.quota.findMany({ where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: { in: userIds } } }),
+      this.prisma.crmDeal.findMany({ where: { tenantid: tenantId, repUserId: { in: userIds }, ...this.inPeriodWhere(period) } }),
+      this.prisma.aiForecastSnapshot.findMany({ where: { tenantid: tenantId, periodId: this.periodId(board) }, orderBy: { predictedAmount: 'desc' } }),
+      this.prisma.boardSubmissionAnnotation.findMany({ where: { tenantid: tenantId, boardId } }),
     ]);
 
     const latestSubmission = this.latestByRep(submissions);
@@ -489,7 +489,7 @@ export class ForecastBoardsService {
       : null;
 
     const latestSnapshot = await this.prisma.aiForecastSnapshot.findFirst({
-      where: { tenantId, periodId: this.periodId(board) },
+      where: { tenantid: tenantId, periodId: this.periodId(board) },
       orderBy: { computedAt: 'desc' },
     });
 
@@ -513,8 +513,8 @@ export class ForecastBoardsService {
         const repDeals = deals.filter((deal) => deal.repUserId && ids.includes(deal.repUserId));
         const pipelineVal = repDeals.filter((deal) => !deal.isClosedWon && !deal.isClosedLost).reduce((sum, deal) => sum + deal.amount, 0);
         await this.prisma.pipelineValuesCache.upsert({
-          where: { tenantId_periodId_repId_dealId: { tenantId, periodId: this.periodId(board), repId: user.id, dealId: '' } },
-          create: { tenantId, periodId: this.periodId(board), repId: user.id, dealId: '', pipelineValue: pipelineVal, computedAt: new Date() },
+          where: { tenantid_periodId_repId_dealId: { tenantid: tenantId, periodId: this.periodId(board), repId: user.id, dealId: '' } },
+          create: { tenantid: tenantId, periodId: this.periodId(board), repId: user.id, dealId: '', pipelineValue: pipelineVal, computedAt: new Date() },
           update: { pipelineValue: pipelineVal, computedAt: new Date() }
         });
       })
@@ -548,7 +548,7 @@ export class ForecastBoardsService {
     }
 
     const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
 
@@ -559,7 +559,7 @@ export class ForecastBoardsService {
       }
       const submission = await this.prisma.forecastSubmission.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           periodId: this.periodId(board),
           repUserId: forecastRepUserId,
           lob: latest.lob,
@@ -575,7 +575,7 @@ export class ForecastBoardsService {
 
       await this.prisma.forecastAuditLog.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           forecastSubmissionId: submission.id,
           action: 'BOARD_SUBMIT',
           actorId: forecastActorId || forecastRepUserId,
@@ -670,7 +670,7 @@ export class ForecastBoardsService {
 
     const submission = await this.prisma.forecastSubmission.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         periodId: this.periodId(board),
         repUserId: forecastRepUserId,
         lob: latest?.lob ?? 'Enterprise',
@@ -686,7 +686,7 @@ export class ForecastBoardsService {
 
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         forecastSubmissionId: submission.id,
         action: 'BOARD_SUBMIT',
         actorId: forecastActorId || forecastRepUserId,
@@ -718,7 +718,7 @@ export class ForecastBoardsService {
     const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
 
     const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
 
@@ -778,7 +778,7 @@ export class ForecastBoardsService {
 
     const submission = await this.prisma.forecastSubmission.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         periodId: this.periodId(board),
         repUserId: forecastRepUserId,
         lob: latest.lob,
@@ -794,7 +794,7 @@ export class ForecastBoardsService {
 
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         forecastSubmissionId: submission.id,
         action: 'CHANGE_APPROVED',
         actorId: forecastActorId || forecastRepUserId,
@@ -816,7 +816,7 @@ export class ForecastBoardsService {
     const column = board.columns.find((item) => item.id === columnId);
     if (!column) throw new BadRequestException('Invalid columnId');
     const label = column.label.toLowerCase();
-    const where: any = { tenantId, repUserId: forecastRepUserId, ...this.inPeriodWhere(period) };
+    const where: any = { tenantid: tenantId, repUserId: forecastRepUserId, ...this.inPeriodWhere(period) };
     if (label.includes('closed')) where.isClosedWon = true;
     if (label.includes('pipeline')) {
       where.isClosedWon = false;
@@ -837,7 +837,7 @@ export class ForecastBoardsService {
     if (!column) throw new BadRequestException('Invalid columnId');
     const field = this.submissionField(column);
     const submissions = await this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: { createdAt: 'asc' },
     });
     
@@ -881,13 +881,13 @@ export class ForecastBoardsService {
     const forecastActorId = await this.resolveForecastUserId(tenantId, actorId) ?? actorId;
 
     if (role === 'manager') {
-      const directReport = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: forecastRepUserId, managerId: forecastActorId } });
+      const directReport = await this.prisma.forecastUser.findFirst({ where: { tenantid: tenantId, id: forecastRepUserId, managerId: forecastActorId } });
       if (!directReport) throw new ForbiddenException('Rep is not a direct report');
     }
     const view = await this.getBoardView(tenantId, boardId, 'sales_rep', forecastRepUserId);
-    const rep = await this.prisma.forecastUser.findFirst({ where: { tenantId, id: forecastRepUserId } });
+    const rep = await this.prisma.forecastUser.findFirst({ where: { tenantid: tenantId, id: forecastRepUserId } });
     const submission = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: forecastRepUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
     return {
@@ -911,12 +911,12 @@ export class ForecastBoardsService {
     if (!annotation.trim()) throw new BadRequestException('annotation is required');
     const saved = await this.prisma.boardSubmissionAnnotation.upsert({
       where: { boardId_submissionId: { boardId, submissionId } },
-      create: { boardId, tenantId, submissionId, managerId, content: annotation },
+      create: { boardId, tenantid: tenantId, submissionId, managerId, content: annotation },
       update: { content: annotation, managerId },
     });
     await this.prisma.forecastSubmission.update({ where: { id: submissionId }, data: { managerComment: annotation, managerId } });
     await this.prisma.forecastAuditLog.create({
-      data: { tenantId, forecastSubmissionId: submissionId, action: 'MANAGER_ANNOTATION', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId } },
+      data: { tenantid: tenantId, forecastSubmissionId: submissionId, action: 'MANAGER_ANNOTATION', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId } },
     });
     return { ...saved, annotation: saved.content, updatedAt: saved.updatedAt };
   }
@@ -926,7 +926,7 @@ export class ForecastBoardsService {
     await this.loadBoard(tenantId, boardId);
     const exclusion = await this.prisma.boardExclusion.upsert({
       where: { boardId_repUserId: { boardId, repUserId } },
-      create: { boardId, tenantId, repUserId, excludedBy: managerId },
+      create: { boardId, tenantid: tenantId, repUserId, excludedBy: managerId },
       update: { isActive: true, excludedBy: managerId, excludedAt: new Date() },
     });
     return { ...exclusion, excluded: exclusion.isActive, repUserId, impactMessage: "This rep's data has been removed from all team rollups and analytics" };
@@ -975,7 +975,7 @@ export class ForecastBoardsService {
     try {
       await this.prisma.forecastNotification.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           repId: submission.repUserId,
           submissionId: submission.id,
           actionType: 'approved',
@@ -988,7 +988,7 @@ export class ForecastBoardsService {
       console.error('Failed to create approval notification', e);
     }
 
-    await this.prisma.forecastAuditLog.create({ data: { tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_APPROVED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
+    await this.prisma.forecastAuditLog.create({ data: { tenantid: tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_APPROVED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
     return { submissionId, status: 'approved', approvedAt: submission.approvedAt };
   }
 
@@ -1003,7 +1003,7 @@ export class ForecastBoardsService {
     try {
       await this.prisma.forecastNotification.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           repId: submission.repUserId,
           submissionId: submission.id,
           actionType: 'reopened',
@@ -1016,7 +1016,7 @@ export class ForecastBoardsService {
       console.error('Failed to create reopen notification', e);
     }
 
-    await this.prisma.forecastAuditLog.create({ data: { tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_REOPENED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
+    await this.prisma.forecastAuditLog.create({ data: { tenantid: tenantId, forecastSubmissionId: submissionId, action: 'SUBMISSION_REOPENED', actorId: managerId, actorRole: role || 'manager', metadata: { boardId } } });
     return { submissionId, status: 'reopened', reopenedAt: submission.reopenedAt };
   }
 
@@ -1028,12 +1028,12 @@ export class ForecastBoardsService {
     const field = this.submissionField(column);
     if (!field) throw new BadRequestException('Only Commit and Best Case columns can be updated');
     const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: this.periodId(board), repUserId },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId },
       orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
     const submission = await this.prisma.forecastSubmission.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         periodId: this.periodId(board),
         repUserId,
         lob: latest?.lob ?? 'Enterprise',
@@ -1051,7 +1051,7 @@ export class ForecastBoardsService {
     try {
       // Find rep's active deals to update manual forecasts or sync to deal values
       const deals = await this.prisma.crmDeal.findMany({
-        where: { tenantId, repUserId, isClosedWon: false, isClosedLost: false }
+        where: { tenantid: tenantId, repUserId, isClosedWon: false, isClosedLost: false }
       });
       if (deals.length > 0) {
         // Apportion manager override proportionally across active deals, or update all
@@ -1073,7 +1073,7 @@ export class ForecastBoardsService {
     try {
       await this.prisma.forecastNotification.create({
         data: {
-          tenantId,
+          tenantid: tenantId,
           repId: repUserId,
           submissionId: submission.id,
           actionType: 'overridden',
@@ -1087,7 +1087,7 @@ export class ForecastBoardsService {
     }
 
     await this.prisma.forecastAuditLog.create({
-      data: { tenantId, forecastSubmissionId: submission.id, action: 'MANAGER_OVERRIDE', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId, columnLabel: column.label, oldValue: latest?.[field], newValue: data.value } },
+      data: { tenantid: tenantId, forecastSubmissionId: submission.id, action: 'MANAGER_OVERRIDE', actorId: managerId, actorRole: role || 'manager', metadata: { boardId, repUserId, columnLabel: column.label, oldValue: latest?.[field], newValue: data.value } },
     });
     this.eventPublisher?.publish('forecast.submitted', { tenantId, correlationId: crypto.randomUUID(), payload: { submissionId: submission.id, periodId: submission.periodId, userId: repUserId, submittedAmount: submission.commitForecast, version: submission.version, lob: submission.lob } });
     return { submission };
@@ -1095,18 +1095,18 @@ export class ForecastBoardsService {
 
   async getPendingApprovalsCount(tenantId: string, boardId: string, managerId: string) {
     const board = await this.loadBoard(tenantId, boardId);
-    const reps = await this.prisma.forecastUser.findMany({ where: { tenantId, managerId } });
+    const reps = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, managerId } });
     const count = await this.prisma.forecastSubmission.count({
-      where: { tenantId, periodId: this.periodId(board), repUserId: { in: reps.map((rep) => rep.id) }, status: 'submitted' },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: { in: reps.map((rep) => rep.id) }, status: 'submitted' },
     });
     return { pendingCount: count };
   }
 
   async getPendingApprovals(tenantId: string, boardId: string, managerId: string) {
     const board = await this.loadBoard(tenantId, boardId);
-    const reps = await this.prisma.forecastUser.findMany({ where: { tenantId, managerId } });
+    const reps = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, managerId } });
     const submissions = await this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId: this.periodId(board), repUserId: { in: reps.map((rep) => rep.id) }, status: 'submitted' },
+      where: { tenantid: tenantId, periodId: this.periodId(board), repUserId: { in: reps.map((rep) => rep.id) }, status: 'submitted' },
       orderBy: { submittedAt: 'desc' },
     });
     return submissions.map((submission) => {
@@ -1137,14 +1137,14 @@ export class ForecastBoardsService {
       assignments.map(async (assign) => {
         return this.prisma.quota.upsert({
           where: {
-            tenantId_periodId_repUserId: {
-              tenantId,
+            tenantid_periodId_repUserId: {
+              tenantid: tenantId,
               periodId,
               repUserId: assign.repUserId,
             }
           },
           create: {
-            tenantId,
+            tenantid: tenantId,
             periodId,
             repUserId: assign.repUserId,
             amount: assign.targetValue,
@@ -1163,7 +1163,7 @@ export class ForecastBoardsService {
 
   async getNotifications(tenantId: string, repId: string) {
     return this.prisma.forecastNotification.findMany({
-      where: { tenantId, repId, isSeen: false },
+      where: { tenantid: tenantId, repId, isSeen: false },
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -1177,7 +1177,7 @@ export class ForecastBoardsService {
 
   async getSubmissionActivity(tenantId: string, submissionId: string) {
     return this.prisma.forecastAuditLog.findMany({
-      where: { tenantId, forecastSubmissionId: submissionId },
+      where: { tenantid: tenantId, forecastSubmissionId: submissionId },
       orderBy: { createdAt: 'asc' }
     });
   }

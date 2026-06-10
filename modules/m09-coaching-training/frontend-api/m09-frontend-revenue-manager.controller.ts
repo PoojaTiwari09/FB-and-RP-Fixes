@@ -21,7 +21,7 @@ export class M09FrontendRevenueManagerController {
   @Get('revenue/accounts/alert')
   async getAlert(): Promise<any> {
     const config = await this.prisma.managerAccountsConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.alertBanner || { totalARR: 0, accountCount: 0, inactiveDays: 0 };
   }
@@ -30,7 +30,7 @@ export class M09FrontendRevenueManagerController {
   @Get('revenue/accounts/summary')
   async getSummary(): Promise<any> {
     const config = await this.prisma.managerAccountsConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.kpiSummary || [];
   }
@@ -39,7 +39,7 @@ export class M09FrontendRevenueManagerController {
   @Get('revenue/accounts/viewers')
   async getViewers(): Promise<any> {
     const config = await this.prisma.managerAccountsConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.viewers || { teams: [], reps: [] };
   }
@@ -354,7 +354,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/filters')
   async getCoachingFilters(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.filters || { periods: [], teams: [] };
   }
@@ -363,7 +363,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/activity')
   async getCoachingActivity(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.activity || [];
   }
@@ -372,7 +372,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/interaction')
   async getCoachingInteraction(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.interaction || { reps: [], benchmarks: {} };
   }
@@ -381,7 +381,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/responsiveness')
   async getCoachingResponsiveness(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.responsiveness || [];
   }
@@ -390,7 +390,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/scorecards')
   async getCoachingScorecards(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.scorecards || [];
   }
@@ -399,7 +399,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/ai-insights')
   async getCoachingAiInsights(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.aiInsights || [];
   }
@@ -408,7 +408,7 @@ Activities: ${JSON.stringify(acc.activity)}`;
   @Get('coaching/team-vs-benchmark')
   async getCoachingTeamVsBenchmark(): Promise<any> {
     const config = await this.prisma.managerCoachingConfig.findUnique({
-      where: { id: 'default' },
+      where: { id: '00000000-0000-0000-0000-000000000000' },
     });
     return config?.teamVsBenchmark || [];
   }

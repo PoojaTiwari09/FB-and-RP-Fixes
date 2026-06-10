@@ -33,9 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
+const database_1 = require("@rri/database");
 const bcrypt = __importStar(require("bcrypt"));
-const prisma = new client_1.PrismaClient();
+const prisma = new database_1.PrismaClient();
 async function main() {
     console.log('Seeding database...');
     const orgId = 'org-demo';

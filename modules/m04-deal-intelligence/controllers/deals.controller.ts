@@ -57,7 +57,7 @@ export class DealsController {
     return Promise.all(
       boards.map(async (b) => {
         const latestDeal = await this.prisma.deal.findFirst({
-          where: { tenantId, pipeline: b.boardId },
+          where: { tenantid: tenantId, pipeline: b.boardId },
           orderBy: { updatedAt: 'desc' },
         });
         return {
@@ -93,7 +93,7 @@ export class DealsController {
       const userRole = req.userRole || 'SALES_REP';
       const userId = req.userId;
 
-      const whereClause: any = { tenantId: req.tenantId, pipeline: boardId };
+      const whereClause: any = { tenantid: req.tenantid, pipeline: boardId };
       
       // Data Isolation
       if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
@@ -146,7 +146,7 @@ export class DealsController {
       const userRole = req.userRole || 'SALES_REP';
       const userId = req.userId;
 
-      const whereClause: any = { tenantId: req.tenantId, pipeline: boardId };
+      const whereClause: any = { tenantid: req.tenantid, pipeline: boardId };
       
       // Data Isolation
       if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
@@ -320,7 +320,7 @@ export class DealsController {
       const userRole = req.userRole || 'SALES_REP';
       const userId = req.userId;
 
-      const where: any = { id: dealId, tenantId: req.tenantId };
+      const where: any = { id: dealId, tenantid: req.tenantid };
       if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
         where.ownerId = userId;
       }
@@ -656,7 +656,7 @@ export class DealsController {
     try {
       const notif = await this.prisma.dealNotification.create({
         data: {
-          tenantId: TENANT_ID,
+          tenantid: TENANT_ID,
           repName: body.repName,
           message: body.message,
           type: body.type || 'info',
@@ -701,7 +701,7 @@ export class DealsController {
 
       const comment = await this.prisma.dealComment.create({
         data: {
-          tenantId: TENANT_ID,
+          tenantid: TENANT_ID,
           dealId,
           comment: commentText,
         },
@@ -776,7 +776,7 @@ export class DealsController {
     try {
       const task = await this.prisma.dealTask.create({
         data: {
-          tenantId: TENANT_ID,
+          tenantid: TENANT_ID,
           dealId: body.dealId,
           title: body.title,
           description: body.description,

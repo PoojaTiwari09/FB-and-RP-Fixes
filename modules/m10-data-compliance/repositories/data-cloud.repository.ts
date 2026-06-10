@@ -18,26 +18,26 @@ export class DataCloudRepository {
     config: object;
   }): Promise<any> {
     return this.prisma.m10DataCloudConnection.create({
-      data: { tenantId, destination: data.destination, config: data.config },
+      data: { tenantid: tenantId, destination: data.destination, config: data.config },
     });
   }
 
   async findConnections(tenantId: string): Promise<any[]> {
     return this.prisma.m10DataCloudConnection.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async findConnectionById(tenantId: string, connectionId: string): Promise<any | null> {
     return this.prisma.m10DataCloudConnection.findFirst({
-      where: { id: connectionId, tenantId },
+      where: { id: connectionId, tenantid: tenantId },
     });
   }
 
   async setConnectionActive(tenantId: string, connectionId: string, isActive: boolean): Promise<any> {
     return this.prisma.m10DataCloudConnection.updateMany({
-      where: { id: connectionId, tenantId },
+      where: { id: connectionId, tenantid: tenantId },
       data: { isActive, updatedAt: new Date() },
     });
   }
@@ -49,7 +49,13 @@ export class DataCloudRepository {
     connectionId: string;
     status: string;
   }): Promise<any> {
-    return this.prisma.m10DataCloudExportRun.create({ data });
+    return this.prisma.m10DataCloudExportRun.create({
+      data: {
+        tenantid: data.tenantId,
+        connectionId: data.connectionId,
+        status: data.status,
+      },
+    });
   }
 
   async updateExportRun(runId: string, data: {
@@ -67,7 +73,7 @@ export class DataCloudRepository {
 
   async findExportRunById(tenantId: string, runId: string): Promise<any | null> {
     return this.prisma.m10DataCloudExportRun.findFirst({
-      where: { id: runId, tenantId },
+      where: { id: runId, tenantid: tenantId },
       include: { connection: true },
     });
   }
@@ -75,7 +81,7 @@ export class DataCloudRepository {
   async findExportRuns(tenantId: string, connectionId?: string): Promise<any[]> {
     return this.prisma.m10DataCloudExportRun.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         ...(connectionId ? { connectionId } : {}),
       },
       orderBy: { startedAt: 'desc' },
@@ -88,15 +94,15 @@ export class DataCloudRepository {
 
   async getCheckpoint(tenantId: string, domain: string): Promise<any | null> {
     return this.prisma.m10DataCloudCheckpoint.findUnique({
-      where: { tenantId_domain: { tenantId, domain } },
+      where: { tenantid_domain: { tenantid: tenantId, domain } },
     });
   }
 
   async upsertCheckpoint(tenantId: string, domain: string, lastCursor: string): Promise<any> {
     return this.prisma.m10DataCloudCheckpoint.upsert({
-      where: { tenantId_domain: { tenantId, domain } },
+      where: { tenantid_domain: { tenantid: tenantId, domain } },
       update: { lastCursor, updatedAt: new Date() },
-      create: { tenantId, domain, lastCursor },
+      create: { tenantid: tenantId, domain, lastCursor },
     });
   }
 
@@ -105,7 +111,7 @@ export class DataCloudRepository {
   async extractAccounts(tenantId: string, since?: Date): Promise<any[]> {
     return this.prisma.m10Account.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         ...(since ? { updatedAt: { gt: since } } : {}),
       },
       orderBy: { updatedAt: 'asc' },
@@ -115,7 +121,7 @@ export class DataCloudRepository {
   async extractContacts(tenantId: string, since?: Date): Promise<any[]> {
     return this.prisma.m10Contact.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         ...(since ? { updatedAt: { gt: since } } : {}),
       },
       orderBy: { updatedAt: 'asc' },
@@ -125,7 +131,7 @@ export class DataCloudRepository {
   async extractDeals(tenantId: string, since?: Date): Promise<any[]> {
     return this.prisma.m10Deal.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         ...(since ? { updatedAt: { gt: since } } : {}),
       },
       orderBy: { updatedAt: 'asc' },
@@ -135,7 +141,7 @@ export class DataCloudRepository {
   async extractActivities(tenantId: string, since?: Date): Promise<any[]> {
     return this.prisma.m10Activity.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         ...(since ? { updatedAt: { gt: since } } : {}),
       },
       orderBy: { updatedAt: 'asc' },

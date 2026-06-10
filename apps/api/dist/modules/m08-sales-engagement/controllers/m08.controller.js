@@ -139,6 +139,10 @@ let M08SalesEngagementController = class M08SalesEngagementController {
     async emailTemplates(req) {
         return this.service.emailTemplates(req.tenantId);
     }
+    async recentActivities(req) {
+        const { MOCK_RECENT_ACTIVITY } = require('./m08-rep-bridge.mock');
+        return { status: 'success', data: MOCK_RECENT_ACTIVITY };
+    }
     enforceRole(req, allowedRoles) {
         const role = req.headers['x-user-role'] || 'representative';
         if (!allowedRoles.includes(role)) {
@@ -268,7 +272,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "getPlayDashboard", null);
 __decorate([
-    (0, common_1.Get)('tasks'),
+    (0, common_1.Get)('manager/tasks'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -276,7 +280,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "tasks", null);
 __decorate([
-    (0, common_1.Get)('tasks/summary'),
+    (0, common_1.Get)('manager/tasks/summary'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)('assigneeId')),
     __param(2, (0, common_1.Query)('date')),
@@ -285,21 +289,21 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "summary", null);
 __decorate([
-    (0, common_1.Get)('tasks/filters-config'),
+    (0, common_1.Get)('manager/tasks/filters-config'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "filtersConfig", null);
 __decorate([
-    (0, common_1.Get)('team/members'),
+    (0, common_1.Get)('manager/team/members'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "teamMembers", null);
 __decorate([
-    (0, common_1.Get)('search/linked-to'),
+    (0, common_1.Get)('manager/search/linked-to'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)('search')),
     __metadata("design:type", Function),
@@ -307,12 +311,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "searchLinkedEntities", null);
 __decorate([
-    (0, common_1.Get)('email-templates'),
+    (0, common_1.Get)('manager/email-templates'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "emailTemplates", null);
+__decorate([
+    (0, common_1.Get)('manager/activities/recent'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "recentActivities", null);
 exports.M08SalesEngagementController = M08SalesEngagementController = __decorate([
     (0, common_1.Controller)('api/v1/sales-engagement'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

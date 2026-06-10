@@ -10,7 +10,7 @@ export class DealDriversApiRepository {
   findMany(filters: { dealId?: string; boardId?: string; tenantId?: string }) {
     return this.prisma.m04DealDriver.findMany({
       where: {
-        tenantId: filters.tenantId ?? 'default',
+        tenantid: filters.tenantId ?? '00000000-0000-0000-0000-000000000001',
         ...(filters.dealId ? { dealId: filters.dealId } : {}),
         ...(filters.boardId ? { boardId: filters.boardId } : {}),
       },
@@ -25,7 +25,7 @@ export class DealDriversApiRepository {
   create(tenantId: string, dto: CreateDealDriverDto) {
     return this.prisma.m04DealDriver.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         dealId: dto.dealId,
         boardId: dto.boardId ?? null,
         name: dto.name,

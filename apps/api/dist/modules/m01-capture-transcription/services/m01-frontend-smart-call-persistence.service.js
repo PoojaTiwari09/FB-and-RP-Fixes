@@ -23,7 +23,7 @@ let M01FrontendSmartCallPersistenceService = class M01FrontendSmartCallPersisten
             where: { id: body.externalSessionId },
             create: {
                 id: body.externalSessionId,
-                tenantId: TENANT_ID,
+                tenantid: TENANT_ID,
                 sessionName: body.sessionName ?? 'Live Call',
                 clientName: body.clientName ?? 'Client',
                 contactId: body.contactId,
@@ -45,7 +45,8 @@ let M01FrontendSmartCallPersistenceService = class M01FrontendSmartCallPersisten
             throw new common_1.NotFoundException('Session not found');
         await this.prisma.liveCallSummary.create({
             data: {
-                sessionId,
+                session: { connect: { id: sessionId } },
+                tenantid: session.tenantid,
                 chunkIndex: chunk.chunk_index,
                 timeStart: chunk.time_start,
                 timeEnd: chunk.time_end,

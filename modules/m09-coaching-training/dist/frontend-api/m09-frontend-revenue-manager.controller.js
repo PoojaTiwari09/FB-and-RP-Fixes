@@ -22,19 +22,19 @@ let M09FrontendRevenueManagerController = class M09FrontendRevenueManagerControl
     }
     async getAlert() {
         const config = await this.prisma.managerAccountsConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.alertBanner || { totalARR: 0, accountCount: 0, inactiveDays: 0 };
     }
     async getSummary() {
         const config = await this.prisma.managerAccountsConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.kpiSummary || [];
     }
     async getViewers() {
         const config = await this.prisma.managerAccountsConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.viewers || { teams: [], reps: [] };
     }
@@ -285,43 +285,43 @@ Activities: ${JSON.stringify(acc.activity)}`;
     }
     async getCoachingFilters() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.filters || { periods: [], teams: [] };
     }
     async getCoachingActivity() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.activity || [];
     }
     async getCoachingInteraction() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.interaction || { reps: [], benchmarks: {} };
     }
     async getCoachingResponsiveness() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.responsiveness || [];
     }
     async getCoachingScorecards() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.scorecards || [];
     }
     async getCoachingAiInsights() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.aiInsights || [];
     }
     async getCoachingTeamVsBenchmark() {
         const config = await this.prisma.managerCoachingConfig.findUnique({
-            where: { id: 'default' },
+            where: { id: '00000000-0000-0000-0000-000000000000' },
         });
         return config?.teamVsBenchmark || [];
     }

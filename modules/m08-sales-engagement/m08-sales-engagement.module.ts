@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { M08SalesEngagementController } from './controllers/m08.controller';
+import { M08RepBridgeController } from './controllers/m08-rep-bridge.controller';
 import { M08TaskController } from './controllers/task.controller';
 import { M08WorkflowController } from './controllers/workflow.controller';
 import { M08TestController } from './controllers/m08-test.controller';
@@ -26,6 +27,7 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
   ],
   controllers: [
     M08SalesEngagementController,
+    M08RepBridgeController,
     M08TaskController,
     M08WorkflowController,
     M08TestController,

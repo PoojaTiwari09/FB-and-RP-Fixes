@@ -1,20 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("../../packages/database/node_modules/@prisma/client");
+const database_1 = require("@rri/database");
 const forecast_boards_service_1 = require("./services/forecast-boards.service");
-const prisma = new client_1.PrismaClient();
+const prisma = new database_1.PrismaClient();
 const service = new forecast_boards_service_1.ForecastBoardsService(prisma);
 async function runTests() {
     const tenantId = 'demo-tenant-01';
     console.log('Seeding minimal test data...');
     const rep1 = await prisma.forecastUser.upsert({
         where: { id: 'rep-test-1' },
-        create: { id: 'rep-test-1', tenantId, email: 'rep1@test.com', name: 'Rep 1', role: 'sales_rep', region: 'NA', isActive: true },
+        create: { id: 'rep-test-1', tenantid: tenantId, email: 'rep1@test.com', name: 'Rep 1', role: 'sales_rep', region: 'NA', password: 'placeholder-hash' },
         update: {}
     });
     const manager = await prisma.forecastUser.upsert({
         where: { id: 'mgr-test-1' },
-        create: { id: 'mgr-test-1', tenantId, email: 'mgr1@test.com', name: 'Manager 1', role: 'manager', region: 'NA', isActive: true },
+        create: { id: 'mgr-test-1', tenantid: tenantId, email: 'mgr1@test.com', name: 'Manager 1', role: 'manager', region: 'NA', password: 'placeholder-hash' },
         update: {}
     });
     await prisma.forecastUser.update({
@@ -25,7 +25,7 @@ async function runTests() {
         where: { id: 'board-test-1' },
         create: {
             id: 'board-test-1',
-            tenantId,
+            tenantid: tenantId,
             name: 'Test Board',
             activePeriod: 'Q1-2026',
             periodType: 'Quarterly',
@@ -38,7 +38,7 @@ async function runTests() {
         where: { id: 'col-test-commit' },
         create: {
             id: 'col-test-commit',
-            tenantId,
+            tenantid: tenantId,
             boardId: board.id,
             label: 'Commit',
             type: 'Submission',

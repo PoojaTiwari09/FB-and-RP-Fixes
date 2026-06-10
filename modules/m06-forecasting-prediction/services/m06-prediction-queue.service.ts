@@ -33,7 +33,7 @@ export class M06PredictionQueueService {
     const jobRecord = await this.prisma.m06PredictionJob.upsert({
       where: { idempotencyKey },
       create: {
-        tenantId,
+        tenantid: tenantId,
         periodId,
         status: 'pending',
         trigger,
@@ -95,7 +95,7 @@ export class M06PredictionQueueService {
 
   async getLatestJob(tenantId: string, periodId: string) {
     return this.prisma.m06PredictionJob.findFirst({
-      where: { tenantId, periodId },
+      where: { tenantid: tenantId, periodId },
       orderBy: { createdAt: 'desc' },
     });
   }

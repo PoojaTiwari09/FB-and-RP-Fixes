@@ -166,14 +166,14 @@ export class M08SalesEngagementController {
   
   // --- BFF TASKS API ---
 
-  @Get('tasks')
+  @Get('manager/tasks')
   async tasks(@Req() req: any, @Query() query: any) {
     const userId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
     const userRole = req.headers['x-user-role'] || 'SALES_REP';
     return this.service.fetchManagerTasks(req.tenantId, query, userId, userRole);
   }
 
-  @Get('tasks/summary')
+  @Get('manager/tasks/summary')
   async summary(@Req() req: any, @Query('assigneeId') assigneeId = 'me', @Query('date') date?: string) {
     const userId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
     const userRole = req.headers['x-user-role'] || 'SALES_REP';
@@ -181,24 +181,30 @@ export class M08SalesEngagementController {
     return this.service.fetchSummary(req.tenantId, assigneeId, date || today, userId, userRole);
   }
 
-  @Get('tasks/filters-config')
+  @Get('manager/tasks/filters-config')
   async filtersConfig(@Req() req: any) {
     return this.service.fetchFiltersConfig(req.tenantId);
   }
 
-  @Get('team/members')
+  @Get('manager/team/members')
   async teamMembers(@Req() req: any) {
     return this.service.fetchTeamMembers(req.tenantId);
   }
 
-  @Get('search/linked-to')
+  @Get('manager/search/linked-to')
   async searchLinkedEntities(@Req() req: any, @Query('search') search = '') {
     return this.service.searchLinkedEntities(req.tenantId, search);
   }
 
-  @Get('email-templates')
+  @Get('manager/email-templates')
   async emailTemplates(@Req() req: any) {
     return this.service.emailTemplates(req.tenantId);
+  }
+
+  @Get('manager/activities/recent')
+  async recentActivities(@Req() req: any) {
+    const { MOCK_RECENT_ACTIVITY } = require('./m08-rep-bridge.mock');
+    return { status: 'success', data: MOCK_RECENT_ACTIVITY };
   }
 
   private enforceRole(req: any, allowedRoles: string[]) {

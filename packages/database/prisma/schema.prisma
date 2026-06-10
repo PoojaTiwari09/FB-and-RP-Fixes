@@ -149,7 +149,7 @@ model Dataset {
 
 model DatasetRelationship {
   id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  datasetId         String
+  datasetId         String             @db.Uuid
   sourceObject      String
   sourceField       String
   targetObject      String
@@ -165,7 +165,7 @@ model DatasetRelationship {
 model Dashboard {
   id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantid         String @db.Uuid
-  ownerId        String
+  ownerId        String @db.Uuid
   datasetId      String?
   title          String
   description    String?
@@ -364,7 +364,7 @@ model DataSourceRelationship {
 
 model DatasetObject {
   id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  datasetId String
+  datasetId String @db.Uuid
   objectId  String @db.Uuid
 
   dataset          Dataset          @relation(fields: [datasetId], references: [id], onDelete: Cascade)
@@ -375,7 +375,7 @@ model DatasetObject {
 
 model DatasetField {
   id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  datasetId String
+  datasetId String @db.Uuid
   fieldId   String @db.Uuid
 
   dataset         Dataset         @relation(fields: [datasetId], references: [id], onDelete: Cascade)
@@ -553,7 +553,7 @@ model Utterance {
   transcript      Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
 
   // tenantId mirrors the parent transcript for RLS enforcement (US-32)
-  tenantid         String @db.Uuid    @default("")
+  tenantid         String @db.Uuid
 
   speaker         String    // "Rep" | "Customer" | "Speaker 1" | "Speaker 2" (US-03 fallback)
   text            String    // utterance text — PII-redacted before storage (US-04, US-16)
@@ -1952,7 +1952,7 @@ model DealMeddpicc {
 
 model M04DealDriver {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantid         String @db.Uuid    @default("default")
+  tenantid         String @db.Uuid
   dealId      String @db.Uuid
   boardId     String? @db.Uuid
   name        String

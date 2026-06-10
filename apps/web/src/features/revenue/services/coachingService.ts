@@ -25,7 +25,11 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     throw new Error(`API error ${res.status} on ${path}`);
   }
-  return res.json() as Promise<T>;
+  const parsed = await res.json();
+  if (parsed && typeof parsed === 'object' && 'success' in parsed && 'data' in parsed) {
+    return parsed.data as T;
+  }
+  return parsed as T;
 }
 
 function buildQuery(params: Record<string, unknown>): string {

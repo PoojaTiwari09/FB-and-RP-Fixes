@@ -53,7 +53,7 @@ let DealDriversApiService = class DealDriversApiService {
             if (board)
                 dto.boardId = board.boardId;
         }
-        const row = await this.repo.create('default', dto);
+        const row = await this.repo.create('00000000-0000-0000-0000-000000000001', dto);
         return this.attachDealContext(deal_driver_entity_1.DealDriverEntity.fromPrisma(row));
     }
     async update(id, dto) {

@@ -56,7 +56,7 @@ export class DealMeddpiccService {
     });
 
     const payload = {
-      tenantId,
+      tenantid: tenantId,
       dealExternalId,
       score: result.score,
       metrics: result.categoryAnswers.metrics || null,

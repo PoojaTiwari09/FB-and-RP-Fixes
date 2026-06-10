@@ -60,7 +60,7 @@ let DealsController = DealsController_1 = class DealsController {
         ];
         return Promise.all(boards.map(async (b) => {
             const latestDeal = await this.prisma.deal.findFirst({
-                where: { tenantId, pipeline: b.boardId },
+                where: { tenantid: tenantId, pipeline: b.boardId },
                 orderBy: { updatedAt: 'desc' },
             });
             return {
@@ -87,7 +87,7 @@ let DealsController = DealsController_1 = class DealsController {
                 throw new Error('Board not found');
             const userRole = req.userRole || 'SALES_REP';
             const userId = req.userId;
-            const whereClause = { tenantId: req.tenantId, pipeline: boardId };
+            const whereClause = { tenantid: req.tenantid, pipeline: boardId };
             if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
                 whereClause.ownerId = userId;
             }
@@ -129,7 +129,7 @@ let DealsController = DealsController_1 = class DealsController {
         try {
             const userRole = req.userRole || 'SALES_REP';
             const userId = req.userId;
-            const whereClause = { tenantId: req.tenantId, pipeline: boardId };
+            const whereClause = { tenantid: req.tenantid, pipeline: boardId };
             if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
                 whereClause.ownerId = userId;
             }
@@ -276,7 +276,7 @@ let DealsController = DealsController_1 = class DealsController {
         try {
             const userRole = req.userRole || 'SALES_REP';
             const userId = req.userId;
-            const where = { id: dealId, tenantId: req.tenantId };
+            const where = { id: dealId, tenantid: req.tenantid };
             if (userRole === 'SALES_REP' || userRole === 'sales_rep') {
                 where.ownerId = userId;
             }
@@ -565,7 +565,7 @@ let DealsController = DealsController_1 = class DealsController {
         try {
             const notif = await this.prisma.dealNotification.create({
                 data: {
-                    tenantId: TENANT_ID,
+                    tenantid: TENANT_ID,
                     repName: body.repName,
                     message: body.message,
                     type: body.type || 'info',
@@ -605,7 +605,7 @@ let DealsController = DealsController_1 = class DealsController {
                 throw new Error('Comment text is required');
             const comment = await this.prisma.dealComment.create({
                 data: {
-                    tenantId: TENANT_ID,
+                    tenantid: TENANT_ID,
                     dealId,
                     comment: commentText,
                 },
@@ -672,7 +672,7 @@ let DealsController = DealsController_1 = class DealsController {
         try {
             const task = await this.prisma.dealTask.create({
                 data: {
-                    tenantId: TENANT_ID,
+                    tenantid: TENANT_ID,
                     dealId: body.dealId,
                     title: body.title,
                     description: body.description,

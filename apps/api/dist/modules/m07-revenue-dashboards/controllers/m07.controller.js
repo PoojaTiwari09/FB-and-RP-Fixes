@@ -16,7 +16,6 @@ exports.M07DealAccountController = void 0;
 const common_1 = require("@nestjs/common");
 const shared_types_1 = require("@rri/shared-types");
 const roles_decorator_1 = require("../decorators/roles.decorator");
-const jwt_auth_guard_1 = require("../guards/jwt-auth.guard");
 const roles_guard_1 = require("../guards/roles.guard");
 const tenant_interceptor_1 = require("../interceptors/tenant.interceptor");
 const m07_service_1 = require("../services/m07.service");
@@ -159,7 +158,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -170,7 +169,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("pipeline-analysis"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)("period")),
@@ -181,7 +180,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("competitive-analysis"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)("period")),
@@ -192,7 +191,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("scorecards-analysis"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)("period")),
@@ -203,7 +202,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("economic-pulse"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)("period")),
@@ -213,14 +212,13 @@ __decorate([
 ], M07DealAccountController.prototype, "getEconomicPulse", null);
 __decorate([
     (0, common_1.Get)("widgets/catalog"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], M07DealAccountController.prototype, "getWidgetCatalog", null);
 __decorate([
     (0, common_1.Get)("dashboards/templates"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -230,7 +228,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards/seed-templates"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -240,7 +238,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards/from-template/:templateId"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("templateId")),
@@ -251,7 +249,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards/:id/publish"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
@@ -262,7 +260,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards/:id/unpublish"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
@@ -273,7 +271,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("widgets"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -284,7 +282,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("kpis"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "SALES_REP", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)("timeRange")),
@@ -295,7 +293,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("sample-dashboard"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "SALES_REP", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Query)("timeRange")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -304,7 +302,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("sample-dashboard-builder/config"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "SALES_REP", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -312,7 +310,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("sample-dashboard-builder/widgets"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -321,7 +319,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("sample-dashboard-builder/render"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "SALES_REP", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -330,7 +328,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("sample-dashboard-builder/export"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -339,7 +337,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("sample-dashboard-builder/share"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -348,7 +346,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("sample-dashboard-builder/widgets/:widgetId/delete"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Param)("widgetId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -357,7 +355,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards/:id/share"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
@@ -369,7 +367,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("dashboards/:dashboardId/export"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("dashboardId")),
@@ -380,7 +378,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("datasets"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -391,7 +389,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("datasets/preview"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -427,7 +425,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("datasets"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -436,7 +434,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)("workspaces"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -446,7 +444,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("workspaces"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -457,7 +455,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("workspaces/validate-widget"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -467,7 +465,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)("workspaces/query"),
     (0, roles_decorator_1.Roles)("ADMIN", "MANAGER", "ANALYST", "SALES_REP"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.UseInterceptors)(tenant_interceptor_1.TenantInterceptor),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),

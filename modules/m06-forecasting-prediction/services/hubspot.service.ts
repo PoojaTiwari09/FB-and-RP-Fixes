@@ -139,7 +139,7 @@ export class HubSpotService {
     const hsDeals = data.results ?? [];
 
     // Resolve open period
-    const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
+    const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
 
     const imported: any[] = [];
 
@@ -167,7 +167,7 @@ export class HubSpotService {
 
       // Upsert to avoid duplicate imports (keyed by dealname+tenantId)
       const existing = await this.prisma.crmDeal.findFirst({
-        where: { tenantId, dealName, hubspotId: hsDeal.id },
+        where: { tenantid: tenantId, dealName, hubspotId: hsDeal.id },
       }).catch(() => null);
 
       if (existing) {
@@ -180,7 +180,7 @@ export class HubSpotService {
       } else {
         const created = await this.prisma.crmDeal.create({
           data: {
-            tenantId,
+            tenantid: tenantId,
             dealName,
             stage:       mappedStage,
             amount,

@@ -22,14 +22,14 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     }
     async findPlays(tenantId) {
         return this.prisma.salesPlay.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { createdAt: 'desc' },
         });
     }
     async findActivePlaysForTrigger(tenantId, eventType) {
         const plays = await this.prisma.salesPlay.findMany({
             where: {
-                tenantId,
+                tenantid: tenantId,
                 isActive: true,
             },
         });
@@ -40,7 +40,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     }
     async findPlayById(tenantId, playId) {
         const play = await this.prisma.salesPlay.findFirst({
-            where: { id: playId, tenantId },
+            where: { id: playId, tenantid: tenantId },
         });
         if (!play) {
             throw new common_1.NotFoundException(`Sales Play with ID ${playId} not found`);
@@ -50,7 +50,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     async createPlay(tenantId, userId, dto) {
         return this.prisma.salesPlay.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 name: dto.name,
                 steps: dto.steps,
                 triggerConditions: dto.triggerConditions,
@@ -79,7 +79,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
         const original = await this.findPlayById(tenantId, playId);
         return this.prisma.salesPlay.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 name: `${original.name} (Clone)`,
                 steps: original.steps,
                 triggerConditions: original.triggerConditions,
@@ -98,8 +98,8 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     async checkIdempotency(tenantId, playId, dealId, triggerEventId) {
         return this.prisma.playEnrollment.findUnique({
             where: {
-                tenantId_playId_dealId_triggerEventId: {
-                    tenantId,
+                tenantid_playId_dealId_triggerEventId: {
+                    tenantid: tenantId,
                     playId,
                     dealId,
                     triggerEventId,
@@ -116,7 +116,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
         }
         return this.prisma.playEnrollment.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 playId,
                 dealId,
                 userId,
@@ -128,7 +128,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     }
     async findEnrollmentById(tenantId, enrollmentId) {
         const enrollment = await this.prisma.playEnrollment.findFirst({
-            where: { id: enrollmentId, tenantId },
+            where: { id: enrollmentId, tenantid: tenantId },
             include: {
                 play: true,
                 completions: true,
@@ -141,7 +141,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
         return enrollment;
     }
     async findEnrollments(tenantId, filters) {
-        const where = { tenantId };
+        const where = { tenantid: tenantId };
         if (filters.userId)
             where.userId = filters.userId;
         if (filters.dealId)
@@ -161,7 +161,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
         const steps = enrollment.play.steps || [];
         await this.prisma.playStepCompletion.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 enrollmentId,
                 stepId,
                 completedBy,
@@ -187,7 +187,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
         const steps = enrollment.play.steps || [];
         await this.prisma.playStepCompletion.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 enrollmentId,
                 stepId,
                 completedBy: skippedBy,
@@ -212,7 +212,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
         await this.findEnrollmentById(tenantId, enrollmentId);
         return this.prisma.playNote.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 enrollmentId,
                 userId,
                 noteText,
@@ -222,7 +222,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     async logAdherence(tenantId, enrollmentId, userId, playId, score) {
         return this.prisma.playAdherenceLog.create({
             data: {
-                tenantId,
+                tenantid: tenantId,
                 enrollmentId,
                 userId,
                 playId,
@@ -232,7 +232,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     }
     async getAdoptionAnalytics(tenantId) {
         const enrollments = await this.prisma.playEnrollment.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             include: { completions: true },
         });
         const totalEnrollments = enrollments.length;
@@ -254,7 +254,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     }
     async getRepLeaderboard(tenantId) {
         const logs = await this.prisma.playAdherenceLog.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { calculatedAt: 'desc' },
         });
         const repAdherence = {};
@@ -277,7 +277,7 @@ let M08SalesEngagementRepository = class M08SalesEngagementRepository {
     }
     async getPlayAnalytics(tenantId) {
         const plays = await this.prisma.salesPlay.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             include: {
                 enrollments: {
                     include: { completions: true },

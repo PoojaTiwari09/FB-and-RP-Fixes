@@ -21,7 +21,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   ): Promise<T> {
     return this.$transaction(async (tx) => {
       await (tx as any).$executeRawUnsafe(
-        `SELECT set_config('app.current_tenant', $1, true)`,
+        `SELECT set_config('app.tenantid', $1, true)`,
         tenantId,
       );
       return fn(tx as PrismaClient);

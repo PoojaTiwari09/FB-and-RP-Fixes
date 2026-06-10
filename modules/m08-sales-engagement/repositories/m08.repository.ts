@@ -13,7 +13,7 @@ export class M08SalesEngagementRepository {
 
   async findPlays(tenantId: string) {
     return this.prisma.salesPlay.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -21,7 +21,7 @@ export class M08SalesEngagementRepository {
   async findActivePlaysForTrigger(tenantId: string, eventType: string) {
     const plays = await this.prisma.salesPlay.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         isActive: true,
       },
     });
@@ -35,7 +35,7 @@ export class M08SalesEngagementRepository {
 
   async findPlayById(tenantId: string, playId: string) {
     const play = await this.prisma.salesPlay.findFirst({
-      where: { id: playId, tenantId },
+      where: { id: playId, tenantid: tenantId },
     });
     if (!play) {
       throw new NotFoundException(`Sales Play with ID ${playId} not found`);
@@ -46,7 +46,7 @@ export class M08SalesEngagementRepository {
   async createPlay(tenantId: string, userId: string, dto: CreatePlayDto) {
     return this.prisma.salesPlay.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         name: dto.name,
         steps: dto.steps as any,
         triggerConditions: dto.triggerConditions as any,
@@ -75,7 +75,7 @@ export class M08SalesEngagementRepository {
     const original = await this.findPlayById(tenantId, playId);
     return this.prisma.salesPlay.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         name: `${original.name} (Clone)`,
         steps: original.steps as any,
         triggerConditions: original.triggerConditions as any,
@@ -98,8 +98,8 @@ export class M08SalesEngagementRepository {
   async checkIdempotency(tenantId: string, playId: string, dealId: string, triggerEventId: string) {
     return this.prisma.playEnrollment.findUnique({
       where: {
-        tenantId_playId_dealId_triggerEventId: {
-          tenantId,
+        tenantid_playId_dealId_triggerEventId: {
+          tenantid: tenantId,
           playId,
           dealId,
           triggerEventId,
@@ -119,7 +119,7 @@ export class M08SalesEngagementRepository {
 
     return this.prisma.playEnrollment.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         playId,
         dealId,
         userId,
@@ -132,7 +132,7 @@ export class M08SalesEngagementRepository {
 
   async findEnrollmentById(tenantId: string, enrollmentId: string) {
     const enrollment = await this.prisma.playEnrollment.findFirst({
-      where: { id: enrollmentId, tenantId },
+      where: { id: enrollmentId, tenantid: tenantId },
       include: {
         play: true,
         completions: true,
@@ -146,7 +146,7 @@ export class M08SalesEngagementRepository {
   }
 
   async findEnrollments(tenantId: string, filters: { userId?: string; dealId?: string; status?: string }) {
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     if (filters.userId) where.userId = filters.userId;
     if (filters.dealId) where.dealId = filters.dealId;
     if (filters.status) where.status = filters.status;
@@ -169,7 +169,7 @@ export class M08SalesEngagementRepository {
     // Create the completion record
     await this.prisma.playStepCompletion.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         enrollmentId,
         stepId,
         completedBy,
@@ -200,7 +200,7 @@ export class M08SalesEngagementRepository {
     // Create the completion record with skipped notes marker
     await this.prisma.playStepCompletion.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         enrollmentId,
         stepId,
         completedBy: skippedBy,
@@ -229,7 +229,7 @@ export class M08SalesEngagementRepository {
 
     return this.prisma.playNote.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         enrollmentId,
         userId,
         noteText,
@@ -240,7 +240,7 @@ export class M08SalesEngagementRepository {
   async logAdherence(tenantId: string, enrollmentId: string, userId: string, playId: string, score: number) {
     return this.prisma.playAdherenceLog.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         enrollmentId,
         userId,
         playId,
@@ -253,7 +253,7 @@ export class M08SalesEngagementRepository {
 
   async getAdoptionAnalytics(tenantId: string) {
     const enrollments = await this.prisma.playEnrollment.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       include: { completions: true },
     });
 
@@ -280,7 +280,7 @@ export class M08SalesEngagementRepository {
 
   async getRepLeaderboard(tenantId: string) {
     const logs = await this.prisma.playAdherenceLog.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { calculatedAt: 'desc' },
     });
 
@@ -308,7 +308,7 @@ export class M08SalesEngagementRepository {
 
   async getPlayAnalytics(tenantId: string) {
     const plays = await this.prisma.salesPlay.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       include: {
         enrollments: {
           include: { completions: true },

@@ -70,18 +70,11 @@ export class TopicRepository {
   // Topic Model Operations
   async createTopicModel(dto: CreateTopicModelDto): Promise<TopicModel> {
     try {
-      const query = `
+      const result = await this.prisma.$queryRaw<TopicModel[]>`
         INSERT INTO m02_topic_models (id, tenant_id, topics, type, created_at, updated_at)
-        VALUES (uuid_generate_v4(), $1::uuid, $2::jsonb, $3, NOW(), NOW())
+        VALUES (uuid_generate_v4(), ${dto.tenantId}::uuid, ${JSON.stringify(dto.topics)}::jsonb, ${dto.type || 'global'}, NOW(), NOW())
         RETURNING id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
       `;
-      
-      const result = await this.prisma.$queryRawUnsafe(
-        query,
-        dto.tenantId,
-        JSON.stringify(dto.topics),
-        dto.type || 'global'
-      ) as TopicModel[];
       
       return result[0];
     } catch (error) {
@@ -103,14 +96,12 @@ export class TopicRepository {
 
   async getTopicModels(tenantId: string): Promise<TopicModel[]> {
     try {
-      const query = `
+      const results = await this.prisma.$queryRaw<TopicModel[]>`
         SELECT id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
         FROM m02_topic_models
-        WHERE tenant_id = $1::uuid
+        WHERE tenant_id = ${tenantId}::uuid
         ORDER BY created_at DESC
       `;
-      
-      const results = await this.prisma.$queryRawUnsafe(query, tenantId) as TopicModel[];
       return results.map((r: TopicModel) => ({
         ...r,
         topics: typeof r.topics === 'string' ? JSON.parse(r.topics) : r.topics
@@ -123,13 +114,11 @@ export class TopicRepository {
   }
 
   async getTopicModelById(id: string): Promise<TopicModel | null> {
-    const query = `
+    const results = await this.prisma.$queryRaw<TopicModel[]>`
       SELECT id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
       FROM m02_topic_models
-      WHERE id = $1::uuid
+      WHERE id = ${id}::uuid
     `;
-    
-    const results = await this.prisma.$queryRawUnsafe(query, id) as TopicModel[];
     if (results.length === 0) return null;
     
     const result = results[0];
@@ -140,23 +129,16 @@ export class TopicRepository {
   }
 
   async deleteTopicModel(id: string): Promise<void> {
-    const query = `DELETE FROM m02_topic_models WHERE id = $1::uuid`;
-    await this.prisma.$queryRawUnsafe(query, id);
+    await this.prisma.$queryRaw`DELETE FROM m02_topic_models WHERE id = ${id}::uuid`;
   }
 
   async updateTopicModel(id: string, topics: any[]): Promise<TopicModel> {
-    const query = `
+    const result = await this.prisma.$queryRaw<TopicModel[]>`
       UPDATE m02_topic_models
-      SET topics = $1::jsonb, updated_at = NOW()
-      WHERE id = $2::uuid
+      SET topics = ${JSON.stringify(topics)}::jsonb, updated_at = NOW()
+      WHERE id = ${id}::uuid
       RETURNING id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
     `;
-    
-    const result = await this.prisma.$queryRawUnsafe(
-      query,
-      JSON.stringify(topics),
-      id
-    ) as TopicModel[];
     
     const updated = result[0];
     return {
@@ -168,23 +150,11 @@ export class TopicRepository {
   // Topic Tag Operations
   async createTopicTag(dto: CreateTopicTagDto): Promise<TopicTag> {
     try {
-      const query = `
+      const result = await this.prisma.$queryRaw<TopicTag[]>`
         INSERT INTO m02_topic_tags (id, call_id, email_id, tenant_id, topic_name, source, confidence_score, explanation, evidence_snippet, created_at)
-        VALUES (uuid_generate_v4(), $1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, NOW())
+        VALUES (uuid_generate_v4(), ${dto.callId || null}::uuid, ${dto.emailId || null}::uuid, ${dto.tenantId}::uuid, ${dto.topicName}, ${dto.source}, ${dto.confidenceScore}, ${dto.explanation || null}, ${dto.evidenceSnippet || null}, NOW())
         RETURNING id, call_id as "callId", email_id as "emailId", tenant_id as "tenantId", topic_name as "topicName", source, confidence_score as "confidenceScore", explanation, evidence_snippet as "evidenceSnippet", created_at as "createdAt"
       `;
-      
-      const result = await this.prisma.$queryRawUnsafe(
-        query,
-        dto.callId || null,
-        dto.emailId || null,
-        dto.tenantId,
-        dto.topicName,
-        dto.source,
-        dto.confidenceScore,
-        dto.explanation || null,
-        dto.evidenceSnippet || null
-      ) as TopicTag[];
       
       return result[0];
     } catch (error) {
@@ -209,14 +179,12 @@ export class TopicRepository {
 
   async getTagsForConversation(conversationId: string): Promise<TopicTag[]> {
     try {
-      const query = `
+      return await this.prisma.$queryRaw<TopicTag[]>`
         SELECT id, call_id as "callId", email_id as "emailId", tenant_id as "tenantId", topic_name as "topicName", source, confidence_score as "confidenceScore", explanation, evidence_snippet as "evidenceSnippet", created_at as "createdAt"
         FROM m02_topic_tags
-        WHERE call_id = $1::uuid OR email_id = $1::uuid
+        WHERE call_id = ${conversationId}::uuid OR email_id = ${conversationId}::uuid
         ORDER BY confidence_score DESC
       `;
-      
-      return await this.prisma.$queryRawUnsafe(query, conversationId) as TopicTag[];
     } catch (error: any) {
       // In-memory fallback
       console.log(`[TopicRepository] Database query failed, using in-memory fallback: ${error.message}`);
@@ -225,48 +193,40 @@ export class TopicRepository {
   }
 
   async getTagsForTenant(tenantId: string): Promise<TopicTag[]> {
-    const query = `
+    return await this.prisma.$queryRaw<TopicTag[]>`
       SELECT id, call_id as "callId", email_id as "emailId", tenant_id as "tenantId", topic_name as "topicName", source, confidence_score as "confidenceScore", explanation, evidence_snippet as "evidenceSnippet", created_at as "createdAt"
       FROM m02_topic_tags
-      WHERE tenant_id = $1::uuid
+      WHERE tenant_id = ${tenantId}::uuid
       ORDER BY created_at DESC
     `;
-    
-    return await this.prisma.$queryRawUnsafe(query, tenantId) as TopicTag[];
   }
 
   async deleteTag(tagId: string): Promise<void> {
-    const query = `DELETE FROM m02_topic_tags WHERE id = $1::uuid`;
-    await this.prisma.$queryRawUnsafe(query, tagId);
+    await this.prisma.$queryRaw`DELETE FROM m02_topic_tags WHERE id = ${tagId}::uuid`;
   }
 
   async deleteTagsForConversation(conversationId: string): Promise<void> {
-    const query = `DELETE FROM m02_topic_tags WHERE call_id = $1::uuid OR email_id = $1::uuid`;
-    await this.prisma.$queryRawUnsafe(query, conversationId);
+    await this.prisma.$queryRaw`DELETE FROM m02_topic_tags WHERE call_id = ${conversationId}::uuid OR email_id = ${conversationId}::uuid`;
   }
 
   async getUntaggedConversations(tenantId: string, limit: number = 50): Promise<any[]> {
-    const query = `
+    return await this.prisma.$queryRaw<any[]>`
       SELECT c.id, c.title, c.transcript
       FROM m01_calls c
-      WHERE c.tenant_id = $1::uuid
+      WHERE c.tenant_id = ${tenantId}::uuid
       AND NOT EXISTS (
         SELECT 1 FROM m02_topic_tags t WHERE t.call_id = c.id
       )
-      LIMIT $2
+      LIMIT ${limit}
     `;
-    
-    return await this.prisma.$queryRawUnsafe(query, tenantId, limit);
   }
 
   async getConversationById(conversationId: string): Promise<any> {
-    const query = `
+    const results = await this.prisma.$queryRaw<any[]>`
       SELECT id, title, transcript
       FROM m01_calls
-      WHERE id = $1::uuid
+      WHERE id = ${conversationId}::uuid
     `;
-    
-    const results = await this.prisma.$queryRawUnsafe(query, conversationId);
     return results.length > 0 ? results[0] : null;
   }
 }

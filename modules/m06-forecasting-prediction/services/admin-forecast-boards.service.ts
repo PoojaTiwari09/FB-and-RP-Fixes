@@ -21,7 +21,7 @@ export class AdminForecastBoardsService {
 
   async getBoards(tenantId: string) {
     return this.prisma.forecastBoard.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { updatedAt: 'desc' },
       include: {
         columns: true,
@@ -31,7 +31,7 @@ export class AdminForecastBoardsService {
 
   async getBoard(tenantId: string, boardId: string) {
     const board = await this.prisma.forecastBoard.findUnique({
-      where: { id: boardId, tenantId },
+      where: { id: boardId, tenantid: tenantId },
       include: {
         columns: { where: { isDeleted: false }, orderBy: { sortOrder: 'asc' } },
         crmMapping: true,
@@ -58,7 +58,7 @@ export class AdminForecastBoardsService {
     }
     return this.prisma.forecastBoard.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         name: data.name,
         scope: data.teamId || data.scope || 'Global Sales Org',
         periodType: data.periodType.toLowerCase() === 'monthly' ? 'Monthly' : 'Quarterly',
@@ -128,13 +128,13 @@ export class AdminForecastBoardsService {
 
     return this.prisma.$transaction(async (tx) => {
       await tx.boardColumn.updateMany({
-        where: { boardId, tenantId, isDeleted: false },
+        where: { boardId, tenantid: tenantId, isDeleted: false },
         data: { isDeleted: true },
       });
 
       const newColumns = data.columns.map((col) => ({
         boardId,
-        tenantId,
+        tenantid: tenantId,
         label: col.label,
         type: col.columnType || col.type || 'Metric',
         submissionMode: col.submissionMode,
@@ -156,7 +156,7 @@ export class AdminForecastBoardsService {
   async createColumnsFromCrm(tenantId: string, boardId: string, data: CreateColumnsFromCrmDto) {
     const board = await this.getBoard(tenantId, boardId);
     const existingColumns = await this.prisma.boardColumn.findMany({
-      where: { boardId, tenantId, isDeleted: false },
+      where: { boardId, tenantid: tenantId, isDeleted: false },
       orderBy: { sortOrder: 'asc' },
     });
     const baseSort = existingColumns.length > 0 ? Math.max(...existingColumns.map((col) => col.sortOrder)) : 0;
@@ -166,7 +166,7 @@ export class AdminForecastBoardsService {
         this.prisma.boardColumn.create({
           data: {
             boardId,
-            tenantId,
+            tenantid: tenantId,
             label: field.label,
             type: field.columnType,
             submissionMode: field.submissionMode,
@@ -210,7 +210,7 @@ export class AdminForecastBoardsService {
       where: { boardId },
       create: {
         boardId,
-        tenantId,
+        tenantid: tenantId,
         crmConnection: data.crmConnection,
         forecastCategoryField: data.forecastCategoryField,
         pipelineSource: data.pipelineSource,
@@ -240,7 +240,7 @@ export class AdminForecastBoardsService {
       where: { boardId },
       create: {
         boardId,
-        tenantId,
+        tenantid: tenantId,
         frequency: data.frequency,
         sendDay: data.sendDay,
         sendTime: data.sendTime,
@@ -269,14 +269,14 @@ export class AdminForecastBoardsService {
       for (const q of data.quotas) {
         await tx.quota.upsert({
           where: {
-            tenantId_periodId_repUserId: {
-              tenantId,
+            tenantid_periodId_repUserId: {
+              tenantid: tenantId,
               periodId: data.periodId,
               repUserId: q.repUserId,
             }
           },
           create: {
-            tenantId,
+            tenantid: tenantId,
             periodId: data.periodId,
             repUserId: q.repUserId,
             amount: q.amount,
@@ -371,7 +371,7 @@ export class AdminForecastBoardsService {
       where: { boardId },
       create: {
         boardId,
-        tenantId,
+        tenantid: tenantId,
         crmConnection: 'salesforce',
         forecastCategoryField: null,
         pipelineSource: null,
@@ -446,7 +446,7 @@ export class AdminForecastBoardsService {
     }
 
     const allRepIds = quotaUpdates.map((entry) => entry.repUserId);
-    const validReps = await this.prisma.forecastUser.findMany({ where: { tenantId, id: { in: allRepIds } }, select: { id: true } });
+    const validReps = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, id: { in: allRepIds } }, select: { id: true } });
     const validRepSet = new Set(validReps.map((rep) => rep.id));
 
     let imported = 0;
@@ -462,14 +462,14 @@ export class AdminForecastBoardsService {
         }
         await tx.quota.upsert({
           where: {
-            tenantId_periodId_repUserId: {
-              tenantId,
+            tenantid_periodId_repUserId: {
+              tenantid: tenantId,
               periodId,
               repUserId: entry.repUserId,
             },
           },
           create: {
-            tenantId,
+            tenantid: tenantId,
             periodId,
             repUserId: entry.repUserId,
             amount: entry.amount,
@@ -493,7 +493,7 @@ export class AdminForecastBoardsService {
 
   async getPermissions(tenantId: string, boardId: string) {
     const board = await this.getBoard(tenantId, boardId);
-    const users = await this.prisma.forecastUser.findMany({ where: { tenantId } });
+    const users = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId } });
     const exclusions = new Set(board.exclusions.filter((exclusion) => exclusion.isActive).map((exclusion) => exclusion.repUserId));
 
     return users.map((u) => ({

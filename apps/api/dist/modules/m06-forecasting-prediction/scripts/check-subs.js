@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const database_1 = require("@rri/database");
+const prisma = new database_1.PrismaClient();
 async function main() {
     const subs = await prisma.forecastSubmission.findMany({
         where: { repUserId: 'rep-02' },

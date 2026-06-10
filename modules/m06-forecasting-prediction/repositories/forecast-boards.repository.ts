@@ -13,7 +13,7 @@ export class ForecastBoardsRepository {
 
   findPeriodsByTenant(tenantId: string) {
     return this.prisma.forecastPeriod.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { startDate: 'desc' },
     });
   }
@@ -21,22 +21,22 @@ export class ForecastBoardsRepository {
   resolvePeriod(tenantId: string, periodId: string) {
     const where =
       periodId === 'current'
-        ? { tenantId, status: 'open' as const }
-        : { id: periodId, tenantId };
+        ? { tenantid: tenantId, status: 'open' as const }
+        : { id: periodId, tenantid: tenantId };
 
     return this.prisma.forecastPeriod.findFirst({ where });
   }
 
   findLatestAiSnapshot(tenantId: string, periodId: string) {
     return this.prisma.aiForecastSnapshot.findFirst({
-      where: { tenantId, periodId },
+      where: { tenantid: tenantId, periodId },
       orderBy: { computedAt: 'desc' },
     });
   }
 
   findLatestCoverageMetrics(tenantId: string, periodId: string) {
     return this.prisma.pipelineCoverageMetrics.findFirst({
-      where: { tenantId, periodId },
+      where: { tenantid: tenantId, periodId },
       orderBy: { computedAt: 'desc' },
     });
   }
@@ -48,7 +48,7 @@ export class ForecastBoardsRepository {
   ) {
     return this.prisma.crmDeal.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         isClosedWon: false,
         isClosedLost: false,
         closeDate: { gte: startDate, lte: endDate },
@@ -58,7 +58,7 @@ export class ForecastBoardsRepository {
 
   findSubmissionsForPeriod(tenantId: string, periodId: string) {
     return this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId },
+      where: { tenantid: tenantId, periodId },
       orderBy: [{ repUserId: 'asc' }, { version: 'desc' }],
     });
   }
@@ -71,7 +71,7 @@ export class ForecastBoardsRepository {
 
   findMaxVersionForUser(tenantId: string, periodId: string, userId: string) {
     return this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId, repUserId: userId },
+      where: { tenantid: tenantId, periodId, repUserId: userId },
       orderBy: { version: 'desc' },
     });
   }

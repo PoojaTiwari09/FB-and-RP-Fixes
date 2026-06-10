@@ -19,7 +19,7 @@ let NextStepsRepository = class NextStepsRepository {
     }
     async findByCallId(callId, tenantId) {
         const transcript = await this.prisma.transcript.findFirst({
-            where: { callId, tenantId },
+            where: { callId, tenantid: tenantId },
             select: { nextSteps: true },
         });
         return transcript?.nextSteps ?? [];
@@ -27,7 +27,7 @@ let NextStepsRepository = class NextStepsRepository {
     async addNextStep(callId, tenantId, step) {
         const current = await this.findByCallId(callId, tenantId);
         const updated = await this.prisma.transcript.updateMany({
-            where: { callId, tenantId },
+            where: { callId, tenantid: tenantId },
             data: { nextSteps: [...current, step] },
         });
         if (updated.count === 0) {
@@ -43,7 +43,7 @@ let NextStepsRepository = class NextStepsRepository {
         const updated = [...current];
         updated[index] = step;
         await this.prisma.transcript.updateMany({
-            where: { callId, tenantId },
+            where: { callId, tenantid: tenantId },
             data: { nextSteps: updated },
         });
         return updated;
@@ -55,14 +55,14 @@ let NextStepsRepository = class NextStepsRepository {
         }
         const updated = current.filter((_, i) => i !== index);
         await this.prisma.transcript.updateMany({
-            where: { callId, tenantId },
+            where: { callId, tenantid: tenantId },
             data: { nextSteps: updated },
         });
         return updated;
     }
     async replaceAll(callId, tenantId, nextSteps) {
         await this.prisma.transcript.updateMany({
-            where: { callId, tenantId },
+            where: { callId, tenantid: tenantId },
             data: { nextSteps },
         });
         return nextSteps;

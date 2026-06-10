@@ -50,18 +50,18 @@ export class M06ForecastingPredictionService {
   private async resolvePeriod(tenantId: string, periodId: string) {
     if (periodId === 'current') {
       let period = await this.prisma.forecastPeriod.findFirst({
-        where: { tenantId, status: 'open' },
+        where: { tenantid: tenantId, status: 'open' },
         orderBy: { startDate: 'desc' },
       });
       if (!period) {
         period = await this.prisma.forecastPeriod.findFirst({
-          where: { tenantId, isLocked: false },
+          where: { tenantid: tenantId, isLocked: false },
           orderBy: { startDate: 'desc' },
         });
       }
       if (!period) {
         period = await this.prisma.forecastPeriod.findFirst({
-          where: { tenantId },
+          where: { tenantid: tenantId },
           orderBy: { startDate: 'desc' },
         });
       }
@@ -70,7 +70,7 @@ export class M06ForecastingPredictionService {
     }
 
     const period = await this.prisma.forecastPeriod.findFirst({
-      where: { id: periodId, tenantId },
+      where: { id: periodId, tenantid: tenantId },
     });
     if (!period) throw new NotFoundException('Period not found');
     return period;
@@ -85,7 +85,7 @@ export class M06ForecastingPredictionService {
   }
 
   private async getStageRateMap(tenantId: string) {
-    const rows = await this.prisma.historicalConversionRate.findMany({ where: { tenantId } });
+    const rows = await this.prisma.historicalConversionRate.findMany({ where: { tenantid: tenantId } });
     if (!rows.length) return { ...this.stageFallbackRates };
 
     const latestPeriod = Array.from(new Set(rows.map((row) => row.periodName).filter(Boolean) as string[]))
@@ -100,7 +100,7 @@ export class M06ForecastingPredictionService {
 
   private async getBaselineRates(tenantId: string, baseline: string, currentPeriodName?: string): Promise<{ rateMap: Record<string, number>; baselineNote: string }> {
     const allRates = await this.prisma.historicalConversionRate.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { computedAt: 'desc' },
     });
 
@@ -193,7 +193,7 @@ export class M06ForecastingPredictionService {
   private async buildExplainability(tenantId: string, period: any, modelInputs: any, region?: string, customRates?: Record<string, number>, repUserId?: string) {
     const rates = customRates ?? await this.getStageRateMap(tenantId);
 
-    let crmDealsQuery: any = { tenantId, closeDate: { gte: period.startDate, lte: period.endDate } };
+    let crmDealsQuery: any = { tenantid: tenantId, closeDate: { gte: period.startDate, lte: period.endDate } };
     if (repUserId) crmDealsQuery.repUserId = repUserId;
 
     let crmDeals = await this.prisma.crmDeal.findMany({
@@ -294,7 +294,7 @@ export class M06ForecastingPredictionService {
     const period = await this.resolvePeriod(tenantId, periodId);
     const job = await this.predictionQueue?.getLatestJob(tenantId, period.id);
     const snapshot = await this.prisma.aiForecastSnapshot.findFirst({
-      where: { tenantId, periodId: period.id },
+      where: { tenantid: tenantId, periodId: period.id },
       orderBy: { computedAt: 'desc' },
     });
     return {
@@ -308,7 +308,7 @@ export class M06ForecastingPredictionService {
     const period = await this.resolvePeriod(tenantId, periodId);
     const normalizedBaseline = this.normalizeBaseline(baseline);
 
-    const snapshot = await this.prisma.aiForecastSnapshot.findFirst({ where: { tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } });
+    const snapshot = await this.prisma.aiForecastSnapshot.findFirst({ where: { tenantid: tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } });
     if (!snapshot) {
       const job = await this.predictionQueue?.getLatestJob(tenantId, period.id);
       throw new NotFoundException({
@@ -371,7 +371,7 @@ export class M06ForecastingPredictionService {
     // Overwrite snapshot deals with REAL-TIME deals from the database
     if (predictionResponse?.aiPrediction?.explainability) {
       const liveDealsQuery: any = {
-        tenantId,
+        tenantid: tenantId,
         isClosedWon: false,
         isClosedLost: false,
         closeDate: { gte: period.startDate, lte: period.endDate }
@@ -379,7 +379,7 @@ export class M06ForecastingPredictionService {
       // If fetching for a specific rep, only show their deals (support both DB id and repId)
       if (repUserId) {
         const user = await this.prisma.forecastUser.findFirst({
-          where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] }
+          where: { tenantid: tenantId, OR: [{ id: repUserId }, { repId: repUserId }] }
         });
         if (user) {
           liveDealsQuery.repUserId = { in: [user.id, user.repId].filter(Boolean) as string[] };
@@ -428,13 +428,13 @@ export class M06ForecastingPredictionService {
 
       // Compute Closed Won from real DB data for this rep (not from stale team snapshot)
       const closedWonQuery: any = {
-        tenantId,
+        tenantid: tenantId,
         isClosedWon: true,
         closeDate: { gte: period.startDate, lte: period.endDate }
       };
       if (repUserId) {
         const user = await this.prisma.forecastUser.findFirst({
-          where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] }
+          where: { tenantid: tenantId, OR: [{ id: repUserId }, { repId: repUserId }] }
         });
         if (user) {
           closedWonQuery.repUserId = { in: [user.id, user.repId].filter(Boolean) as string[] };
@@ -465,7 +465,7 @@ export class M06ForecastingPredictionService {
       predictionResponse.aiPrediction.explainability.deals = predictionResponse.aiPrediction.explainability.deals.filter((d: any) => d.lob === lob);
     }
 
-    const whereClause: any = { tenantId, periodId: period.id };
+    const whereClause: any = { tenantid: tenantId, periodId: period.id };
     if (lob) whereClause.lob = lob;
 
     // Feature 4: Immutable versioning - Get MAX version
@@ -484,12 +484,12 @@ export class M06ForecastingPredictionService {
 
     let quota: number | null = null;
     if (repUserId) {
-      const quotaRecord = await this.prisma.quota.findFirst({ where: { tenantId, periodId: period.id, repUserId } });
+      const quotaRecord = await this.prisma.quota.findFirst({ where: { tenantid: tenantId, periodId: period.id, repUserId } });
       if (quotaRecord) quota = quotaRecord.amount;
       else {
-        const user = await this.prisma.forecastUser.findFirst({ where: { tenantId, OR: [{ id: repUserId }, { repId: repUserId }] } });
+        const user = await this.prisma.forecastUser.findFirst({ where: { tenantid: tenantId, OR: [{ id: repUserId }, { repId: repUserId }] } });
         if (user) {
-          const quotaByUser = await this.prisma.quota.findFirst({ where: { tenantId, periodId: period.id, repUserId: user.id } });
+          const quotaByUser = await this.prisma.quota.findFirst({ where: { tenantid: tenantId, periodId: period.id, repUserId: user.id } });
           if (quotaByUser) quota = quotaByUser.amount;
         }
       }
@@ -531,7 +531,7 @@ export class M06ForecastingPredictionService {
     }
 
     const maxSub = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, repUserId, lob: data.lob, periodId: openPeriod.id },
+      where: { tenantid: tenantId, repUserId, lob: data.lob, periodId: openPeriod.id },
       orderBy: { version: 'desc' }
     });
 
@@ -539,7 +539,7 @@ export class M06ForecastingPredictionService {
 
     const submission = await this.prisma.forecastSubmission.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         periodId: openPeriod.id,
         repUserId,
         lob: data.lob,
@@ -553,7 +553,7 @@ export class M06ForecastingPredictionService {
 
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         forecastSubmissionId: submission.id,
         action: 'Draft created',
         actorId: repUserId,
@@ -566,7 +566,7 @@ export class M06ForecastingPredictionService {
   }
 
   async submitForecast(tenantId: string, submissionId: string) {
-    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantId } });
+    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantid: tenantId } });
     if (!sub) throw new NotFoundException('Submission not found');
 
     const period = await this.resolvePeriod(tenantId, sub.periodId);
@@ -581,7 +581,7 @@ export class M06ForecastingPredictionService {
 
     const updated = await this.prisma.forecastSubmission.create({
       data: {
-        tenantId: sub.tenantId,
+        tenantid: sub.tenantid,
         periodId: sub.periodId,
         repUserId: sub.repUserId,
         lob: sub.lob,
@@ -600,7 +600,7 @@ export class M06ForecastingPredictionService {
 
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         forecastSubmissionId: updated.id,
         action: nextStatus === 'resubmitted' ? 'Resubmitted' : 'Submitted',
         actorId: sub.repUserId,
@@ -627,7 +627,7 @@ export class M06ForecastingPredictionService {
   }
 
   async approveSubmission(tenantId: string, submissionId: string, managerId: string, managerName: string) {
-    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantId } });
+    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantid: tenantId } });
     if (!sub) throw new NotFoundException('Submission not found');
 
     // Feature 4: Immutable - insert new version
@@ -649,7 +649,7 @@ export class M06ForecastingPredictionService {
 
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId, forecastSubmissionId: updated.id, action: 'Approved',
+        tenantid: tenantId, forecastSubmissionId: updated.id, action: 'Approved',
         actorId: managerId, actorRole: 'Manager', metadata: { managerName, version: newVersion }
       }
     });
@@ -658,7 +658,7 @@ export class M06ForecastingPredictionService {
   }
 
   async reopenSubmission(tenantId: string, submissionId: string, managerId: string, managerName: string, comment: string) {
-    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantId } });
+    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantid: tenantId } });
     if (!sub) throw new NotFoundException('Submission not found');
 
     const newVersion = sub.version + 1;
@@ -680,7 +680,7 @@ export class M06ForecastingPredictionService {
 
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId, forecastSubmissionId: updated.id, action: 'Reopened by Manager',
+        tenantid: tenantId, forecastSubmissionId: updated.id, action: 'Reopened by Manager',
         actorId: managerId, actorRole: 'Manager', metadata: { managerName, comment, version: newVersion }
       }
     });
@@ -689,7 +689,7 @@ export class M06ForecastingPredictionService {
   }
 
   async overrideSubmission(tenantId: string, submissionId: string, managerId: string, managerName: string, overrideValue: number, justification: string, approveNow = false) {
-    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantId } });
+    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantid: tenantId } });
     if (!sub) throw new NotFoundException('Submission not found');
     if (!justification || !justification.trim()) throw new BadRequestException('Justification is required');
 
@@ -731,7 +731,7 @@ export class M06ForecastingPredictionService {
     const systemLog = `Manager Override: ₹${(sub.commitForecast / 100000).toFixed(0)}L → ₹${(overrideValue / 100000).toFixed(0)}L`;
     await this.prisma.forecastAuditLog.create({
       data: {
-        tenantId, forecastSubmissionId: updated.id, action: systemLog,
+        tenantid: tenantId, forecastSubmissionId: updated.id, action: systemLog,
         actorId: managerId, actorRole: 'Manager',
         metadata: { managerName, justification, original: sub.commitForecast, override: overrideValue, version: newVersion }
       }
@@ -740,7 +740,7 @@ export class M06ForecastingPredictionService {
     if (approveNow) {
       await this.prisma.forecastAuditLog.create({
         data: {
-          tenantId, forecastSubmissionId: updated.id, action: 'Approved',
+          tenantid: tenantId, forecastSubmissionId: updated.id, action: 'Approved',
           actorId: managerId, actorRole: 'Manager', metadata: { managerName, afterOverride: true, version: newVersion }
         }
       });
@@ -750,12 +750,12 @@ export class M06ForecastingPredictionService {
   }
 
   async getSubmission(tenantId: string, submissionId: string) {
-    const submission = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantId } });
+    const submission = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantid: tenantId } });
     if (!submission) throw new NotFoundException('Submission not found');
 
     // Feature 4: Read queries return MAX(version)
     const latest = await this.prisma.forecastSubmission.findFirst({
-      where: { tenantId, periodId: submission.periodId, repUserId: submission.repUserId, lob: submission.lob },
+      where: { tenantid: tenantId, periodId: submission.periodId, repUserId: submission.repUserId, lob: submission.lob },
       orderBy: { version: 'desc' }
     });
 
@@ -763,23 +763,23 @@ export class M06ForecastingPredictionService {
   }
 
   async getAuditLog(tenantId: string, submissionId: string) {
-    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantId } });
+    const sub = await this.prisma.forecastSubmission.findFirst({ where: { id: submissionId, tenantid: tenantId } });
     if (!sub) return { auditLogs: [], versions: [] };
 
     // Find all versions of this submission
     const allVersions = await this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId: sub.periodId, repUserId: sub.repUserId, lob: sub.lob },
+      where: { tenantid: tenantId, periodId: sub.periodId, repUserId: sub.repUserId, lob: sub.lob },
       select: { id: true }
     });
     const ids = allVersions.map(v => v.id);
 
     const auditLogs = await this.prisma.forecastAuditLog.findMany({
-      where: { tenantId, forecastSubmissionId: { in: ids } },
+      where: { tenantid: tenantId, forecastSubmissionId: { in: ids } },
       orderBy: { createdAt: 'desc' }
     });
 
     const versions = await this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId: sub.periodId, repUserId: sub.repUserId, lob: sub.lob },
+      where: { tenantid: tenantId, periodId: sub.periodId, repUserId: sub.repUserId, lob: sub.lob },
       orderBy: { version: 'desc' }
     });
 
@@ -831,7 +831,7 @@ export class M06ForecastingPredictionService {
   // Feature 11: Rep Drill-Down
   async getRepDrillDown(tenantId: string, repId: string, periodId: string) {
     const period = await this.resolvePeriod(tenantId, periodId);
-    const user = await this.prisma.forecastUser.findFirst({ where: { tenantId, OR: [{ id: repId }, { repId: repId }] } });
+    const user = await this.prisma.forecastUser.findFirst({ where: { tenantid: tenantId, OR: [{ id: repId }, { repId: repId }] } });
     if (!user) throw new NotFoundException('Rep not found');
 
     const board = await this.getBoard(tenantId, period.id, user.id);
@@ -863,7 +863,7 @@ export class M06ForecastingPredictionService {
 
   async getMath(tenantId: string, periodId: string) {
     const period = await this.resolvePeriod(tenantId, periodId);
-    const snapshot = await this.prisma.aiForecastSnapshot.findFirst({ where: { tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } });
+    const snapshot = await this.prisma.aiForecastSnapshot.findFirst({ where: { tenantid: tenantId, periodId: period.id }, orderBy: { computedAt: 'desc' } });
     if (!snapshot) throw new NotFoundException('Snapshot not found');
     return { period, aiPrediction: snapshot.predictedAmount, math: await this.buildExplainability(tenantId, period, snapshot.modelInputs as any) };
   }
@@ -873,7 +873,7 @@ export class M06ForecastingPredictionService {
     if (existing) throw new Error('Email already registered');
     const normalizedRole = data.role?.toLowerCase() || 'sales_rep';
     const user = await this.prisma.forecastUser.create({
-      data: { tenantId: 'demo-tenant-01', name: data.name, email: data.email, password: data.password, role: normalizedRole, repId: normalizedRole === 'sales_rep' ? `rep-${Date.now()}` : null }
+      data: { tenantid: 'demo-tenant-01', name: data.name, email: data.email, password: data.password, role: normalizedRole, repId: normalizedRole === 'sales_rep' ? `rep-${Date.now()}` : null }
     });
     const { password: _, ...safeUser } = user;
     return safeUser;
@@ -891,7 +891,7 @@ export class M06ForecastingPredictionService {
     const normalizedBaseline = this.normalizeBaseline(baseline);
     if (!period) throw new NotFoundException('No open period');
 
-    const repWhere: any = { tenantId, role: 'sales_rep' };
+    const repWhere: any = { tenantid: tenantId, role: 'sales_rep' };
     if (region && region !== 'Company') repWhere.region = region;
     const reps = await this.prisma.forecastUser.findMany({ where: repWhere });
 
@@ -899,7 +899,7 @@ export class M06ForecastingPredictionService {
 
     // Get live deals for dynamic math (exclude dummy historical deals)
     let realDeals = await this.prisma.crmDeal.findMany({
-      where: { tenantId, closeDate: { gte: period.startDate, lte: period.endDate } }
+      where: { tenantid: tenantId, closeDate: { gte: period.startDate, lte: period.endDate } }
     });
     realDeals = realDeals.filter(d => !d.dealName.startsWith('Historical Deal'));
 
@@ -923,7 +923,7 @@ export class M06ForecastingPredictionService {
 
     // Feature 4: MAX Version
     const allSubmissions = await this.prisma.forecastSubmission.findMany({
-      where: { tenantId, periodId: period.id, repUserId: { in: repIds } },
+      where: { tenantid: tenantId, periodId: period.id, repUserId: { in: repIds } },
       orderBy: [{ repUserId: 'asc' }, { lob: 'asc' }, { version: 'desc' }],
     });
     const activeSubmissionsMap = new Map();
@@ -933,7 +933,7 @@ export class M06ForecastingPredictionService {
     }
     const submissions = Array.from(activeSubmissionsMap.values());
 
-    const auditLogs = await this.prisma.forecastAuditLog.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+    const auditLogs = await this.prisma.forecastAuditLog.findMany({ where: { tenantid: tenantId }, orderBy: { createdAt: 'desc' } });
 
     const predictionResponse = await this.getAiPrediction(tenantId, period.id, normalizedBaseline, region).catch(() => null);
     
@@ -965,7 +965,7 @@ export class M06ForecastingPredictionService {
     }
 
     const quotas = await this.prisma.quota.findMany({
-      where: { tenantId, periodId: period.id, repUserId: { in: repIds } }
+      where: { tenantid: tenantId, periodId: period.id, repUserId: { in: repIds } }
     });
 
     const teamData = activeReps.map(rep => {
@@ -1068,7 +1068,7 @@ export class M06ForecastingPredictionService {
 
     if (!opts?.skipSnapshot) {
       const materialized = await this.prisma.forecastExecutiveSnapshot.findFirst({
-        where: { tenantId, periodId: period.id },
+        where: { tenantid: tenantId, periodId: period.id },
         orderBy: { computedAt: 'desc' },
       });
       if (materialized?.payload) {
@@ -1101,7 +1101,7 @@ export class M06ForecastingPredictionService {
 
     let realDeals = await this.prisma.crmDeal.findMany({
       where: {
-        tenantId,
+        tenantid: tenantId,
         closeDate: { gte: period.startDate, lte: period.endDate }
       }
     });
@@ -1149,9 +1149,9 @@ export class M06ForecastingPredictionService {
 
   async createDeal(tenantId: string, data: any) {
     const normalizedProbability = data.probability == null ? undefined : data.probability > 1 ? data.probability / 100 : data.probability;
-    const deal = await this.prisma.crmDeal.create({ data: { tenantId, dealName: data.dealName, stage: data.stage, amount: data.amount, closeDate: new Date(data.closeDate), probability: normalizedProbability, isClosedWon: data.stage === 'Closed Won', isClosedLost: data.stage === 'Closed Lost', region: data.region, lob: data.lob, repUserId: data.repUserId, source: 'manual', createdBy: 'user' } });
+    const deal = await this.prisma.crmDeal.create({ data: { tenantid: tenantId, dealName: data.dealName, stage: data.stage, amount: data.amount, closeDate: new Date(data.closeDate), probability: normalizedProbability, isClosedWon: data.stage === 'Closed Won', isClosedLost: data.stage === 'Closed Lost', region: data.region, lob: data.lob, repUserId: data.repUserId, source: 'manual', createdBy: 'user' } });
 
-    const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
+    const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
     if (period && this.predictionQueue) {
       await this.predictionQueue.enqueuePrediction(tenantId, period.id, 'deal.created');
     }
@@ -1159,7 +1159,7 @@ export class M06ForecastingPredictionService {
     // Also check if we need to unlock the forecast entries
     if (data.repUserId && period) {
       const allRepSubs = await this.prisma.forecastSubmission.findMany({
-        where: { tenantId, periodId: period.id, repUserId: data.repUserId },
+        where: { tenantid: tenantId, periodId: period.id, repUserId: data.repUserId },
         orderBy: { version: 'desc' }
       });
       
@@ -1173,7 +1173,7 @@ export class M06ForecastingPredictionService {
           // Unlock by creating a new draft
           await this.prisma.forecastSubmission.create({
             data: {
-              tenantId,
+              tenantid: tenantId,
               periodId: period.id,
               repUserId: data.repUserId,
               lob: latestSub.lob,
@@ -1191,7 +1191,7 @@ export class M06ForecastingPredictionService {
           
           await this.prisma.forecastAuditLog.create({
             data: {
-              tenantId,
+              tenantid: tenantId,
               forecastSubmissionId: latestSub.id,
               action: 'Forecast unlocked due to new deal',
               actorId: data.repUserId,
@@ -1206,8 +1206,8 @@ export class M06ForecastingPredictionService {
     return deal;
   }
 
-  async upsertQuota(tenantId: string, periodId: string, repUserId: string, amount: number) { return this.prisma.quota.upsert({ where: { tenantId_periodId_repUserId: { tenantId, periodId, repUserId } }, update: { amount }, create: { tenantId, periodId, repUserId, amount } }); }
-  async getQuotas(tenantId: string, periodId: string) { return this.prisma.quota.findMany({ where: { tenantId, periodId } }); }
+  async upsertQuota(tenantId: string, periodId: string, repUserId: string, amount: number) { return this.prisma.quota.upsert({ where: { tenantid_periodId_repUserId: { tenantid: tenantId, periodId, repUserId } }, update: { amount }, create: { tenantid: tenantId, periodId, repUserId, amount } }); }
+  async getQuotas(tenantId: string, periodId: string) { return this.prisma.quota.findMany({ where: { tenantid: tenantId, periodId } }); }
 
   async getAtRiskDeals(tenantId: string, region?: string) {
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
@@ -1215,13 +1215,13 @@ export class M06ForecastingPredictionService {
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
 
-    const whereClause: any = { tenantId, isClosedWon: false, isClosedLost: false, stage: { notIn: ['Closed Won', 'Closed Lost'] } };
+    const whereClause: any = { tenantid: tenantId, isClosedWon: false, isClosedLost: false, stage: { notIn: ['Closed Won', 'Closed Lost'] } };
     if (region && region !== 'Company') whereClause.region = region;
 
     const deals = await this.prisma.crmDeal.findMany({ where: whereClause });
 
     // Build repId → name map from User table (CrmDeal has no Prisma relation to User)
-    const allReps = await this.prisma.forecastUser.findMany({ where: { tenantId, role: 'sales_rep' } });
+    const allReps = await this.prisma.forecastUser.findMany({ where: { tenantid: tenantId, role: 'sales_rep' } });
     const repNameMap = new Map<string, string>();
     allReps.forEach(r => {
       repNameMap.set(r.id, r.name);
@@ -1230,14 +1230,14 @@ export class M06ForecastingPredictionService {
 
     // Identify critical reps directly — avoid recursive getTeamBoard call.
     // A rep is Critical if their effective commit is < 70% of their weighted pipeline sum.
-    const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantId, status: 'open' } });
+    const period = await this.prisma.forecastPeriod.findFirst({ where: { tenantid: tenantId, status: 'open' } });
     const criticalRepIds = new Set<string>();
     if (period) {
       const allDeals = await this.prisma.crmDeal.findMany({
-        where: { tenantId, closeDate: { gte: period.startDate, lte: period.endDate }, repUserId: { not: null } }
+        where: { tenantid: tenantId, closeDate: { gte: period.startDate, lte: period.endDate }, repUserId: { not: null } }
       });
       const subs = await this.prisma.forecastSubmission.findMany({
-        where: { tenantId, periodId: period.id },
+        where: { tenantid: tenantId, periodId: period.id },
         orderBy: { version: 'desc' },
       });
       const latestSubs = new Map<string, typeof subs[0]>();
@@ -1316,7 +1316,7 @@ export class M06ForecastingPredictionService {
 
   async getExecutiveTrends(tenantId: string) {
     const periods = await this.prisma.forecastPeriod.findMany({
-      where: { tenantId, status: { in: ['closed', 'locked', 'open'] } },
+      where: { tenantid: tenantId, status: { in: ['closed', 'locked', 'open'] } },
       orderBy: { startDate: 'desc' },
       take: 4,
     });
@@ -1326,7 +1326,7 @@ export class M06ForecastingPredictionService {
     for (const period of periods) {
       const closedDeals = await this.prisma.crmDeal.findMany({
         where: {
-          tenantId,
+          tenantid: tenantId,
           OR: [{ isClosedWon: true }, { isClosedLost: true }],
           closeDate: { gte: period.startDate, lte: period.endDate }
         }
@@ -1336,7 +1336,7 @@ export class M06ForecastingPredictionService {
       const winRate = totalClosedAmount > 0 ? bookings / totalClosedAmount : 0;
 
       const metrics = await this.prisma.pipelineCoverageMetrics.findFirst({
-        where: { tenantId, periodId: period.id },
+        where: { tenantid: tenantId, periodId: period.id },
         orderBy: { computedAt: 'desc' }
       });
 

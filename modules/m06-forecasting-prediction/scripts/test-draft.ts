@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@rri/database';
 const prisma = new PrismaClient();
 async function main() {
   const period = await prisma.forecastPeriod.findFirst({ where: { status: 'open' } });
@@ -11,7 +11,7 @@ async function main() {
   try {
     const newSub = await prisma.forecastSubmission.create({
       data: {
-        tenantId: latestSub!.tenantId,
+        tenantid: latestSub!.tenantid,
         periodId: latestSub!.periodId,
         repUserId: latestSub!.repUserId,
         lob: latestSub!.lob,
@@ -32,3 +32,4 @@ async function main() {
   }
 }
 main().catch(console.error).finally(() => prisma.$disconnect());
+

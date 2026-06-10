@@ -10,6 +10,7 @@ exports.M08SalesEngagementModule = void 0;
 const common_1 = require("@nestjs/common");
 const bullmq_1 = require("@nestjs/bullmq");
 const m08_controller_1 = require("./controllers/m08.controller");
+const m08_rep_bridge_controller_1 = require("./controllers/m08-rep-bridge.controller");
 const task_controller_1 = require("./controllers/task.controller");
 const workflow_controller_1 = require("./controllers/workflow.controller");
 const m08_test_controller_1 = require("./controllers/m08-test.controller");
@@ -38,6 +39,7 @@ exports.M08SalesEngagementModule = M08SalesEngagementModule = __decorate([
         ],
         controllers: [
             m08_controller_1.M08SalesEngagementController,
+            m08_rep_bridge_controller_1.M08RepBridgeController,
             task_controller_1.M08TaskController,
             workflow_controller_1.M08WorkflowController,
             m08_test_controller_1.M08TestController,

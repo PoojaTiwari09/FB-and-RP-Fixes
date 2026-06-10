@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 let TenantGuard = class TenantGuard {
     canActivate(context) {
         const request = context.switchToHttp().getRequest();
+        console.log(`[TenantGuard] Path: ${request.url}, Headers:`, request.headers);
         const headerTenant = request.headers?.['x-tenant-id'];
         const userTenant = request.user?.tenantId;
         const tenantId = headerTenant || userTenant;
@@ -18,6 +19,7 @@ let TenantGuard = class TenantGuard {
             throw new common_1.UnauthorizedException('Missing tenant identifier. Set the x-tenant-id header or authenticate.');
         }
         request.tenantId = tenantId;
+        request.tenantid = tenantId;
         const headerUser = request.headers?.['x-user-id'];
         const headerRole = request.headers?.['x-user-role'];
         request.userId = request.user?.id ?? headerUser ?? 'anonymous';

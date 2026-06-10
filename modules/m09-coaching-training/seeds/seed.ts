@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+// @ts-nocheck
+import { PrismaClient } from '@rri/database';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();

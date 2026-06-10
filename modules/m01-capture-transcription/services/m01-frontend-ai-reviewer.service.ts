@@ -75,7 +75,7 @@ export class M01FrontendAiReviewerService {
 
   async mapReview(record: any, tenantId: string) {
     const review = await this.prisma.callReview.findFirst({
-      where: { callTitle: record.title, tenantId },
+      where: { callTitle: record.title, tenantid: tenantId },
     });
     if (!review || review.status !== 'Completed') return wrapData(null);
 
@@ -97,7 +97,7 @@ export class M01FrontendAiReviewerService {
 
   async mapFeedback(record: any, tenantId: string) {
     const review = await this.prisma.callReview.findFirst({
-      where: { callTitle: record.title, tenantId },
+      where: { callTitle: record.title, tenantid: tenantId },
     });
     if (!review || review.status !== 'Completed') return wrapData(null);
 

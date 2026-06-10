@@ -25,7 +25,7 @@ export class RevenueGraphRepository {
     const skip = (page - 1) * limit;
 
     const where: any = {
-      tenantId,
+      tenantid: tenantId,
       ...(opts.search
         ? {
             OR: [
@@ -50,14 +50,14 @@ export class RevenueGraphRepository {
 
   async findAccountById(tenantId: string, accountId: string): Promise<any | null> {
     return this.prisma.m10Account.findFirst({
-      where: { id: accountId, tenantId },
+      where: { id: accountId, tenantid: tenantId },
     });
   }
 
   async listAccountsForMatching(tenantId: string, limit = 500): Promise<any[]> {
     if (!(this.prisma as any).m10Account?.findMany) return [];
     return this.prisma.m10Account.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       select: { id: true, name: true, domain: true, crmAccountId: true },
       take: limit,
       orderBy: { updatedAt: 'desc' },
@@ -67,7 +67,7 @@ export class RevenueGraphRepository {
   async listContactsForMatching(tenantId: string, limit = 500): Promise<any[]> {
     if (!(this.prisma as any).m10Contact?.findMany) return [];
     return this.prisma.m10Contact.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       select: { id: true, email: true, name: true, accountId: true },
       take: limit,
       orderBy: { updatedAt: 'desc' },
@@ -87,7 +87,7 @@ export class RevenueGraphRepository {
   ): Promise<any> {
     if (data.crmAccountId) {
       const existing = await this.prisma.m10Account.findFirst({
-        where: { tenantId, crmAccountId: data.crmAccountId },
+        where: { tenantid: tenantId, crmAccountId: data.crmAccountId },
         select: { id: true },
       });
       if (existing) {
@@ -97,20 +97,20 @@ export class RevenueGraphRepository {
         });
       }
     }
-    return this.prisma.m10Account.create({ data: { tenantId, ...data } });
+    return this.prisma.m10Account.create({ data: { tenantid: tenantId, ...data } });
   }
 
   // ─── CONTACTS ────────────────────────────────────────────────────────────────
 
   async findContactByEmail(tenantId: string, email: string): Promise<any | null> {
     return this.prisma.m10Contact.findFirst({
-      where: { tenantId, email: email.toLowerCase() },
+      where: { tenantid: tenantId, email: email.toLowerCase() },
     });
   }
 
   async findContactById(tenantId: string, contactId: string): Promise<any | null> {
     return this.prisma.m10Contact.findFirst({
-      where: { id: contactId, tenantId },
+      where: { id: contactId, tenantid: tenantId },
     });
   }
 
@@ -132,7 +132,7 @@ export class RevenueGraphRepository {
       });
     }
     return this.prisma.m10Contact.create({
-      data: { tenantId, ...data, email: data.email.toLowerCase() },
+      data: { tenantid: tenantId, ...data, email: data.email.toLowerCase() },
     });
   }
 
@@ -153,7 +153,7 @@ export class RevenueGraphRepository {
     const skip = (page - 1) * limit;
 
     const where: any = {
-      tenantId,
+      tenantid: tenantId,
       ...(opts.accountId ? { accountId: opts.accountId } : {}),
       ...(opts.isActive !== undefined ? { isActive: opts.isActive } : {}),
       ...(opts.stage ? { stage: opts.stage } : {}),
@@ -177,7 +177,7 @@ export class RevenueGraphRepository {
 
   async findDealById(tenantId: string, dealId: string): Promise<any | null> {
     return this.prisma.m10Deal.findFirst({
-      where: { id: dealId, tenantId },
+      where: { id: dealId, tenantid: tenantId },
       include: {
         account: true,
         dealContacts: { include: { contact: true } },
@@ -188,7 +188,7 @@ export class RevenueGraphRepository {
 
   async findOpenDealsByAccount(tenantId: string, accountId: string): Promise<any[]> {
     return this.prisma.m10Deal.findMany({
-      where: { tenantId, accountId, isActive: true },
+      where: { tenantid: tenantId, accountId, isActive: true },
       orderBy: { updatedAt: 'desc' },
       take: 10,
     });
@@ -233,7 +233,7 @@ export class RevenueGraphRepository {
 
     return this.prisma.m10Activity.create({
       data: {
-        tenantId,
+        tenantid: tenantId,
         ...data,
         occurredAt: data.occurredAt,
         status: data.status ?? 'received',
@@ -279,8 +279,8 @@ export class RevenueGraphRepository {
     for (const link of links) {
       const result = await this.prisma.m10InteractionLink.upsert({
         where: {
-          tenantId_activityId_entityType_entityId: {
-            tenantId,
+          tenantid_activityId_entityType_entityId: {
+            tenantid: tenantId,
             activityId,
             entityType: link.entityType,
             entityId: link.entityId,
@@ -294,7 +294,7 @@ export class RevenueGraphRepository {
           updatedAt: new Date(),
         },
         create: {
-          tenantId,
+          tenantid: tenantId,
           activityId,
           entityType: link.entityType,
           entityId: link.entityId,
@@ -312,7 +312,7 @@ export class RevenueGraphRepository {
 
   async findLinksByActivity(tenantId: string, activityId: string): Promise<any[]> {
     return this.prisma.m10InteractionLink.findMany({
-      where: { tenantId, activityId },
+      where: { tenantid: tenantId, activityId },
     });
   }
 
@@ -333,14 +333,14 @@ export class RevenueGraphRepository {
       failureReason?: string;
     },
   ): Promise<any> {
-    return this.prisma.m10LinkDecisionLog.create({ data: { tenantId, ...data } });
+    return this.prisma.m10LinkDecisionLog.create({ data: { tenantid: tenantId, ...data } });
   }
 
   // ─── MAPPING RULES ────────────────────────────────────────────────────────────
 
   async getActiveMappingRules(tenantId: string): Promise<any | null> {
     return this.prisma.m10MappingRuleSet.findFirst({
-      where: { tenantId, isActive: true },
+      where: { tenantid: tenantId, isActive: true },
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -348,7 +348,7 @@ export class RevenueGraphRepository {
   // ─── CRM SYNC STATE ───────────────────────────────────────────────────────────
 
   async getCrmSyncStates(tenantId: string): Promise<any[]> {
-    return this.prisma.m10CrmSyncState.findMany({ where: { tenantId } });
+    return this.prisma.m10CrmSyncState.findMany({ where: { tenantid: tenantId } });
   }
 
   async upsertCrmSyncState(
@@ -365,10 +365,10 @@ export class RevenueGraphRepository {
   ): Promise<any> {
     return this.prisma.m10CrmSyncState.upsert({
       where: {
-        tenantId_crmSource_entityType: { tenantId, crmSource, entityType },
+        tenantid_crmSource_entityType: { tenantid: tenantId, crmSource, entityType },
       },
       update: { ...data, updatedAt: new Date() },
-      create: { tenantId, crmSource, entityType, ...data },
+      create: { tenantid: tenantId, crmSource, entityType, ...data },
     });
   }
 }
