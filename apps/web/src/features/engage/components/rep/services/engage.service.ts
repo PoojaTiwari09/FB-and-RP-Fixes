@@ -11,6 +11,7 @@ import type {
   LinkedInDraft,
   FilterOptions,
   EmailTemplate,
+  AssignableUser,
 } from '../types/engage.types';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
@@ -201,4 +202,8 @@ export async function updateTask(taskId: string, fields: Partial<Task>): Promise
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(fields),
   });
+}
+
+export async function getAssignableUsers(): Promise<AssignableUser[]> {
+  return apiRequest<AssignableUser[]>('/users/assignable');
 }

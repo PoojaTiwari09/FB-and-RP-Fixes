@@ -17,7 +17,9 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const deal_summary_service_1 = require("@/services/deal-summary.service");
 const auth_guard_1 = require("@/guards/auth.guard");
-const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
+const roles_guard_1 = require("@/guards/roles.guard");
+const roles_decorator_1 = require("@/decorators/roles.decorator");
+const user_role_enum_1 = require("@/interfaces/user-role.enum");
 const deal_summary_dto_1 = require("@/schemas/deal-summary.dto");
 let DealSummaryController = class DealSummaryController {
     summaryService;
@@ -55,7 +57,7 @@ let DealSummaryController = class DealSummaryController {
 exports.DealSummaryController = DealSummaryController;
 __decorate([
     (0, common_1.Post)('generate'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Generate AI summary for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -75,7 +77,7 @@ __decorate([
 ], DealSummaryController.prototype, "generateSummary", null);
 __decorate([
     (0, common_1.Get)('current'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get current summary for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -94,7 +96,7 @@ __decorate([
 ], DealSummaryController.prototype, "getCurrentSummary", null);
 __decorate([
     (0, common_1.Get)('history'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get summary history for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -110,7 +112,7 @@ __decorate([
 ], DealSummaryController.prototype, "getSummaryHistory", null);
 __decorate([
     (0, common_1.Get)('weekly-changes'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Detect weekly changes in deal summary' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -125,7 +127,7 @@ __decorate([
 ], DealSummaryController.prototype, "detectWeeklyChanges", null);
 __decorate([
     (0, common_1.Patch)(':summaryId/flag'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Flag summary for review' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiParam)({ name: 'summaryId', description: 'Summary ID' }),
@@ -141,7 +143,7 @@ __decorate([
 ], DealSummaryController.prototype, "flagForReview", null);
 __decorate([
     (0, common_1.Patch)(':summaryId/unflag'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Unflag summary from review' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiParam)({ name: 'summaryId', description: 'Summary ID' }),
@@ -159,7 +161,7 @@ exports.DealSummaryController = DealSummaryController = __decorate([
     (0, swagger_1.ApiTags)('Deal Summaries'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('deals/:dealId/summaries'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [deal_summary_service_1.DealSummaryService])
 ], DealSummaryController);
 let SummaryManagementController = class SummaryManagementController {
@@ -175,7 +177,7 @@ let SummaryManagementController = class SummaryManagementController {
 exports.SummaryManagementController = SummaryManagementController;
 __decorate([
     (0, common_1.Get)('flagged'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get all flagged summaries' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -191,7 +193,7 @@ exports.SummaryManagementController = SummaryManagementController = __decorate([
     (0, swagger_1.ApiTags)('Deal Summaries'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('summaries'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [deal_summary_service_1.DealSummaryService])
 ], SummaryManagementController);
 //# sourceMappingURL=deal-summary.controller.js.map

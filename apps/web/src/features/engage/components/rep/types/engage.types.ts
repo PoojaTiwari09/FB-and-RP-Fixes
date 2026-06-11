@@ -41,6 +41,10 @@ export interface Task {
   isOverdue: boolean;
   isAtRisk: boolean;
   snoozedUntil?: string | null;
+  entityType?: string;
+  dueDate?: string;
+  localTime?: string;
+  title?: string;
 }
 
 export interface TaskSummary {

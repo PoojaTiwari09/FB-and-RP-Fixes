@@ -23,7 +23,7 @@ let AuditLogService = AuditLogService_1 = class AuditLogService {
         try {
             await this.prisma.auditLog.create({
                 data: {
-                    tenantId: entry.tenantId,
+                    tenantid: entry.tenantId,
                     actorId: entry.actorId,
                     actorType: entry.actorType ?? 'system',
                     action: entry.action,
@@ -43,7 +43,7 @@ let AuditLogService = AuditLogService_1 = class AuditLogService {
         const effectiveDateFrom = dateFrom
             ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         const where = {
-            tenantId: tenantId,
+            tenantid: tenantId,
             createdAt: {
                 gte: effectiveDateFrom,
                 ...(dateTo ? { lte: dateTo } : {}),

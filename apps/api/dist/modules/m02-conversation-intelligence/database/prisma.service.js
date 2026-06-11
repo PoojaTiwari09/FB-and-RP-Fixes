@@ -38,23 +38,13 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaService = void 0;
 const common_1 = require("@nestjs/common");
 const prismaClientModule = __importStar(require("@rri/database"));
 const BaseClass = prismaClientModule.PrismaClient || class {
 };
-const prisma_extension_1 = require("../../../modules/platform-core/database/prisma.extension");
 let PrismaService = class PrismaService extends BaseClass {
-    constructor() {
-        super();
-        if (typeof this.$extends === 'function') {
-            return (0, prisma_extension_1.getExtendedPrismaClient)(this);
-        }
-    }
     async onModuleInit() {
         try {
             if (typeof this.$connect === 'function') {
@@ -72,7 +62,6 @@ let PrismaService = class PrismaService extends BaseClass {
 };
 exports.PrismaService = PrismaService;
 exports.PrismaService = PrismaService = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    (0, common_1.Injectable)()
 ], PrismaService);
 //# sourceMappingURL=prisma.service.js.map

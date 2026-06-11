@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const deal_repository_1 = require("@/repositories/deal.repository");
 const deal_board_repository_1 = require("@/repositories/deal-board.repository");
 const m04_memory_store_1 = require("../database/m04-memory.store");
+const jwt_guard_1 = require("../interfaces/jwt.guard");
 let M04TestController = class M04TestController {
     deals;
     boards;
@@ -50,6 +51,7 @@ let M04TestController = class M04TestController {
 };
 exports.M04TestController = M04TestController;
 __decorate([
+    (0, jwt_guard_1.Public)(),
     (0, common_1.Get)('health'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),

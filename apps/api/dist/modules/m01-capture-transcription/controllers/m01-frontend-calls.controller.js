@@ -22,22 +22,22 @@ let M01FrontendCallsController = class M01FrontendCallsController {
         this.svc = svc;
     }
     listCalls(query, req) {
-        return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole);
+        return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
     }
     searchCalls(query, req) {
-        return this.svc.searchCalls(req.tenantId, query, req.userId, req.userRole);
+        return this.svc.searchCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
     }
     listAccounts(query, req) {
-        return this.svc.listAccounts(req.tenantId, query, req.userId, req.userRole);
+        return this.svc.listAccounts(req.tenantId, query, req.userId, req.userRole, req.userName);
     }
     listParticipants(query, req) {
-        return this.svc.listParticipants(req.tenantId, query, req.userId, req.userRole);
+        return this.svc.listParticipants(req.tenantId, query, req.userId, req.userRole, req.userName);
     }
     getCallMetadata(callId, req) {
-        return this.svc.getCallMetadata(callId, req.tenantId, req.userId, req.userRole);
+        return this.svc.getCallMetadata(callId, req.tenantId, req.userId, req.userRole, req.userName);
     }
     getCall(callId, query, req) {
-        return this.svc.getCall(callId, req.tenantId, query, req.userId, req.userRole);
+        return this.svc.getCall(callId, req.tenantId, query, req.userId, req.userRole, req.userName);
     }
 };
 exports.M01FrontendCallsController = M01FrontendCallsController;

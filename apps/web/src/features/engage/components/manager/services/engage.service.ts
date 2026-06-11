@@ -94,6 +94,20 @@ export async function fetchTasks(query: {
     size: String(query.size || 50),
   });
   if (query.search) params.set('search', query.search);
+
+  // Serialize filter state into query params for server-side filtering
+  if (query.filters) {
+    if (query.filters.dueDate) {
+      params.set('filterDueDate', query.filters.dueDate);
+    }
+    if (query.filters.entityTypes && query.filters.entityTypes.size > 0) {
+      params.set('filterEntityTypes', Array.from(query.filters.entityTypes).join(','));
+    }
+    if (query.filters.localTime) {
+      params.set('filterLocalTime', query.filters.localTime);
+    }
+  }
+
   const endpoint = `/manager/tasks?${params.toString()}`;
 
   const res = await apiFetch('GET', endpoint);
