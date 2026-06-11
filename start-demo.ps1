@@ -46,6 +46,10 @@ if ((docker ps -a --filter "name=revenue_intel_db" --format "{{.Names}}" 2>$null
   Start-Sleep -Seconds 3
 }
 
+Write-Host "[DB] Seeding/Updating demo data..." -ForegroundColor Yellow
+& (Join-Path $Root "scripts\seed-demo-data.ps1")
+
+
 function Start-DevWindow {
   param([string]$Title, [string]$Command)
   Start-Process powershell -ArgumentList "-NoExit", "-Command", $Command
