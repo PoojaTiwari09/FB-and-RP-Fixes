@@ -14,31 +14,31 @@ export class M01FrontendCallsController {
   /** 1. Calls list with filters */
   @Get()
   listCalls(@Query() query: Record<string, string>, @Req() req: any) {
-    return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole);
+    return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
   }
 
   /** 5. Search — must be before :callId */
   @Get('search')
   searchCalls(@Query() query: Record<string, string>, @Req() req: any) {
-    return this.svc.searchCalls(req.tenantId, query, req.userId, req.userRole);
+    return this.svc.searchCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
   }
 
   /** 3. Account filter dropdown */
   @Get('accounts')
   listAccounts(@Query() query: Record<string, string>, @Req() req: any) {
-    return this.svc.listAccounts(req.tenantId, query, req.userId, req.userRole);
+    return this.svc.listAccounts(req.tenantId, query, req.userId, req.userRole, req.userName);
   }
 
   /** 4. Participants filter dropdown */
   @Get('participants')
   listParticipants(@Query() query: Record<string, string>, @Req() req: any) {
-    return this.svc.listParticipants(req.tenantId, query, req.userId, req.userRole);
+    return this.svc.listParticipants(req.tenantId, query, req.userId, req.userRole, req.userName);
   }
 
   /** 6. Lightweight call header (Briefs / Transcript tabs) */
   @Get(':callId/metadata')
   getCallMetadata(@Param('callId') callId: string, @Req() req: any) {
-    return this.svc.getCallMetadata(callId, req.tenantId, req.userId, req.userRole);
+    return this.svc.getCallMetadata(callId, req.tenantId, req.userId, req.userRole, req.userName);
   }
 
   /** 2. Single call row / detail */
@@ -48,6 +48,6 @@ export class M01FrontendCallsController {
     @Query() query: Record<string, string>,
     @Req() req: any,
   ) {
-    return this.svc.getCall(callId, req.tenantId, query, req.userId, req.userRole);
+    return this.svc.getCall(callId, req.tenantId, query, req.userId, req.userRole, req.userName);
   }
 }

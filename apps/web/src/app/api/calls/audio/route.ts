@@ -5,8 +5,8 @@ const ALLOWED_SOURCE = [
   /^https:\/\/recordings-buttons\.s3\.eu-north-1\.amazonaws\.com\/.+/i,
   /^https:\/\/github\.com\/.+/i,
   /^https:\/\/raw\.githubusercontent\.com\/.+/i,
-  /^http:\/\/localhost:3001\/uploads\/audio\/.+/i,
-  /^http:\/\/127\.0\.0\.1:3001\/uploads\/audio\/.+/i,
+  /^http:\/\/localhost:3002\/uploads\/audio\/.+/i,
+  /^http:\/\/127\.0\.0\.1:3002\/uploads\/audio\/.+/i,
 ];
 
 function isAllowedSource(src: string): boolean {

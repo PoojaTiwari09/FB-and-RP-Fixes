@@ -1,4 +1,4 @@
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 import { ENV } from '@shared/config/env';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import type {
@@ -33,7 +33,7 @@ export async function fetchCallReviews(params: {
   sort?: string;
 }): Promise<CallReviewsResponse> {
   const qs = apiQueryParams(params as Record<string, string>);
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews?${qs}`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews?${qs}`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -51,7 +51,7 @@ export async function fetchAllCalls(params: {
   sort?: string;
 }): Promise<CallsResponse> {
   const qs = apiQueryParams(params as Record<string, string>);
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/manager/calls?${qs}`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/manager/calls?${qs}`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -64,7 +64,7 @@ export async function fetchAllCalls(params: {
 export async function fetchCallReviewDetail(
   reviewId: string
 ): Promise<CallReviewDetail> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews/${reviewId}`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews/${reviewId}`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -75,7 +75,7 @@ export async function fetchCallReviewDetail(
 // ─── Scorecards ──────────────────────────────────────────────────────────────
 
 export async function fetchScorecards(): Promise<{ scorecards: Scorecard[] }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/scorecards`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/scorecards`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -86,7 +86,7 @@ export async function fetchScorecards(): Promise<{ scorecards: Scorecard[] }> {
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 export async function fetchUsers(): Promise<{ users: User[] }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/users`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/users`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -100,7 +100,7 @@ export async function patchCallReview(
   reviewId: string,
   body: { scorecardId?: string; reviewerId?: string }
 ): Promise<{ success: boolean }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews/${reviewId}`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews/${reviewId}`, {
     method: 'PATCH',
     headers: {
       ...getBridgeHeaders(),
@@ -117,7 +117,7 @@ export async function patchCallReview(
 export async function markNotApplicable(
   reviewId: string
 ): Promise<{ success: boolean }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/mark-na`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/mark-na`, {
     method: 'POST',
     headers: getBridgeHeaders(),
   });
@@ -128,7 +128,7 @@ export async function markNotApplicable(
 // ─── Analytics Summary ───────────────────────────────────────────────────────
 
 export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/analytics/summary`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/analytics/summary`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -139,7 +139,7 @@ export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
 // ─── Score Trend ─────────────────────────────────────────────────────────────
 
 export async function fetchScoreTrend(): Promise<{ trendData: TrendPoint[] }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/analytics/score-trend`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/analytics/score-trend`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -153,7 +153,7 @@ export async function fetchScoreTrend(): Promise<{ trendData: TrendPoint[] }> {
 // ─── Focus Areas ─────────────────────────────────────────────────────────────
 
 export async function fetchFocusAreas(): Promise<{ focusAreas: FocusArea[] }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/analytics/focus-areas`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/analytics/focus-areas`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -166,7 +166,7 @@ export async function fetchFocusAreas(): Promise<{ focusAreas: FocusArea[] }> {
 // ─── Common Tags ─────────────────────────────────────────────────────────────
 
 export async function fetchCommonTags(): Promise<{ tags: TagCount[] }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/analytics/common-tags`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/analytics/common-tags`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -186,7 +186,7 @@ export async function fetchReviewHistory(params: {
 }): Promise<ReviewHistoryResponse> {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => v && qs.set(k, String(v)));
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/analytics/review-history?${qs}`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/analytics/review-history?${qs}`, {
     cache: 'no-store',
     headers: getBridgeHeaders(),
   });
@@ -198,7 +198,7 @@ export async function saveCallReviewDraft(
   reviewId: string,
   body: { answers?: any; coaching?: any }
 ): Promise<{ success: boolean }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/save-draft`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/save-draft`, {
     method: 'POST',
     headers: {
       ...getBridgeHeaders(),
@@ -214,7 +214,7 @@ export async function submitCallReview(
   reviewId: string,
   body: { answers?: any; coaching?: any }
 ): Promise<{ success: boolean; finalScore: number }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/submit`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/submit`, {
     method: 'POST',
     headers: {
       ...getBridgeHeaders(),
@@ -230,7 +230,7 @@ export async function saveCoachingFeedback(
   reviewId: string,
   coaching: any
 ): Promise<{ success: boolean }> {
-  const res = await fetch(`${resolveApiBase()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/coaching`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/conversation-intelligence/call-reviews/${reviewId}/coaching`, {
     method: 'POST',
     headers: {
       ...getBridgeHeaders(),

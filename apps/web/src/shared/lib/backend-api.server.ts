@@ -1,19 +1,24 @@
 import 'server-only';
 
 import { cookies } from 'next/headers';
+import { buildAuthHeaders, roleFromCookieValue } from './backend-api.shared';
 
-import {
-  buildBackendHeaders,
-  roleFromCookieValue,
-  type BackendRole,
-} from './backend-api.shared';
-
-/** Server Components / Route handlers / Server Actions — reads user_role and user_id cookies. */
+/** Server Components — attaches Bearer token from httpOnly-accessible cookies. */
 export async function getServerBackendHeaders(): Promise<Record<string, string>> {
   const cookieStore = await cookies();
-  const role = roleFromCookieValue(cookieStore.get('user_role')?.value);
-  const userId = cookieStore.get('user_id')?.value;
-  return buildBackendHeaders(role, userId);
+  const token =
+    cookieStore.get('access_token')?.value ||
+    cookieStore.get('rbac_token')?.value;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${decodeURIComponent(token)}`;
+  }
+
+  return headers;
 }
 
 export async function serverBackendFetch(
@@ -26,3 +31,5 @@ export async function serverBackendFetch(
   };
   return fetch(url, { ...init, headers });
 }
+
+export { roleFromCookieValue };

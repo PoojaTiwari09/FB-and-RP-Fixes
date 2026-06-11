@@ -10,9 +10,9 @@ import type {
   SmartCall,
 } from '@smart-call/types/smart-call.types';
 
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 
-const SC_BASE = `${resolveApiBase()}/api/v1/capture-transcription/smart-call`;
+const SC_BASE = `${getBackendUrl()}/api/v1/capture-transcription/smart-call`;
 
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {

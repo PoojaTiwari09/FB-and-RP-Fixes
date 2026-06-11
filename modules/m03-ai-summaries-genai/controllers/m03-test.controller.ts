@@ -40,10 +40,10 @@ export class M03TestController {
     const tenantId = M03_DEMO_TENANT;
     const prisma = this.prisma as any;
     const [calls, accounts, deals, m10Contacts] = await Promise.all([
-      prisma.callRecord?.count?.({ where: { tenantId } }) ?? 0,
-      prisma.account?.count?.({ where: { tenantId } }) ?? 0,
-      prisma.deal?.count?.({ where: { tenantId } }) ?? 0,
-      prisma.m10Contact?.count?.({ where: { tenantId } }) ?? 0,
+      prisma.callRecord?.count?.({ where: { tenantid: tenantId } }) ?? 0,
+      prisma.account?.count?.({ where: { tenantid: tenantId } }) ?? 0,
+      prisma.deal?.count?.({ where: { tenantid: tenantId } }) ?? 0,
+      prisma.m10Contact?.count?.({ where: { tenantid: tenantId } }) ?? 0,
     ]);
     return {
       tenantId,
@@ -78,8 +78,7 @@ export class M03TestController {
       prisma.account.upsert({
         where: { id: 'm03-seed-acct-modus' },
         create: {
-          id: 'm03-seed-acct-modus',
-          tenantId,
+          id: 'm03-seed-acct-modus', tenantid: tenantId,
           name: 'Moduslink',
           industry: 'Technology',
           ownerName: 'Demo Rep',
@@ -89,8 +88,7 @@ export class M03TestController {
       prisma.account.upsert({
         where: { id: 'm03-seed-acct-acme' },
         create: {
-          id: 'm03-seed-acct-acme',
-          tenantId,
+          id: 'm03-seed-acct-acme', tenantid: tenantId,
           name: 'Acme Corp',
           industry: 'Manufacturing',
           ownerName: 'Demo Rep',
@@ -103,8 +101,7 @@ export class M03TestController {
       prisma.deal.upsert({
         where: { id: 'm03-seed-deal-modus' },
         create: {
-          id: 'm03-seed-deal-modus',
-          tenantId,
+          id: 'm03-seed-deal-modus', tenantid: tenantId,
           accountId: 'm03-seed-acct-modus',
           name: 'Moduslink Expansion',
           amount: 125000,
@@ -116,8 +113,7 @@ export class M03TestController {
       prisma.deal.upsert({
         where: { id: 'm03-seed-deal-acme' },
         create: {
-          id: 'm03-seed-deal-acme',
-          tenantId,
+          id: 'm03-seed-deal-acme', tenantid: tenantId,
           accountId: 'm03-seed-acct-acme',
           name: 'Acme Platform Renewal',
           amount: 85000,
@@ -129,7 +125,7 @@ export class M03TestController {
     ]);
 
     const calls = await prisma.callRecord.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       take: 10,
       orderBy: { callDate: 'desc' },
     });
@@ -150,8 +146,7 @@ export class M03TestController {
     }
 
     return {
-      success: true,
-      tenantId,
+      success: true, tenantid: tenantId,
       accounts: accounts.length,
       deals: deals.length,
       callsLinked: linked,

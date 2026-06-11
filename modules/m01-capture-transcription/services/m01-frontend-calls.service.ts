@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isSalesRepRole, repOwnerFilter } from '../../platform-core/auth/role-helpers';
 import { CallService } from './call.service';
 import { CallRepository } from '../repositories/call.repository';
 import { PrismaService } from '../database/prisma.service';
@@ -24,7 +25,18 @@ export class M01FrontendCallsService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async listCalls(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
+  private repOwnsCall(callOwner: string, userId?: string, userName?: string): boolean {
+    if (!userId && !userName) return true;
+    return callOwner === userId || (!!userName && callOwner === userName);
+  }
+
+  async listCalls(
+    tenantId: string,
+    rawQuery: Record<string, string>,
+    userId?: string,
+    userRole?: string,
+    userName?: string,
+  ) {
     const q = FrontendListCallsQuerySchema.parse(rawQuery);
 
     if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
@@ -33,8 +45,9 @@ export class M01FrontendCallsService {
       const andClauses: Record<string, unknown>[] = [];
 
       // Data Isolation: Sales Reps can only see their own calls
-      if (userRole === 'sales_rep' && userId) {
-        andClauses.push({ callOwner: userId });
+      if (isSalesRepRole(userRole)) {
+        const ownerClause = repOwnerFilter('callOwner', userId, userName);
+        if (ownerClause) andClauses.push(ownerClause);
       }
 
       if (q.search?.trim()) {
@@ -70,19 +83,13 @@ export class M01FrontendCallsService {
 
       const calls = records.map((r: any) => mapAiReviewerCallRow(r, reviewMap.get(r.title)));
       return {
-        data: {
-          calls,
-          pagination: {
-            page: q.page,
-            size: q.size,
-            total,
-            totalPages: Math.max(1, Math.ceil(total / q.size)),
-          },
-        },
-        totalCount: total,
-        page: q.page,
-        size: q.size,
         calls,
+        pagination: {
+          page: q.page,
+          size: q.size,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / q.size)),
+        },
       };
     }
 
@@ -92,8 +99,9 @@ export class M01FrontendCallsService {
     const andClauses: any[] = [];
 
     // Data Isolation: Sales Reps can only see their own calls
-    if (userRole === 'sales_rep' && userId) {
-      andClauses.push({ callOwner: userId });
+    if (isSalesRepRole(userRole)) {
+      const ownerClause = repOwnerFilter('callOwner', userId, userName);
+      if (ownerClause) andClauses.push(ownerClause);
     }
 
     // Calls List UI: only show review-ready rows (recording + completed transcript).
@@ -206,11 +214,18 @@ export class M01FrontendCallsService {
     };
   }
 
-  async getCall(callId: string, tenantId: string, rawQuery: Record<string, string> = {}, userId?: string, userRole?: string) {
+  async getCall(
+    callId: string,
+    tenantId: string,
+    rawQuery: Record<string, string> = {},
+    userId?: string,
+    userRole?: string,
+    userName?: string,
+  ) {
     const record = await this.calls.getCallDetail(callId, tenantId);
 
     // Data Isolation: Sales Reps can only see their own calls
-    if (userRole === 'sales_rep' && userId && record.callOwner !== userId) {
+    if (isSalesRepRole(userRole) && !this.repOwnsCall(record.callOwner, userId, userName)) {
       throw new Error('Access denied');
     }
 
@@ -233,18 +248,30 @@ export class M01FrontendCallsService {
     return mapCallDetail(record);
   }
 
-  async getCallMetadata(callId: string, tenantId: string, userId?: string, userRole?: string) {
+  async getCallMetadata(
+    callId: string,
+    tenantId: string,
+    userId?: string,
+    userRole?: string,
+    userName?: string,
+  ) {
     const record = await this.calls.getCallDetail(callId, tenantId);
 
     // Data Isolation: Sales Reps can only see their own calls
-    if (userRole === 'sales_rep' && userId && record.callOwner !== userId) {
+    if (isSalesRepRole(userRole) && !this.repOwnsCall(record.callOwner, userId, userName)) {
       throw new Error('Access denied');
     }
 
     return mapCallMetadata(record);
   }
 
-  async searchCalls(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
+  async searchCalls(
+    tenantId: string,
+    rawQuery: Record<string, string>,
+    userId?: string,
+    userRole?: string,
+    userName?: string,
+  ) {
     const q = FrontendSearchCallsQuerySchema.parse(rawQuery);
     const offset = (q.page - 1) * q.size;
 
@@ -257,8 +284,8 @@ export class M01FrontendCallsService {
     let calls = (Array.isArray(hits) ? hits : []).map(mapCallSearchHit);
 
     // Data Isolation: Sales Reps can only see their own calls
-    if (userRole === 'sales_rep' && userId) {
-      calls = calls.filter((c) => c.callOwner === userId);
+    if (isSalesRepRole(userRole)) {
+      calls = calls.filter((c) => this.repOwnsCall(c.callOwner, userId, userName));
     }
 
     return {
@@ -267,13 +294,20 @@ export class M01FrontendCallsService {
     };
   }
 
-  async listAccounts(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
+  async listAccounts(
+    tenantId: string,
+    rawQuery: Record<string, string>,
+    userId?: string,
+    userRole?: string,
+    userName?: string,
+  ) {
     const { search } = FrontendFilterSearchSchema.parse(rawQuery);
     const where: any = { tenantid: tenantId };
 
     // Data Isolation: Sales Reps can only see accounts for their own calls
-    if (userRole === 'sales_rep' && userId) {
-      where.callOwner = userId;
+    if (isSalesRepRole(userRole)) {
+      const ownerClause = repOwnerFilter('callOwner', userId, userName);
+      if (ownerClause) Object.assign(where, ownerClause);
     }
 
     const rows = await this.prisma.callRecord.findMany({
@@ -306,14 +340,21 @@ export class M01FrontendCallsService {
     return { accounts };
   }
 
-  async listParticipants(tenantId: string, rawQuery: Record<string, string>, userId?: string, userRole?: string) {
+  async listParticipants(
+    tenantId: string,
+    rawQuery: Record<string, string>,
+    userId?: string,
+    userRole?: string,
+    userName?: string,
+  ) {
     const { search, accountId } = FrontendFilterSearchSchema.parse(rawQuery);
     const where: any = { tenantid: tenantId };
     if (accountId) where.accountId = accountId;
 
     // Data Isolation: Sales Reps can only see participants for their own calls
-    if (userRole === 'sales_rep' && userId) {
-      where.callOwner = userId;
+    if (isSalesRepRole(userRole)) {
+      const ownerClause = repOwnerFilter('callOwner', userId, userName);
+      if (ownerClause) Object.assign(where, ownerClause);
     }
 
     const rows = await this.prisma.callRecord.findMany({

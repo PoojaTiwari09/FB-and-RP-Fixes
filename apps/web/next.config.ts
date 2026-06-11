@@ -3,12 +3,12 @@ import type { NextConfig } from 'next';
 const backendUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.BACKEND_API_URL ??
-  'http://localhost:3001';
+  'http://localhost:3002';
 
 // m07-api runs on port 3001 when unified in monorepo monolith. Use 127.0.0.1 to avoid IPv6 issues.
 const m07ApiUrl =
   process.env.M07_API_URL ??
-  `http://127.0.0.1:${process.env.M07_API_PORT ?? '3001'}`;
+  `http://127.0.0.1:${process.env.M07_API_PORT ?? process.env.PORT ?? '3002'}`;
 
 const nextConfig: NextConfig = {
   async rewrites() {
@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
         { source: '/api/search/:path*',       destination: `${backendUrl}/api/search/:path*` },
         { source: '/api/contacts/:path*',     destination: `${backendUrl}/api/contacts/:path*` },
         { source: '/api/email-templates',     destination: `${backendUrl}/api/email-templates` },
+        { source: '/api/trainings',           destination: `${backendUrl}/api/trainings` },
         { source: '/api/trainings/:path*',    destination: `${backendUrl}/api/trainings/:path*` },
         { source: '/api/manager/:path*',      destination: `${backendUrl}/api/manager/:path*` },
 

@@ -15,11 +15,12 @@ datasource db {
 // Platform Core
 // ─────────────────────────────────────────────────────────────
 model Tenant {
-  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
-  slug       String      @unique
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  slug       String       @unique
+  status     TenantStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
   accounts   Account[]
   calls      Call[]
   dashboards Dashboard[]
@@ -31,17 +32,51 @@ model Tenant {
 }
 
 model User {
-  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantid     String      @db.Uuid
-  email        String
-  passwordHash String
-  name         String
-  role         UserRole
-  dashboards   Dashboard[] @relation("DashboardOwner")
-  tenant       Tenant      @relation(fields: [tenantid], references: [id], onDelete: Cascade)
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid      String         @db.Uuid
+  email         String
+  passwordHash  String
+  name          String
+  role          UserRole
+  status        UserStatus     @default(ACTIVE)
+  lastLoginAt   DateTime?
+  dashboards    Dashboard[]    @relation("DashboardOwner")
+  tenant        Tenant         @relation(fields: [tenantid], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
 
   @@unique([tenantid, email])
   @@index([tenantid, role])
+  @@schema("public")
+}
+
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@schema("public")
+}
+
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DELETED
+
+  @@schema("public")
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+
   @@schema("public")
 }
 

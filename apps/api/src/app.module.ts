@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -8,6 +9,8 @@ import { join } from 'path';
 
 import { EventPublisherModule } from '../../../modules/platform-core/events/event-publisher.module';
 import { PlatformNotificationModule } from '../../../modules/platform-core/notifications/platform-notification.module';
+import { PlatformAuthModule } from '../../../modules/platform-core/auth/auth.module';
+import { TenantThrottlerGuard } from './tenant-throttler.guard';
 
 // ── Backend modules ──────────────────────────────────────────────────────────
 import { M01CaptureTranscriptionModule } from '../../../modules/m01-capture-transcription/m01-capture-transcription.module';
@@ -56,6 +59,11 @@ const sharedBackendModules = [
     // injects `undefined` and constructors crash with "Cannot read get of undefined".
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [
+        join(__dirname, '../../../.env'),
+        join(__dirname, '../../../../.env'),
+        '.env',
+      ],
     }),
     // EventEmitter2 — backbone of the domain event bus (`transcription.completed`,
     // `call.shared`, …). Registered once at the root so every module's
@@ -71,6 +79,7 @@ const sharedBackendModules = [
     // EventPublisherModule is @Global, so any module can use the publisher.
     EventPublisherModule,
     PlatformNotificationModule,
+    PlatformAuthModule,
     // Expose the local uploads directory as static assets so the frontend
     // <AudioPlayer/> can stream audio uploaded via POST /calls/upload.
     ServeStaticModule.forRoot({
@@ -93,6 +102,12 @@ const sharedBackendModules = [
       },
     }),
     ...sharedBackendModules,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: TenantThrottlerGuard,
+    },
   ],
 })
 export class AppModule {

@@ -49,18 +49,18 @@ export class M02FrontendCallReviewsService {
 
   private async ensureSeeded(tenantId: string, userId?: string) {
     const count = await this.prisma.callReview.count({
-      where: { tenantId },
+      where: { tenantid: tenantId },
     });
     if (count > 0) return;
 
     // Fetch actual user names for seeding if possible
     const dbUsers = await this.prisma.user.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       take: 5
     });
 
     const calls = await this.prisma.callRecord.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       take: 8,
       orderBy: { callDate: 'desc' },
       include: { transcript: true },
@@ -152,7 +152,7 @@ export class M02FrontendCallReviewsService {
   private async getCallForReview(tenantId: string, callId: string) {
     if (!callId) return null;
     return this.prisma.callRecord.findFirst({
-      where: { id: callId, tenantId },
+      where: { id: callId, tenantid: tenantId },
       include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
     });
   }
@@ -212,7 +212,7 @@ export class M02FrontendCallReviewsService {
     const review = await this.getReview(tenantId, reviewId, userId, userRole);
     // Try to find a call record linked to this review
     const call = await this.prisma.callRecord.findFirst({
-      where: { title: review.callTitle, tenantId },
+      where: { title: review.callTitle, tenantid: tenantId },
       include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
     });
     return mapReviewDetail(review, call);
@@ -224,7 +224,7 @@ export class M02FrontendCallReviewsService {
 
   async getUsers(tenantId: string) {
     const users = await this.prisma.user.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       select: { id: true, name: true }
     });
     return { 
@@ -287,7 +287,7 @@ export class M02FrontendCallReviewsService {
   async getTranscript(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
     const review = await this.getReview(tenantId, reviewId, userId, userRole);
     const call = await this.prisma.callRecord.findFirst({
-      where: { title: review.callTitle, tenantId },
+      where: { title: review.callTitle, tenantid: tenantId },
       include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } },
     });
     const entries = (call?.transcript?.utterances ?? []).map((u) => ({

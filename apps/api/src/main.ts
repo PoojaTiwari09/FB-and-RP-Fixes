@@ -1,7 +1,16 @@
 import 'reflect-metadata';
+import * as dotenv from 'dotenv';
 import { register } from 'tsconfig-paths';
 import * as path from 'path';
 import * as fs from 'fs';
+
+dotenv.config({
+  path: [
+    path.resolve(__dirname, '../../../.env'),
+    path.resolve(__dirname, '../../../../.env'),
+    path.resolve(process.cwd(), '.env'),
+  ].find((p) => fs.existsSync(p)),
+});
 
 const tsConfigPath = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
   ? path.join(__dirname, '../tsconfig.json')
@@ -17,16 +26,15 @@ register({
   paths: require(tsConfigPath).compilerOptions.paths,
 });
 
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { ZodExceptionFilter } from './zod-exception.filter';
 import { ResponseTransformInterceptor } from './response-transform.interceptor';
 import { FrontendApiExceptionFilter } from '../../../modules/platform-core/filters/frontend-api-exception.filter';
-import { JwtAuthGuard } from '../../../modules/platform-core/guards/jwt.guard';
-import { TenantThrottlerGuard } from './tenant-throttler.guard';
 import { TraceAndTenantMiddleware } from './trace-tenant.middleware';
+import { rejectSpoofHeadersMiddleware } from '../../../modules/platform-core/middleware/reject-spoof-headers.middleware';
 
 // ─── Upload directory ─────────────────────────────────────────────────────────
 // Some flows (M-01 audio upload) need a place to drop files before AssemblyAI
@@ -44,11 +52,9 @@ async function bootstrap() {
     bufferLogs: false,
   });
 
-  const reflector = app.get(Reflector);
-
   app.enableCors({ origin: true, credentials: true });
-  
-  // Register global middleware to inject trace_id and tenant_id
+
+  app.use(rejectSpoofHeadersMiddleware);
   app.use(TraceAndTenantMiddleware);
 
   app.useGlobalPipes(
@@ -65,18 +71,16 @@ async function bootstrap() {
   // Convert HttpException and ZodError raised inside controllers into structured responses.
   app.useGlobalFilters(new FrontendApiExceptionFilter(), new ZodExceptionFilter());
   
-  // Register global auth guard, permissions guard, and rate limiting (throttler) guard
-  const { PermissionsGuard } = require('../../../modules/platform-core/guards/permissions.guard');
-  app.useGlobalGuards(
-    new JwtAuthGuard(reflector), 
-    new PermissionsGuard(reflector),
-    new TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector)
-  );
-
   const port = parseInt(process.env.PORT || '3001', 10);
   await app.listen(port);
 
   logger.log(`API listening on http://localhost:${port}`);
+  logger.log('Auth routes:');
+  logger.log('  POST   /api/v1/auth/register');
+  logger.log('  POST   /api/v1/auth/login');
+  logger.log('  POST   /api/v1/auth/refresh');
+  logger.log('  POST   /api/v1/auth/logout');
+  logger.log('  GET    /api/v1/auth/me');
   logger.log('Mounted routes:');
   logger.log('  POST   /api/v1/capture-transcription/calls/upload (multer audio)');
   logger.log('  *      /api/v1/capture-transcription/calls/:id/next-steps (CRUD)');

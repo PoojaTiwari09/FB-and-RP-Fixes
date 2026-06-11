@@ -1,6 +1,8 @@
 import {
   Injectable, CanActivate, ExecutionContext, UnauthorizedException,
 } from '@nestjs/common';
+import { toFrontendRole } from '../auth/role-mapper';
+import type { UserRole } from '@rri/database';
 
 /**
  * TenantGuard
@@ -18,25 +20,28 @@ export class TenantGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     console.log(`[TenantGuard] Path: ${request.url}, Headers:`, request.headers);
-    const headerTenant = request.headers?.['x-tenant-id'];
-    const userTenant   = request.user?.tenantId;
-    const tenantId     = headerTenant || userTenant;
+    const allowDevHeaders = process.env.ALLOW_DEV_HEADER_AUTH === 'true';
+    const headerTenant = allowDevHeaders ? request.headers?.['x-tenant-id'] : undefined;
+    const userTenant = request.user?.tenantId;
+    const tenantId = userTenant || headerTenant;
 
     if (!tenantId || typeof tenantId !== 'string') {
       throw new UnauthorizedException(
-        'Missing tenant identifier. Set the x-tenant-id header or authenticate.',
+        'Missing tenant context. Authenticate with a valid Bearer token.',
       );
     }
 
     request.tenantId = tenantId;
     request.tenantid = tenantId;
-    
-    // RBAC: Extract User ID and Role
-    const headerUser = request.headers?.['x-user-id'];
-    const headerRole = request.headers?.['x-user-role'];
-    
-    request.userId = request.user?.id ?? headerUser ?? 'anonymous';
-    request.userRole = request.user?.role ?? headerRole ?? 'SALES_REP';
+
+    request.userId = request.user?.sub ?? request.user?.id ?? 'anonymous';
+    request.userName = request.user?.name;
+    request.backendRole = request.user?.role ?? 'SALES_REP';
+    request.userRole = toFrontendRole((request.user?.role ?? 'SALES_REP') as UserRole);
+    if (request.user?.tenantId && !request.tenantId) {
+      request.tenantId = request.user.tenantId;
+      request.tenantid = request.user.tenantId;
+    }
     
     return true;
   }

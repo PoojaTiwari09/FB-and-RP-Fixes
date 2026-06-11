@@ -144,11 +144,9 @@ export default function Sidebar() {
     localStorage.setItem('sidebar-collapsed', String(next));
   };
 
-  const handleSignOut = () => {
-    document.cookie = 'rbac_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = 'user_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = 'rbac_user_json=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  const handleSignOut = async () => {
+    const { logoutRequest } = await import('@shared/lib/auth-api.client');
+    await logoutRequest();
     window.location.href = '/login';
   };
 

@@ -25,8 +25,8 @@ export type {
 // ─── Base URL ────────────────────────────────────────────────
 
 import { ENV } from '../config/env';
-import { resolveApiBase } from '@shared/config/module-api';
-const BASE_URL = resolveApiBase() + '/api/v1/deal-management';
+import { getBackendUrl } from '@shared/config/module-api';
+const BASE_URL = getBackendUrl() + '/api/v1/deal-management';
 
 // ─── Core Fetch Utility ───────────────────────────────────────
 

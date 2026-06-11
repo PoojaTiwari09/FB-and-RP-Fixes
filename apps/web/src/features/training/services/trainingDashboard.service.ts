@@ -1,11 +1,8 @@
 // src/services/trainingDashboard.service.ts
 import { TrainingDashboardPage } from '@training/types/trainingDashboard.types';
 import { ENV } from '@shared/config/env';
+import { getServerBackendHeaders } from '@shared/lib/backend-api.server';
 
-/**
- * Adapts raw API response to our typed shape.
- * Isolates field-name uncertainty.
- */
 function adaptTrainingDashboard(raw: Record<string, unknown>): TrainingDashboardPage {
   const trainings = (raw['trainings'] as Record<string, unknown>[]) ?? [];
   return {
@@ -21,10 +18,13 @@ function adaptTrainingDashboard(raw: Record<string, unknown>): TrainingDashboard
 }
 
 export async function fetchTrainingDashboard(): Promise<TrainingDashboardPage> {
+  const headers = await getServerBackendHeaders();
   const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings`, {
+    headers,
     next: { revalidate: 60 },
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const raw = await res.json();
-  return adaptTrainingDashboard(raw as Record<string, unknown>);
+  const payload = raw?.data ?? raw;
+  return adaptTrainingDashboard(payload as Record<string, unknown>);
 }

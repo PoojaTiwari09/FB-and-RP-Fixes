@@ -21,7 +21,7 @@ import {
   fetchSessionSummaries,
   type LiveCallChunkSummary,
 } from '@smart-call/services/smart-call.service';
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 import {
   detectLocalSignals,
@@ -369,7 +369,7 @@ export function useSmartCallSession(options: SmartCallSessionOptions) {
         raw_transcript: rolling,
       };
       chunkSummariesRef.current = [...chunkSummariesRef.current, body].slice(-20);
-      await fetch(`${resolveApiBase()}/api/v1/capture-transcription/smart-call/sessions/${sessionId}/chunks`, {
+      await fetch(`${getBackendUrl()}/api/v1/capture-transcription/smart-call/sessions/${sessionId}/chunks`, {
         method: 'POST',
         headers: getBridgeHeaders(),
         body: JSON.stringify(body),

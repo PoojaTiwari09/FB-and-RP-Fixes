@@ -1,0 +1,348 @@
+================================================================================
+              ARCHITECTURE & DATA FLOW DIAGRAM
+================================================================================
+
+                              FRONTEND LAYER
+                         (Next.js on Port 3000)
+                         
+        ┌─────────────────────────────────────────────────┐
+        │                                                 │
+        │  apps/web (Next.js Turbopack)                  │
+        │                                                 │
+        │  - Login Page (/login)                         │
+        │  - Engage Page (/engage)                       │
+        │  - Other features                              │
+        │                                                 │
+        │  .env.local:                                   │
+        │  NEXT_PUBLIC_API_BASE_URL=                     │
+        │  http://localhost:3002  ✓                      │
+        │                                                 │
+        └────────────┬────────────────────────────────────┘
+                     │
+                     │ HTTPS/HTTP Calls to API
+                     │ http://localhost:3002/api/v1/*
+                     │
+                     ▼
+                     
+                     BACKEND LAYER
+              (NestJS API on Port 3002)
+              
+        ┌─────────────────────────────────────────────────┐
+        │                                                 │
+        │  apps/api (NestJS)                             │
+        │  Port 3002 ✓                                   │
+        │                                                 │
+        │  ┌─────────────────────────────────────────┐   │
+        │  │ Authentication Module                   │   │
+        │  │ ├── POST /api/v1/auth/login            │   │
+        │  │ ├── POST /api/v1/auth/register         │   │
+        │  │ ├── GET  /api/v1/auth/me               │   │
+        │  │ └── POST /api/v1/auth/logout           │   │
+        │  └─────────────────────────────────────────┘   │
+        │                                                 │
+        │  ┌─────────────────────────────────────────┐   │
+        │  │ Sales Engagement (M08)                  │   │
+        │  │ ├── GET  /api/v1/sales-engagement/*    │   │
+        │  │ ├── POST /api/v1/sales-engagement/*    │   │
+        │  │ ├── PATCH /api/v1/sales-engagement/*   │   │
+        │  │ └── DELETE /api/v1/sales-engagement/*  │   │
+        │  └─────────────────────────────────────────┘   │
+        │                                                 │
+        │  ┌─────────────────────────────────────────┐   │
+        │  │ Conversation Intelligence (M02)         │   │
+        │  │ ├── GET /api/v1/conversation-*         │   │
+        │  │ ├── GET /api/v1/call-reviews/*         │   │
+        │  │ └── GET /api/v1/scorecards/*           │   │
+        │  └─────────────────────────────────────────┘   │
+        │                                                 │
+        │  ┌─────────────────────────────────────────┐   │
+        │  │ Forecasting (M06)                       │   │
+        │  │ ├── GET /api/v1/forecasting/periods    │   │
+        │  │ ├── GET /api/v1/forecasting/board      │   │
+        │  └─────────────────────────────────────────┘   │
+        │                                                 │
+        │  ┌─────────────────────────────────────────┐   │
+        │  │ RBAC & Auth Guards                      │   │
+        │  │ ├── JWT Validation                      │   │
+        │  │ ├── Role Verification (Manager/Rep)    │   │
+        │  │ └── Permission Checks                   │   │
+        │  └─────────────────────────────────────────┘   │
+        │                                                 │
+        └────────┬───────────────────────┬────────────────┘
+                 │                       │
+                 ▼                       ▼
+                 
+            DATABASE            CACHE LAYER
+         PostgreSQL            Redis
+         Port 5438             Port 6379
+         
+         ┌──────────────┐     ┌──────────────┐
+         │ - Users      │     │ - Sessions   │
+         │ - Tasks      │     │ - Tokens     │
+         │ - Calls      │     │ - Cache      │
+         │ - Reviews    │     │ - Queues     │
+         │ - Forecasts  │     │              │
+         └──────────────┘     └──────────────┘
+
+================================================================================
+                        TOKEN FLOW DIAGRAM
+================================================================================
+
+                            MANAGER LOGIN
+                         
+        1. Frontend sends credentials
+           ┌─────────────────────────────────────────────┐
+           │ POST /api/v1/auth/login                     │
+           │ {                                           │
+           │   "email": "alex.morgan@relanto.com",      │
+           │   "password": "Password123!",              │
+           │   "tenantSlug": "relanto"                  │
+           │ }                                           │
+           └──────────────┬──────────────────────────────┘
+                          │
+                          ▼
+        2. Backend validates & generates token
+           ┌─────────────────────────────────────────────┐
+           │ Backend Response (200 OK)                   │
+           │ {                                           │
+           │   "success": true,                          │
+           │   "data": {                                 │
+           │     "accessToken": "eyJ...",               │
+           │     "refreshToken": "refresh...",          │
+           │     "user": {                               │
+           │       "id": "uuid",                         │
+           │       "email": "alex.morgan@...",          │
+           │       "role": "MANAGER"                     │
+           │     }                                       │
+           │   }                                         │
+           │ }                                           │
+           └──────────────┬──────────────────────────────┘
+                          │
+                          ▼
+        3. Postman Test Script Extracts & Stores Token
+           ┌─────────────────────────────────────────────┐
+           │ pm.collectionVariables.set('accessToken',   │
+           │   jsonData.data.accessToken)                │
+           │                                             │
+           │ {{accessToken}} = "eyJ..."                  │
+           └──────────────┬──────────────────────────────┘
+                          │
+                          ▼
+        4. Use Token in Subsequent Requests
+           ┌─────────────────────────────────────────────┐
+           │ GET /api/v1/sales-engagement/tasks          │
+           │                                             │
+           │ Headers: {                                  │
+           │   "Authorization": "Bearer {{accessToken}}" │
+           │ }                                           │
+           │                                             │
+           │ Postman substitutes with actual token:      │
+           │ "Authorization": "Bearer eyJ..."            │
+           └──────────────┬──────────────────────────────┘
+                          │
+                          ▼
+        5. Backend Verifies Token & Returns Data
+           ┌─────────────────────────────────────────────┐
+           │ ✓ Validate JWT signature                    │
+           │ ✓ Check expiration (600 seconds)            │
+           │ ✓ Extract user ID and role                  │
+           │ ✓ Check permissions (MANAGER role)          │
+           │ ✓ Return filtered data                      │
+           │                                             │
+           │ Response (200 OK):                          │
+           │ {                                           │
+           │   "success": true,                          │
+           │   "data": [                                 │
+           │     { "id": "task-1", "title": "..." },    │
+           │     { "id": "task-2", "title": "..." }      │
+           │   ]                                         │
+           │ }                                           │
+           └─────────────────────────────────────────────┘
+
+================================================================================
+                    ROLE-BASED API ACCESS
+================================================================================
+
+MANAGER (alex.morgan@relanto.com)
+├── Sales Engagement APIs ✓ (Can view all tasks)
+├── Conversation Intelligence ✓ (Can see all calls & reviews)
+├── Forecasting ✓ (Can access forecasts & boards)
+└── Reports ✓ (Manager-level reports)
+
+SALES_REP (sarah.chen@relanto.com)
+├── Sales Engagement APIs ✓ (Can view own tasks)
+├── Conversation Intelligence ✓ (Can see own calls)
+├── Forecasting ✗ (Not typically available)
+└── Reports ✗ (Limited reporting)
+
+API STRUCTURE:
+             
+Request with Manager Token {{accessToken}}
+    ↓
+Backend Validates JWT & Extracts Role = "MANAGER"
+    ↓
+Routes decorated with @Roles('MANAGER', 'SALES_REP')
+    ↓
+Role matches → Allow Access ✓
+    ↓
+Return Data
+
+Request with Sales Rep Token {{repAccessToken}}
+    ↓
+Backend Validates JWT & Extracts Role = "SALES_REP"
+    ↓
+Routes decorated with @Roles('MANAGER', 'SALES_REP')
+    ↓
+Role matches → Allow Access ✓
+    ↓
+Return Data (filtered by user's own records)
+
+Request with Invalid Token or No Token
+    ↓
+JWT Validation Fails
+    ↓
+Return 401 Unauthorized ✗
+
+================================================================================
+              POSTMAN COLLECTION EXECUTION FLOW
+================================================================================
+
+                    Collection Runner Execution
+                    
+┌─────────────────────────────────────────────────────────────┐
+│ START: Press "Run" Button                                   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 1. POST /auth/login - Manager                               │
+│    → Sets {{accessToken}}                                    │
+│    → Sets {{userId}}                                         │
+│    → Sets {{refreshToken}}                                   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. POST /auth/login - Sales Rep                             │
+│    → Sets {{repAccessToken}}                                │
+│    → Sets {{repUserId}}                                      │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 3-6. Authentication Tests (Register, Me, Logout)            │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 7-13. Sales Engagement Tests (M08)                          │
+│       All use {{accessToken}} (Manager)                     │
+│       └─ Sets {{taskId}} from create response               │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 14-17. Conversation Intelligence Tests (M02)                │
+│        All use {{accessToken}} (Manager)                    │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 18-19. Forecasting Tests (M06)                              │
+│        All use {{accessToken}} (Manager)                    │
+│        └─ Sets {{periodId}} from periods response           │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 20-23. RBAC Permission Tests                                │
+│        ✓ Test Manager access (expect 200)                   │
+│        ✓ Test Sales Rep access (expect 200)                │
+│        ✓ Test invalid token (expect 401)                    │
+│        ✓ Test no token (expect 401)                         │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ FINISH: All 22 Requests Complete                            │
+│ Result: 22 Passed ✅ | 0 Failed | ~15 seconds              │
+└─────────────────────────────────────────────────────────────┘
+
+================================================================================
+                    PORT CONFIGURATION (FINAL)
+================================================================================
+
+    LOCAL DEVELOPMENT SETUP
+
+┌──────────────────────────┐
+│ Frontend Next.js         │
+│ Port: 3000 ✓             │
+│                          │
+│ Calls:                   │
+│ http://localhost:3002    │
+│ /api/v1/*                │
+│                          │
+│ .env.local:              │
+│ NEXT_PUBLIC_API_BASE_URL │
+│ =http://localhost:3002 ✓ │
+└──────────────────────────┘
+            │
+            │ http://localhost:3002
+            │
+            ▼
+┌──────────────────────────┐         ┌──────────────────┐
+│ Backend NestJS API       │────────→│ PostgreSQL       │
+│ Port: 3002 ✓             │         │ Port: 5438       │
+│                          │         │ relanto          │
+│ .env:                    │         └──────────────────┘
+│ PORT=3002 ✓              │
+│ NEXT_PUBLIC_API_BASE_URL │         ┌──────────────────┐
+│ =http://localhost:3002 ✓ │────────→│ Redis            │
+│                          │         │ Port: 6379       │
+│ Routes:                  │         │ Session cache    │
+│ /api/v1/auth/*           │         └──────────────────┘
+│ /api/v1/sales-*          │
+│ /api/v1/conversation-*   │         ┌──────────────────┐
+│ /api/v1/forecasting/*    │────────→│ Postman Tests    │
+└──────────────────────────┘         │ Port: 3002 ✓     │
+                                     │ 22 requests      │
+                                     │ All automated    │
+                                     └──────────────────┘
+
+================================================================================
+                  VARIABLE PERSISTENCE FLOW
+================================================================================
+
+Postman Collection Variables (Persist for Entire Run):
+
+1. baseUrl
+   ├─ Initial: http://localhost:3002
+   └─ Used: Every request's {{baseUrl}} placeholder
+
+2. accessToken
+   ├─ Set: After "Manager Login" test script
+   ├─ Stored: JWT token string
+   ├─ Used: All Manager API requests
+   └─ Cleared: After logout (optional)
+
+3. repAccessToken
+   ├─ Set: After "Sales Rep Login" test script
+   ├─ Stored: JWT token string (different from manager)
+   ├─ Used: All Sales Rep API requests
+   └─ Cleared: After logout (optional)
+
+4. taskId
+   ├─ Set: After "Create Task" test script
+   ├─ Stored: Task UUID from response
+   ├─ Used: In GET/PATCH/DELETE task requests
+   └─ Example: /tasks/{{taskId}}/detail
+
+5. periodId
+   ├─ Set: After "Get Periods" test script
+   ├─ Stored: Period UUID from response
+   ├─ Used: In GET /periods/{{periodId}}/board
+   └─ Example: /forecasting/periods/{{periodId}}/board
+
+All variables available for subsequent requests in same run.
+
+================================================================================

@@ -30,7 +30,7 @@ import type {
   PdfExportResponse,
 } from '../types/calls.types';
 
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 
 // ─── Config (M01 bridge @ /api/v1/capture-transcription/calls) ───────────────────────
@@ -40,9 +40,9 @@ import { getBridgeHeaders } from '@shared/lib/backend-headers';
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   let fullUrl = '';
   if (url.startsWith('/api/v1/')) {
-    fullUrl = `${resolveApiBase()}${url}`;
+    fullUrl = `${getBackendUrl()}${url}`;
   } else {
-    fullUrl = `${resolveApiBase()}/api/v1/capture-transcription${url.substring(4)}`;
+    fullUrl = `${getBackendUrl()}/api/v1/capture-transcription${url.substring(4)}`;
   }
   const res = await fetch(fullUrl, {
     ...options,

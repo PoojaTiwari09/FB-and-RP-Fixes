@@ -1,4 +1,4 @@
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 
 /** LLM keys are server-side only (Next.js API routes). */
 export function hasServerLlmKeys(): boolean {
@@ -54,7 +54,7 @@ export async function createLiveCallDbSession(body: {
   clientName?: string;
   sessionName?: string;
 }) {
-  const res = await fetch(`${resolveApiBase()}/api/v1/capture-transcription/smart-call/sessions/${body.sessionId}/persist`, {
+  const res = await fetch(`${getBackendUrl()}/api/v1/capture-transcription/smart-call/sessions/${body.sessionId}/persist`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'start', ...body }),
@@ -68,7 +68,7 @@ export async function storeLiveCallChunk(
   sessionId: string,
   chunk: Record<string, unknown>,
 ) {
-  await fetch(`${resolveApiBase()}/api/v1/capture-transcription/smart-call/sessions/${sessionId}/chunks`, {
+  await fetch(`${getBackendUrl()}/api/v1/capture-transcription/smart-call/sessions/${sessionId}/chunks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(chunk),
@@ -85,7 +85,7 @@ export async function completeLiveCallDbSession(
     transcript?: unknown[];
   },
 ) {
-  await fetch(`${resolveApiBase()}/api/v1/capture-transcription/smart-call/sessions/${sessionId}/persist`, {
+  await fetch(`${getBackendUrl()}/api/v1/capture-transcription/smart-call/sessions/${sessionId}/persist`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'complete', ...body }),

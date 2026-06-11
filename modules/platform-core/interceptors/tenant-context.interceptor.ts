@@ -7,7 +7,10 @@ export class TenantContextInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     // We can pull tenantId from req.user (JWT) or headers (for internal bypass)
-    const tenantId = request.user?.tenantId || request.headers['x-tenant-id'] || request.headers['tenant-id'];
+    const allowDevHeaders = process.env.ALLOW_DEV_HEADER_AUTH === 'true';
+    const tenantId =
+      request.user?.tenantId ||
+      (allowDevHeaders ? request.headers['x-tenant-id'] || request.headers['tenant-id'] : undefined);
     
     if (tenantId) {
       return new Observable((subscriber) => {

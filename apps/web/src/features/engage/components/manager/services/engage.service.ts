@@ -1,9 +1,9 @@
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 
 import { ENV } from '@shared/config/env';
 import { getBridgeHeaders } from '@shared/lib/backend-headers';
 
-const API_BASE = resolveApiBase() + '/api/v1/sales-engagement';
+const API_BASE = getBackendUrl() + '/api/v1/sales-engagement';
 import type { Task, FilterState, TaskType, SortOption, GroupByOption, StatusTab } from '../types/engage.types';
 
 // Normalize backend field names to match frontend Task model

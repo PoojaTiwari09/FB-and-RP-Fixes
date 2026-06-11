@@ -11,6 +11,10 @@
 | `m08-sales-engagement/services/m08.service.ts` — `fetchTeamMembers` | 418 | ✅ Fixed (`tenantid`) |
 | `m08-sales-engagement/services/m08.service.ts` — `fetchManagerTasks` | 278 | ✅ Fixed (`tenantid`) |
 | `m08-sales-engagement/services/m08.service.ts` — `fetchSummary` | 378 | ✅ Fixed (`tenantid`) |
+| M02 services (`tracker`, `translation`, `vocabulary-correction`, `m02-frontend-*`, `m02.repository`) | all | ✅ Fixed (`tenantid` in Prisma `where`/`data`) |
+| `m03-ai-summaries-genai/repositories/m03.repository.ts` | all | ✅ Fixed |
+| `m01-capture-transcription/services/ai-extractor.service.ts` | all | ✅ Fixed |
+| `m03-ai-summaries-genai/controllers/m03-test.controller.ts` | all | ✅ Fixed |
 
 ---
 

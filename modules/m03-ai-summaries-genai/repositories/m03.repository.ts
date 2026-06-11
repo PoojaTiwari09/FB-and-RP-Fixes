@@ -20,7 +20,7 @@ export class M03AiSummariesGenaiRepository {
     const delegate = this.aiBriefDelegate();
     if (delegate?.findMany) {
       return delegate.findMany({
-        where: { tenantId },
+        where: { tenantid: tenantId },
         orderBy: { updatedAt: 'desc' },
         take: 50,
       });
@@ -31,7 +31,7 @@ export class M03AiSummariesGenaiRepository {
   async create(data: { tenantId: string; briefType?: string; entityId?: string; generatedSummary?: string }) {
     const row = {
       id: randomUUID(),
-      tenantId: data.tenantId,
+      tenantid: data.tenantId,
       briefType: data.briefType || 'account',
       entityId: data.entityId || 'unknown',
       generatedSummary: data.generatedSummary || null,
@@ -47,8 +47,8 @@ export class M03AiSummariesGenaiRepository {
       try {
         return await delegate.upsert({
           where: {
-            tenantId_briefType_entityId: {
-              tenantId: row.tenantId,
+            tenantid_briefType_entityId: {
+              tenantid: row.tenantid ?? row.tenantId,
               briefType: row.briefType,
               entityId: row.entityId,
             },
@@ -84,7 +84,7 @@ export class M03AiSummariesGenaiRepository {
       try {
         const row = await delegate.findUnique({
           where: {
-            tenantId_briefType_entityId: { tenantId: tid, briefType, entityId },
+            tenantid_briefType_entityId: { tenantid: tid, briefType, entityId },
           },
         });
         if (row) return this.mapBrief(row);
@@ -133,7 +133,7 @@ export class M03AiSummariesGenaiRepository {
     const delegate = this.chatDelegate();
     if (delegate?.findMany) {
       return delegate.findMany({
-        where: { tenantId },
+        where: { tenantid: tenantId },
         orderBy: { createdAt: 'desc' },
         take: limit,
       });
@@ -152,7 +152,7 @@ export class M03AiSummariesGenaiRepository {
   }) {
     const row = {
       id: randomUUID(),
-      tenantId: params.tenantId,
+      tenantid: params.tenantId,
       userId: params.userId,
       question: params.question,
       answer: params.answer,
@@ -222,7 +222,7 @@ export class M03AiSummariesGenaiRepository {
     const [callRecords, accounts, deals, m10Contacts] = await Promise.all([
       prisma.callRecord?.findMany
         ? prisma.callRecord.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { callDate: 'desc' },
             take: 50,
             include: { transcript: true },
@@ -230,14 +230,14 @@ export class M03AiSummariesGenaiRepository {
         : [],
       prisma.account?.findMany
         ? prisma.account.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { updatedAt: 'desc' },
             take: 50,
           })
         : [],
       prisma.deal?.findMany
         ? prisma.deal.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { updatedAt: 'desc' },
             take: 50,
             include: { account: true },
@@ -245,7 +245,7 @@ export class M03AiSummariesGenaiRepository {
         : [],
       prisma.m10Contact?.findMany
         ? prisma.m10Contact.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { updatedAt: 'desc' },
             take: 50,
           })

@@ -35,7 +35,7 @@ export class TopicManagementService {
     if (topicPayload.linkedTrackerId && topicPayload.keywords && topicPayload.keywords.length > 0) {
       try {
         const tracker = await this.prisma.m02Tracker.findUnique({
-          where: { id: topicPayload.linkedTrackerId, tenantId },
+          where: { id: topicPayload.linkedTrackerId, tenantid: tenantId },
         });
 
         if (tracker) {

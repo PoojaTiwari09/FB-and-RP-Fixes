@@ -51,7 +51,8 @@ export class TrackerService {
       TrackerService.memTrackers.push(created);
       return created;
     }
-    return this.trackerDelegate.create({ data });
+    const { tenantId, ...rest } = data;
+    return this.trackerDelegate.create({ data: { ...rest, tenantid: tenantId } });
   }
 
   async getTrackers(tenantId: string) {
@@ -61,7 +62,7 @@ export class TrackerService {
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     }
     return this.trackerDelegate.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -75,7 +76,7 @@ export class TrackerService {
       TrackerService.memTrackers[idx] = { ...TrackerService.memTrackers[idx], ...data };
       return TrackerService.memTrackers[idx];
     }
-    return this.trackerDelegate.update({ where: { id, tenantId }, data });
+    return this.trackerDelegate.update({ where: { id, tenantid: tenantId }, data });
   }
 
   async deleteTracker(id: string, tenantId: string) {
@@ -86,7 +87,7 @@ export class TrackerService {
       );
       return { success: TrackerService.memTrackers.length < before };
     }
-    return this.trackerDelegate.delete({ where: { id, tenantId } });
+    return this.trackerDelegate.delete({ where: { id, tenantid: tenantId } });
   }
 
   async addKeywordsToTracker(trackerId: string, tenantId: string, keywords: string[]) {
@@ -99,12 +100,12 @@ export class TrackerService {
       return t;
     }
     const tracker = await this.trackerDelegate.findUnique({
-      where: { id: trackerId, tenantId },
+      where: { id: trackerId, tenantid: tenantId },
     });
     if (!tracker) throw new Error('Tracker not found');
     const newKeywords = Array.from(new Set([...tracker.keywords, ...keywords]));
     return this.trackerDelegate.update({
-      where: { id: trackerId, tenantId },
+      where: { id: trackerId, tenantid: tenantId },
       data: { keywords: newKeywords },
     });
   }
@@ -125,7 +126,7 @@ export class TrackerService {
       return [];
     }
     const trackers = await this.trackerDelegate.findMany({
-      where: { tenantId, isActive: true },
+      where: { tenantid: tenantId, isActive: true },
     });
 
     if (trackers.length === 0) {
@@ -185,7 +186,8 @@ export class TrackerService {
     }
 
     if (detections.length > 0 && this.detectionDelegate?.createMany) {
-      await this.detectionDelegate.createMany({ data: detections, skipDuplicates: true });
+      const rows = detections.map(({ tenantId: tid, ...d }) => ({ ...d, tenantid: tid }));
+      await this.detectionDelegate.createMany({ data: rows, skipDuplicates: true });
     } else if (detections.length > 0) {
       TrackerService.memDetections.push(...detections);
     }
@@ -299,7 +301,7 @@ export class TrackerService {
       );
     }
     return this.detectionDelegate.findMany({
-      where: { tenantId, entityId, entityType },
+      where: { tenantid: tenantId, entityId, entityType },
       include: { tracker: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -310,7 +312,7 @@ export class TrackerService {
       return TrackerService.memDetections.filter((d) => d.tenantId === tenantId);
     }
     return this.detectionDelegate.findMany({
-      where: { tenantId },
+      where: { tenantid: tenantId },
       include: { tracker: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -336,12 +338,11 @@ export class TrackerService {
     }
 
     const [totalTrackers, activeTrackers, totalDetections, detectionsThisMonth] = await Promise.all([
-      trackerD.count({ where: { tenantId } }),
-      trackerD.count({ where: { tenantId, isActive: true } }),
-      detectionD.count({ where: { tenantId } }),
+      trackerD.count({ where: { tenantid: tenantId } }),
+      trackerD.count({ where: { tenantid: tenantId, isActive: true } }),
+      detectionD.count({ where: { tenantid: tenantId } }),
       detectionD.count({
-        where: {
-          tenantId,
+        where: { tenantid: tenantId,
           createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
         },
       }),

@@ -1,0 +1,188 @@
+================================================================================
+                    POSTMAN COLLECTION - QUICK START
+================================================================================
+
+✅ FIXES APPLIED:
+  • Frontend .env.local: Changed port 3001 → 3002
+  • Postman collection: Already configured correctly for port 3002
+  • Backend environment: Confirmed running on port 3002
+
+================================================================================
+                          PORT CONFIGURATION
+================================================================================
+
+Backend API:      http://localhost:3002  ✓
+Frontend (Next):  http://localhost:3000  ✓
+Postman tests:    Target http://localhost:3002  ✓
+
+================================================================================
+                       HOW TOKEN FLOW WORKS
+================================================================================
+
+1. POST /auth/login → Backend returns accessToken
+2. Test script automatically stores token in {{accessToken}} variable
+3. All next requests use {{accessToken}} in Authorization header
+4. Tokens persist for entire test run
+
+MANAGER TOKEN:     {{accessToken}} (set by Manager login)
+SALES REP TOKEN:   {{repAccessToken}} (set by Sales Rep login)
+
+================================================================================
+                       TO RUN COMPLETE TEST
+================================================================================
+
+STEP 1: Start Backend (Terminal)
+  $ cd apps/api
+  $ npm run dev
+  Wait for: "Listening on port 3002"
+
+STEP 2: Start Database (Terminal)
+  $ docker-compose up -d postgres redis
+
+STEP 3: Open Postman
+  • Import: postman_collection_updated.json
+  • Collection > Variables tab
+  • Verify baseUrl = http://localhost:3002
+
+STEP 4: Run Collection
+  • Click "Collection Runner" button (top-left)
+  • Select collection
+  • Click "Run"
+  
+Expected: All 22 requests show ✅ GREEN
+
+================================================================================
+                    WHAT GETS TESTED (22 REQUESTS)
+================================================================================
+
+AUTHENTICATION (5 tests):
+  ✓ Manager Login      → stores {{accessToken}}
+  ✓ Sales Rep Login    → stores {{repAccessToken}}
+  ✓ Register User
+  ✓ Get Current User
+  ✓ Logout
+
+MANAGER APIs - SALES ENGAGEMENT (7 tests):
+  ✓ List Tasks
+  ✓ Task Summary
+  ✓ Recent Activity
+  ✓ Create Task         → stores {{taskId}}
+  ✓ Get Task Detail
+  ✓ Update Task
+  ✓ Mark Task Complete
+
+MANAGER APIs - CONVERSATION INTELLIGENCE (4 tests):
+  ✓ Filter Options
+  ✓ Search Calls
+  ✓ Call Reviews
+  ✓ Scorecards
+
+MANAGER APIs - FORECASTING (2 tests):
+  ✓ List Periods
+  ✓ Forecast Board
+
+PERMISSION TESTS (4 tests):
+  ✓ Manager can access Sales Engagement
+  ✓ Sales Rep can access Sales Engagement
+  ✓ Invalid token returns 401
+  ✓ No token returns 401
+
+Total: 22 requests all automated with token flow
+
+================================================================================
+                      LOGIN CREDENTIALS (TEST DATA)
+================================================================================
+
+MANAGER:
+  Email:    alex.morgan@relanto.com
+  Password: Password123!
+  Role:     MANAGER
+  Token:    {{accessToken}}
+
+SALES REP:
+  Email:    sarah.chen@relanto.com
+  Password: Password123!
+  Role:     SALES_REP
+  Token:    {{repAccessToken}}
+
+================================================================================
+                     VERIFY TOKEN IS WORKING
+================================================================================
+
+After running ANY request:
+
+1. Look at "Authorization" header
+   Should show: Bearer <actual-token-value>
+
+2. Check Postman Variables tab
+   {{accessToken}} should be filled with token string
+
+3. Look at test results
+   Green ✅ = Tests passed
+   Red ❌ = Check Authorization header
+
+If 401 Unauthorized:
+  • Login request may have failed
+  • Check test script output in login response
+  • Try login again manually first
+
+================================================================================
+                    TROUBLESHOOTING
+================================================================================
+
+ERROR: ECONNREFUSED 127.0.0.1:3002
+FIX: Backend not running
+  $ cd apps/api && npm run dev
+
+ERROR: 401 Unauthorized on all requests
+FIX: Token not extracted or expired
+  • Run login request first
+  • Check Variables tab - {{accessToken}} should be filled
+  • Look at "Tests" tab in login response for green checkmarks
+
+ERROR: 404 Not Found
+FIX: Endpoint doesn't exist or wrong port
+  • Verify baseUrl = http://localhost:3002 in Variables
+  • Check backend logs for route registration
+  • Verify backend is running and port is 3002
+
+ERROR: No data returned
+FIX: Database might be empty
+  • Create data first using POST requests
+  • Or check database has test data seeded
+
+================================================================================
+                   TEST FLOW SEQUENCE
+================================================================================
+
+For complete end-to-end testing (single Collection Runner):
+
+1. Manager Login
+2. Manager API Tests (Engagement, Intelligence, Forecasting)
+3. Sales Rep Login
+4. Sales Rep API Tests
+5. Permission Verification Tests
+
+All tokens managed automatically through collection variables.
+
+================================================================================
+                    FILES REFERENCED
+================================================================================
+
+Main Collection:  postman_collection_updated.json (922 lines)
+Complete Guide:   COMPLETE_TESTING_GUIDE.md (detailed explanation)
+Fixes Applied:    FIXES_APPLIED.md (what was changed and why)
+This File:        QUICK_START.txt (this reference)
+
+================================================================================
+                   ENVIRONMENT VERIFICATION
+================================================================================
+
+✓ Backend .env:       PORT=3002
+✓ Backend .env:       NEXT_PUBLIC_API_BASE_URL=http://localhost:3002
+✓ Frontend .env.local: NEXT_PUBLIC_API_BASE_URL=http://localhost:3002
+✓ Postman collection:  baseUrl = http://localhost:3002
+
+All configured correctly - ready to test!
+
+================================================================================

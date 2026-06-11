@@ -45,9 +45,12 @@ export function createAppMiddleware() {
     const { pathname } = request.nextUrl;
     const role = getRole(request);
 
+    const hasToken =
+      request.cookies.get('access_token')?.value ||
+      request.cookies.get('rbac_token')?.value;
     const hasRole = request.cookies.get('user_role')?.value;
 
-    if (!hasRole && !pathname.startsWith('/login')) {
+    if ((!hasToken || !hasRole) && !pathname.startsWith('/login')) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 

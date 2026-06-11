@@ -15,10 +15,10 @@ export type ReviewData = any;
 export type FeedbackData = any;
 export type CoachingInsights = any;
 
-import { resolveApiBase } from '@shared/config/module-api';
+import { getBackendUrl } from '@shared/config/module-api';
 
 const BASE_URL = () => {
-  return `${resolveApiBase()}/api/v1/capture-transcription`;
+  return `${getBackendUrl()}/api/v1/capture-transcription`;
 };
 
 function unwrapApiPayload<T>(json: Record<string, unknown>): T {
@@ -26,6 +26,17 @@ function unwrapApiPayload<T>(json: Record<string, unknown>): T {
     throw new Error(String(json.error));
   }
   if (json.data !== undefined) {
+    const data = json.data as Record<string, unknown>;
+    // M01 list responses may nest { calls, pagination } under data.data
+    if (data.data && typeof data.data === 'object') {
+      const nested = data.data as Record<string, unknown>;
+      if (nested.calls && nested.pagination) {
+        return { calls: nested.calls, pagination: nested.pagination } as T;
+      }
+    }
+    if (data.calls && data.pagination) {
+      return data as T;
+    }
     return json.data as T;
   }
   if (Array.isArray(json.calls) && json.totalCount !== undefined) {

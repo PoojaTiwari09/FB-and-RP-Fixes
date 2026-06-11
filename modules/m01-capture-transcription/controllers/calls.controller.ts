@@ -108,6 +108,12 @@ export class CallsController {
     return this.svc.searchWithinCall(id, req.tenantId, parsed);
   }
 
+  // ── GET /calls/:id/notes — list notes (CT-22) ─────────────────────────
+  @Get('calls/:id/notes')
+  listNotes(@Param('id') id: string, @Req() req: Record<string, string>) {
+    return this.svc.listNotes(id, req.tenantId, req.userId);
+  }
+
   // ── POST /calls/:id/notes — create note (CT-22) ───────────────────────
   @Post('calls/:id/notes')
   createNote(@Param('id') id: string, @Body() body: unknown, @Req() req: Record<string, string>) {

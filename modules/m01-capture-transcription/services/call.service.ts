@@ -157,6 +157,18 @@ export class CallService {
   }
 
   // ── CT-22: Notes ──────────────────────────────────────────────────────
+  async listNotes(callId: string, tenantId: string, authorId?: string) {
+    const rows = await this.notes.findByCallId(callId, tenantId, authorId);
+    return rows.map((n) => ({
+      noteId: n.id,
+      callId: n.callId,
+      note: n.content,
+      userId: n.authorId,
+      timestamp: n.createdAt.toISOString(),
+      createdAt: n.createdAt.toISOString(),
+    }));
+  }
+
   async createNote(callId: string, tenantId: string, authorId: string, dto: CreateNoteDto) {
     return this.notes.create(callId, tenantId, authorId, dto);
   }

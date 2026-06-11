@@ -1,103 +1,101 @@
 ﻿import { PrismaClient } from '../node_modules/.prisma/client';
+import * as bcrypt from 'bcryptjs';
 import { seedEngageData } from './seed-engage';
 
 const prisma = new PrismaClient();
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const TENANT_SLUG = 'relanto';
+const DEFAULT_PASSWORD = 'Password123!';
 
 async function main() {
   console.log('--- Database Seeding Started ---');
 
-  // 1. Seed Tenant
+  const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+
   console.log('Seeding Tenant...');
-  const tenant = await prisma.tenant.upsert({
+  await prisma.tenant.upsert({
     where: { id: TENANT_ID },
-    update: {},
+    update: { name: 'Relanto', slug: TENANT_SLUG, status: 'ACTIVE' },
     create: {
       id: TENANT_ID,
-      name: 'Default Tenant',
-      slug: 'default',
+      name: 'Relanto',
+      slug: TENANT_SLUG,
+      status: 'ACTIVE',
     },
   });
 
-  // 2. Seed Users
   console.log('Seeding Users...');
   const usersToSeed = [
     {
       id: '00000000-0000-0000-0000-000000000001',
-      email: 'admin@company.com',
+      email: 'admin@relanto.com',
       name: 'Admin User',
       role: 'ADMIN',
-      passwordHash: 'admin_hash',
     },
     {
-      id: 'me',
-      email: 'alex.morgan@relanto.ai',
+      id: '22222222-2222-2222-2222-222222222222',
+      email: 'alex.morgan@relanto.com',
       name: 'Alex Morgan',
-      role: 'SALES_REP',
-      passwordHash: 'alex_hash',
+      role: 'MANAGER',
     },
     {
-      id: 'sarah',
-      email: 'sarah.chen@company.com',
+      id: '33333333-3333-3333-3333-333333333333',
+      email: 'sarah.chen@relanto.com',
       name: 'Sarah Chen',
       role: 'SALES_REP',
-      passwordHash: 'sarah_hash',
     },
     {
-      id: 'michael',
-      email: 'michael.rod@company.com',
+      id: '44444444-4444-4444-4444-444444444444',
+      email: 'michael.rod@relanto.com',
       name: 'Michael Rodriguez',
       role: 'SALES_REP',
-      passwordHash: 'michael_hash',
     },
     {
-      id: 'jennifer',
-      email: 'jennifer.kim@company.com',
-      name: 'Jennifer Kim',
-      role: 'MANAGER',
-      passwordHash: 'jennifer_hash',
-    },
-    {
-      id: 'david',
-      email: 'david.park@company.com',
+      id: '55555555-5555-5555-5555-555555555555',
+      email: 'david.park@relanto.com',
       name: 'David Park',
       role: 'SALES_REP',
-      passwordHash: 'david_hash',
     },
     {
-      id: 'emily',
-      email: 'emily.thompson@company.com',
-      name: 'Emily Thompson',
+      id: '66666666-6666-6666-6666-666666666666',
+      email: 'sujeevan@relanto.com',
+      name: 'Sujeevan',
       role: 'SALES_REP',
-      passwordHash: 'emily_hash',
     },
-  ];
+  ] as const;
 
   for (const u of usersToSeed) {
     await prisma.user.upsert({
-      where: { tenantId_email: { tenantId: TENANT_ID, email: u.email } },
-      update: { name: u.name, role: u.role as any },
-      create: {
-        id: u.id,
-        tenantId: TENANT_ID,
+      where: { id: u.id },
+      update: {
+        tenantid: TENANT_ID,
         email: u.email,
         name: u.name,
-        role: u.role as any,
-        passwordHash: u.passwordHash,
+        role: u.role,
+        passwordHash,
+        status: 'ACTIVE',
+      },
+      create: {
+        id: u.id,
+        tenantid: TENANT_ID,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        passwordHash,
+        status: 'ACTIVE',
       },
     });
   }
 
   await seedEngageData(prisma);
 
-  // 8. Seed CallRecords + Transcripts
   console.log('Seeding Call Records...');
   const callRecordsData = [
     {
       id: 'call_001',
       title: 'Discovery Call - Acme Corp Q2 Initiative',
-      callOwner: 'Sarah Chen',
+      callOwner: '33333333-3333-3333-3333-333333333333',
       accountId: 'Acme Corp',
       callDate: new Date('2026-05-14T10:00:00Z'),
       durationSeconds: 2723,
@@ -110,7 +108,7 @@ async function main() {
     {
       id: 'call_002',
       title: 'Product Demo - TechStart Solutions',
-      callOwner: 'Michael Rodriguez',
+      callOwner: '44444444-4444-4444-4444-444444444444',
       accountId: 'TechStart Solutions',
       callDate: new Date('2026-05-14T14:30:00Z'),
       durationSeconds: 3135,
@@ -127,7 +125,7 @@ async function main() {
       where: { id: c.id },
       update: c,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...c,
       },
     });
@@ -142,7 +140,6 @@ async function main() {
     });
   }
 
-  // 9. Seed Call Reviews
   console.log('Seeding Call Reviews...');
   const reviewsData = [
     {
@@ -195,7 +192,7 @@ async function main() {
       aiSummary: 'Michael delivered a solid product demo to TechStart Solutions.',
       keyHighlights: ['Strong product demonstration of core features'],
       talkRatio: { rep: 60, customer: 40 },
-      sentimentSummary: 'Mixed â€” positive on product, concern on pricing',
+      sentimentSummary: 'Mixed - positive on product, concern on pricing',
       sentimentScore: 58,
       risksDetected: ['Pricing objection unresolved'],
       actionItemsList: ['Send pricing proposal'],
@@ -224,7 +221,6 @@ async function main() {
     });
   }
 
-  // 10. Seed Training Scenarios
   console.log('Seeding Training Scenarios...');
   const scenariosToSeed = [
     {
@@ -233,7 +229,7 @@ async function main() {
       personadescription: 'Upset IT Executive dealing with downtime issues.',
       context: 'Client is upset about recent downtime and wants to cancel contract.',
       difficulty: 'advanced',
-      createdby: 'me',
+      createdby: '22222222-2222-2222-2222-222222222222',
     },
     {
       scenarioid: 'seed-scenario-2',
@@ -241,7 +237,7 @@ async function main() {
       personadescription: 'Procurement manager trying to negotiate 25% discount.',
       context: 'Prospect loves the tool but claims budget is tight.',
       difficulty: 'medium',
-      createdby: 'me',
+      createdby: '33333333-3333-3333-3333-333333333333',
     },
   ];
 
@@ -256,7 +252,7 @@ async function main() {
     });
   }
 
-  console.log('--- Database Seeding Completed Successfully ---');
+  console.log(`--- Database Seeding Completed (default password: ${DEFAULT_PASSWORD}) ---`);
 }
 
 main()

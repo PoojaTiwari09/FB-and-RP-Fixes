@@ -188,7 +188,7 @@ export class M02ConversationIntelligenceRepository {
       const callDelegate = this.callRecordDelegate;
       if (callDelegate?.findFirst) {
         const c = await callDelegate.findFirst({
-          where: { id, tenantId },
+          where: { id, tenantid: tenantId },
           include:
             callDelegate === (this.prisma as any).callRecord
               ? { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } }
@@ -199,7 +199,7 @@ export class M02ConversationIntelligenceRepository {
 
       const emailDelegate = this.emailDelegate;
       if (emailDelegate?.findFirst) {
-        const e = await emailDelegate.findFirst({ where: { id, tenantId } });
+        const e = await emailDelegate.findFirst({ where: { id, tenantid: tenantId } });
         if (e) return this.mapEmailToConversation(e);
       }
     } catch (err: any) {
@@ -219,7 +219,7 @@ export class M02ConversationIntelligenceRepository {
     try {
       const delegate = this.savedSearchDelegate;
       if (delegate?.findMany) {
-        const searches = await delegate.findMany({ where: { tenantId } });
+        const searches = await delegate.findMany({ where: { tenantid: tenantId } });
         if (searches.length > 0) {
           return searches.map((s: any) => ({
             id: s.id,
@@ -259,7 +259,7 @@ export class M02ConversationIntelligenceRepository {
       if (delegate?.create) {
         const newSearch = await delegate.create({
           data: {
-            tenantId,
+            tenantid: tenantId,
             userId,
             name: data.name,
             queryString: data.queryString || '',
@@ -268,7 +268,7 @@ export class M02ConversationIntelligenceRepository {
         });
         return {
           id: newSearch.id,
-          tenantId: newSearch.tenantId,
+          tenantId: newSearch.tenantid ?? newSearch.tenantId,
           userId: newSearch.userId,
           name: newSearch.name,
           queryString: newSearch.queryString || '',
@@ -304,7 +304,7 @@ export class M02ConversationIntelligenceRepository {
     try {
       const delegate = this.syncLogDelegate;
       if (delegate?.findMany) {
-        const logs = await delegate.findMany({ where: { tenantId } });
+        const logs = await delegate.findMany({ where: { tenantid: tenantId } });
         if (logs.length > 0) {
           return logs.map((l: any) => ({
             id: l.id,
@@ -343,7 +343,7 @@ export class M02ConversationIntelligenceRepository {
       if (delegate?.create) {
         const newLog = await delegate.create({
           data: {
-            tenantId,
+            tenantid: tenantId,
             entityType: data.entityType,
             entityId: data.entityId,
             syncStatus: 'COMPLETED',
@@ -353,7 +353,7 @@ export class M02ConversationIntelligenceRepository {
         });
         return {
           id: newLog.id,
-          tenantId: newLog.tenantId,
+          tenantId: newLog.tenantid ?? newLog.tenantId,
           entityType: newLog.entityType as 'transcript' | 'email',
           idempotencyKey: newLog.idempotencyKey,
           indexedAt: newLog.indexedAt?.toISOString?.(),
@@ -387,7 +387,7 @@ export class M02ConversationIntelligenceRepository {
     try {
       const isUnified = delegate === (this.prisma as any).callRecord;
       return await delegate.findMany({
-        where: { tenantId },
+        where: { tenantid: tenantId },
         ...(isUnified
           ? { include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } } }
           : {}),
@@ -405,7 +405,7 @@ export class M02ConversationIntelligenceRepository {
     const delegate = this.emailDelegate;
     if (!delegate?.findMany) return [];
     try {
-      return await delegate.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+      return await delegate.findMany({ where: { tenantid: tenantId }, orderBy: { createdAt: 'desc' } });
     } catch (err: any) {
       M02ConversationIntelligenceRepository.logger.warn(
         `findAllConversations.emails failed: ${err.message}`,
@@ -569,8 +569,7 @@ export class M02ConversationIntelligenceRepository {
       ];
 
       corpus.push({
-        id: `call-${100 + i}`,
-        tenantId,
+        id: `call-${100 + i}`, tenantid: tenantId,
         title,
         channel: 'call',
         customerName: `${company} Team`,
@@ -732,8 +731,7 @@ export class M02ConversationIntelligenceRepository {
       date.setHours(9 + (i % 8), 10 + (i % 40), 0, 0);
 
       corpus.push({
-        id: `email-${200 + i}`,
-        tenantId,
+        id: `email-${200 + i}`, tenantid: tenantId,
         title: subject,
         channel: 'email',
         customerName: `${company} Contact`,
@@ -772,8 +770,7 @@ export class M02ConversationIntelligenceRepository {
   private generateSampleSavedSearches(tenantId: string): any[] {
     return [
       {
-        id: 'saved-search-001',
-        tenantId,
+        id: 'saved-search-001', tenantid: tenantId,
         userId: M02ConversationIntelligenceRepository.DEV_SEED_USER_ID,
         name: 'Enterprise Pricing Calls',
         queryString: 'pricing volume discount',
@@ -782,8 +779,7 @@ export class M02ConversationIntelligenceRepository {
         updatedAt: '2026-05-18T12:00:00Z'
       },
       {
-        id: 'saved-search-002',
-        tenantId,
+        id: 'saved-search-002', tenantid: tenantId,
         userId: M02ConversationIntelligenceRepository.DEV_SEED_USER_ID,
         name: 'Negative Sentiment Alerts',
         queryString: '',
@@ -797,16 +793,14 @@ export class M02ConversationIntelligenceRepository {
   private generateSampleSyncLogs(tenantId: string): any[] {
     return [
       {
-        id: 'sync-log-001',
-        tenantId,
+        id: 'sync-log-001', tenantid: tenantId,
         entityType: 'transcript',
         lastSyncedAt: '2026-05-19T02:00:00Z',
         recordsSynced: 100,
         idempotencyKey: 'sync-1'
       },
       {
-        id: 'sync-log-002',
-        tenantId,
+        id: 'sync-log-002', tenantid: tenantId,
         entityType: 'email',
         lastSyncedAt: '2026-05-19T03:00:00Z',
         recordsSynced: 100,

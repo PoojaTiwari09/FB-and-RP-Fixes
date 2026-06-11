@@ -1,0 +1,326 @@
+================================================================================
+              TENANT ID MISMATCH - AUDIT & FIX SUMMARY
+================================================================================
+
+ISSUE FOUND: tenantid_audit.md implementation check
+STATUS: ✅ AUDIT COMPLETE - 41 locations identified for fixing
+SEVERITY: 🔴 CRITICAL - Will cause 500 errors in production
+
+================================================================================
+                          THE PROBLEM
+================================================================================
+
+Prisma Schema Field Name:     tenantid      (ALL LOWERCASE)
+Backend Code Uses:            tenantId      (CAMEL CASE)
+Result:                       PrismaClientValidationError → HTTP 500
+
+EXAMPLE:
+  ❌ BROKEN:  where: { tenantId }    // PrismaClientValidationError
+  ✅ CORRECT: where: { tenantid }    // Works correctly
+
+================================================================================
+                      AUDIT FINDINGS SUMMARY
+================================================================================
+
+TOTAL LOCATIONS TO FIX: 41
+TOTAL FILES TO FIX: 12
+
+BREAKDOWN:
+  🔴 CRITICAL (500 errors):         25 locations (6 files)
+  🟡 MEDIUM (silent wrong data):     8 locations (3 files)
+  🟢 LOW (test files only):          8 locations (3 files)
+
+================================================================================
+                    FILES NEEDING FIXES (PRIORITY)
+================================================================================
+
+PRIORITY 1 - CRITICAL (Production breaking)
+============================================
+
+1. m02-frontend-call-reviews.service.ts
+   Location: apps/api/src/modules/m02-conversation-intelligence/services/
+   Fixes Needed: 4 locations
+   Impact: Call review listing broken (500 errors)
+
+2. tracker.service.ts
+   Location: apps/api/src/modules/m02-conversation-intelligence/services/
+   Fixes Needed: 6 locations
+   Impact: Tracker queries broken (500 errors)
+
+3. m02-frontend-trackers.service.ts
+   Location: apps/api/src/modules/m02-conversation-intelligence/services/
+   Fixes Needed: 3 locations
+   Impact: Tracker frontend data broken (500 errors)
+
+4. translation.service.ts
+   Location: apps/api/src/modules/m02-conversation-intelligence/services/
+   Fixes Needed: 4 locations
+   Impact: Translation queries broken (500 errors)
+
+5. vocabulary-correction.service.ts
+   Location: apps/api/src/modules/m02-conversation-intelligence/services/
+   Fixes Needed: 4 locations
+   Impact: Vocabulary correction broken (500 errors)
+
+6. m02.repository.ts
+   Location: apps/api/src/modules/m02-conversation-intelligence/repositories/
+   Fixes Needed: 4 locations
+   Impact: Generic repository broken (500 errors)
+
+TOTAL PRIORITY 1: 6 files, 25 locations
+
+---
+
+PRIORITY 2 - MEDIUM (Silent data failures)
+===========================================
+
+7. m03.repository.ts
+   Location: apps/api/src/modules/m03-ai-summaries-genai/repositories/
+   Fixes Needed: 3 locations
+   Impact: Returns empty arrays instead of data
+
+8. ai-extractor.service.ts
+   Location: apps/api/src/modules/m01-capture-transcription/services/
+   Fixes Needed: 3 locations
+   Impact: Mixed - some protected, one will 500
+
+9. m03-test.controller.ts
+   Location: apps/api/src/modules/m03-ai-summaries-genai/controllers/
+   Fixes Needed: 2 locations
+   Impact: Health check endpoints will 500
+
+TOTAL PRIORITY 2: 3 files, 8 locations
+
+---
+
+PRIORITY 3 - LOW (Test files)
+==============================
+
+10. run-task-tests.ts
+    Location: apps/api/src/modules/m08-sales-engagement/tests/
+    Fixes Needed: 1 location
+
+11. run-tests.ts
+    Location: apps/api/src/modules/m08-sales-engagement/tests/
+    Fixes Needed: 2 locations
+
+12. run-workflow-tests.ts
+    Location: apps/api/src/modules/m08-sales-engagement/tests/
+    Fixes Needed: 2 locations
+
+TOTAL PRIORITY 3: 3 files, 5 locations
+
+---
+
+ALREADY FIXED: ✅ M08 m08.service.ts (3 locations correct)
+
+================================================================================
+                        FIX PATTERN
+================================================================================
+
+SIMPLE REPLACEMENT:
+  Find:    tenantId
+  Replace: tenantid
+
+SPECIFIC PATTERN (if needed):
+  Find:    where:\s*{\s*tenantId
+  Replace: where: { tenantid
+
+CONTEXTS WHERE FIX APPLIES:
+  ✅ where: { tenantId }
+  ✅ where: { tenantId, userId }
+  ✅ count({ where: { tenantId } })
+  ✅ findMany({ where: { tenantId } })
+  ✅ findUnique({ where: { tenantId } })
+
+CONTEXTS TO AVOID:
+  ❌ Comments mentioning tenantId (leave as-is)
+  ❌ Strings and documentation
+  ❌ Type annotations (leave as TypeScript naming)
+
+================================================================================
+                        IMPACT ANALYSIS
+================================================================================
+
+IF NOT FIXED:
+
+  Production Impact:
+    ❌ Any tenant-scoped query will return 500 error
+    ❌ Multi-tenant data isolation broken
+    ❌ Users cannot perform basic operations
+    ❌ API becomes unusable
+
+  Data Impact:
+    ❌ Silent wrong data returned (M03, M01)
+    ❌ Data may leak between tenants
+    ❌ Compliance violations (GDPR, SOC2)
+    ❌ Unauditable operations
+
+  Business Impact:
+    ❌ Customers cannot use the platform
+    ❌ Support escalations
+    ❌ Revenue impact
+    ❌ Trust damage
+
+AFTER FIXING:
+
+  ✅ All tenant queries work correctly
+  ✅ 500 errors resolved
+  ✅ Multi-tenant isolation verified
+  ✅ Data integrity maintained
+  ✅ Platform usable for customers
+
+================================================================================
+                    IMPLEMENTATION ROADMAP
+================================================================================
+
+PHASE 1: PREPARATION (5 minutes)
+  ✓ Review tenantid_audit.md
+  ✓ Review this summary
+  ✓ Create backup branch
+  ✓ Document current state
+
+PHASE 2: CRITICAL FIXES (15 minutes)
+  ✓ Fix Priority 1 files (6 files, 25 locations)
+  ✓ Commit changes
+  ✓ Verify compilation
+
+PHASE 3: MEDIUM FIXES (10 minutes)
+  ✓ Fix Priority 2 files (3 files, 8 locations)
+  ✓ Commit changes
+  ✓ Verify compilation
+
+PHASE 4: LOW FIXES (5 minutes)
+  ✓ Fix Priority 3 files (3 files, 8 locations)
+  ✓ Commit changes
+
+PHASE 5: TESTING (10 minutes)
+  ✓ Compile TypeScript
+  ✓ Run test suite
+  ✓ Manual API testing
+  ✓ Verify no 500 errors
+
+TOTAL TIME: ~45 minutes
+
+================================================================================
+                        HOW TO VERIFY FIXES
+================================================================================
+
+COMMAND LINE (Linux/Mac):
+
+  # Find any remaining tenantId in query contexts
+  grep -r "where.*tenantId" apps/api/src/modules/ || echo "✅ All fixed"
+
+  # Alternative with ripgrep
+  rg "where:\s*{\s*tenantId" apps/api/src/modules/ || echo "✅ All fixed"
+
+VS CODE:
+
+  1. Open Find (Ctrl+F)
+  2. Search: tenantId
+  3. Filter to: *.service.ts, *.repository.ts
+  4. Should show 0 results (after fixing)
+
+TESTING:
+
+  1. npm run build
+  2. npm run test
+  3. npm run dev (start backend)
+  4. Run Postman collection
+  5. Check for 500 errors in logs
+
+================================================================================
+                        REFERENCE DOCUMENTS
+================================================================================
+
+Main Audit Document:
+  /docs/execution/tenantid_audit.md
+  - Detailed breakdown of all 41 locations
+  - Exact line numbers and code snippets
+  - Severity classification
+
+Fix Report:
+  /docs/execution/TENANT_ID_FIX_REPORT.md
+  - Executive summary
+  - File-by-file breakdown
+  - Impact analysis
+  - Verification checklist
+
+Implementation Guide:
+  /docs/execution/TENANT_ID_FIX_IMPLEMENTATION.md
+  - Step-by-step fix instructions
+  - Before/after code examples
+  - Testing strategy
+  - Common mistakes to avoid
+
+This Summary:
+  /docs/execution/TENANT_ID_AUDIT_SUMMARY.txt
+  - Quick reference overview
+  - Priority list
+  - Timeline and roadmap
+
+================================================================================
+                        ACTION ITEMS
+================================================================================
+
+IMMEDIATE (Next task):
+  [ ] Read tenantid_audit.md
+  [ ] Review TENANT_ID_FIX_REPORT.md
+  [ ] Read TENANT_ID_FIX_IMPLEMENTATION.md
+
+SHORT TERM (This sprint):
+  [ ] Fix Priority 1 files (25 locations)
+  [ ] Test thoroughly
+  [ ] Commit changes
+
+MEDIUM TERM:
+  [ ] Fix Priority 2 files (8 locations)
+  [ ] Fix Priority 3 files (8 locations)
+  [ ] Final testing
+
+LONG TERM:
+  [ ] Deploy to staging
+  [ ] Deploy to production
+  [ ] Monitor for issues
+  [ ] Document learnings
+
+================================================================================
+                            CHECKLIST
+================================================================================
+
+Before Fixes:
+  [ ] Reviewed audit document
+  [ ] Understood the problem
+  [ ] Created backup branch
+  [ ] Identified all 41 locations
+
+During Fixes:
+  [ ] Fixed Priority 1 (6 files, 25 locations)
+  [ ] Fixed Priority 2 (3 files, 8 locations)
+  [ ] Fixed Priority 3 (3 files, 8 locations)
+  [ ] Committed changes with good messages
+
+After Fixes:
+  [ ] Verified no tenantId in query contexts
+  [ ] TypeScript compiles without errors
+  [ ] Test suite passes
+  [ ] Started backend server successfully
+  [ ] Ran Postman tests
+  [ ] No 500 errors in logs
+  [ ] Multi-tenant queries verified
+  [ ] Code reviewed
+  [ ] Ready for production
+
+================================================================================
+                            STATUS
+================================================================================
+
+Current Status: 🔴 NOT IMPLEMENTED
+Audit Status:   ✅ COMPLETE (41 locations identified)
+Priority:       🔴 CRITICAL (Production breaking)
+
+Next Step:      Implement fixes from TENANT_ID_FIX_IMPLEMENTATION.md
+
+Expected Outcome: All 41 locations fixed, zero 500 errors on tenant queries
+
+================================================================================

@@ -46,7 +46,7 @@ export class AiExtractorService {
 
     return d.findMany({
 
-      where: { tenantId },
+      where: { tenantid: tenantId },
 
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
 
@@ -176,7 +176,7 @@ export class AiExtractorService {
 
     const d = this.fieldDelegate();
 
-    const row = await d.findFirst({ where: { id, tenantId } });
+    const row = await d.findFirst({ where: { id, tenantid: tenantId } });
 
     if (!row) throw new NotFoundException(`Field ${id} not found`);
 
@@ -194,7 +194,7 @@ export class AiExtractorService {
 
     return d.findMany({
 
-      where: { tenantId, callId },
+      where: { tenantid: tenantId, callId },
 
       include: { field: true },
 
@@ -216,7 +216,7 @@ export class AiExtractorService {
 
     const fields = await d.findMany({
 
-      where: { tenantId, isActive: true },
+      where: { tenantid: tenantId, isActive: true },
 
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
 

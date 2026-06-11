@@ -37,8 +37,7 @@ export class M02FrontendTrackersService {
     const since = dateRangeStart(query.dateRange ?? 'last-30-days');
 
     const trackers = await this.db.m02Tracker.findMany({
-      where: {
-        tenantId,
+      where: { tenantid: tenantId,
         isActive: true,
         ...(search
           ? {
@@ -55,7 +54,7 @@ export class M02FrontendTrackersService {
     });
 
     const totalCalls = await this.db.callRecord.count({
-      where: { tenantId, transcriptStatus: 'completed' },
+      where: { tenantid: tenantId, transcriptStatus: 'completed' },
     });
     const denominator = Math.max(totalCalls, 1);
 
@@ -78,7 +77,7 @@ export class M02FrontendTrackersService {
 
   async getTrackerDetail(tenantId: string, trackerSlug: string) {
     const tracker = await this.db.m02Tracker.findFirst({
-      where: { tenantId, slug: trackerSlug },
+      where: { tenantid: tenantId, slug: trackerSlug },
       include: { detections: true },
     });
     if (!tracker) throw new NotFoundException('Tracker not found');
@@ -86,7 +85,7 @@ export class M02FrontendTrackersService {
     const detections = tracker.detections ?? [];
     const entityIds = new Set(detections.map((d: { entityId: string }) => d.entityId));
     const totalCalls = await this.db.callRecord.count({
-      where: { tenantId, transcriptStatus: 'completed' },
+      where: { tenantid: tenantId, transcriptStatus: 'completed' },
     });
     const denominator = Math.max(totalCalls, 1);
     const percentage = Math.min(

@@ -130,7 +130,7 @@ export class M02FrontendSearchService {
 
   async getCallDrawer(tenantId: string, callId: string) {
     const record = await this.prisma.callRecord.findFirst({
-      where: { id: callId, tenantId },
+      where: { id: callId, tenantid: tenantId },
       include: {
         transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } },
       },
@@ -195,7 +195,7 @@ export class M02FrontendSearchService {
   async aiAsk(tenantId: string, body: { callId: string; question: string }) {
     const dto = M02AiAskBodySchema.parse(body);
     const record = await this.prisma.callRecord.findFirst({
-      where: { id: dto.callId, tenantId },
+      where: { id: dto.callId, tenantid: tenantId },
       include: { transcript: true },
     });
     if (!record) throw new NotFoundException('Call not found');

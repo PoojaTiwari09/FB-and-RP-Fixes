@@ -1,31 +1,10 @@
 import { cookies } from 'next/headers';
 import type { UserRole, UserSession } from '@shared/types/shared.types';
-
-// In production: replace with real JWT validation / session decoding.
-// The cookie `user_role` drives all role decisions server-side.
-// Set it to 'sales_manager' or 'sales_rep' to switch personas.
-
-const MOCK_SESSIONS: Record<UserRole, UserSession> = {
-  sales_manager: {
-    id: 'mgr-001',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@company.com',
-    role: 'sales_manager',
-    teamId: 'team-west',
-  },
-  sales_rep: {
-    id: 'rep-001',
-    name: 'Alex Chen',
-    email: 'alex.chen@company.com',
-    role: 'sales_rep',
-    teamId: 'team-west',
-  },
-};
+import { roleFromCookieValue } from './backend-api.shared';
 
 export async function getUserSession(): Promise<UserSession> {
   const cookieStore = await cookies();
-  const rawRole = cookieStore.get('user_role')?.value;
-  const role: UserRole = rawRole === 'sales_manager' ? 'sales_manager' : 'sales_rep';
+  const role = roleFromCookieValue(cookieStore.get('user_role')?.value);
 
   const rbacUserStr = cookieStore.get('rbac_user_json')?.value;
   if (rbacUserStr) {
@@ -36,15 +15,21 @@ export async function getUserSession(): Promise<UserSession> {
         id: u.id,
         name: u.name,
         email: u.email,
-        role: role, // Use the role from user_role cookie to support manager switching views if needed
-        teamId: 'team-relanto',
+        role,
+        teamId: u.tenantId ?? 'team-relanto',
       };
     } catch (e) {
       console.error('Failed to parse rbac_user_json:', e);
     }
   }
 
-  return MOCK_SESSIONS[role];
+  return {
+    id: 'anonymous',
+    name: 'Guest',
+    email: 'guest@relanto.com',
+    role: 'sales_rep',
+    teamId: 'team-relanto',
+  };
 }
 
 export async function getUserRole(): Promise<UserRole> {

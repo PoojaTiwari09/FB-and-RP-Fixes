@@ -1,56 +1,52 @@
-/** Matches m09-api dev seed (see m09-memory.store.ts). */
-const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
-const DEFAULT_REP_USER_ID = 'me';
-const DEFAULT_MANAGER_USER_ID = '00000000-0000-0000-0000-000000000002';
-
-function envOrDefault(raw: string | undefined, fallback: string): string {
-  const trimmed = raw?.trim();
-  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
-  return trimmed;
-}
-
-export const BACKEND_ORG_ID = envOrDefault(
-  process.env.NEXT_PUBLIC_BACKEND_ORG_ID ?? process.env.BACKEND_ORG_ID,
-  DEFAULT_ORG_ID,
-);
-export const BACKEND_REP_USER_ID = envOrDefault(
-  process.env.NEXT_PUBLIC_BACKEND_REP_USER_ID ?? process.env.BACKEND_REP_USER_ID,
-  DEFAULT_REP_USER_ID,
-);
-export const BACKEND_MANAGER_USER_ID = envOrDefault(
-  process.env.NEXT_PUBLIC_BACKEND_MANAGER_USER_ID ?? process.env.BACKEND_MANAGER_USER_ID,
-  DEFAULT_MANAGER_USER_ID,
-);
+/** Default demo tenant slug — must match seeded tenant in packages/database/prisma/seed-all.ts */
+export const DEFAULT_TENANT_SLUG = 'relanto';
 
 export type BackendRole = 'sales_rep' | 'sales_manager';
 
 export function roleFromCookieValue(raw: string | undefined): BackendRole {
   if (!raw) return 'sales_rep';
   const norm = raw.toLowerCase();
-  return (norm === 'sales_manager' || norm === 'manager' || norm === 'admin') ? 'sales_manager' : 'sales_rep';
+  return norm === 'sales_manager' || norm === 'manager' || norm === 'admin'
+    ? 'sales_manager'
+    : 'sales_rep';
 }
 
-export function buildBackendHeaders(role: BackendRole = 'sales_rep', userId?: string): Record<string, string> {
-  return {
+function readCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+}
+
+/** Build Authorization headers from JWT cookies (no spoof identity headers). */
+export function buildAuthHeaders(): Record<string, string> {
+  const token =
+    readCookie('access_token') ||
+    readCookie('rbac_token');
+
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-tenant-id': BACKEND_ORG_ID,
-    'x-org-id': BACKEND_ORG_ID,
-    'x-user-id': userId || (role === 'sales_manager' ? BACKEND_MANAGER_USER_ID : BACKEND_REP_USER_ID),
-    'x-user-role': role,
   };
-}
 
-/** Browser / client components — reads document.cookie. */
-export function getClientBackendHeaders(): Record<string, string> {
-  if (typeof document === 'undefined') {
-    return buildBackendHeaders('sales_rep');
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
-  const roleMatch = document.cookie.match(/(?:^|;\s*)user_role=([^;]+)/);
-  const role = roleFromCookieValue(roleMatch?.[1] ? decodeURIComponent(roleMatch[1]) : undefined);
-  
-  const idMatch = document.cookie.match(/(?:^|;\s*)user_id=([^;]+)/);
-  const userId = idMatch?.[1] ? decodeURIComponent(idMatch[1]) : undefined;
-  
-  return buildBackendHeaders(role, userId);
+
+  return headers;
 }
 
+/** Browser / client components — reads JWT from cookies. */
+export function getClientBackendHeaders(): Record<string, string> {
+  return buildAuthHeaders();
+}
+
+/** @deprecated Legacy header bridge removed — use JWT Bearer via buildAuthHeaders(). */
+export function buildBackendHeaders(): Record<string, string> {
+  return buildAuthHeaders();
+}
+
+/** @deprecated */
+export const BACKEND_ORG_ID = '00000000-0000-0000-0000-000000000001';
+/** @deprecated */
+export const BACKEND_REP_USER_ID = '33333333-3333-3333-3333-333333333333';
+/** @deprecated */
+export const BACKEND_MANAGER_USER_ID = '22222222-2222-2222-2222-222222222222';
