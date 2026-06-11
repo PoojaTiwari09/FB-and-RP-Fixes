@@ -1,6 +1,5 @@
 const TENANT_SLUG = process.env.NEXT_PUBLIC_TENANT_SLUG ?? 'relanto';
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3002';
-
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 export interface AuthUser {
   id: string;
   email: string;

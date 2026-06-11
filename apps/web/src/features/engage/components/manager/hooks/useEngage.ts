@@ -91,15 +91,24 @@ export function useEngage(initialAssigneeId?: string) {
 
       startTransition(() => {
         setGroups(tasksData.groups);
+        const tCounts = tasksData.tabCounts || {};
         setTabCounts({
-          today: tasksData.tabCounts.today || 0,
-          inProgress: tasksData.tabCounts.inProgress || 0,
-          upcoming: tasksData.tabCounts.upcoming || 0,
-          completed: tasksData.tabCounts.completed || 0,
-          snoozed: (tasksData.tabCounts as any).snooze || 0,
+          today: tCounts.today || 0,
+          inProgress: tCounts.inProgress || 0,
+          upcoming: tCounts.upcoming || 0,
+          completed: tCounts.completed || 0,
+          snoozed: (tCounts as any).snooze || (tCounts as any).snoozed || 0,
         });
-        setStatusPills(tasksData.statusPills);
-        setSummary(summaryData);
+        setStatusPills(tasksData.statusPills || { atRisk: 0, dueToday: 0 });
+        setSummary(summaryData || {
+          totalToday: 0,
+          completedToday: 0,
+          atRisk: 0,
+          dueToday: 0,
+          highPriorityRemaining: 0,
+          completionPercentage: 0,
+          headerAlert: '',
+        });
         const flatTasks: Task[] = [];
         tasksData.groups.forEach(g => flatTasks.push(...g.tasks));
         setTasks(flatTasks);
