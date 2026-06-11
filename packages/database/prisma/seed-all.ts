@@ -1,4 +1,4 @@
-﻿import { PrismaClient } from '../node_modules/.prisma/client';
+import { PrismaClient } from '../node_modules/.prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { seedEngageData } from './seed-engage';
 
@@ -93,10 +93,10 @@ async function main() {
   console.log('Seeding Call Records...');
   const callRecordsData = [
     {
-      id: 'call_001',
+      id: '00000000-0000-0000-0001-000000000001',
       title: 'Discovery Call - Acme Corp Q2 Initiative',
       callOwner: '33333333-3333-3333-3333-333333333333',
-      accountId: 'Acme Corp',
+      accountId: null,
       callDate: new Date('2026-05-14T10:00:00Z'),
       durationSeconds: 2723,
       callType: 'Discovery',
@@ -106,10 +106,10 @@ async function main() {
       transcriptStatus: 'completed',
     },
     {
-      id: 'call_002',
+      id: '00000000-0000-0000-0001-000000000002',
       title: 'Product Demo - TechStart Solutions',
       callOwner: '44444444-4444-4444-4444-444444444444',
-      accountId: 'TechStart Solutions',
+      accountId: null,
       callDate: new Date('2026-05-14T14:30:00Z'),
       durationSeconds: 3135,
       callType: 'Demo',
@@ -135,6 +135,8 @@ async function main() {
       update: {},
       create: {
         callId: rec.id,
+        tenantid: TENANT_ID,
+        fullText: 'Seeded full text',
         summary: `Seeded transcript for ${rec.title}. Prospect showed interest in key features.`,
       },
     });
@@ -215,7 +217,7 @@ async function main() {
       where: { reviewId: r.reviewId },
       update: r,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...r,
       },
     });
@@ -246,7 +248,7 @@ async function main() {
       where: { scenarioid: s.scenarioid },
       update: s,
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...s,
       },
     });
