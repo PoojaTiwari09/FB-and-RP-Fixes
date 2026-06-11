@@ -15,6 +15,12 @@ if (-not (Test-Path (Join-Path $UnifiedUi "package.json"))) {
   exit 1
 }
 
+# Auto-create root .env from .env.example if missing (fresh clone)
+if (-not (Test-Path (Join-Path $Root ".env")) -and (Test-Path (Join-Path $Root ".env.example"))) {
+  Copy-Item (Join-Path $Root ".env.example") (Join-Path $Root ".env")
+  Write-Host "      Created .env from .env.example" -ForegroundColor Green
+}
+
 Write-Host "[Env] Syncing API keys from .env..." -ForegroundColor Yellow
 & (Join-Path $Root "scripts\sync-env.ps1") 2>$null | Out-Null
 
