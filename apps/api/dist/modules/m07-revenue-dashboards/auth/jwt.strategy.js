@@ -25,22 +25,41 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.prisma = prisma;
     }
     async validate(payload) {
-        const tenantId = payload.tenantId || payload.app_metadata?.tenantId;
-        const role = payload.role || payload.app_metadata?.role;
-        const permissions = payload.permissions || payload.app_metadata?.permissions || [];
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
-            select: { email: true, name: true },
+            select: { id: true, tenantid: true, role: true, email: true, name: true },
         });
         if (!user)
             throw new common_1.UnauthorizedException("User no longer exists");
+        let permissions = payload.permissions;
+        if (!permissions || !Array.isArray(permissions)) {
+            const role = user.role;
+            if (role === 'ADMIN') {
+                permissions = ["task.view", "task.create", "task.delete", "task.assign", "opportunity.view", "opportunity.create", "opportunity.update", "opportunity.delete", "customer.view", "customer.create", "customer.update", "customer.delete", "report.view", "report.export", "user.view", "user.invite", "user.manage", "settings.view", "settings.manage", "ai.query", "ai.report"];
+            }
+            else if (role === 'MANAGER') {
+                permissions = ["task.view", "task.create", "task.update", "task.assign", "opportunity.view", "opportunity.create", "opportunity.update", "customer.view", "customer.create", "customer.update", "report.view", "report.export", "user.view", "user.invite", "ai.query", "ai.report"];
+            }
+            else if (role === 'SALES_REP') {
+                permissions = ["task.view", "task.create", "task.update", "opportunity.view", "opportunity.create", "opportunity.update", "customer.view", "customer.create", "customer.update", "ai.query"];
+            }
+            else if (role === 'ANALYST') {
+                permissions = ["report.view", "report.export", "ai.query", "ai.report"];
+            }
+            else if (role === 'EXECUTIVE') {
+                permissions = ["opportunity.view", "customer.view", "report.view", "report.export", "ai.query", "ai.report"];
+            }
+            else {
+                permissions = [];
+            }
+        }
         return {
-            sub: payload.sub,
-            tenantId: tenantId,
-            role: role,
+            sub: user.id,
+            tenantId: user.tenantid,
+            role: user.role,
             email: user.email,
             name: user.name,
-            permissions: permissions
+            permissions,
         };
     }
 };

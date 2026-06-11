@@ -41,7 +41,8 @@ let TrackerService = class TrackerService {
             TrackerService_1.memTrackers.push(created);
             return created;
         }
-        return this.trackerDelegate.create({ data });
+        const { tenantId, ...rest } = data;
+        return this.trackerDelegate.create({ data: { ...rest, tenantid: tenantId } });
     }
     async getTrackers(tenantId) {
         if (!this.trackerDelegate?.findMany) {
@@ -50,7 +51,7 @@ let TrackerService = class TrackerService {
                 .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         }
         return this.trackerDelegate.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: { createdAt: 'desc' },
         });
     }
@@ -62,7 +63,7 @@ let TrackerService = class TrackerService {
             TrackerService_1.memTrackers[idx] = { ...TrackerService_1.memTrackers[idx], ...data };
             return TrackerService_1.memTrackers[idx];
         }
-        return this.trackerDelegate.update({ where: { id, tenantId }, data });
+        return this.trackerDelegate.update({ where: { id, tenantid: tenantId }, data });
     }
     async deleteTracker(id, tenantId) {
         if (!this.trackerDelegate?.delete) {
@@ -70,7 +71,7 @@ let TrackerService = class TrackerService {
             TrackerService_1.memTrackers = TrackerService_1.memTrackers.filter((t) => !(t.id === id && t.tenantId === tenantId));
             return { success: TrackerService_1.memTrackers.length < before };
         }
-        return this.trackerDelegate.delete({ where: { id, tenantId } });
+        return this.trackerDelegate.delete({ where: { id, tenantid: tenantId } });
     }
     async addKeywordsToTracker(trackerId, tenantId, keywords) {
         if (!this.trackerDelegate?.findUnique || !this.trackerDelegate?.update) {
@@ -81,13 +82,13 @@ let TrackerService = class TrackerService {
             return t;
         }
         const tracker = await this.trackerDelegate.findUnique({
-            where: { id: trackerId, tenantId },
+            where: { id: trackerId, tenantid: tenantId },
         });
         if (!tracker)
             throw new Error('Tracker not found');
         const newKeywords = Array.from(new Set([...tracker.keywords, ...keywords]));
         return this.trackerDelegate.update({
-            where: { id: trackerId, tenantId },
+            where: { id: trackerId, tenantid: tenantId },
             data: { keywords: newKeywords },
         });
     }
@@ -97,7 +98,7 @@ let TrackerService = class TrackerService {
             return [];
         }
         const trackers = await this.trackerDelegate.findMany({
-            where: { tenantId, isActive: true },
+            where: { tenantid: tenantId, isActive: true },
         });
         if (trackers.length === 0) {
             this.logger.log(`No active trackers found for tenant ${tenantId}`);
@@ -136,7 +137,8 @@ let TrackerService = class TrackerService {
             }
         }
         if (detections.length > 0 && this.detectionDelegate?.createMany) {
-            await this.detectionDelegate.createMany({ data: detections, skipDuplicates: true });
+            const rows = detections.map(({ tenantId: tid, ...d }) => ({ ...d, tenantid: tid }));
+            await this.detectionDelegate.createMany({ data: rows, skipDuplicates: true });
         }
         else if (detections.length > 0) {
             TrackerService_1.memDetections.push(...detections);
@@ -208,7 +210,7 @@ let TrackerService = class TrackerService {
             return TrackerService_1.memDetections.filter((d) => d.tenantId === tenantId && d.entityId === entityId && d.entityType === entityType);
         }
         return this.detectionDelegate.findMany({
-            where: { tenantId, entityId, entityType },
+            where: { tenantid: tenantId, entityId, entityType },
             include: { tracker: true },
             orderBy: { createdAt: 'desc' },
         });
@@ -218,7 +220,7 @@ let TrackerService = class TrackerService {
             return TrackerService_1.memDetections.filter((d) => d.tenantId === tenantId);
         }
         return this.detectionDelegate.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             include: { tracker: true },
             orderBy: { createdAt: 'desc' },
         });
@@ -239,12 +241,11 @@ let TrackerService = class TrackerService {
             };
         }
         const [totalTrackers, activeTrackers, totalDetections, detectionsThisMonth] = await Promise.all([
-            trackerD.count({ where: { tenantId } }),
-            trackerD.count({ where: { tenantId, isActive: true } }),
-            detectionD.count({ where: { tenantId } }),
+            trackerD.count({ where: { tenantid: tenantId } }),
+            trackerD.count({ where: { tenantid: tenantId, isActive: true } }),
+            detectionD.count({ where: { tenantid: tenantId } }),
             detectionD.count({
-                where: {
-                    tenantId,
+                where: { tenantid: tenantId,
                     createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
                 },
             }),

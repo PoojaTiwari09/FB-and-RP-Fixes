@@ -32,7 +32,7 @@ let AiExtractorService = class AiExtractorService {
         if (!d?.findMany)
             return [];
         return d.findMany({
-            where: { tenantId },
+            where: { tenantid: tenantId },
             orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
         });
     }
@@ -93,7 +93,7 @@ let AiExtractorService = class AiExtractorService {
     }
     async getField(tenantId, id) {
         const d = this.fieldDelegate();
-        const row = await d.findFirst({ where: { id, tenantId } });
+        const row = await d.findFirst({ where: { id, tenantid: tenantId } });
         if (!row)
             throw new common_1.NotFoundException(`Field ${id} not found`);
         return row;
@@ -103,7 +103,7 @@ let AiExtractorService = class AiExtractorService {
         if (!d?.findMany)
             return [];
         return d.findMany({
-            where: { tenantId, callId },
+            where: { tenantid: tenantId, callId },
             include: { field: true },
         });
     }
@@ -111,7 +111,7 @@ let AiExtractorService = class AiExtractorService {
         const { fullText, utterances } = await this.loadTranscript(callId, tenantId);
         const d = this.fieldDelegate();
         const fields = await d.findMany({
-            where: { tenantId, isActive: true },
+            where: { tenantid: tenantId, isActive: true },
             orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
         });
         for (const field of fields) {

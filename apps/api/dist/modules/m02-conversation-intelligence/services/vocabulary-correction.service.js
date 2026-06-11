@@ -24,8 +24,7 @@ let VocabularyCorrectionService = class VocabularyCorrectionService {
     }
     async createRule(tenantId, incorrectTerm, correctTerm, language = 'en', category = 'Custom', mispronunciations = [], variations = []) {
         const newRule = {
-            id: Date.now().toString(),
-            tenantId,
+            id: Date.now().toString(), tenantid: tenantId,
             incorrectTerm,
             correctTerm,
             language,
@@ -60,7 +59,7 @@ let VocabularyCorrectionService = class VocabularyCorrectionService {
     async getRules(tenantId) {
         try {
             const dbRules = await this.prisma.m02VocabularyCorrection.findMany({
-                where: { tenantId },
+                where: { tenantid: tenantId },
                 orderBy: { createdAt: 'desc' },
             });
             if (dbRules.length > 0) {
@@ -88,19 +87,18 @@ let VocabularyCorrectionService = class VocabularyCorrectionService {
     async getStats(tenantId) {
         try {
             const termsCount = await this.prisma.m02VocabularyCorrection.count({
-                where: { tenantId }
+                where: { tenantid: tenantId }
             });
             const now = new Date();
             const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const correctionsThisMonth = await this.prisma.m02TranscriptCorrection.count({
-                where: {
-                    tenantId,
+                where: { tenantid: tenantId,
                     appliedAt: { gte: firstDayOfMonth }
                 }
             });
-            const totalCalls = await this.prisma.m01Call.count({ where: { tenantId } });
+            const totalCalls = await this.prisma.m01Call.count({ where: { tenantid: tenantId } });
             const totalEnhanced = await this.prisma.m01Call.count({
-                where: { tenantId, correctionVersion: { gt: 0 } }
+                where: { tenantid: tenantId, correctionVersion: { gt: 0 } }
             });
             const enhancedPercent = totalCalls > 0 ? Math.round((totalEnhanced / totalCalls) * 100) : 0;
             return {
@@ -146,14 +144,14 @@ let VocabularyCorrectionService = class VocabularyCorrectionService {
         let rawText = '';
         let currentVersion = 0;
         if (type === 'call') {
-            const call = await this.prisma.m01Call.findUnique({ where: { id: transcriptId, tenantId } });
+            const call = await this.prisma.m01Call.findUnique({ where: { id: transcriptId, tenantid: tenantId } });
             if (!call)
                 throw new Error('Call not found');
             rawText = call.transcript || '';
             currentVersion = call.correctionVersion;
         }
         else {
-            const email = await this.prisma.m02Email.findUnique({ where: { id: transcriptId, tenantId } });
+            const email = await this.prisma.m02Email.findUnique({ where: { id: transcriptId, tenantid: tenantId } });
             if (!email)
                 throw new Error('Email not found');
             rawText = email.body || '';

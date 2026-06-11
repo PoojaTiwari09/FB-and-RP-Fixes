@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
-import type { ChannelType } from './types/engage.types';
+import type { ChannelType, AssignableUser } from './types/engage.types';
+import { getAssignableUsers } from './services/engage.service';
 
 interface CreateTaskModalProps {
   onClose: () => void;
@@ -25,7 +26,34 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
   const [description, setDescription] = useState('');
-  const [assignTo, setAssignTo] = useState('');
+  const [assignTo, setAssignTo] = useState('me');
+  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+
+  useEffect(() => {
+    async function loadUsers() {
+      try {
+        const users = await getAssignableUsers();
+        if (users && users.length > 0) {
+          setAssignableUsers(users);
+          const current = users.find(u => u.isCurrentUser);
+          setAssignTo(current ? current.userId : users[0].userId);
+        } else {
+          fallbackToDefault();
+        }
+      } catch (err) {
+        console.error('Failed to load assignable users:', err);
+        fallbackToDefault();
+      }
+    }
+
+    function fallbackToDefault() {
+      const defaultUsers = [{ userId: 'me', displayName: 'Alex Chen (Me)', role: 'sales_rep', isCurrentUser: true }];
+      setAssignableUsers(defaultUsers);
+      setAssignTo('me');
+    }
+
+    loadUsers();
+  }, []);
 
   const parseLinkedTo = (val: string) => {
     const delimiters = [' - ', ' – ', ' | ', ' @ '];
@@ -155,6 +183,28 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
               rows={3}
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-800"
             />
+          </div>
+
+          {/* Assign To */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Assign To</label>
+            <div className="relative">
+              <select
+                value={assignTo}
+                onChange={(e) => setAssignTo(e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none cursor-pointer text-gray-800 bg-white"
+              >
+                {assignableUsers.map((user) => (
+                  <option key={user.userId} value={user.userId}>
+                    {user.displayName} ({user.role === 'sales_manager' ? 'Manager' : 'Rep'})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
+            </div>
           </div>
 
         </div>

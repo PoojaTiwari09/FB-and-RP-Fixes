@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X, Search, ChevronDown, ChevronUp } from 'lucide-react';
 
-interface FilterState {
+export interface FilterState {
   dueDate: 'today' | 'tomorrow' | 'this-week' | 'overdue' | 'custom' | null;
   entityTypes: Set<'account' | 'deal' | 'lead'>;
   localTime: 'morning' | 'business_hours' | 'custom' | null;

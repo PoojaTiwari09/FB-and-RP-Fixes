@@ -131,7 +131,7 @@ let M02FrontendSearchService = class M02FrontendSearchService {
     }
     async getCallDrawer(tenantId, callId) {
         const record = await this.prisma.callRecord.findFirst({
-            where: { id: callId, tenantId },
+            where: { id: callId, tenantid: tenantId },
             include: {
                 transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } },
             },
@@ -194,7 +194,7 @@ let M02FrontendSearchService = class M02FrontendSearchService {
     async aiAsk(tenantId, body) {
         const dto = m02_frontend_search_schema_1.M02AiAskBodySchema.parse(body);
         const record = await this.prisma.callRecord.findFirst({
-            where: { id: dto.callId, tenantId },
+            where: { id: dto.callId, tenantid: tenantId },
             include: { transcript: true },
         });
         if (!record)
