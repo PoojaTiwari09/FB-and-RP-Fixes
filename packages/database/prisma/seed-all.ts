@@ -226,7 +226,7 @@ async function main() {
   console.log('Seeding Training Scenarios...');
   const scenariosToSeed = [
     {
-      scenarioid: 'seed-scenario-1',
+      scenarioid: '00000000-0000-0000-0000-000000000101',
       name: 'Angry Client - Downtime Discussion',
       personadescription: 'Upset IT Executive dealing with downtime issues.',
       context: 'Client is upset about recent downtime and wants to cancel contract.',
@@ -234,7 +234,7 @@ async function main() {
       createdby: '22222222-2222-2222-2222-222222222222',
     },
     {
-      scenarioid: 'seed-scenario-2',
+      scenarioid: '00000000-0000-0000-0000-000000000102',
       name: 'Pricing Objection - SaaS Expansion',
       personadescription: 'Procurement manager trying to negotiate 25% discount.',
       context: 'Prospect loves the tool but claims budget is tight.',

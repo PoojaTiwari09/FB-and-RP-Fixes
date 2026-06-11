@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
 import express from 'express';
 import { resolveUploadsRoot } from '../../../modules/m01-capture-transcription/services/upload-paths';
 

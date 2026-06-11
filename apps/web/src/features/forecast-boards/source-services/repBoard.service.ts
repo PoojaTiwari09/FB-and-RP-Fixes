@@ -11,7 +11,7 @@ const headers = (userId?: string) => {
 
 export async function getRepBoardView(boardId: string): Promise<RepBoardViewResponse> {
   const repUserId = headers()['x-user-id'] || 'sarah';
-  const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
   // 1. Fetch periods to find active period info
   const periodsRes = await fetch(`/api/forecast/periods`, { headers: headers(), cache: 'no-store' });
@@ -130,7 +130,7 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
   return {
     board: {
       id: boardId,
-      name: boardId === 'board-q1' ? 'Q1 FY26 Forecast Board' : 'Q2 FY26 Forecast Board',
+      name: boardId === '00000000-0000-0000-0000-0000000000a1' ? 'Q1 FY26 Forecast Board' : 'Q2 FY26 Forecast Board',
       status: 'active',
       periodType: 'quarterly',
     },
@@ -183,7 +183,7 @@ export async function submitForecast(
   boardId: string,
   payload: { columnId?: string; repUserId: string; value?: number; note?: string; dealId?: string; status?: string },
 ) {
-  const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
   const field = payload.columnId === 'col-best-case' ? 'best_case' : 'commit';
   const customHeaders = headers(payload.repUserId);
 
@@ -238,10 +238,10 @@ export async function submitForecast(
 }
 
 export async function getActiveBoardForPeriod(periodId: string): Promise<ActiveBoardForPeriodResponse> {
-  const boardId = periodId === 'q1-fy26-demo' ? 'board-q1' : 'board-q2';
+  const boardId = periodId === '00000000-0000-0000-0000-0000000000b1' ? '00000000-0000-0000-0000-0000000000a1' : '00000000-0000-0000-0000-0000000000a2';
   return {
-    board: { id: boardId, name: periodId === 'q1-fy26-demo' ? 'Q1 FY26 Forecast Board' : 'Q2 FY26 Forecast Board', status: 'active', periodType: 'quarterly' },
-    period: { id: periodId, name: periodId === 'q1-fy26-demo' ? 'Q1 FY26' : 'Q2 FY26', startDate: '', endDate: '', isLocked: false },
+    board: { id: boardId, name: periodId === '00000000-0000-0000-0000-0000000000b1' ? 'Q1 FY26 Forecast Board' : 'Q2 FY26 Forecast Board', status: 'active', periodType: 'quarterly' },
+    period: { id: periodId, name: periodId === '00000000-0000-0000-0000-0000000000b1' ? 'Q1 FY26' : 'Q2 FY26', startDate: '', endDate: '', isLocked: false },
   };
 }
 

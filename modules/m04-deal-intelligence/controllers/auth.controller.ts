@@ -19,12 +19,14 @@ import { AuthService } from '@/services/auth.service';
 import { LoginDto, RegisterDto, AuthResponseDto, UserResponseDto } from '@/schemas';
 import { AuthGuard } from '@/guards/auth.guard';
 import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { Public } from '../interfaces/jwt.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @ApiOperation({
     summary: 'Register a new user',
@@ -43,6 +45,7 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -60,12 +63,13 @@ export class AuthController {
   })
   async login(
     @Body() loginDto: LoginDto,
-    @Session() session: Record<string, any>,
+    @Session() session?: Record<string, any>,
   ): Promise<AuthResponseDto> {
-    const user = await this.authService.login(loginDto, session.id);
+    const sessionObj = session || { id: 'mock-session-id' };
+    const user = await this.authService.login(loginDto, sessionObj.id);
 
     // Store user ID in session
-    session.userId = user.id;
+    sessionObj.userId = user.id;
 
     return {
       message: 'Login successful',
@@ -85,9 +89,12 @@ export class AuthController {
     status: 200,
     description: 'Logout successful',
   })
-  async logout(@Session() session: Record<string, any>): Promise<{ message: string }> {
-    await this.authService.logout(session.id);
-    session.destroy();
+  async logout(@Session() session?: Record<string, any>): Promise<{ message: string }> {
+    const sessionObj = session || { id: 'mock-session-id', destroy: () => {} };
+    await this.authService.logout(sessionObj.id);
+    if (typeof sessionObj.destroy === 'function') {
+      sessionObj.destroy();
+    }
 
     return {
       message: 'Logout successful',

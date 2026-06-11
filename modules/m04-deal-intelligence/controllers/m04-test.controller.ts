@@ -2,6 +2,7 @@ import { Controller, Get, Post } from '@nestjs/common';
 import { DealRepository } from '@/repositories/deal.repository';
 import { DealBoardRepository } from '@/repositories/deal-board.repository';
 import { M04MemoryStore, M04_DEV_USER } from '../database/m04-memory.store';
+import { Public } from '../interfaces/jwt.guard';
 @Controller('m04-test')
 export class M04TestController {
   constructor(
@@ -10,6 +11,7 @@ export class M04TestController {
     private readonly store: M04MemoryStore,
   ) {}
 
+  @Public()
   @Get('health')
   health() {
     return {

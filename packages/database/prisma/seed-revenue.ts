@@ -3,16 +3,23 @@ import { PrismaClient } from '../node_modules/.prisma/client';
 const prisma = new PrismaClient();
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
+// Rep UUID constants aligned with seed-m06.ts
+const ALEX_MORGAN_UUID = '00000000-0000-0000-0000-000000000003';
+const SARAH_CHEN_UUID = '00000000-0000-0000-0000-000000000004';
+const MICHAEL_RODRIGUEZ_UUID = '00000000-0000-0000-0000-000000000005';
+const DAVID_PARK_UUID = '00000000-0000-0000-0000-000000000006';
+const EMILY_THOMPSON_UUID = '00000000-0000-0000-0000-000000000007';
+
 async function main() {
   console.log('--- Seeding Revenue Manager Accounts & Coaching Data ---');
 
   // 1. Seed Accounts Config
   await prisma.managerAccountsConfig.upsert({
-    where: { id: 'default' },
+    where: { id: '00000000-0000-0000-0000-000000000000' },
     update: {},
     create: {
-      id: 'default',
-      tenantId: TENANT_ID,
+      id: '00000000-0000-0000-0000-000000000000',
+      tenantid: TENANT_ID,
       alertBanner: {
         totalARR: 2100000,
         accountCount: 18,
@@ -30,9 +37,9 @@ async function main() {
           { id: 'team-east',  name: 'East Team',  memberCount: 3 }
         ],
         reps: [
-          { id: 'sarah', name: 'Sarah Chen',   initials: 'SC' },
-          { id: 'me', name: 'Alex Morgan',   initials: 'AM' },
-          { id: 'michael', name: 'Michael Rodriguez',  initials: 'MR' }
+          { id: SARAH_CHEN_UUID, name: 'Sarah Chen',   initials: 'SC' },
+          { id: ALEX_MORGAN_UUID, name: 'Alex Morgan',   initials: 'AM' },
+          { id: MICHAEL_RODRIGUEZ_UUID, name: 'Michael Rodriguez',  initials: 'MR' }
         ]
       }
     }
@@ -42,9 +49,9 @@ async function main() {
   // 2. Seed ManagerAccounts
   const accounts = [
     {
-      id: 'acc-001',
+      id: '00000000-0000-0000-0000-000000000081',
       name: 'Technology Pacific',
-      ownerId: 'sarah',
+      ownerId: SARAH_CHEN_UUID,
       ownerName: 'Sarah Chen',
       ownerInitials: 'SC',
       exitARR: 180000,
@@ -105,9 +112,9 @@ async function main() {
       aiChatHistory: []
     },
     {
-      id: 'acc-002',
+      id: '00000000-0000-0000-0000-000000000082',
       name: 'Parker Smith',
-      ownerId: 'sarah',
+      ownerId: SARAH_CHEN_UUID,
       ownerName: 'Sarah Chen',
       ownerInitials: 'SC',
       exitARR: 100000,
@@ -131,9 +138,9 @@ async function main() {
       aiChatHistory: []
     },
     {
-      id: 'acc-003',
+      id: '00000000-0000-0000-0000-000000000083',
       name: 'Southern Provider',
-      ownerId: 'me',
+      ownerId: ALEX_MORGAN_UUID,
       ownerName: 'Alex Morgan',
       ownerInitials: 'AM',
       exitARR: 100000,
@@ -157,9 +164,9 @@ async function main() {
       aiChatHistory: []
     },
     {
-      id: 'acc-004',
+      id: '00000000-0000-0000-0000-000000000084',
       name: 'Fusion Connect',
-      ownerId: 'me',
+      ownerId: ALEX_MORGAN_UUID,
       ownerName: 'Alex Morgan',
       ownerInitials: 'AM',
       exitARR: 100000,
@@ -182,9 +189,9 @@ async function main() {
       aiChatHistory: []
     },
     {
-      id: 'acc-005',
+      id: '00000000-0000-0000-0000-000000000085',
       name: 'CyberByte Systems',
-      ownerId: 'michael',
+      ownerId: MICHAEL_RODRIGUEZ_UUID,
       ownerName: 'Michael Rodriguez',
       ownerInitials: 'MR',
       exitARR: 100000,
@@ -205,9 +212,9 @@ async function main() {
       aiChatHistory: []
     },
     {
-      id: 'acc-006',
+      id: '00000000-0000-0000-0000-000000000086',
       name: 'Legend Homes',
-      ownerId: 'michael',
+      ownerId: MICHAEL_RODRIGUEZ_UUID,
       ownerName: 'Michael Rodriguez',
       ownerInitials: 'MR',
       exitARR: 100000,
@@ -257,7 +264,7 @@ async function main() {
         aiChatHistory: acc.aiChatHistory
       },
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...acc
       }
     });
@@ -266,11 +273,11 @@ async function main() {
 
   // 3. Seed Coaching Config
   await prisma.managerCoachingConfig.upsert({
-    where: { id: 'default' },
+    where: { id: '00000000-0000-0000-0000-000000000000' },
     update: {},
     create: {
-      id: 'default',
-      tenantId: TENANT_ID,
+      id: '00000000-0000-0000-0000-000000000000',
+      tenantid: TENANT_ID,
       filters: {
         periods: ['Last 7 days', 'Last 30 days', 'Last quarter', 'This quarter'],
         teams: [
@@ -279,19 +286,19 @@ async function main() {
         ]
       },
       activity: [
-        { repId: 'me', repName: 'Alex Morgan',   initials: 'AM', avatarColor: '#6c5ce7', callsCount: 42, emailsCount: 87, meetingsCount: 12, totalActivities: 141 },
-        { repId: 'sarah', repName: 'Sarah Chen',     initials: 'SC', avatarColor: '#00b894', callsCount: 35, emailsCount: 62, meetingsCount:  9, totalActivities: 106 },
-        { repId: 'michael', repName: 'Michael Rodriguez',     initials: 'MR', avatarColor: '#fd79a8', callsCount: 28, emailsCount: 55, meetingsCount:  7, totalActivities:  90 },
-        { repId: 'david', repName: 'David Park',    initials: 'DP', avatarColor: '#fdcb6e', callsCount: 51, emailsCount: 73, meetingsCount: 14, totalActivities: 138 },
-        { repId: 'emily', repName: 'Emily Thompson',  initials: 'ET', avatarColor: '#74b9ff', callsCount: 22, emailsCount: 41, meetingsCount:  5, totalActivities:  68 }
+        { repId: ALEX_MORGAN_UUID, repName: 'Alex Morgan',   initials: 'AM', avatarColor: '#6c5ce7', callsCount: 42, emailsCount: 87, meetingsCount: 12, totalActivities: 141 },
+        { repId: SARAH_CHEN_UUID, repName: 'Sarah Chen',     initials: 'SC', avatarColor: '#00b894', callsCount: 35, emailsCount: 62, meetingsCount:  9, totalActivities: 106 },
+        { repId: MICHAEL_RODRIGUEZ_UUID, repName: 'Michael Rodriguez',     initials: 'MR', avatarColor: '#fd79a8', callsCount: 28, emailsCount: 55, meetingsCount:  7, totalActivities:  90 },
+        { repId: DAVID_PARK_UUID, repName: 'David Park',    initials: 'DP', avatarColor: '#fdcb6e', callsCount: 51, emailsCount: 73, meetingsCount: 14, totalActivities: 138 },
+        { repId: EMILY_THOMPSON_UUID, repName: 'Emily Thompson',  initials: 'ET', avatarColor: '#74b9ff', callsCount: 22, emailsCount: 41, meetingsCount:  5, totalActivities:  68 }
       ],
       interaction: {
         reps: [
-          { repId: 'me', repName: 'Alex Morgan',  initials: 'AM', avatarColor: '#6c5ce7', talkRatio: 68, talkRatioStatus: 'critical',  questionRate: 11, questionRateStatus: 'critical',  interactivity: 4, monologue: '4:12', monologueStatus: 'critical'  },
-          { repId: 'sarah', repName: 'Sarah Chen',    initials: 'SC', avatarColor: '#00b894', talkRatio: 41, talkRatioStatus: 'optimal',   questionRate: 21, questionRateStatus: 'optimal',   interactivity: 8, monologue: '1:45', monologueStatus: 'optimal'   },
-          { repId: 'michael', repName: 'Michael Rodriguez',    initials: 'MR', avatarColor: '#fd79a8', talkRatio: 55, talkRatioStatus: 'warning',   questionRate: 16, questionRateStatus: 'warning',   interactivity: 6, monologue: '2:30', monologueStatus: 'warning'   },
-          { repId: 'david', repName: 'David Park',   initials: 'DP', avatarColor: '#fdcb6e', talkRatio: 38, talkRatioStatus: 'optimal',   questionRate: 24, questionRateStatus: 'optimal',   interactivity: 9, monologue: '1:20', monologueStatus: 'optimal'   },
-          { repId: 'emily', repName: 'Emily Thompson', initials: 'ET', avatarColor: '#74b9ff', talkRatio: 49, talkRatioStatus: 'warning',   questionRate: 14, questionRateStatus: 'warning',   interactivity: 5, monologue: '3:05', monologueStatus: 'warning'   }
+          { repId: ALEX_MORGAN_UUID, repName: 'Alex Morgan',  initials: 'AM', avatarColor: '#6c5ce7', talkRatio: 68, talkRatioStatus: 'critical',  questionRate: 11, questionRateStatus: 'critical',  interactivity: 4, monologue: '4:12', monologueStatus: 'critical'  },
+          { repId: SARAH_CHEN_UUID, repName: 'Sarah Chen',    initials: 'SC', avatarColor: '#00b894', talkRatio: 41, talkRatioStatus: 'optimal',   questionRate: 21, questionRateStatus: 'optimal',   interactivity: 8, monologue: '1:45', monologueStatus: 'optimal'   },
+          { repId: MICHAEL_RODRIGUEZ_UUID, repName: 'Michael Rodriguez',    initials: 'MR', avatarColor: '#fd79a8', talkRatio: 55, talkRatioStatus: 'warning',   questionRate: 16, questionRateStatus: 'warning',   interactivity: 6, monologue: '2:30', monologueStatus: 'warning'   },
+          { repId: DAVID_PARK_UUID, repName: 'David Park',   initials: 'DP', avatarColor: '#fdcb6e', talkRatio: 38, talkRatioStatus: 'optimal',   questionRate: 24, questionRateStatus: 'optimal',   interactivity: 9, monologue: '1:20', monologueStatus: 'optimal'   },
+          { repId: EMILY_THOMPSON_UUID, repName: 'Emily Thompson', initials: 'ET', avatarColor: '#74b9ff', talkRatio: 49, talkRatioStatus: 'warning',   questionRate: 14, questionRateStatus: 'warning',   interactivity: 5, monologue: '3:05', monologueStatus: 'warning'   }
         ],
         benchmarks: {
           talkRatioOptimal: '<43%',
@@ -300,18 +307,18 @@ async function main() {
         }
       },
       responsiveness: [
-        { repId: 'me', repName: 'Alex Morgan',  avgResponseTime: '4.2 hrs', followUpRate: 62, replyRate: 71 },
-        { repId: 'sarah', repName: 'Sarah Chen',    avgResponseTime: '1.1 hrs', followUpRate: 91, replyRate: 88 },
-        { repId: 'michael', repName: 'Michael Rodriguez',  avgResponseTime: '2.8 hrs', followUpRate: 74, replyRate: 79 },
-        { repId: 'david', repName: 'David Park',   avgResponseTime: '0.9 hrs', followUpRate: 95, replyRate: 93 },
-        { repId: 'emily', repName: 'Emily Thompson', avgResponseTime: '5.7 hrs', followUpRate: 55, replyRate: 60 }
+        { repId: ALEX_MORGAN_UUID, repName: 'Alex Morgan',  avgResponseTime: '4.2 hrs', followUpRate: 62, replyRate: 71 },
+        { repId: SARAH_CHEN_UUID, repName: 'Sarah Chen',    avgResponseTime: '1.1 hrs', followUpRate: 91, replyRate: 88 },
+        { repId: MICHAEL_RODRIGUEZ_UUID, repName: 'Michael Rodriguez',  avgResponseTime: '2.8 hrs', followUpRate: 74, replyRate: 79 },
+        { repId: DAVID_PARK_UUID, repName: 'David Park',   avgResponseTime: '0.9 hrs', followUpRate: 95, replyRate: 93 },
+        { repId: EMILY_THOMPSON_UUID, repName: 'Emily Thompson', avgResponseTime: '5.7 hrs', followUpRate: 55, replyRate: 60 }
       ],
       scorecards: [
-        { repId: 'me', repName: 'Alex Morgan',  overallScore: 58, categories: [{ name: 'Discovery', score: 45 }, { name: 'Closing', score: 61 }, { name: 'Objection Handling', score: 52 }] },
-        { repId: 'sarah', repName: 'Sarah Chen',    overallScore: 89, categories: [{ name: 'Discovery', score: 92 }, { name: 'Closing', score: 88 }, { name: 'Objection Handling', score: 91 }] },
-        { repId: 'michael', repName: 'Michael Rodriguez',    overallScore: 74, categories: [{ name: 'Discovery', score: 78 }, { name: 'Closing', score: 70 }, { name: 'Objection Handling', score: 75 }] },
-        { repId: 'david', repName: 'David Park',   overallScore: 93, categories: [{ name: 'Discovery', score: 95 }, { name: 'Closing', score: 94 }, { name: 'Objection Handling', score: 90 }] },
-        { repId: 'emily', repName: 'Emily Thompson', overallScore: 62, categories: [{ name: 'Discovery', score: 58 }, { name: 'Closing', score: 65 }, { name: 'Objection Handling', score: 60 }] }
+        { repId: ALEX_MORGAN_UUID, repName: 'Alex Morgan',  overallScore: 58, categories: [{ name: 'Discovery', score: 45 }, { name: 'Closing', score: 61 }, { name: 'Objection Handling', score: 52 }] },
+        { repId: SARAH_CHEN_UUID, repName: 'Sarah Chen',    overallScore: 89, categories: [{ name: 'Discovery', score: 92 }, { name: 'Closing', score: 88 }, { name: 'Objection Handling', score: 91 }] },
+        { repId: MICHAEL_RODRIGUEZ_UUID, repName: 'Michael Rodriguez',    overallScore: 74, categories: [{ name: 'Discovery', score: 78 }, { name: 'Closing', score: 70 }, { name: 'Objection Handling', score: 75 }] },
+        { repId: DAVID_PARK_UUID, repName: 'David Park',   overallScore: 93, categories: [{ name: 'Discovery', score: 95 }, { name: 'Closing', score: 94 }, { name: 'Objection Handling', score: 90 }] },
+        { repId: EMILY_THOMPSON_UUID, repName: 'Emily Thompson', overallScore: 62, categories: [{ name: 'Discovery', score: 58 }, { name: 'Closing', score: 65 }, { name: 'Objection Handling', score: 60 }] }
       ],
       aiInsights: [
         {
@@ -342,12 +349,12 @@ async function main() {
   });
   console.log('✔ ManagerCoachingConfig seeded.');
 
-  // 4. Seed ManagerCoachingReps (e.g. me Alex Morgan, sarah Sarah Chen)
+  // 4. Seed ManagerCoachingReps (e.g. Alex Morgan, Sarah Chen)
   const coachingReps = [
     {
-      id: 'me',
+      id: ALEX_MORGAN_UUID,
       header: {
-        repId: 'me',
+        repId: ALEX_MORGAN_UUID,
         name: 'Alex Morgan',
         initials: 'AM',
         avatarColor: '#f6c23e',
@@ -395,9 +402,9 @@ async function main() {
       ]
     },
     {
-      id: 'sarah',
+      id: SARAH_CHEN_UUID,
       header: {
-        repId: 'sarah',
+        repId: SARAH_CHEN_UUID,
         name: 'Sarah Chen',
         initials: 'SC',
         avatarColor: '#1cc88a',
@@ -452,7 +459,7 @@ async function main() {
         coachingHistory: rep.coachingHistory
       },
       create: {
-        tenantId: TENANT_ID,
+        tenantid: TENANT_ID,
         ...rep
       }
     });

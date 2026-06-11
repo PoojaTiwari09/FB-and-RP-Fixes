@@ -10,7 +10,7 @@ export async function getSubmissionHistory(
   dealId?: string
 ): Promise<SubmissionHistoryResponse> {
   try {
-    const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
+    const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
     
     // We can fetch the list of all submissions for this rep, deal, and period.
     // In our new REST API design, we can query GET /api/forecast/submissions/:period_id/:rep_id

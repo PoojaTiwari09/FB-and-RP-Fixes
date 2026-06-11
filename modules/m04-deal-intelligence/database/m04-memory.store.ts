@@ -40,7 +40,7 @@ export const M04_DEV_BOARD_2 = '00000000-0000-0000-0000-000000000102';
 
 /** bcrypt hash for password "password" */
 const DEMO_PASSWORD_HASH =
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+  '$2b$10$P3j82dKxwk1DZvm8yUt22OviSTsKj0f9bQy0vkFHtQ/mxz309O57i';
 
 export type M04CollectionKey =
   | 'deals'

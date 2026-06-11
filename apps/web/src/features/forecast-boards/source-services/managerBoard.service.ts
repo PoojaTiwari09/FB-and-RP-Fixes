@@ -7,7 +7,7 @@ const headers = () => getManagerM06Headers();
 
 export async function getManagerBoardView(boardId: string): Promise<ManagerBoardViewResponse> {
   const managerId = headers()['x-user-id'] || '00000000-0000-0000-0000-000000000002';
-  const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
   // 1. Fetch manager board rows (reps list)
   const mbRes = await fetch(`/api/forecast/manager-board/${managerId}?period_id=${periodId}`, {
@@ -83,7 +83,7 @@ export async function getManagerBoardView(boardId: string): Promise<ManagerBoard
   return {
     board: {
       id: boardId,
-      name: boardId === 'board-q1' ? 'Q1 FY26 Forecast Board' : 'Q2 FY26 Forecast Board',
+      name: boardId === '00000000-0000-0000-0000-0000000000a1' ? 'Q1 FY26 Forecast Board' : 'Q2 FY26 Forecast Board',
       status: 'active',
       periodType: 'quarterly',
     },
