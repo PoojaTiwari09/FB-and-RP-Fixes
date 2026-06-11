@@ -30,7 +30,11 @@ if (Test-Path $fixTenant) {
   Get-Content $fixTenant | docker exec -i revenue_intel_db psql -U revenue_user -d revenue_intelligence 2>$null | Out-Null
 }
 
-Write-Host "[3/5] M01 call records + transcripts..." -ForegroundColor Yellow
+Write-Host "[3/6] Base Users & Tenant (seed:all)..." -ForegroundColor Yellow
+pnpm run seed:all
+$codeAll = $LASTEXITCODE
+
+Write-Host "[4/6] M01 call records + transcripts..." -ForegroundColor Yellow
 pnpm run seed:m01
 $code = $LASTEXITCODE
 

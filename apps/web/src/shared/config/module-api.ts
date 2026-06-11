@@ -6,14 +6,14 @@ export type RevenueModule = 'm01' | 'm02' | 'm08' | 'm09';
 const SERVER_API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   process.env.NEXT_PUBLIC_M01_API_BASE_URL ??
-  'http://localhost:3002';
+  'http://localhost:3001';
 
 /**
  * Get the backend API base URL
  * Always returns the full backend URL from env config
  */
 export function getBackendUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3002';
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 }
 
 /** Browser uses same-origin `/api/*` (Next.js rewrite → :3001). SSR uses full backend URL. */
