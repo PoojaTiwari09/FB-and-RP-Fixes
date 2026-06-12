@@ -6,21 +6,70 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url",      "value": "http://localhost:4011",                      "type": "string" },
-    { "key": "api_prefix",    "value": "/api/v1/m10-data-compliance",               "type": "string" },
-    { "key": "tenant_id",     "value": "00000000-0000-0000-0000-000000000001",       "type": "string" },
-    { "key": "user_id",       "value": "00000000-0000-0000-0000-000000000002",       "type": "string" },
-    { "key": "connection_id", "value": "",                                           "type": "string" },
-    { "key": "run_id",        "value": "",                                           "type": "string" },
-    { "key": "policy_id",     "value": "",                                           "type": "string" },
-    { "key": "dsar_id",       "value": "",                                           "type": "string" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:4011",
+      "type": "string"
+    },
+    {
+      "key": "api_prefix",
+      "value": "/api/v1/m10-data-compliance",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "00000000-0000-0000-0000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "00000000-0000-0000-0000-000000000002",
+      "type": "string"
+    },
+    {
+      "key": "connection_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "run_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "policy_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dsar_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "deal_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "contact_id",
+      "value": "",
+      "type": "string"
+    }
   ],
   "auth": {
-    "type": "apikey",
-    "apikey": [
-      { "key": "key",   "value": "x-tenant-id",    "type": "string" },
-      { "key": "value", "value": "{{tenant_id}}",  "type": "string" },
-      { "key": "in",    "value": "header",          "type": "string" }
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
     ]
   },
   "item": [
@@ -36,7 +85,8 @@
               "script": {
                 "exec": [
                   "pm.test('Health OK', function () {",
-                  "  var json = pm.response.json();",
+                  "  var raw = pm.response.json();",
+                  "  var json = raw.data !== undefined ? raw.data : raw;",
                   "  pm.expect(json.success).to.be.true;",
                   "});"
                 ],
@@ -47,13 +97,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/test/health",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "test", "health"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "test",
+                "health"
+              ]
             },
             "description": "Frontend calls this on mount to verify the API is reachable."
           }
@@ -66,7 +130,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "pm.test('Returns array', function () { pm.expect(json).to.be.an('array'); });",
                   "if (Array.isArray(json) && json.length > 0) {",
                   "  pm.collectionVariables.set('connection_id', json[0].connectionId);",
@@ -80,13 +145,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/connections",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "connections"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "connections"
+              ]
             },
             "description": "Frontend normalises each item via normaliseConnection(raw):\n  raw.connectionId → id\n  raw.destination  → type (snowflake|postgres|redshift|bigquery|s3|databricks)\n  raw.destinationName → name\n  raw.isActive     → CONNECTED / DISCONNECTED\n  raw.config.host, .database, .schema, .username\n  raw.createdAt    → lastSynced"
           }
@@ -99,7 +178,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (json.connectionId) {",
                   "  pm.collectionVariables.set('connection_id', json.connectionId);",
                   "  console.log('connection_id set to', json.connectionId);",
@@ -112,9 +192,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",   "value": "{{tenant_id}}" },
-              { "key": "x-user-id",     "value": "{{user_id}}" },
-              { "key": "Content-Type",  "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -122,8 +211,16 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/connections",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "connections"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "connections"
+              ]
             },
             "description": "Frontend payload shape (from apiClient.ts createConnection):\n  destination: 'postgres' | 'snowflake' | 'bigquery' | 's3' | 'databricks' | 'redshift'\n  destinationName: string\n  config: { host, database, schema, username }\n\nResponse fields used by frontend: connectionId, destination, destinationName, isActive, config, createdAt"
           }
@@ -136,7 +233,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "pm.test('Has success field', function () { pm.expect(json).to.have.property('success'); });",
                   "pm.test('Has message field', function () { pm.expect(json).to.have.property('message'); });"
                 ],
@@ -147,13 +245,29 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/connections/{{connection_id}}/test",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "connections", "{{connection_id}}", "test"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "connections",
+                "{{connection_id}}",
+                "test"
+              ]
             },
             "description": "Frontend reads: { success: boolean, message: string }\nCalled from handleTestConnection() in DataCloudManagerView."
           }
@@ -166,7 +280,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "pm.test('Returns array', function () { pm.expect(json).to.be.an('array'); });",
                   "if (Array.isArray(json) && json.length > 0) {",
                   "  pm.collectionVariables.set('run_id', json[0].runId);",
@@ -180,15 +295,33 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/runs",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "runs"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "runs"
+              ],
               "query": [
-                { "key": "connectionId", "value": "", "disabled": true }
+                {
+                  "key": "connectionId",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             },
             "description": "Frontend normalises via normaliseExportRun(raw):\n  raw.runId → id\n  raw.connectionId\n  raw.destination → tableName\n  raw.status → RUNNING / SUCCESS / FAILED\n  raw.rowsExported → recordsExported\n  raw.filePaths (object keys = dataset names)\n  raw.startedAt, raw.completedAt, raw.errorMessage, raw.downloadUrls"
@@ -199,20 +332,68 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/runs/{{run_id}}/download?dataset=accounts&format=csv",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "runs", "{{run_id}}", "download"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "runs",
+                "{{run_id}}",
+                "download"
+              ],
               "query": [
-                { "key": "dataset", "value": "accounts", "description": "accounts | contacts | deals | activities" },
-                { "key": "format",  "value": "csv",      "description": "csv | parquet" }
+                {
+                  "key": "dataset",
+                  "value": "accounts",
+                  "description": "accounts | contacts | deals | activities"
+                },
+                {
+                  "key": "format",
+                  "value": "csv",
+                  "description": "csv | parquet"
+                }
               ]
             },
             "description": "Frontend constructs this URL via downloadExportRun(runId, dataset, format).\nReturns raw file stream (text/csv or application/octet-stream)."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "7. Get Policies (GET /policies)",
@@ -222,7 +403,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "pm.test('Returns array', function () { pm.expect(json).to.be.an('array'); });",
                   "if (Array.isArray(json) && json.length > 0) {",
                   "  pm.collectionVariables.set('policy_id', json[0].id);",
@@ -236,13 +418,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies"
+              ]
             },
             "description": "Frontend normalises via normalisePolicy(raw):\n  raw.id\n  raw.name → ruleName\n  raw.description → details\n  raw.channel → appliedTo\n  raw.regionFamily → appliedTo (fallback)\n  raw.isActive + raw.ruleDefinition.fallbackAction → COMPLIANT / WARNING\n  raw.createdAt / raw.updatedAt → checkedAt"
           }
@@ -255,7 +450,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (json.id) {",
                   "  pm.collectionVariables.set('policy_id', json.id);",
                   "  console.log('policy_id set to', json.id);",
@@ -268,9 +464,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -278,8 +483,15 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies"
+              ]
             },
             "description": "Frontend payload shape (from apiClient.ts createDataCompliance):\n  name: string\n  description: string\n  channel: 'email' | 'call' | 'sms' | 'data_export'\n  regionFamily: 'GLOBAL'  ← frontend always sends GLOBAL\n  ruleDefinition: { fallbackAction: 'allow' | 'block' }\n\nNote: frontend does NOT send requireExplicitConsent."
           }
@@ -302,15 +514,32 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/compliance/audit-log?limit=1",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "compliance", "audit-log"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "compliance",
+                "audit-log"
+              ],
               "query": [
-                { "key": "limit", "value": "1" }
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
               ]
             },
             "description": "Frontend calls getCrmSyncStatus() which hits this endpoint with limit=1\nas a lightweight health-check only. The response body is NOT read — the\nfrontend returns its own mocked sync-status with the current timestamp."
@@ -324,7 +553,8 @@
               "script": {
                 "exec": [
                   "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "pm.test('Has message', function () { pm.expect(json).to.have.property('message'); });",
                   "if (json.runId) {",
                   "  pm.collectionVariables.set('run_id', json.runId);",
@@ -338,9 +568,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -348,8 +587,16 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/replay",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "replay"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "replay"
+              ]
             },
             "description": "Frontend payload shape (from apiClient.ts replaySync):\n  connectionId: UUID  ← set by collection variable from step 2 or 3\n  datasetName: 'accounts' (frontend default)\n  windowStart: ISO8601\n  windowEnd: ISO8601\n\nFrontend reads: { message: string }"
           }
@@ -365,25 +612,70 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/data-compliance",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "data-compliance"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-compliance"
+              ]
             },
             "description": "Handler: findAll(tenantId)\nReturns: [{ message: 'Mock list for tenant <id>' }]\nNote: path is /api/v1/data-compliance — NOT /api/v1/m10-data-compliance"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Compliance Record (POST /api/v1/data-compliance)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -391,11 +683,41 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/data-compliance",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "data-compliance"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data-compliance"
+              ]
             },
             "description": "Handler: create(dto, tenantId)\nPublishes 'compliance.policy.updated' event after creation.\nReturns: { id: 'mock-id-123', ...dto, tenantId }\nNote: path is /api/v1/data-compliance — NOT /api/v1/m10-data-compliance"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -407,65 +729,223 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/test/health",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "test", "health"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "test",
+                "health"
+              ]
             },
             "description": "Verifies the API is running. No DB call."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Smoke Test (DB connectivity)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/test/smoke",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "test", "smoke"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "test",
+                "smoke"
+              ]
             },
             "description": "Verifies database connectivity by running a lightweight Prisma query."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Seed Demo Data",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/test/seed",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "test", "seed"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "test",
+                "seed"
+              ]
             },
             "description": "Seeds the DB with demo tenant + accounts/deals. Useful for populating the frontend."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Mock Accounts",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/test/accounts",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "test", "accounts"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "test",
+                "accounts"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -477,36 +957,131 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/accounts?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "accounts"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "accounts"
+              ],
               "query": [
-                { "key": "page",   "value": "1" },
-                { "key": "limit",  "value": "20" },
-                { "key": "search", "value": "", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});",
+                  "",
+                  "if (json.data && Array.isArray(json.data) && json.data.length > 0) {",
+                  "  pm.collectionVariables.set('account_id', json.data[0].accountId);",
+                  "  console.log('account_id set to', json.data[0].accountId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Account by ID",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/accounts/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "accounts", ":id"],
-              "variable": [{ "key": "id", "value": "" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "accounts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{account_id}}"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -518,54 +1093,211 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/deals?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "deals"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "deals"
+              ],
               "query": [
-                { "key": "page",      "value": "1" },
-                { "key": "limit",     "value": "20" },
-                { "key": "accountId", "value": "", "disabled": true },
-                { "key": "isActive",  "value": "true", "disabled": true },
-                { "key": "stage",     "value": "", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "accountId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "stage",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});",
+                  "",
+                  "if (json.data && Array.isArray(json.data) && json.data.length > 0) {",
+                  "  pm.collectionVariables.set('deal_id', json.data[0].dealId);",
+                  "  console.log('deal_id set to', json.data[0].dealId);",
+                  "  ",
+                  "  // Find the first deal that actually contains contacts",
+                  "  const dealWithContact = json.data.find(d => d.contacts && d.contacts.length > 0);",
+                  "  if (dealWithContact) {",
+                  "    const cId = dealWithContact.contacts[0].contactId;",
+                  "    pm.collectionVariables.set('contact_id', cId);",
+                  "    console.log('contact_id set to', cId);",
+                  "  } else {",
+                  "    console.log('No deal with contacts found in list');",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Deal by ID",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/deals/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "deals", ":id"],
-              "variable": [{ "key": "id", "value": "" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "deals",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{deal_id}}"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Deal Relationships",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/deals/:id/relationship",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "deals", ":id", "relationship"],
-              "variable": [{ "key": "id", "value": "" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "deals",
+                ":id",
+                "relationship"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{deal_id}}"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -577,16 +1309,59 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/contacts/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "contacts", ":id"],
-              "variable": [{ "key": "id", "value": "" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "contacts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{contact_id}}"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -598,9 +1373,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -608,25 +1392,93 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/crm-sync",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "crm-sync"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "crm-sync"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 202 or 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 202]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get CRM Sync Status",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/crm-sync-status",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "crm-sync-status"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "crm-sync-status"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -640,7 +1492,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (json.id) { pm.collectionVariables.set('policy_id', json.id); }"
                 ],
                 "type": "text/javascript"
@@ -650,9 +1503,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -660,8 +1522,15 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies"
+              ]
             },
             "description": "channel: email | call | sms | data_export\nregionFamily: GDPR | CCPA | GLOBAL\nfallbackAction: allow | block"
           }
@@ -671,40 +1540,129 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies?activeOnly=false",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies"],
-              "query": [{ "key": "activeOnly", "value": "false" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies"
+              ],
+              "query": [
+                {
+                  "key": "activeOnly",
+                  "value": "false"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Policy by ID",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies/{{policy_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies", "{{policy_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies",
+                "{{policy_id}}"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Update Policy",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -712,26 +1670,96 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies/{{policy_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies", "{{policy_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies",
+                "{{policy_id}}"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Deactivate Policy (DELETE)",
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/policies/{{policy_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "policies", "{{policy_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "policies",
+                "{{policy_id}}"
+              ]
             },
             "description": "Soft-deactivates the policy (sets isActive=false). Does NOT hard-delete the row."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -743,9 +1771,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -753,35 +1790,119 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/compliance/optouts",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "compliance", "optouts"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "compliance",
+                "optouts"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Opt-Outs",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/compliance/optouts?email=user@example.com",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "compliance", "optouts"],
-              "query": [{ "key": "email", "value": "user@example.com" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "compliance",
+                "optouts"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Consent Log",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -789,49 +1910,176 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/compliance/consent-logs",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "compliance", "consent-logs"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "compliance",
+                "consent-logs"
+              ]
             },
             "description": "source: web_form | manual_crm | opt_in_email | api\nstatus: granted | revoked"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Consent Logs",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/compliance/consent-logs?email=user@example.com",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "compliance", "consent-logs"],
-              "query": [{ "key": "email", "value": "user@example.com" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "compliance",
+                "consent-logs"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Audit Log",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/compliance/audit-log?limit=50&offset=0",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "compliance", "audit-log"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "compliance",
+                "audit-log"
+              ],
               "query": [
-                { "key": "email",    "value": "", "disabled": true },
-                { "key": "decision", "value": "", "disabled": true },
-                { "key": "limit",    "value": "50" },
-                { "key": "offset",   "value": "0" }
+                {
+                  "key": "email",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "decision",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "Immutable evaluation decision log. Filter by email, decision (allow|block)."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -843,9 +2091,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -853,20 +2110,60 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/evaluate",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "evaluate"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "evaluate"
+              ]
             },
             "description": "Runtime compliance gate called before email/call/SMS.\nReturns: { decision: 'allow'|'block', reasonCode, correlationId }\n\nReason codes:\n  POLICY_PASSED | CRM_OPTED_OUT | SUPPRESSED | GDPR_CONSENT_REQUIRED\n  CCPA_RESTRICTED | GDPR_ERASURE_IN_PROGRESS | EPRIVACY_CONSENT_REQUIRED\n  FAIL_CLOSED_MISSING_DATA | NO_ACTIVE_POLICY"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Evaluate Outreach (GDPR EU contact)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -874,11 +2171,42 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/evaluate",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "evaluate"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "evaluate"
+              ]
             },
             "description": "Will block if no GDPR consent record exists for this EU contact."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -892,7 +2220,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (json.connectionId) { pm.collectionVariables.set('connection_id', json.connectionId); }"
                 ],
                 "type": "text/javascript"
@@ -902,9 +2231,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -912,8 +2250,16 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/connections",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "connections"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "connections"
+              ]
             },
             "description": "destination: postgres | snowflake | bigquery | s3 | databricks | redshift\n\nFor Snowflake use:\n  { \"account\": \"xy12345.us-east-1\", \"warehouse\": \"COMPUTE_WH\", \"database\": \"ANALYTICS\", \"schema\": \"PUBLIC\", \"username\": \"loader\" }\n\nFor S3 use:\n  { \"bucket\": \"my-bucket\", \"region\": \"us-east-1\", \"prefix\": \"exports/\" }"
           }
@@ -923,31 +2269,109 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/connections",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "connections"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "connections"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Test Connection",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/connections/{{connection_id}}/test",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "connections", "{{connection_id}}", "test"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "connections",
+                "{{connection_id}}",
+                "test"
+              ]
             },
             "description": "Returns: { success: boolean, message: string }"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -961,7 +2385,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (json.runId) { pm.collectionVariables.set('run_id', json.runId); }"
                 ],
                 "type": "text/javascript"
@@ -971,9 +2396,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -981,8 +2415,16 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/replay",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "replay"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "replay"
+              ]
             },
             "description": "datasetName: accounts | contacts | deals | activities"
           }
@@ -994,7 +2436,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (Array.isArray(json) && json.length > 0) { pm.collectionVariables.set('run_id', json[0].runId); }"
                 ],
                 "type": "text/javascript"
@@ -1004,15 +2447,33 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/runs",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "runs"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "runs"
+              ],
               "query": [
-                { "key": "connectionId", "value": "", "disabled": true }
+                {
+                  "key": "connectionId",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1022,20 +2483,68 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/exports/runs/{{run_id}}/download?dataset=accounts&format=csv",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "exports", "runs", "{{run_id}}", "download"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "exports",
+                "runs",
+                "{{run_id}}",
+                "download"
+              ],
               "query": [
-                { "key": "dataset", "value": "accounts", "description": "accounts | contacts | deals | activities" },
-                { "key": "format",  "value": "csv",      "description": "csv | parquet" }
+                {
+                  "key": "dataset",
+                  "value": "accounts",
+                  "description": "accounts | contacts | deals | activities"
+                },
+                {
+                  "key": "format",
+                  "value": "csv",
+                  "description": "csv | parquet"
+                }
               ]
             },
             "description": "Returns raw file stream. Use 'Send and Download' in Postman to save the file."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1049,7 +2558,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var json = pm.response.json();",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
                   "if (json.id) { pm.collectionVariables.set('dsar_id', json.id); }"
                 ],
                 "type": "text/javascript"
@@ -1059,9 +2569,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1069,8 +2588,16 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/gdpr/dsar",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "gdpr", "dsar"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "gdpr",
+                "dsar"
+              ]
             },
             "description": "requestType: erasure | portability | access | rectification"
           }
@@ -1080,9 +2607,18 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1090,20 +2626,63 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/gdpr/dsar/{{dsar_id}}/status",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "gdpr", "dsar", "{{dsar_id}}", "status"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "gdpr",
+                "dsar",
+                "{{dsar_id}}",
+                "status"
+              ]
             },
             "description": "status: pending | in_progress | completed | rejected"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Execute Erasure (Right to be Forgotten)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1111,38 +2690,123 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/gdpr/dsar/{{dsar_id}}/execute-erasure",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "gdpr", "dsar", "{{dsar_id}}", "execute-erasure"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "gdpr",
+                "dsar",
+                "{{dsar_id}}",
+                "execute-erasure"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Data Portability Export",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/gdpr/dsar/portability?email=user@example.com",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "gdpr", "dsar", "portability"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "gdpr",
+                "dsar",
+                "portability"
+              ],
               "query": [
-                { "key": "email", "value": "user@example.com" }
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                }
               ]
             },
             "description": "Returns portable data package for the given contact email."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create ROPA (Records of Processing Activity)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1150,19 +2814,60 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/gdpr/ropa",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "gdpr", "ropa"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "gdpr",
+                "ropa"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Log Data Breach",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1170,10 +2875,42 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/gdpr/data-breach",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "gdpr", "data-breach"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "gdpr",
+                "data-breach"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1185,9 +2922,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1195,40 +2941,128 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/eprivacy/consent",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "eprivacy", "consent"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "eprivacy",
+                "consent"
+              ]
             },
             "description": "purpose: marketing | tracking | essential\nsource: cookie_banner | preference_center\nstatus: granted | revoked"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get ePrivacy Consent Status",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/eprivacy/consent?email=user@example.com&channel=email&purpose=marketing",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "eprivacy", "consent"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "eprivacy",
+                "consent"
+              ],
               "query": [
-                { "key": "email",   "value": "user@example.com" },
-                { "key": "channel", "value": "email" },
-                { "key": "purpose", "value": "marketing" }
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "channel",
+                  "value": "email"
+                },
+                {
+                  "key": "purpose",
+                  "value": "marketing"
+                }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Add to Suppression List",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-tenant-id",  "value": "{{tenant_id}}" },
-              { "key": "x-user-id",    "value": "{{user_id}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -1236,27 +3070,102 @@
             },
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/eprivacy/suppression",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "eprivacy", "suppression"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "eprivacy",
+                "suppression"
+              ]
             },
             "description": "reason: global_dnc | eprivacy_revoke | spam_complaint"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Check Suppression",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-tenant-id", "value": "{{tenant_id}}" },
-              { "key": "x-user-id",   "value": "{{user_id}}" }
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{user_id}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}{{api_prefix}}/eprivacy/suppression?email=user@example.com",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "m10-data-compliance", "eprivacy", "suppression"],
-              "query": [{ "key": "email", "value": "user@example.com" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "m10-data-compliance",
+                "eprivacy",
+                "suppression"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                }
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var raw = pm.response.json();",
+                  "var json = raw.data !== undefined ? raw.data : raw;",
+                  "",
+                  "pm.test(\"Response has success flag or valid object\", function () {",
+                  "  if (raw.success !== undefined) {",
+                  "    pm.expect(raw.success).to.be.true;",
+                  "  } else {",
+                  "    pm.expect(json).to.be.ok;",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     }
