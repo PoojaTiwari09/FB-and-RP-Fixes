@@ -8,8 +8,8 @@ export interface Tracker {
 export interface TrackerDetail {
   percentage: number;
   mentions: number;
-  topAccounts: string[];
-  topReps: string[];
+  topAccounts: any[];
+  topReps: any[];
   aiInsight: string;
 }
 

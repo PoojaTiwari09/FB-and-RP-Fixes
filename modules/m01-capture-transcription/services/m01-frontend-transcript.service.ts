@@ -41,7 +41,7 @@ export class M01FrontendTranscriptService {
   constructor(
     private readonly calls: CallService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   private async loadCall(callId: string, tenantId: string) {
     const record = await this.calls.getCallDetail(callId, tenantId);
@@ -141,10 +141,10 @@ export class M01FrontendTranscriptService {
       t?.summary?.trim() ||
       (utterances.length > 0
         ? utterances
-            .slice(0, 3)
-            .map((u: any) => u.text)
-            .join(' ')
-            .slice(0, 500)
+          .slice(0, 3)
+          .map((u: any) => u.text)
+          .join(' ')
+          .slice(0, 500)
         : 'No summary available yet.');
     const account = record.accountId || record.accountName || '';
     return {

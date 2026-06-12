@@ -22,6 +22,11 @@ export class M02FrontendSearchController {
   getCallDrawer(@Param('callId') callId: string, @Req() req: Record<string, string>) {
     return this.svc.getCallDrawer(req.tenantId, callId);
   }
+
+  @Get('options')
+  getFilterOptionsAlias() {
+    return this.svc.getFilterOptions();
+  }
 }
 
 @Controller('api/v1/conversation-intelligence/filters')
@@ -32,6 +37,11 @@ export class M02FrontendFiltersController {
   @Get('options')
   getFilterOptions() {
     return this.svc.getFilterOptions();
+  }
+
+  @Get('teams')
+  async getTeams(@Req() req: Record<string, string>) {
+    return this.svc.getTeams(req.tenantId);
   }
 }
 
