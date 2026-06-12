@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthGuard } from '../guards/auth.guard';
 import { NotesRepository } from '../repositories/notes.repository';
 import { M01FrontendTranscriptService } from '../services/m01-frontend-transcript.service';
 import { M01FrontendCallProcessingService } from '../services/m01-frontend-call-processing.service';
@@ -18,7 +19,7 @@ import { M01FrontendCallsService } from '../services/m01-frontend-calls.service'
 
 /** M01 call detail: transcript, briefs, next-steps (under /api/calls/:callId). */
 @Controller('api/v1/capture-transcription/calls/:callId')
-@UseGuards(TenantGuard)
+@UseGuards(AuthGuard, TenantGuard)
 export class M01FrontendCallDetailController {
   constructor(
     private readonly svc: M01FrontendTranscriptService,
@@ -152,6 +153,66 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     return this.svc.formattedSummary(callId, briefId, req.tenantId);
+  }
+
+  @Get('briefs/:briefId/discussion-points')
+  async getBriefDiscussionPoints(
+    @Param('callId') callId: string,
+    @Param('briefId') briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+    return { success: true, data: brief.keyDiscussionPoints || [] };
+  }
+
+  @Get('briefs/:briefId/customer-needs')
+  async getBriefCustomerNeeds(
+    @Param('callId') callId: string,
+    @Param('briefId') briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+    return { success: true, data: brief.customerNeeds || [] };
+  }
+
+  @Get('briefs/:briefId/risks')
+  async getBriefRisks(
+    @Param('callId') callId: string,
+    @Param('briefId') briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+    return { success: true, data: brief.risks || [] };
+  }
+
+  @Get('briefs/:briefId/commitments')
+  async getBriefCommitments(
+    @Param('callId') callId: string,
+    @Param('briefId') briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+    return { success: true, data: brief.commitments || [] };
+  }
+
+  @Get('briefs/:briefId/stakeholders')
+  async getBriefStakeholders(
+    @Param('callId') callId: string,
+    @Param('briefId') briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+    return { success: true, data: brief.stakeholders || [] };
+  }
+
+  @Get('briefs/:briefId/activity-context')
+  async getBriefActivityContext(
+    @Param('callId') callId: string,
+    @Param('briefId') briefId: string,
+    @Req() req: Record<string, string>,
+  ) {
+    const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+    return { success: true, data: brief.activityContext || [] };
   }
 
   @Get('notes')

@@ -22,6 +22,13 @@ Comprehensive API tests for m03-ai-summaries-genai
 16. [[POST] /api/v1/ai-summaries-genai/workspace/chat-history](#-post-api-v1-ai-summaries-genai-workspace-chat-history)
 17. [[DELETE] /api/v1/ai-summaries-genai/workspace/chat-history/:id](#-delete-api-v1-ai-summaries-genai-workspace-chat-history-id)
 18. [[POST] /api/v1/ai-summaries-genai/workspace/deals](#-post-api-v1-ai-summaries-genai-workspace-deals)
+19. [[PATCH] /api/v1/capture-transcription/calls/:callId/next-steps/:stepId](#-patch-api-v1-capture-transcription-calls-callid-next-steps-stepid)
+20. [[GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/discussion-points](#-get-api-v1-capture-transcription-calls-callid-briefs-briefid-discussion-points)
+21. [[GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/customer-needs](#-get-api-v1-capture-transcription-calls-callid-briefs-briefid-customer-needs)
+22. [[GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/risks](#-get-api-v1-capture-transcription-calls-callid-briefs-briefid-risks)
+23. [[GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/commitments](#-get-api-v1-capture-transcription-calls-callid-briefs-briefid-commitments)
+24. [[GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/stakeholders](#-get-api-v1-capture-transcription-calls-callid-briefs-briefid-stakeholders)
+25. [[GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/activity-context](#-get-api-v1-capture-transcription-calls-callid-briefs-briefid-activity-context)
 
 ---
 
@@ -1028,6 +1035,360 @@ No payload or parameters needed.
 - **Assertions**:
   - `pm.test('Status code is 400', function () {`
   - `    pm.response.to.have.status(400);`
+  - `});`
+
+
+---
+
+## [PATCH] /api/v1/capture-transcription/calls/:callId/next-steps/:stepId
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/next-steps/{{stepId}}`
+- **Method / Endpoint Type**: `PATCH`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+**Request Body (JSON)**:
+```json
+{
+  "completed": true
+}
+```
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Bad Request (Validation)
+- **Expected Status**: `400 Bad Request`
+- **Payload Sent**:
+```json
+{
+  "completed": "not-a-boolean"
+}
+```
+- **Assertions**:
+  - `pm.test('Status code is 400', function () {`
+  - `    pm.response.to.have.status(400);`
+  - `});`
+
+
+---
+
+## [GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/discussion-points
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/briefs/{{briefId}}/discussion-points`
+- **Method / Endpoint Type**: `GET`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+No payload or parameters needed.
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Invalid JWT
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+
+---
+
+## [GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/customer-needs
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/briefs/{{briefId}}/customer-needs`
+- **Method / Endpoint Type**: `GET`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+No payload or parameters needed.
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Invalid JWT
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+
+---
+
+## [GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/risks
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/briefs/{{briefId}}/risks`
+- **Method / Endpoint Type**: `GET`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+No payload or parameters needed.
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Invalid JWT
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+
+---
+
+## [GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/commitments
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/briefs/{{briefId}}/commitments`
+- **Method / Endpoint Type**: `GET`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+No payload or parameters needed.
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Invalid JWT
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+
+---
+
+## [GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/stakeholders
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/briefs/{{briefId}}/stakeholders`
+- **Method / Endpoint Type**: `GET`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+No payload or parameters needed.
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Invalid JWT
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+
+---
+
+## [GET] /api/v1/capture-transcription/calls/:callId/briefs/:briefId/activity-context
+
+### 1. General Details
+
+- **Endpoint**: `{{baseUrl}}/api/v1/capture-transcription/calls/{{callId}}/briefs/{{briefId}}/activity-context`
+- **Method / Endpoint Type**: `GET`
+
+### 2. Headers
+
+| Header Key | Value | Description |
+|---|---|---|
+| `Content-Type` | `application/json` | | 
+| `x-tenant-id` | `00000000-0000-0000-0000-000000000001` | | 
+| `Authorization` | `Bearer {{jwtToken}}` | Bearer Token Auth |
+
+### 3. Payload Details
+
+No payload or parameters needed.
+
+### 4. Test Cases & Expected Responses
+
+#### Test Case 1: Happy Path (Valid Request)
+- **Expected Status**: `200 OK`
+- **Assertions & Logic**:
+  - `pm.test('Status code is 200', function () {`
+  - `    pm.response.to.have.status(200);`
+  - `});`
+  - `pm.test('Response time is less than 5000ms', function () {`
+  - `    pm.expect(pm.response.responseTime).to.be.below(5000);`
+  - `});`
+
+#### Test Case 2: Missing JWT (Authentication Required)
+- **Authentication Mode**: `noauth` (removes the Authorization header)
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
+  - `});`
+
+#### Test Case 3: 3. Invalid JWT
+- **Expected Status**: `401 Unauthorized`
+- **Assertions**:
+  - `pm.test('Status code is 401', function () {`
+  - `    pm.response.to.have.status(401);`
   - `});`
 
 
