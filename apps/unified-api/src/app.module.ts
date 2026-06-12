@@ -13,7 +13,7 @@ import { M06ForecastingPredictionModule } from '../../../modules/m06-forecasting
 import { M04DealIntelligenceModule } from '../../../modules/m04-deal-intelligence/m04-deal-intelligence.module';
 import { M11AiDeepResearcherModule } from '../../../modules/m11-ai-deep-researcher/m11-ai-deep-researcher.module';
 import { M07RevenueDashboardsModule } from '../../../modules/m07-revenue-dashboards/m07-revenue-dashboards.module';
-import { M03AiSummariesGenaiModule } from '../../../modules/m03-ai-summaries-genai/m03-ai-summaries-genai.module';
+import { M10DataComplianceModule } from '../../../modules/m10-data-compliance/m10-data-compliance.module';
 import { PlatformAuthModule } from '../../../modules/platform-core/auth/auth.module';
 
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -56,7 +56,7 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://1
     M04DealIntelligenceModule,
     M11AiDeepResearcherModule,
     M07RevenueDashboardsModule,
-    M03AiSummariesGenaiModule,
+    M10DataComplianceModule,
     PlatformAuthModule,
   ],
   providers: [

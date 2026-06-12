@@ -20,6 +20,11 @@ export class ResponseTransformInterceptor implements NestInterceptor {
           return data;
         }
 
+        // Bypass formatting for m10-data-compliance endpoints to keep legacy contracts
+        if (req.url && req.url.includes('/m10-data-compliance')) {
+          return data;
+        }
+
         // Avoid wrapping standard NestJS/Express redirected or streaming responses if they handle it themselves
         const res = ctx.getResponse();
         if (res.headersSent) {
