@@ -237,7 +237,9 @@ export class AiDeepResearcherService {
     };
   }
 
-  async getRepCalls(repId: string): Promise<any> {
+    async getRepCalls(repId: string): Promise<any> {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(repId);
+    if (!isUuid) return { calls: [] };
     const rep = await this.prisma.user.findUnique({ where: { id: repId } });
     const calls = await this.prisma.callRecord.findMany({
       where: { callOwner: rep?.name || undefined },
@@ -276,8 +278,11 @@ export class AiDeepResearcherService {
   }
 
   async getAccountDetails(accountId: string): Promise<any> {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(accountId);
     const account = await this.prisma.account.findFirst({
-      where: { OR: [{ id: accountId }, { name: accountId }] },
+      where: isUuid
+        ? { OR: [{ id: accountId }, { name: accountId }] }
+        : { name: accountId },
     });
     return account || { id: accountId, name: accountId, status: 'not_found' };
   }

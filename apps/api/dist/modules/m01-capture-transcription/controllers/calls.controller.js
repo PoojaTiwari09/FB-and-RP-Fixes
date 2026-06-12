@@ -68,6 +68,9 @@ let CallsController = class CallsController {
         const parsed = m01_schema_1.SearchQuerySchema.parse(query);
         return this.svc.searchWithinCall(id, req.tenantId, parsed);
     }
+    listNotes(id, req) {
+        return this.svc.listNotes(id, req.tenantId, req.userId);
+    }
     createNote(id, body, req) {
         const dto = m01_schema_1.CreateNoteSchema.parse(body);
         return this.svc.createNote(id, req.tenantId, req.userId ?? 'anonymous', dto);
@@ -177,6 +180,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], CallsController.prototype, "searchWithinCall", null);
+__decorate([
+    (0, common_1.Get)('calls/:id/notes'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CallsController.prototype, "listNotes", null);
 __decorate([
     (0, common_1.Post)('calls/:id/notes'),
     __param(0, (0, common_1.Param)('id')),

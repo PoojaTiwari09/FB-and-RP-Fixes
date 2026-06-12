@@ -85,8 +85,11 @@ let M01FrontendCallDetailController = class M01FrontendCallDetailController {
         return this.svc.formattedSummary(callId, briefId, req.tenantId);
     }
     async getNotes(callId, req) {
-        const currentUserId = req.user?.id || 'usr_001';
-        const notes = await this.notesRepo.findByCallId(callId, req.tenantId || 'tenant_001', currentUserId);
+        const currentUserId = req.user?.sub || req.user?.id || req.userId;
+        const tenantId = req.tenantId || req.user?.tenantId;
+        if (!tenantId)
+            throw new common_1.BadRequestException('Tenant context required');
+        const notes = await this.notesRepo.findByCallId(callId, tenantId, currentUserId);
         return {
             data: notes.map((n) => ({
                 noteId: n.id,
@@ -103,8 +106,11 @@ let M01FrontendCallDetailController = class M01FrontendCallDetailController {
         if (!noteText) {
             throw new common_1.BadRequestException('Note content is required');
         }
-        const authorId = body.userId || req.userId || 'usr_001';
-        const created = await this.notesRepo.create(callId, req.tenantId || 'tenant_001', authorId, { content: noteText });
+        const authorId = body.userId || req.user?.sub || req.user?.id || req.userId;
+        const tenantId = req.tenantId || req.user?.tenantId;
+        if (!tenantId || !authorId)
+            throw new common_1.BadRequestException('Authentication required');
+        const created = await this.notesRepo.create(callId, tenantId, authorId, { content: noteText });
         return {
             data: {
                 noteId: created.id,

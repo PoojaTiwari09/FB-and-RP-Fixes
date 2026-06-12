@@ -8,7 +8,7 @@ exports.M04_DEV_TENANT = 'dev-tenant-m04-001';
 exports.M04_DEV_USER = '00000000-0000-0000-0000-000000000004';
 exports.M04_DEV_BOARD_1 = '00000000-0000-0000-0000-000000000101';
 exports.M04_DEV_BOARD_2 = '00000000-0000-0000-0000-000000000102';
-const DEMO_PASSWORD_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+const DEMO_PASSWORD_HASH = '$2b$10$P3j82dKxwk1DZvm8yUt22OviSTsKj0f9bQy0vkFHtQ/mxz309O57i';
 class M04MemoryStore {
     deals = new Map();
     boards = new Map();

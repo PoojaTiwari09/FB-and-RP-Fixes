@@ -45,7 +45,7 @@ let M06ForecastingPredictionController = class M06ForecastingPredictionControlle
         if (!tenantId)
             throw new common_1.ForbiddenException('Tenant ID required');
         const periods = await this.service['prisma'].forecastPeriod.findMany({
-            where: { tenantId: tenantId },
+            where: { tenantid: tenantId },
             orderBy: { startDate: 'desc' },
         });
         return periods.map((period) => ({

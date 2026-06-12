@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoardWarningConfigController = void 0;
 const common_1 = require("@nestjs/common");
 const class_validator_1 = require("class-validator");
-const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
+const jwt_guard_1 = require("../interfaces/jwt.guard");
 const database_service_1 = require("../database/database.service");
 const uuid_1 = require("uuid");
 class AddBoardWarningDto {
@@ -202,7 +202,7 @@ __decorate([
 ], BoardWarningConfigController.prototype, "removeWarningFromBoard", null);
 exports.BoardWarningConfigController = BoardWarningConfigController = __decorate([
     (0, common_1.Controller)('deal-drivers/boards/:boardId/warnings'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, jwt_guard_1.Roles)('revops', 'admin'),
     __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], BoardWarningConfigController);
 //# sourceMappingURL=board-warning-config.controller.js.map

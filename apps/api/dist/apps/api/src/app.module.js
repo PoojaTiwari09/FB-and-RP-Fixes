@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
 const bullmq_1 = require("@nestjs/bullmq");
 const config_1 = require("@nestjs/config");
 const event_emitter_1 = require("@nestjs/event-emitter");
@@ -19,6 +20,8 @@ const throttler_1 = require("@nestjs/throttler");
 const path_1 = require("path");
 const event_publisher_module_1 = require("../../../modules/platform-core/events/event-publisher.module");
 const platform_notification_module_1 = require("../../../modules/platform-core/notifications/platform-notification.module");
+const auth_module_1 = require("../../../modules/platform-core/auth/auth.module");
+const tenant_throttler_guard_1 = require("./tenant-throttler.guard");
 const m01_capture_transcription_module_1 = require("../../../modules/m01-capture-transcription/m01-capture-transcription.module");
 const m02_conversation_intelligence_module_1 = require("../../../modules/m02-conversation-intelligence/m02-conversation-intelligence.module");
 const m03_ai_summaries_genai_module_1 = require("../../../modules/m03-ai-summaries-genai/m03-ai-summaries-genai.module");
@@ -59,6 +62,11 @@ exports.AppModule = AppModule = __decorate([
                 }]),
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
+                envFilePath: [
+                    (0, path_1.join)(__dirname, '../../../.env'),
+                    (0, path_1.join)(__dirname, '../../../../.env'),
+                    '.env',
+                ],
             }),
             event_emitter_1.EventEmitterModule.forRoot({
                 wildcard: true,
@@ -70,6 +78,7 @@ exports.AppModule = AppModule = __decorate([
             }),
             event_publisher_module_1.EventPublisherModule,
             platform_notification_module_1.PlatformNotificationModule,
+            auth_module_1.PlatformAuthModule,
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(process.cwd(), 'uploads'),
                 serveRoot: '/uploads',
@@ -86,6 +95,12 @@ exports.AppModule = AppModule = __decorate([
                 },
             }),
             ...sharedBackendModules,
+        ],
+        providers: [
+            {
+                provide: core_1.APP_GUARD,
+                useClass: tenant_throttler_guard_1.TenantThrottlerGuard,
+            },
         ],
     }),
     __metadata("design:paramtypes", [])

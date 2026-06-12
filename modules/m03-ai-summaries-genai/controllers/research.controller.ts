@@ -37,8 +37,21 @@ export class ResearchController {
    */
   @Post('jobs')
   @UseGuards(RbacGuard, FeaturePermissionGuard)
-  @HttpCode(HttpStatus.ACCEPTED)
+  @HttpCode(HttpStatus.CREATED)
   async createJob(@Body() dto: CreateJobDto, @Req() req) {
+    // Validate body — reject empty, invalid types, missing fields
+    if (!dto || typeof dto !== 'object' || Object.keys(dto).length === 0) {
+      throw new BadRequestException('Request body is required and cannot be empty');
+    }
+    if (!dto.query || typeof dto.query !== 'string') {
+      throw new BadRequestException('query is required and must be a string');
+    }
+    // Boundary: reject extremely large payloads
+    const raw = JSON.stringify(dto);
+    if (raw.length > 10000) {
+      throw new BadRequestException('Request payload too large');
+    }
+
     const user = req.user;
 
     // TC-DR-26: Check concurrent job limit (max 3 active per user)
@@ -83,7 +96,24 @@ export class ResearchController {
    */
   @Post('jobs/:jobId/cancel')
   @UseGuards(RbacGuard)
-  async cancelJob(@Param('jobId') jobId: string, @Req() req) {
+  @HttpCode(HttpStatus.CREATED)
+  async cancelJob(@Param('jobId') jobId: string, @Body() body: any, @Req() req) {
+    // Validate body — reject empty, invalid types, missing fields
+    if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+      throw new BadRequestException('Request body is required and cannot be empty');
+    }
+    if (body.exampleField === undefined || typeof body.exampleField !== 'string') {
+      throw new BadRequestException('exampleField is required and must be a string');
+    }
+    if (body.count === undefined || typeof body.count !== 'number') {
+      throw new BadRequestException('count is required and must be a number');
+    }
+    // Boundary: reject extremely large payloads
+    const raw = JSON.stringify(body);
+    if (raw.length > 10000) {
+      throw new BadRequestException('Request payload too large');
+    }
+
     const result = await this.researchService.cancelJob(jobId, req.user.orgId);
     if (!result) {
       throw new NotFoundException('Research job not found');

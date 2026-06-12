@@ -46,7 +46,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TestController = exports.AnalyticsController = exports.TrainingController = exports.CoachingController = exports.ScenariosController = exports.SessionsController = exports.RolesGuard = exports.JwtAuthGuard = exports.Public = exports.IS_PUBLIC_KEY = exports.Roles = exports.ROLES_KEY = exports.CurrentUser = exports.AppController = void 0;
-const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const platform_express_1 = require("@nestjs/platform-express");
@@ -232,7 +231,7 @@ let SessionsController = class SessionsController {
 exports.SessionsController = SessionsController;
 __decorate([
     (0, common_1.Get)(),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -240,7 +239,7 @@ __decorate([
 ], SessionsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('my'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -270,7 +269,7 @@ __decorate([
 ], SessionsController.prototype, "getSessionById", null);
 __decorate([
     (0, common_1.Get)(':id/hint'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -279,7 +278,7 @@ __decorate([
 ], SessionsController.prototype, "getHint", null);
 __decorate([
     (0, common_1.Post)('start'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -288,7 +287,7 @@ __decorate([
 ], SessionsController.prototype, "startSession", null);
 __decorate([
     (0, common_1.Post)('send-message'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -297,7 +296,7 @@ __decorate([
 ], SessionsController.prototype, "sendMessage", null);
 __decorate([
     (0, common_1.Post)('send-voice'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio')),
     __param(0, (0, common_1.Body)('sessionId')),
     __param(1, (0, common_1.UploadedFile)()),
@@ -308,7 +307,7 @@ __decorate([
 ], SessionsController.prototype, "sendVoiceMessage", null);
 __decorate([
     (0, common_1.Post)('end'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -317,7 +316,7 @@ __decorate([
 ], SessionsController.prototype, "endSession", null);
 __decorate([
     (0, common_1.Post)('submit-to-manager'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -326,7 +325,7 @@ __decorate([
 ], SessionsController.prototype, "submitSessionToManager", null);
 __decorate([
     (0, common_1.Post)('retry'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -335,7 +334,7 @@ __decorate([
 ], SessionsController.prototype, "retrySession", null);
 __decorate([
     (0, common_1.Post)('message'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -344,7 +343,7 @@ __decorate([
 ], SessionsController.prototype, "sendMessageAlias", null);
 __decorate([
     (0, common_1.Post)('voice-message'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio')),
     __param(0, (0, common_1.Body)('sessionId')),
     __param(1, (0, common_1.UploadedFile)()),
@@ -362,7 +361,7 @@ __decorate([
 ], SessionsController.prototype, "getVoicesAlias", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, exports.CurrentUser)()),
@@ -372,7 +371,7 @@ __decorate([
 ], SessionsController.prototype, "updateSession", null);
 __decorate([
     (0, common_1.Post)('analyze-call'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio')),
     __param(0, (0, common_1.UploadedFile)()),
     __param(1, (0, exports.CurrentUser)()),
@@ -382,7 +381,7 @@ __decorate([
 ], SessionsController.prototype, "analyzeUploadedCall", null);
 exports.SessionsController = SessionsController = __decorate([
     (0, common_1.Controller)('api/v1/coaching-training/sessions'),
-    (0, common_1.UseGuards)(JwtAuthGuard),
+    (0, common_1.UseGuards)(JwtAuthGuard, RolesGuard),
     __metadata("design:paramtypes", [m09_service_1.SessionsService])
 ], SessionsController);
 let ScenariosController = class ScenariosController {
@@ -440,7 +439,7 @@ __decorate([
 ], ScenariosController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -449,7 +448,7 @@ __decorate([
 ], ScenariosController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, exports.CurrentUser)()),
@@ -459,7 +458,7 @@ __decorate([
 ], ScenariosController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -468,7 +467,7 @@ __decorate([
 ], ScenariosController.prototype, "delete", null);
 __decorate([
     (0, common_1.Post)('transcribe'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio')),
     __param(0, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
@@ -477,7 +476,7 @@ __decorate([
 ], ScenariosController.prototype, "transcribeAudio", null);
 __decorate([
     (0, common_1.Post)('analyze-audio'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio')),
     __param(0, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
@@ -486,7 +485,7 @@ __decorate([
 ], ScenariosController.prototype, "analyzeAudio", null);
 __decorate([
     (0, common_1.Post)('generate-persona'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Body)('transcript')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -494,7 +493,7 @@ __decorate([
 ], ScenariosController.prototype, "generatePersona", null);
 exports.ScenariosController = ScenariosController = __decorate([
     (0, common_1.Controller)('api/v1/coaching-training/scenarios'),
-    (0, common_1.UseGuards)(JwtAuthGuard),
+    (0, common_1.UseGuards)(JwtAuthGuard, RolesGuard),
     __metadata("design:paramtypes", [m09_service_1.ScenariosService])
 ], ScenariosController);
 let CoachingController = class CoachingController {
@@ -525,7 +524,7 @@ __decorate([
 ], CoachingController.prototype, "getNotes", null);
 __decorate([
     (0, common_1.Post)('notes'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -534,7 +533,7 @@ __decorate([
 ], CoachingController.prototype, "createNote", null);
 __decorate([
     (0, common_1.Get)('recommendations'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -542,7 +541,7 @@ __decorate([
 ], CoachingController.prototype, "getRecommendations", null);
 __decorate([
     (0, common_1.Post)('recommendations'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -551,7 +550,7 @@ __decorate([
 ], CoachingController.prototype, "pushRecommendation", null);
 exports.CoachingController = CoachingController = __decorate([
     (0, common_1.Controller)('api/v1/coaching-training/coaching'),
-    (0, common_1.UseGuards)(JwtAuthGuard),
+    (0, common_1.UseGuards)(JwtAuthGuard, RolesGuard),
     __metadata("design:paramtypes", [m09_service_1.CoachingService])
 ], CoachingController);
 let TrainingController = class TrainingController {
@@ -583,7 +582,7 @@ let TrainingController = class TrainingController {
 exports.TrainingController = TrainingController;
 __decorate([
     (0, common_1.Post)('submit-session'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -592,7 +591,7 @@ __decorate([
 ], TrainingController.prototype, "submitSessionToManager", null);
 __decorate([
     (0, common_1.Post)('assignments'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -608,7 +607,7 @@ __decorate([
 ], TrainingController.prototype, "getAssignments", null);
 __decorate([
     (0, common_1.Patch)('assignments/:id'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin', 'rep'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, exports.CurrentUser)()),
@@ -618,7 +617,7 @@ __decorate([
 ], TrainingController.prototype, "updateAssignment", null);
 __decorate([
     (0, common_1.Delete)('assignments/:id'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -627,7 +626,7 @@ __decorate([
 ], TrainingController.prototype, "deleteAssignment", null);
 exports.TrainingController = TrainingController = __decorate([
     (0, common_1.Controller)('api/v1/coaching-training/training'),
-    (0, common_1.UseGuards)(JwtAuthGuard),
+    (0, common_1.UseGuards)(JwtAuthGuard, RolesGuard),
     __metadata("design:paramtypes", [m09_service_1.TrainingService,
         m09_service_1.SessionsService])
 ], TrainingController);
@@ -688,7 +687,7 @@ let AnalyticsController = class AnalyticsController {
 exports.AnalyticsController = AnalyticsController;
 __decorate([
     (0, common_1.Get)('dashboard'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -696,7 +695,7 @@ __decorate([
 ], AnalyticsController.prototype, "getDashboardStats", null);
 __decorate([
     (0, common_1.Get)('reps'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -704,7 +703,7 @@ __decorate([
 ], AnalyticsController.prototype, "getRepsWithStats", null);
 __decorate([
     (0, common_1.Get)('compare/:repId'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, common_1.Param)('repId')),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -713,7 +712,7 @@ __decorate([
 ], AnalyticsController.prototype, "getRepComparison", null);
 __decorate([
     (0, common_1.Get)('team'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -721,7 +720,7 @@ __decorate([
 ], AnalyticsController.prototype, "getTeamAnalytics", null);
 __decorate([
     (0, common_1.Get)('activity'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -729,7 +728,7 @@ __decorate([
 ], AnalyticsController.prototype, "getActivityMetrics", null);
 __decorate([
     (0, common_1.Get)('interactions'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -737,7 +736,7 @@ __decorate([
 ], AnalyticsController.prototype, "getInteractionAnalytics", null);
 __decorate([
     (0, common_1.Get)('topics'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -745,7 +744,7 @@ __decorate([
 ], AnalyticsController.prototype, "getTopicInsights", null);
 __decorate([
     (0, common_1.Get)('call-drilldown/:sessionId'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin', 'rep'),
     __param(0, (0, common_1.Param)('sessionId')),
     __param(1, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
@@ -754,7 +753,7 @@ __decorate([
 ], AnalyticsController.prototype, "getCallDrilldown", null);
 __decorate([
     (0, common_1.Get)('benchmarks'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin', 'rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -762,7 +761,7 @@ __decorate([
 ], AnalyticsController.prototype, "getBenchmarks", null);
 __decorate([
     (0, common_1.Get)('manager-review'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -770,7 +769,7 @@ __decorate([
 ], AnalyticsController.prototype, "getManagerReview", null);
 __decorate([
     (0, common_1.Get)('training-report'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -778,7 +777,7 @@ __decorate([
 ], AnalyticsController.prototype, "getTrainingReport", null);
 __decorate([
     (0, common_1.Get)('export'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -787,7 +786,7 @@ __decorate([
 ], AnalyticsController.prototype, "exportCsv", null);
 __decorate([
     (0, common_1.Get)('export-training'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, exports.Roles)('manager', 'org_admin'),
     __param(0, (0, exports.CurrentUser)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -796,7 +795,7 @@ __decorate([
 ], AnalyticsController.prototype, "exportTrainingCsv", null);
 __decorate([
     (0, common_1.Get)('my'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -804,7 +803,7 @@ __decorate([
 ], AnalyticsController.prototype, "getMyAnalytics", null);
 __decorate([
     (0, common_1.Get)('my-notes'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -812,7 +811,7 @@ __decorate([
 ], AnalyticsController.prototype, "getMyNotes", null);
 __decorate([
     (0, common_1.Get)('my-assignments'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, exports.Roles)('rep'),
     __param(0, (0, exports.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -820,7 +819,7 @@ __decorate([
 ], AnalyticsController.prototype, "getMyAssignments", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('api/v1/coaching-training/analytics'),
-    (0, common_1.UseGuards)(JwtAuthGuard),
+    (0, common_1.UseGuards)(JwtAuthGuard, RolesGuard),
     __metadata("design:paramtypes", [m09_service_1.AnalyticsService])
 ], AnalyticsController);
 let TestController = class TestController {
@@ -867,7 +866,11 @@ let TestController = class TestController {
         return this.ensureSeedData();
     }
     async generateToken(dto) {
-        const user = await this.repository.getUserById(dto.userId);
+        let userId = dto.userId;
+        if (!userId || userId === 'mock_data' || !userId.includes('-')) {
+            userId = '00000000-0000-0000-0000-000000000002';
+        }
+        const user = await this.repository.getUserById(userId);
         const token = this.jwtService.sign({
             sub: user.id,
             email: user.email,

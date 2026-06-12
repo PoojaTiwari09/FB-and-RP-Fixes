@@ -288,7 +288,7 @@ export default function AICallReviewerCallsList() {
                       <p className="text-sm font-medium">Failed to load calls</p>
                       <p className="text-xs text-gray-500 max-w-md">{error}</p>
                       <p className="text-xs text-gray-400">
-                        Ensure the API is running on port 3002, you are logged in, and Postgres is seeded.
+                        Ensure the API is running on port 3001, you are logged in, and Postgres is seeded.
                       </p>
                       <button
                         type="button"

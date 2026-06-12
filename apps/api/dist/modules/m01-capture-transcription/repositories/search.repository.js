@@ -92,7 +92,7 @@ let SearchRepository = class SearchRepository {
     async searchWithinCall(callId, tenantId, q) {
         const utterances = await this.prisma.utterance.findMany({
             where: {
-                transcript: { callId, tenantId: tenantId },
+                transcript: { callId, tenantid: tenantId },
                 text: { contains: q, mode: 'insensitive' },
             },
             orderBy: { sequenceIndex: 'asc' },
@@ -123,11 +123,11 @@ let ShareRepository = class ShareRepository {
                 },
             },
             update: {},
-            create: { callId, tenantId: tenantId, sharedByUserId, ...dto },
+            create: { callId, tenantid: tenantId, sharedByUserId, ...dto },
         });
     }
     async findByCallId(callId, tenantId) {
-        return this.prisma.callShare.findMany({ where: { callId, tenantId: tenantId } });
+        return this.prisma.callShare.findMany({ where: { callId, tenantid: tenantId } });
     }
 };
 exports.ShareRepository = ShareRepository;

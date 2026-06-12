@@ -15,6 +15,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthGuard } from '../guards/auth.guard';
 import { NotesRepository } from '../repositories/notes.repository';
 import { NextStepsRepository } from '../repositories/next-steps.repository';
 import { M01FrontendTranscriptService } from '../services/m01-frontend-transcript.service';
@@ -33,7 +34,7 @@ import {
 
 /** M01 call detail: transcript, briefs, next-steps (under /api/calls/:callId). */
 @Controller('api/v1/capture-transcription/calls/:callId')
-@UseGuards(TenantGuard)
+@UseGuards(AuthGuard, TenantGuard)
 export class M01FrontendCallDetailController {
   constructor(
     private readonly svc: M01FrontendTranscriptService,

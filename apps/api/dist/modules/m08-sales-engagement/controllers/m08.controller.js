@@ -117,13 +117,13 @@ let M08SalesEngagementController = class M08SalesEngagementController {
         return this.service.getPlayDashboard(req.tenantId);
     }
     async tasks(req, query) {
-        const userId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
-        const userRole = req.headers['x-user-role'] || 'SALES_REP';
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
         return this.service.fetchManagerTasks(req.tenantId, query, userId, userRole);
     }
     async summary(req, assigneeId = 'me', date) {
-        const userId = req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
-        const userRole = req.headers['x-user-role'] || 'SALES_REP';
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
         const today = new Date().toISOString().split('T')[0];
         return this.service.fetchSummary(req.tenantId, assigneeId, date || today, userId, userRole);
     }
@@ -140,12 +140,123 @@ let M08SalesEngagementController = class M08SalesEngagementController {
         return this.service.emailTemplates(req.tenantId);
     }
     async recentActivities(req) {
-        const { MOCK_RECENT_ACTIVITY } = require('./m08-rep-bridge.mock');
-        return { status: 'success', data: MOCK_RECENT_ACTIVITY };
+        return this.service.fetchRecentActivities(req.tenantId);
+    }
+    async getTasks(req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.fetchRepTasks(req.tenantId, userId, userRole);
+    }
+    async getSummary(req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.fetchRepSummary(req.tenantId, userId, userRole);
+    }
+    async getRecentActivity(req, limit) {
+        const limitNum = limit ? parseInt(limit, 10) : 10;
+        const activities = await this.service.fetchRecentActivities(req.tenantId);
+        return activities.slice(0, isNaN(limitNum) ? 10 : limitNum);
+    }
+    async getTaskDetail(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.fetchTaskDetail(req.tenantId, taskId, userId, userRole);
+    }
+    async getContactDetails(contactId, req) {
+        return this.service.fetchContactDetail(req.tenantId, contactId);
+    }
+    async getEmailDraft(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.fetchEmailDraft(req.tenantId, taskId, userId, userRole);
+    }
+    async getNotes(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        const t = await this.service.validateTaskAccess(req.tenantId, taskId, userId, userRole);
+        return t.notes ? [{
+                noteId: 'note-001',
+                id: 'note-001',
+                note: t.notes,
+                noteText: t.notes,
+                authorName: t.assigneeName || 'Alex Morgan',
+                createdAt: t.updatedAt?.toISOString() || new Date().toISOString(),
+                timestamp: t.updatedAt?.toISOString() || new Date().toISOString(),
+            }] : [];
+    }
+    async getLinkedInDraft(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.fetchLinkedInScript(req.tenantId, taskId, userId, userRole);
+    }
+    async getFilterOptions(req) {
+        return this.service.fetchFilterOptions(req.tenantId);
+    }
+    async getEmailTemplates(req) {
+        const res = await this.service.emailTemplates(req.tenantId);
+        return res.templates;
+    }
+    async createTask(body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.createEngageTask(req.tenantId, body, userId, userRole);
+    }
+    async saveNotes(taskId, body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.saveNotes(req.tenantId, taskId, body.notes, userId, userRole);
+    }
+    async sendEmail(taskId, body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.sendEmail(req.tenantId, taskId, body, userId, userRole);
+    }
+    async saveDraft(taskId, body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.saveDraft(req.tenantId, taskId, body, userId, userRole);
+    }
+    async rephraseEmail(taskId, body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.rephraseEmail(req.tenantId, taskId, body, userId, userRole);
+    }
+    async markComplete(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.markComplete(req.tenantId, taskId, userId, userRole);
+    }
+    async skipTask(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.skipTask(req.tenantId, taskId, userId, userRole);
+    }
+    async dismissTask(taskId, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.dismissTask(req.tenantId, taskId, userId, userRole);
+    }
+    async reassignTask(taskId, body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.reassignEngageTask(req.tenantId, taskId, body.newAssigneeId, userId, userRole);
+    }
+    async updateTask(taskId, body, req) {
+        const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
+        return this.service.updateEngageTask(req.tenantId, taskId, body, userId, userRole);
+    }
+    async assignableUsers(req) {
+        const userId = req.userId || req.user?.id || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
+        return this.service.fetchAssignableUsers(req.tenantId, userId);
     }
     enforceRole(req, allowedRoles) {
-        const role = req.headers['x-user-role'] || 'representative';
-        if (!allowedRoles.includes(role)) {
+        const role = req.userRole || req.user?.role || req.headers['x-user-role'] || 'representative';
+        const normalizedAllowed = allowedRoles.map(r => r.toLowerCase());
+        if (normalizedAllowed.includes('manager')) {
+            normalizedAllowed.push('sales_manager');
+        }
+        if (!normalizedAllowed.includes(role.toLowerCase())) {
             throw new common_1.ForbiddenException(`Access denied. Role '${role}' does not have sufficient permissions to perform this action.`);
         }
     }
@@ -324,6 +435,175 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], M08SalesEngagementController.prototype, "recentActivities", null);
+__decorate([
+    (0, common_1.Get)('tasks'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getTasks", null);
+__decorate([
+    (0, common_1.Get)('tasks/summary'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getSummary", null);
+__decorate([
+    (0, common_1.Get)('activity/recent'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getRecentActivity", null);
+__decorate([
+    (0, common_1.Get)('tasks/:taskId/detail'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getTaskDetail", null);
+__decorate([
+    (0, common_1.Get)('contacts/:contactId/details'),
+    __param(0, (0, common_1.Param)('contactId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getContactDetails", null);
+__decorate([
+    (0, common_1.Get)('tasks/:taskId/email-draft'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getEmailDraft", null);
+__decorate([
+    (0, common_1.Get)('tasks/:taskId/notes'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getNotes", null);
+__decorate([
+    (0, common_1.Get)('tasks/:taskId/linkedin-draft'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getLinkedInDraft", null);
+__decorate([
+    (0, common_1.Get)('filters/options'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getFilterOptions", null);
+__decorate([
+    (0, common_1.Get)('email-templates'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "getEmailTemplates", null);
+__decorate([
+    (0, common_1.Post)('tasks'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "createTask", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/notes'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "saveNotes", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/send-email'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "sendEmail", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/save-draft'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "saveDraft", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/ai-rephrase'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "rephraseEmail", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/mark-complete'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "markComplete", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/skip'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "skipTask", null);
+__decorate([
+    (0, common_1.Post)('tasks/:taskId/dismiss'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "dismissTask", null);
+__decorate([
+    (0, common_1.Patch)('tasks/:taskId/reassign'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "reassignTask", null);
+__decorate([
+    (0, common_1.Patch)('tasks/:taskId'),
+    __param(0, (0, common_1.Param)('taskId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "updateTask", null);
+__decorate([
+    (0, common_1.Get)('users/assignable'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M08SalesEngagementController.prototype, "assignableUsers", null);
 exports.M08SalesEngagementController = M08SalesEngagementController = __decorate([
     (0, common_1.Controller)('api/v1/sales-engagement'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

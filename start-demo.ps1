@@ -6,6 +6,17 @@ $BackendRoot = $Root
 $UnifiedUi = Join-Path $Root "apps\web"
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
+# Ensure global npm prefix (where pnpm is installed) is in PATH if pnpm is not recognized
+if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+  $npmPrefix = (npm config get prefix 2>$null)
+  if ($npmPrefix) {
+    $npmPrefix = $npmPrefix.Trim()
+    if (Test-Path $npmPrefix) {
+      $env:PATH = "$npmPrefix;$env:PATH"
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "=== Unified Demo (UI :3000, API :3001) ===" -ForegroundColor Cyan
 Write-Host ""
@@ -13,6 +24,12 @@ Write-Host ""
 if (-not (Test-Path (Join-Path $UnifiedUi "package.json"))) {
   Write-Host "Missing frontend web app in apps/web. Run .\setup-first-time.ps1 first." -ForegroundColor Red
   exit 1
+}
+
+# Auto-create root .env from .env.example if missing (fresh clone)
+if (-not (Test-Path (Join-Path $Root ".env")) -and (Test-Path (Join-Path $Root ".env.example"))) {
+  Copy-Item (Join-Path $Root ".env.example") (Join-Path $Root ".env")
+  Write-Host "      Created .env from .env.example" -ForegroundColor Green
 }
 
 Write-Host "[Env] Syncing API keys from .env..." -ForegroundColor Yellow
@@ -39,6 +56,10 @@ if ((docker ps -a --filter "name=revenue_intel_db" --format "{{.Names}}" 2>$null
   Pop-Location
   Start-Sleep -Seconds 3
 }
+
+Write-Host "[DB] Seeding/Updating demo data..." -ForegroundColor Yellow
+& (Join-Path $Root "scripts\seed-demo-data.ps1")
+
 
 function Start-DevWindow {
   param([string]$Title, [string]$Command)
