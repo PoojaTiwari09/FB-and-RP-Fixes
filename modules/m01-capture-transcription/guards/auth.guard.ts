@@ -1,16 +1,4 @@
-/**
- * Auth Guard — JWT-aware for Postman testing.
- * Checks for Authorization: Bearer <token> header.
- * - Missing header → 401
- * - "invalid-token-*" → 401
- * - Token containing "expired" → 401
- * - Any other token → extract user context from headers or defaults.
- *
- * Supports @Public() decorator to skip auth on test endpoints.
- */
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from '../controllers/m03-test.controller';
 
 export interface UserContext {
   userId: string;
@@ -22,26 +10,7 @@ export interface UserContext {
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private reflector?: Reflector) {}
-
   canActivate(context: ExecutionContext): boolean {
-    // Check for @Public() decorator — skip auth
-    const isPublic = this.reflector?.getAllAndOverride?.<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
-      const request = context.switchToHttp().getRequest();
-      request.user = {
-        userId: 'c0000000-0000-0000-0000-000000000001',
-        orgId: 'a0000000-0000-0000-0000-000000000001',
-        role: 'SALES_MANAGER',
-        teamId: 'b0000000-0000-0000-0000-000000000001',
-        email: 'sarah.manager@acme.com',
-      };
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers['authorization'] || '';
 
