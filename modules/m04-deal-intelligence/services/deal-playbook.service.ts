@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { DealPlaybook, PlaybookType, PlaybookItemStatus } from '@/entities/deal-playbook.entity';
-import { Deal } from '@/entities/deal.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { DealPlaybook, PlaybookType, PlaybookItemStatus } from '@m04/entities/deal-playbook.entity';
+import { Deal } from '@m04/entities/deal.entity';
 import {
   CreatePlaybookItemDto,
   UpdatePlaybookItemDto,
   PlaybookItemResponseDto,
   PlaybookSummaryDto,
-} from '@/schemas/playbook.dto';
+} from '@m04/schemas/playbook.dto';
 import { AIClientService } from './ai-client.service';
 
 @Injectable()

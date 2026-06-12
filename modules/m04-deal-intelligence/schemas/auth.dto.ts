@@ -1,6 +1,6 @@
 import { IsEmail, IsString, MinLength, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@/interfaces/user-role.enum';
+import { UserRole } from '@m04/interfaces/user-role.enum';
 
 export class LoginDto {
   @ApiProperty({

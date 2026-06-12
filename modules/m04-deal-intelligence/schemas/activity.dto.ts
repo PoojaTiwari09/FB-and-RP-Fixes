@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsDateString, IsInt, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ActivityType } from '@/entities/deal-activity.entity';
+import { ActivityType } from '@m04/entities/deal-activity.entity';
 import { Type } from 'class-transformer';
 
 export class CreateActivityDto {

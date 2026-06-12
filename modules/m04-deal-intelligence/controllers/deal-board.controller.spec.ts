@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DealBoardController } from './deal-board.controller';
-import { DealBoardService } from '@/services/deal-board.service';
-import { CreateBoardDto, UpdateBoardDto, QueryBoardDto } from '@/schemas';
-import { UserRole } from '@/interfaces/user-role.enum';
-import { FilterOperator, FilterLogic } from '@/entities';
+import { DealBoardService } from '@m04/services/deal-board.service';
+import { CreateBoardDto, UpdateBoardDto, QueryBoardDto } from '@m04/schemas';
+import { UserRole } from '@rri/database';
+import { FilterOperator, FilterLogic } from '@m04/entities';
 import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 
 describe('DealBoardController', () => {
@@ -92,7 +92,7 @@ describe('DealBoardController', () => {
     });
 
     it('should require admin or manager role', async () => {
-      const userWithoutPermission = { ...mockUser, role: UserRole.USER };
+      const userWithoutPermission = { ...mockUser, role: UserRole.SALES_REP };
       // This should be enforced by the @Roles decorator and RolesGuard
       // The controller method signature allows it, but the guard should prevent execution
       expect(DealBoardController).toBeDefined();

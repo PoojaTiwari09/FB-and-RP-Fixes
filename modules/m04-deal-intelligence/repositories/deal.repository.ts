@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Deal, DealStage, ForecastCategory } from '@/entities';
+import { Deal, DealStage, ForecastCategory } from '@m04/entities';
 import { InjectRepository } from '../database/inject-repository';
-import { Between, In, M04EntityRepository } from '../database/m04-entity.repository';
+import { Between, In, M04EntityRepository } from '../database/m04-prisma.repository';
 
 export interface DealFilters {
   ownerId?: string;

@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BoardAudience, BoardStatus } from '@/entities';
+import { BoardAudience, BoardStatus } from '@m04/entities';
 
 export class QueryBoardDto {
   @ApiPropertyOptional({ description: 'Page number', minimum: 1, default: 1 })

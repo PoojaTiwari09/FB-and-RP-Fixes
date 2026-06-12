@@ -1,7 +1,7 @@
 import { IsOptional, IsEnum, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { WarningType, WarningSeverity } from '@/entities';
+import { WarningType, WarningSeverity } from '@m04/entities';
 
 export class GenerateWarningsDto {
   @ApiProperty({ description: 'Deal ID to generate warnings for' })

@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { HubSpotClientService } from './hubspot-client.service';
 import {
@@ -11,8 +11,8 @@ import {
   SyncType,
   SyncEntityType,
   SyncStatus,
-} from '@/entities';
-import { HubSpotDeal, HubSpotDealStage } from '@/interfaces/hubspot-types.interface';
+} from '@m04/entities';
+import { HubSpotDeal, HubSpotDealStage } from '@m04/interfaces/hubspot-types.interface';
 
 @Injectable()
 export class DealSyncService {

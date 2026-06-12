@@ -17,20 +17,21 @@ import {
   ApiParam,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { DealActivityService } from '@/services/deal-activity.service';
+import { DealActivityService } from '@m04/services/deal-activity.service';
 import {
   CreateActivityDto,
   UpdateActivityDto,
   ActivityResponseDto,
   ActivityQueryDto,
   ActivityTimelineDto,
-} from '@/schemas/activity.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/activity.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Deal Activities')
 @Controller('deals/:dealId/activities')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class DealActivityController {
   constructor(private readonly activityService: DealActivityService) {}

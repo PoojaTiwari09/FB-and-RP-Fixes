@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { DealWarning, WarningType, WarningSeverity, AuditAction, AuditEntityType } from '@/entities';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { DealWarning, WarningType, WarningSeverity, AuditAction, AuditEntityType } from '@m04/entities';
 import { AIClientService } from './ai-client.service';
 import { DealService } from './deal.service';
 import { AuditLogService } from './audit-log.service';

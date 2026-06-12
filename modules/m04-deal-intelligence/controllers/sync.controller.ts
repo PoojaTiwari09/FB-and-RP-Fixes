@@ -12,17 +12,18 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { DealSyncService } from '@/services/deal-sync.service';
-import { AuthGuard } from '@/guards/auth.guard';
-import { RolesGuard } from '@/guards/roles.guard';
-import { Roles } from '@/decorators/roles.decorator';
-import { UserRole } from '@/interfaces/user-role.enum';
-import { SyncLog, SyncType } from '@/entities';
+import { DealSyncService } from '@m04/services/deal-sync.service';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { RolesGuard } from '../../platform-core/guards/roles.guard';
+import { Roles } from '../../platform-core/decorators/roles.decorator';
+import { UserRole } from '@rri/database';
+import { SyncLog, SyncType } from '@m04/entities';
 
 @ApiTags('Sync')
 @ApiBearerAuth()
 @Controller('sync')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 export class SyncController {
   constructor(private readonly syncService: DealSyncService) {}
 

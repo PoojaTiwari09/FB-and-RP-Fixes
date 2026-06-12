@@ -19,18 +19,19 @@ import {
   ApiQuery,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { DealCommentService } from '@/services/deal-comment.service';
+import { DealCommentService } from '@m04/services/deal-comment.service';
 import {
   CreateCommentDto,
   UpdateCommentDto,
   CommentResponseDto,
-} from '@/schemas/comment.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/comment.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Deal Comments')
 @Controller('deals/:dealId/comments')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class DealCommentController {
   constructor(private readonly commentService: DealCommentService) {}
