@@ -16,15 +16,24 @@ interface CreateTaskModalProps {
     dueTime: string;
     description: string;
     assigneeId: string;
+    priority: string;
   }) => void;
+}
+
+// Compute priority automatically from due date:
+// today or past = HIGH, future = NORMAL, no date = NORMAL
+function computePriority(dueDate: string): string {
+  if (!dueDate) return 'NORMAL';
+  const today = new Date().toISOString().split('T')[0];
+  return dueDate <= today ? 'HIGH' : 'NORMAL';
 }
 
 export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProps) {
   const [taskType, setTaskType] = useState<ChannelType>('CALL');
   const [title, setTitle] = useState('');
   const [linkedTo, setLinkedTo] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [dueTime, setDueTime] = useState('');
+  const [dueDate, setDueDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dueTime, setDueTime] = useState('17:00');
   const [description, setDescription] = useState('');
   const [assignTo, setAssignTo] = useState('me');
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
@@ -84,6 +93,7 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
       dueTime,
       description,
       assigneeId: assignTo || 'me',
+      priority: computePriority(dueDate),
     });
     onClose();
   };
@@ -173,6 +183,8 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
             </div>
           </div>
 
+          {/* Priority is auto-derived from due date */}
+
           {/* Description */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
@@ -206,6 +218,8 @@ export default function CreateTaskModal({ onClose, onSave }: CreateTaskModalProp
               />
             </div>
           </div>
+
+          {/* Priority is auto-computed from due date — no manual selection */}
 
         </div>
 

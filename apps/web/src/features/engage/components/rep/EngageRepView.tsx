@@ -458,10 +458,7 @@ export default function EngageRepView() {
 
   const todayDateStr = new Date().toISOString().split('T')[0];
   const highPriority = filteredTasks.filter(t => {
-    const p = t.priority.toUpperCase() === 'HIGH';
-    const dDate = t.dueDate || (t.dueDateTime ? t.dueDateTime.split('T')[0] : '');
-    const dueOrOverdue = dDate && dDate <= todayDateStr && t.status.toUpperCase() !== 'COMPLETED';
-    return p || dueOrOverdue;
+    return t.priority.toUpperCase() === 'HIGH';
   });
   const highPriorityIds = new Set(highPriority.map(t => t.taskId));
   const normal       = filteredTasks.filter(t => !highPriorityIds.has(t.taskId));
@@ -545,7 +542,7 @@ export default function EngageRepView() {
   const queueTasks  = selectedIds.length > 0 ? tasks.filter(t => selectedIds.includes(t.taskId)) : filteredTasks;
   const emailIdx    = emailTask    ? filteredTasks.findIndex(t => t.taskId === emailTask.taskId)    : -1;
   const linkedInIdx = linkedInTask ? filteredTasks.findIndex(t => t.taskId === linkedInTask.taskId) : -1;
-  const total       = summary?.totalTasksToday ?? 0;
+  const total       = summary?.totalTodayCount ?? summary?.totalTasksToday ?? 0;
   const progressPct = summary?.progressPercent ?? 0;
   const hpTotal     = summary?.highPriorityCount ?? 0;
   const atRisk      = summary?.atRiskCount ?? 0;
@@ -710,7 +707,7 @@ export default function EngageRepView() {
                   Today&apos;s Progress
                 </p>
                 <p className="text-sm font-semibold" style={{ color: C.darkText }}>
-                  {summary?.completedCount ?? 0}/{total}
+                  {summary?.completedTodayCount ?? summary?.completedCount ?? 0}/{total}
                 </p>
               </div>
               <div className="h-2 rounded-full overflow-hidden mb-2" style={{ backgroundColor: C.subtleBg }}>
@@ -837,12 +834,16 @@ export default function EngageRepView() {
           onSave={async (taskData) => {
             try {
               await createTask(taskData);
+              setCreateTaskOpen(false);
               await loadData();
               setToastMessage('Task created successfully');
               setShowToast(true);
               setTimeout(() => setShowToast(false), 3000);
             } catch (err) {
               console.error('Failed to create task:', err);
+              setToastMessage('Failed to create task');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 3000);
             }
           }}
         />

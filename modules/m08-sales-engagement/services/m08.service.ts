@@ -319,10 +319,11 @@ export class M08SalesEngagementService {
       channel: t.channel ? t.channel.toLowerCase() : 'custom',
       scheduledTime: t.scheduledTime || '',
       dueDateTime: t.dueDateTime || '',
-      isOverdue: t.isOverdue || false,
+      isOverdue: t.isOverdue || (t.dueDate && t.dueDate < todayStr && t.status.toLowerCase() !== 'completed'),
       isAtRisk: t.isAtRisk || false,
       interactionCount: t.interactionCount || 0,
-      priority: t.priority ? t.priority.toLowerCase() : 'normal',
+      // Auto-derive priority from due date: today/overdue = HIGH, future = NORMAL
+      priority: (t.dueDate && t.dueDate <= todayStr) ? 'high' : 'normal',
       status: t.status ? t.status.toLowerCase() : 'pending',
       dueDate: t.dueDate || '',
       dueTime: t.dueTime || '',
@@ -358,7 +359,9 @@ export class M08SalesEngagementService {
 
     switch (currentTab) {
       case 'today':
-        list = list.filter((t) => ((t.dueDate && t.dueDate <= todayStr) || t.priority === 'high') && t.status !== 'completed' && !isCurrentlySnoozed(t));
+        // Show ALL non-completed, non-snoozed tasks.
+        // High Priority (today/overdue) vs All Tasks (upcoming) split happens in the group-builder below.
+        list = list.filter((t) => t.status !== 'completed' && !isCurrentlySnoozed(t));
         break;
       case 'inProgress':
         list = list.filter((t) => t.status === 'in_progress' && !isCurrentlySnoozed(t));
@@ -458,8 +461,8 @@ export class M08SalesEngagementService {
     const atRisk = pagedTasks.filter((t) => t.aiSignalType === 'risk').length;
     const dueToday = pagedTasks.filter((t) => t.dueDate === todayStr).length;
 
-    // Group tasks: 'High Priority' includes tasks with priority=high OR dueDate <= today (urgent)
-    const highPriority = pagedTasks.filter((t) => t.priority === 'high' || (t.dueDate && t.dueDate <= todayStr && t.status !== 'completed'));
+    // Group tasks: 'High Priority' strictly includes tasks with priority=high
+    const highPriority = pagedTasks.filter((t) => t.priority === 'high');
     const highPriorityIds = new Set(highPriority.map(t => t.id));
     const normalPriority = pagedTasks.filter((t) => !highPriorityIds.has(t.id));
 
@@ -494,7 +497,12 @@ export class M08SalesEngagementService {
     };
     const activeList = rawTasks.filter((t: any) => !isCurrentlySnoozed(t));
 
-    const todayTasks = activeList.filter((t: any) => t.dueDate === date);
+    const todayTasks = rawTasks.filter((t: any) => {
+      if (isCurrentlySnoozed(t)) return false;
+      const isDueTodayOrOverdue = t.dueDate && t.dueDate <= date;
+      const isHighPriority = t.priority && t.priority.toLowerCase() === 'high';
+      return isDueTodayOrOverdue || isHighPriority;
+    });
 
     const completedToday = todayTasks.filter((t: any) => t.status.toLowerCase() === 'completed').length;
     const totalToday = todayTasks.length;
@@ -533,6 +541,16 @@ export class M08SalesEngagementService {
 
     const activeList = rawTasks.filter((t: any) => !isCurrentlySnoozed(t));
     
+    const todayTasks = rawTasks.filter((t: any) => {
+      if (isCurrentlySnoozed(t)) return false;
+      const isDueTodayOrOverdue = t.dueDate && t.dueDate <= todayStr;
+      const isHighPriority = t.priority && t.priority.toLowerCase() === 'high';
+      return isDueTodayOrOverdue || isHighPriority;
+    });
+
+    const completedTodayCount = todayTasks.filter((t: any) => t.status.toLowerCase() === 'completed').length;
+    const totalTodayCount = todayTasks.length;
+
     const totalTasksToday = activeList.filter((t: any) => ((t.dueDate && t.dueDate <= todayStr) || t.priority.toUpperCase() === 'HIGH') && t.status.toLowerCase() !== 'completed' && !isCurrentlySnoozed(t)).length;
     const completedCount = rawTasks.filter((t: any) => t.status.toLowerCase() === 'completed').length;
     const inProgressCount = activeList.filter((t: any) => t.status.toLowerCase() === 'in_progress').length;
@@ -542,8 +560,7 @@ export class M08SalesEngagementService {
     const highPriorityCount = activeList.filter((t: any) => t.priority.toUpperCase() === 'HIGH' && t.status.toLowerCase() !== 'completed').length;
     const snoozedCount = rawTasks.filter((t: any) => isCurrentlySnoozed(t)).length;
     
-    const totalCount = totalTasksToday + completedCount;
-    const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    const progressPercent = totalTodayCount > 0 ? Math.round((completedTodayCount / totalTodayCount) * 100) : 0;
     
     return {
       totalTasksToday,
@@ -555,6 +572,8 @@ export class M08SalesEngagementService {
       highPriorityCount,
       progressPercent,
       snoozedCount,
+      completedTodayCount,
+      totalTodayCount,
     };
   }
 
@@ -637,6 +656,7 @@ export class M08SalesEngagementService {
 
   async fetchTaskDetail(tenantId: string, taskId: string, userId: string, userRole: string) {
     const t = await this.validateTaskAccess(tenantId, taskId, userId, userRole);
+    const todayStr = new Date().toISOString().split('T')[0];
     return {
       id: t.taskId,
       taskId: t.taskId,
@@ -650,7 +670,7 @@ export class M08SalesEngagementService {
       scheduledTime: t.scheduledTime || '',
       scheduledDateTime: t.dueDateTime || '',
       dueDateTime: t.dueDateTime || '',
-      isOverdue: t.isOverdue,
+      isOverdue: t.isOverdue || (t.dueDate && t.dueDate < todayStr && t.status.toUpperCase() !== 'COMPLETED'),
       isAtRisk: t.isAtRisk,
       interactionCount: t.interactionCount,
       priority: t.priority.toUpperCase(),
@@ -853,10 +873,25 @@ export class M08SalesEngagementService {
   }
 
   async fetchContactDetail(tenantId: string, contactId: string) {
+    let searchId = contactId;
+    if (contactId.startsWith('cnt-')) {
+      searchId = 'contact-' + contactId.substring(4);
+    } else if (contactId.startsWith('cnt_')) {
+      searchId = 'contact-' + contactId.substring(4);
+    }
+
     // @ts-ignore
-    const c = await this.repo.prisma.engageContact.findFirst({
-      where: { tenantid: tenantId, contactId },
+    let c = await this.repo.prisma.engageContact.findFirst({
+      where: { tenantid: tenantId, contactId: searchId },
     });
+
+    if (!c && searchId !== contactId) {
+      // @ts-ignore
+      c = await this.repo.prisma.engageContact.findFirst({
+        where: { tenantid: tenantId, contactId },
+      });
+    }
+
     if (!c) throw new NotFoundException('Contact not found');
     return {
       contactId: c.contactId,
@@ -898,22 +933,55 @@ export class M08SalesEngagementService {
         }
       } catch {}
     }
+    let contactId = body.contactId || body.linkedToId || '';
+    let contactName = body.contactName || '';
+    let companyName = body.companyName || body.company || '';
+
+    if (contactId && (!contactName || contactName === 'New Contact' || !companyName || companyName === 'New Company')) {
+      try {
+        // @ts-ignore
+        const contact = await this.repo.prisma.engageContact.findFirst({
+          where: { tenantid: tenantId, contactId },
+        });
+        if (contact) {
+          contactName = contact.contactName;
+          companyName = contact.company;
+        }
+      } catch (err) {
+        console.error('Failed to look up contact for new task:', err);
+      }
+    }
+
+    if (!contactName) contactName = 'New Contact';
+    if (!companyName) companyName = 'New Company';
+
     // @ts-ignore
     const newTask = await this.repo.prisma.engageTask.create({
       data: {
         tenantid: tenantId,
         taskId,
         title: body.title || body.taskTitle || '',
-        contactId: body.contactId || '',
-        contactName: body.contactName || 'New Contact',
-        companyName: body.companyName || body.company || 'New Company',
+        contactId,
+        contactName,
+        companyName,
         channel: ((body.channel || body.channelType || body.taskType || 'CUSTOM') as string).toUpperCase(),
         status: 'PENDING',
         dueDate: body.dueDate || new Date().toISOString().split('T')[0],
         dueTime: body.dueTime || null,
         scheduledTime: body.dueTime || null,
-        dueDateTime: body.dueDate ? `${body.dueDate}T${body.dueTime || '00:00:00'}` : new Date().toISOString(),
-        priority: (body.priority || 'NORMAL').toUpperCase(),
+        dueDateTime: (() => {
+          const date = body.dueDate || new Date().toISOString().split('T')[0];
+          const time = body.dueTime || '00:00';
+          // Ensure time has seconds for valid ISO format
+          const timeFull = time.includes(':') && time.split(':').length === 2 ? `${time}:00` : time;
+          return `${date}T${timeFull}`;
+        })(),
+        // Auto-compute priority from due date: today/overdue = HIGH, future = NORMAL
+        priority: (() => {
+          const due = body.dueDate || new Date().toISOString().split('T')[0];
+          const today = new Date().toISOString().split('T')[0];
+          return due <= today ? 'HIGH' : 'NORMAL';
+        })(),
         assigneeId,
         assigneeName,
         assigneeRole,
@@ -947,7 +1015,7 @@ export class M08SalesEngagementService {
     };
   }
 
-  async reassignEngageTask(tenantId: string, taskId: string, newAssigneeId: string, userId: string, userRole: string) {
+  async reassignEngageTask(tenantId: string, taskId: string, newAssigneeId: string, userId: string, userRole: string, scope?: string, reason?: string) {
     await this.validateTaskAccess(tenantId, taskId, userId, userRole);
     // @ts-ignore
     const user = await this.repo.prisma.user.findUnique({
@@ -969,6 +1037,9 @@ export class M08SalesEngagementService {
       assigneeName: updated.assigneeName,
       assigneeRole: updated.assigneeRole,
       updatedAt: updated.updatedAt.toISOString(),
+      scope: scope || 'this_task_only',
+      reason: reason || null,
+      status: 'reassigned',
     };
   }
 
@@ -1114,10 +1185,127 @@ export class M08SalesEngagementService {
 
   async rephraseEmail(tenantId: string, taskId: string, body: any, userId: string, userRole: string) {
     await this.validateTaskAccess(tenantId, taskId, userId, userRole);
-    const text = body.body || body.bodyHtml || '';
-    const rephrasedBody = text
-      ? `${text}\n\n[AI Rephrased: Clearer, more concise call-to-action added.]`
-      : 'Hi Sarah,\n\nFollowing up on our Q2 renewal. Let me know if you would like to run through the ROI projections.\n\nBest,\nAlex';
+    const text = body.body || body.bodyHtml || body.currentBody || '';
+    if (!text.trim()) {
+      return {
+        rephrasedBody: 'Hi Sarah,\n\nFollowing up on our Q2 renewal. Let me know if you would like to run through the ROI projections.\n\nBest,\nAlex'
+      };
+    }
+
+    const stripAiMeta = (str: string): string => {
+      return str
+        .replace(/\n*\[AI Rephrased:[^\]]*\]\s*/gi, '')
+        .replace(/^Here(?:'s| is) (?:the )?rephrased email:?\\s*/i, '')
+        .trim();
+    };
+
+    const localRephrase = (str: string, tone: string): string => {
+      const lines = str.split('\n');
+      const result: string[] = [];
+      for (const line of lines) {
+        let modified = line;
+        if (tone === 'casual') {
+          modified = modified.replace(/^Dear\s+/i, 'Hey ');
+          modified = modified.replace(/^Hello\s+/i, 'Hi ');
+          modified = modified.replace(/\bI would like to\b/gi, "I'd love to");
+          modified = modified.replace(/\bPlease do not hesitate\b/gi, "Feel free");
+          modified = modified.replace(/\bI wanted to follow up\b/gi, "Just following up");
+          modified = modified.replace(/\bRegards\b/gi, 'Cheers');
+          modified = modified.replace(/\bBest regards\b/gi, 'Best');
+          modified = modified.replace(/\bSincerely\b/gi, 'Thanks');
+          modified = modified.replace(/\bPlease let me know\b/gi, 'Let me know');
+          modified = modified.replace(/\bI would appreciate\b/gi, "I'd appreciate");
+          modified = modified.replace(/\bWould you be open to\b/gi, "How about");
+          modified = modified.replace(/\bwalk through\b/gi, "go over");
+        } else if (tone === 'demanding') {
+          modified = modified.replace(/^Hi\s+/i, 'Hello ');
+          modified = modified.replace(/^Hey\s+/i, 'Hello ');
+          modified = modified.replace(/\bWould you be open to\b/gi, "I need us to schedule");
+          modified = modified.replace(/\bI wanted to follow up\b/gi, "This requires immediate attention");
+          modified = modified.replace(/\bPlease let me know\b/gi, 'Please respond by end of day');
+          modified = modified.replace(/\bBest\b/gi, 'Regards');
+          modified = modified.replace(/\bCheers\b/gi, 'Regards');
+          modified = modified.replace(/\bwalk through\b/gi, "review urgently");
+          modified = modified.replace(/\bI'd love to\b/gi, "We need to");
+        } else {
+          modified = modified.replace(/^Hey\s+/i, 'Dear ');
+          modified = modified.replace(/^Hi\s+/i, 'Hello ');
+          modified = modified.replace(/\bI'd love to\b/gi, "I would like to");
+          modified = modified.replace(/\bjust following up\b/gi, "I am following up");
+          modified = modified.replace(/\bCheers\b/gi, 'Best regards');
+          modified = modified.replace(/\bThanks\b/gi, 'Thank you');
+          modified = modified.replace(/\bLet me know\b/gi, 'Please let me know at your earliest convenience');
+          modified = modified.replace(/\bHow about\b/gi, "Would you be open to");
+          modified = modified.replace(/\bgo over\b/gi, "walk through");
+        }
+        result.push(modified);
+      }
+      return result.join('\n');
+    };
+
+    const originalBody = stripAiMeta(text);
+    const groqKey = (process.env.GROQ_API_KEY || '').trim();
+
+    if (groqKey) {
+      try {
+        const contextLines = [
+          body.contactName ? `Recipient: ${body.contactName}` : null,
+          (body.company || body.companyName) ? `Company: ${body.company || body.companyName}` : null,
+          body.subject ? `Subject: ${body.subject}` : null,
+          body.tone ? `Preferred tone: ${body.tone}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        const systemPrompt = `You are an expert B2B sales email assistant. Rephrase the provided text in a ${body.tone || 'formal'} tone while keeping the same meaning.
+
+Rules:
+- Preserve ALL facts: names, companies, dates, numbers, product details, and the call-to-action.
+- If the input is a full email, maintain the structure (greeting, body, sign-off).
+- If the input is just a sentence or fragment, rephrase only that fragment.
+- Match the requested tone:
+  * casual: friendly, conversational, less formal, use contractions.
+  * formal: professional, respectful, standard business English.
+  * demanding: firm, urgent, authoritative, clear expectations.
+- Match roughly the same length.
+- Return ONLY the rephrased text — no titles, labels, markdown, or meta commentary.`;
+
+        const userPrompt = `${contextLines ? `${contextLines}\n\n` : ''}Rephrase this email:\n\n${originalBody}`;
+
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.4,
+            max_tokens: 1200,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json() as any;
+          const completionText = data.choices?.[0]?.message?.content?.trim() || '';
+          const rephrasedBody = stripAiMeta(completionText);
+          if (rephrasedBody) {
+            return { rephrasedBody };
+          }
+        } else {
+          const errText = await res.text();
+          console.warn(`[Rephrase] Groq API error ${res.status}: ${errText}. Falling back to local rephrase.`);
+        }
+      } catch (err) {
+        console.warn(`[Rephrase] Groq fetch failed: ${err}. Falling back to local rephrase.`);
+      }
+    }
+
+    const rephrasedBody = localRephrase(originalBody, body.tone || 'formal');
     return { rephrasedBody };
   }
 
@@ -1146,6 +1334,8 @@ export class M08SalesEngagementService {
       ]
     });
     
+    const todayStr = new Date().toISOString().split('T')[0];
+    
     const parseTimeTo24h = (timeStr?: string | null): string => {
       if (!timeStr) return '12:00';
       const clean = timeStr.trim().toUpperCase();
@@ -1159,27 +1349,32 @@ export class M08SalesEngagementService {
       return `${String(hour).padStart(2, '0')}:${minute}`;
     };
 
-    return rawTasks.map((t: any) => ({
-      taskId: t.taskId,
-      contactId: t.contactId || '',
-      contactName: t.contactName || '',
-      company: t.companyName || '',
-      channelType: t.channel ? t.channel.toUpperCase() : 'CUSTOM',
-      sequenceName: t.sequenceName || '',
-      sequenceStep: t.sequenceStep || '',
-      scheduledTime: t.scheduledTime || '',
-      dueDateTime: t.dueDateTime || '',
-      interactionCount: t.interactionCount || 0,
-      priority: t.priority ? t.priority.toUpperCase() : 'NORMAL',
-      status: t.status ? t.status.toUpperCase() : 'PENDING',
-      isOverdue: t.isOverdue || false,
-      isAtRisk: t.isAtRisk || false,
-      snoozedUntil: t.snoozedUntil || null,
-      entityType: t.entityType || 'lead',
-      dueDate: t.dueDate || '',
-      localTime: parseTimeTo24h(t.dueTime || t.scheduledTime),
-      title: t.title || '',
-    }));
+    return rawTasks.map((t: any) => {
+      const dueDate = t.dueDate || '';
+      // Auto-derive priority from due date: today/overdue = HIGH, future = NORMAL
+      const derivedPriority = dueDate && dueDate <= todayStr ? 'HIGH' : 'NORMAL';
+      return {
+        taskId: t.taskId,
+        contactId: t.contactId || '',
+        contactName: t.contactName || '',
+        company: t.companyName || '',
+        channelType: t.channel ? t.channel.toUpperCase() : 'CUSTOM',
+        sequenceName: t.sequenceName || '',
+        sequenceStep: t.sequenceStep || '',
+        scheduledTime: t.scheduledTime || '',
+        dueDateTime: t.dueDateTime || '',
+        interactionCount: t.interactionCount || 0,
+        priority: derivedPriority,
+        status: t.status ? t.status.toUpperCase() : 'PENDING',
+        isOverdue: t.isOverdue || (dueDate && dueDate < todayStr && t.status.toUpperCase() !== 'COMPLETED'),
+        isAtRisk: t.isAtRisk || false,
+        snoozedUntil: t.snoozedUntil || null,
+        entityType: t.entityType || 'lead',
+        dueDate,
+        localTime: parseTimeTo24h(t.dueTime || t.scheduledTime),
+        title: t.title || '',
+      };
+    });
   }
 
   async fetchFilterOptions(tenantId: string) {

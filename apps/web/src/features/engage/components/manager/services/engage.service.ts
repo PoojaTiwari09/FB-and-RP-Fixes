@@ -149,6 +149,7 @@ export async function createTask(body: {
   dueTime: string;
   description?: string;
   assigneeId?: string;
+  priority?: string;
 }): Promise<{ taskId: string; status: string; createdAt: string }> {
   const endpoint = '/tasks';
   const res = await apiFetch('POST', endpoint, {
@@ -267,7 +268,7 @@ export async function fetchEmailTemplates(): Promise<{ id: string; name: string;
 }
 
 export async function fetchLinkedInScript(taskId: string): Promise<Task['linkedinScript'] & { mutualConnections?: number; linkedInProfileUrl?: string }> {
-  const endpoint = `/tasks/${taskId}/linkedin-script`;
+  const endpoint = `/tasks/${taskId}/linkedin-draft`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;
@@ -290,7 +291,7 @@ export async function snoozeTask(taskId: string, snoozedUntil: string): Promise<
 }
 
 export async function fetchContactDetail(contactId: string): Promise<any> {
-  const endpoint = `/api/contacts/${contactId}/detail`;
+  const endpoint = `/contacts/${contactId}/details`;
   const res = await apiFetch('GET', endpoint);
   const payload = await res.json();
   return payload.data;

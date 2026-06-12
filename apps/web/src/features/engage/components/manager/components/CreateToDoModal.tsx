@@ -11,12 +11,22 @@ interface CreateToDoModalProps {
     title: string;
     linkedToId: string;
     linkedToType: string;
+    contactName?: string;
+    companyName?: string;
     dueDate: string;
     dueTime: string;
     description?: string;
     assigneeId?: string;
+    priority?: string;
   }) => void;
   teamMembers?: { id: string; name: string; role: string }[];
+}
+
+// Auto-derive priority: today/overdue = HIGH, future = NORMAL
+function computePriority(dueDate: string): string {
+  if (!dueDate) return 'NORMAL';
+  const today = new Date().toISOString().split('T')[0];
+  return dueDate <= today ? 'HIGH' : 'NORMAL';
 }
 
 export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers = [] }: CreateToDoModalProps) {
@@ -24,13 +34,13 @@ export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers =
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [dueTime, setDueTime] = useState('05:00 PM');
+  const [dueTime, setDueTime] = useState('17:00');
   const [assigneeId, setAssigneeId] = useState('me');
 
   // Autocomplete search states for "Linked To"
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; type: string; subLabel: string }[]>([]);
-  const [selectedEntity, setSelectedEntity] = useState<{ id: string; name: string; type: string } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<{ id: string; name: string; type: string; company: string } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -65,8 +75,11 @@ export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers =
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  const handleSelectEntity = (entity: { id: string; name: string; type: string }) => {
-    setSelectedEntity(entity);
+  const handleSelectEntity = (entity: { id: string; name: string; type: string; subLabel: string }) => {
+    // Extract company name from subLabel (format: "Job Title · Company Name")
+    const parts = entity.subLabel.split('·');
+    const company = parts.length > 1 ? parts[parts.length - 1].trim() : '';
+    setSelectedEntity({ id: entity.id, name: entity.name, type: entity.type, company });
     setSearchQuery(entity.name);
     setShowDropdown(false);
   };
@@ -80,10 +93,14 @@ export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers =
       title,
       linkedToId: selectedEntity.id,
       linkedToType: selectedEntity.type,
+      // Pass names directly so backend doesn't need to do a DB lookup
+      contactName: selectedEntity.name,
+      companyName: selectedEntity.company,
       dueDate,
       dueTime,
       description,
       assigneeId,
+      priority: computePriority(dueDate),
     });
 
     // Reset Form
@@ -92,7 +109,7 @@ export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers =
     setSearchQuery('');
     setSelectedEntity(null);
     setDueDate(new Date().toISOString().split('T')[0]);
-    setDueTime('05:00 PM');
+    setDueTime('17:00');
     setAssigneeId('me');
   };
 
@@ -209,14 +226,15 @@ export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers =
                 Due Time
               </label>
               <input
-                type="text"
+                type="time"
                 value={dueTime}
                 onChange={(e) => setDueTime(e.target.value)}
-                placeholder="05:00 PM"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
           </div>
+
+          {/* Priority is auto-derived from due date */}
 
           {/* Description */}
           <div className="space-y-1.5">
@@ -251,6 +269,8 @@ export default function CreateToDoModal({ isOpen, onClose, onSave, teamMembers =
               ))}
             </select>
           </div>
+
+          {/* Priority is auto-derived from due date — no manual selection */}
         </form>
 
         {/* Footer */}
