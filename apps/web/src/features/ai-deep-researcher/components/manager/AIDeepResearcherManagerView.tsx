@@ -7,7 +7,7 @@ import {
   Sparkles, MessageCircle, CheckCircle, Circle, Info,
   Eye, Calendar, Users, ChevronDown,
   ChevronLeft, ChevronRight, AlertTriangle, Building2, GitBranch, MapPin,
-  Plus, BookOpen, AlertCircle, Target, Search,
+  Plus, BookOpen, AlertCircle, Target, Search, X,
 } from 'lucide-react';
 
 import {
@@ -157,6 +157,11 @@ export default function AIDeepResearcherManagerView() {
   const [segment, setSegment]     = useState('');
   const [callStage, setCallStage] = useState('');
   const [region, setRegion]       = useState('');
+
+  // Modal states for functional drill-downs
+  const [activeModal, setActiveModal] = useState<'calls' | 'all_reps' | 'rep_breakdown' | 'account' | 'recommendation' | null>(null);
+  const [modalData, setModalData] = useState<any>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const [jobId, setJobId]       = useState<string | null>(null);
   const [progress, setProgress] = useState<ProgressResponse | null>(null);
@@ -315,38 +320,101 @@ export default function AIDeepResearcherManagerView() {
 
   const handleOpenCall = async (callId: string) => {
     console.log("Open Call clicked for", callId);
-    await getCallDetails(callId);
+    setModalLoading(true);
+    setActiveModal('calls');
+    try {
+      const res = await getCallDetails(callId);
+      setModalData({ repId: 'Call Detail', calls: res ? [res] : [] });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleViewAccount = async (accountName: string) => {
     console.log("View Account clicked for", accountName);
-    await getAccountDetails(accountName);
+    setModalLoading(true);
+    setActiveModal('account');
+    try {
+      const res = await getAccountDetails(accountName);
+      setModalData({ account: res });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleViewDetails = async (recId: string) => {
     console.log("View Details clicked for", recId);
-    await getRecommendationDetails(recId);
+    setModalLoading(true);
+    setActiveModal('recommendation');
+    try {
+      const res = await getRecommendationDetails(recId);
+      setModalData({ recommendation: res });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleViewCalls = async (repId: string) => {
     console.log("View Calls", repId);
-    await getRepCalls(repId);
+    setModalLoading(true);
+    setActiveModal('calls');
+    try {
+      const res = await getRepCalls(repId);
+      setModalData({ repId, calls: res.calls || [] });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleShowAllReps = async () => {
     console.log("Show All Reps clicked");
-    await getAllReps();
+    setModalLoading(true);
+    setActiveModal('all_reps');
+    try {
+      const res = await getAllReps();
+      setModalData({ reps: res.reps || [] });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleViewRepBreakdown = async (objectionId: string) => {
     console.log("Rep Breakdown", objectionId);
-    await getObjectionRepBreakdown(objectionId);
+    setModalLoading(true);
+    setActiveModal('rep_breakdown');
+    try {
+      const res = await getObjectionRepBreakdown(objectionId);
+      setModalData({ objectionId, breakdown: res.breakdown || [] });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleSeeEvidence = async (objectionId: string) => {
     console.log("See Evidence", objectionId);
-    await getObjectionEvidence(objectionId);
-    setActiveTab(2);
+    setModalLoading(true);
+    try {
+      const res = await getObjectionEvidence(objectionId);
+      setEvidence(res);
+      setEvFilter(objectionId);
+      setActiveTab(2);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   /* ── Derived ── */
@@ -967,6 +1035,158 @@ export default function AIDeepResearcherManagerView() {
         )}
       </div>
 
+      {/* ── Drill-down Modals ── */}
+      {activeModal && (
+        <div className="adr-modal-overlay" onClick={() => { setActiveModal(null); setModalData(null); }}>
+          <div className="adr-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="adr-modal-header">
+              <h3 className="adr-modal-title">
+                {activeModal === 'calls' && `Calls List`}
+                {activeModal === 'all_reps' && `All Reps`}
+                {activeModal === 'rep_breakdown' && `Objection Resolution Breakdown`}
+                {activeModal === 'account' && `Account Details`}
+                {activeModal === 'recommendation' && `Recommendation Details`}
+              </h3>
+              <button className="adr-modal-close" onClick={() => { setActiveModal(null); setModalData(null); }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="adr-modal-body">
+              {modalLoading ? (
+                <div className="adr-modal-loader">
+                  <Loader2 size={32} className="adr-spin" />
+                  <p>Loading details...</p>
+                </div>
+              ) : modalData ? (
+                <>
+                  {/* 1. Calls list modal */}
+                  {activeModal === 'calls' && (
+                    <div>
+                      <h4 style={{ marginBottom: 12, fontSize: '1rem', fontWeight: 600 }}>
+                        {modalData.repId === 'Call Detail' ? 'Call Details' : `Calls managed by rep`}
+                      </h4>
+                      {modalData.calls && modalData.calls.length > 0 ? (
+                        modalData.calls.map((c: any) => (
+                          <div key={c.id} className="adr-modal-list-item">
+                            <div className="adr-modal-list-item-title">{c.title || 'Sales Call'}</div>
+                            <div className="adr-modal-list-item-sub">
+                              Date: {c.callDate ? new Date(c.callDate).toLocaleDateString() : 'N/A'} | Owner: {c.callOwner || 'N/A'}
+                            </div>
+                            {c.transcript?.summary && (
+                              <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#cbd5e1', borderTop: '1px solid #334155', paddingTop: 8 }}>
+                                <strong>Summary:</strong> {c.transcript.summary}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p style={{ color: '#94a3b8' }}>No calls found.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 2. All Reps modal */}
+                  {activeModal === 'all_reps' && (
+                    <div className="adr-modal-grid">
+                      {modalData.reps && modalData.reps.map((r: any) => (
+                        <div key={r.repId} className="adr-modal-grid-card">
+                          <div className="adr-modal-rep-avatar" style={{ backgroundColor: r.avatarColor }}>
+                            {r.initials}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{r.repName}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Sales Representative</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 3. Objection Breakdown modal */}
+                  {activeModal === 'rep_breakdown' && (
+                    <div>
+                      <h4 style={{ marginBottom: 14, fontWeight: 600 }}>
+                        Objection: {modalData.objectionId ? modalData.objectionId.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Integration Complexity'}
+                      </h4>
+                      {modalData.breakdown && modalData.breakdown.map((item: any) => (
+                        <div key={item.repId} className="adr-rep-bar-row" style={{ background: '#0f172a', padding: '10px 14px', borderRadius: 8, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div className="adr-rep-avatar" style={{ background: item.avatarColor }}>
+                            {item.initials}
+                          </div>
+                          <span className="adr-rep-name" style={{ flex: 1 }}>{item.repName}</span>
+                          <div className="adr-rep-bar-track" style={{ width: '150px' }}>
+                            <div
+                              className={`adr-rep-bar-fill ${item.resolutionRatePct >= 60 ? 'green' : item.resolutionRatePct >= 40 ? 'amber' : 'red'}`}
+                              style={{ width: `${item.resolutionRatePct}%` }}
+                            />
+                          </div>
+                          <span className="adr-rep-pct">{item.resolutionRatePct}%</span>
+                          {item.coachingNeeded && (
+                            <span style={{ fontSize: '0.75rem', padding: '2px 6px', background: '#ef4444', color: 'white', borderRadius: 4 }}>Coaching Required</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 4. Account details modal */}
+                  {activeModal === 'account' && modalData.account && (
+                    <div>
+                      <div className="adr-modal-detail-row">
+                        <div className="adr-modal-detail-label">Account Name</div>
+                        <div className="adr-modal-detail-val" style={{ fontSize: '1.2rem', fontWeight: 600 }}>{modalData.account.name}</div>
+                      </div>
+                      <div className="adr-modal-detail-row">
+                        <div className="adr-modal-detail-label">Account ID</div>
+                        <div className="adr-modal-detail-val">{modalData.account.id}</div>
+                      </div>
+                      {modalData.account.industry && (
+                        <div className="adr-modal-detail-row">
+                          <div className="adr-modal-detail-label">Industry</div>
+                          <div className="adr-modal-detail-val">{modalData.account.industry}</div>
+                        </div>
+                      )}
+                      {modalData.account.createdAt && (
+                        <div className="adr-modal-detail-row">
+                          <div className="adr-modal-detail-label">Created At</div>
+                          <div className="adr-modal-detail-val">{new Date(modalData.account.createdAt).toLocaleDateString()}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 5. Recommendation details modal */}
+                  {activeModal === 'recommendation' && modalData.recommendation && (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                        <span className={`adr-pri-badge ${modalData.recommendation.priority}`} style={{ textTransform: 'uppercase' }}>
+                          {modalData.recommendation.priority}
+                        </span>
+                        <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>{modalData.recommendation.title}</h4>
+                      </div>
+                      <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: 18 }}>
+                        {modalData.recommendation.description}
+                      </p>
+                      {modalData.recommendation.basedOnTags && modalData.recommendation.basedOnTags.length > 0 && (
+                        <div>
+                          <div className="adr-modal-detail-label" style={{ marginBottom: 6 }}>Based On</div>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            {modalData.recommendation.basedOnTags.map((t: string) => (
+                              <span key={t} className="adr-tag-sm" style={{ background: '#334155', color: '#f8fafc', padding: '4px 8px', borderRadius: 4, fontSize: '0.75rem' }}>{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p style={{ color: '#94a3b8' }}>Failed to load modal details.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
