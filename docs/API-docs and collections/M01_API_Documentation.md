@@ -5,11 +5,8 @@ All requests require the following headers to be set:
 
 | Header | Example Value | Description |
 |---|---|---|
-| `tenant-id` | `tenant-123` | Your organization tenant ID |
-| `user-id` | `user-123` | Your personal user ID |
-| `user-role` | `Admin` | Your role (`Admin`, `Sales Rep`, etc.) |
-| `user-name` | `Test User` | Your full name |
-| `Authorization` | `Bearer eyJhbG...` | Your JWT Access Token |
+| `Authorization` | `Bearer eyJhbG...` | Your JWT Access Token (Required) |
+| `x-tenant-id` | `tenant-123` | Your organization tenant ID (Optional if present in JWT) |
 
 ---
 
@@ -238,6 +235,19 @@ All requests require the following headers to be set:
 **Method:** `GET`
 
 **Endpoint:** `/api/v1/capture-transcription/calls/{{call_id}}/next-steps`
+
+**Response Payload:**
+```json
+{
+  "nextSteps": [
+    {
+      "stepId": "step-0",
+      "description": "Send follow-up email",
+      "completed": false
+    }
+  ]
+}
+```
 
 ---
 

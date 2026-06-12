@@ -3,6 +3,7 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 export interface UserContext {
   userId: string;
   orgId: string;
+  tenantId: string;
   role: string;
   teamId: string | null;
   email: string;
@@ -38,6 +39,7 @@ export class AuthGuard implements CanActivate {
     const userContext: UserContext = {
       userId: request.headers['x-user-id'] || 'c0000000-0000-0000-0000-000000000001',
       orgId: request.headers['x-org-id'] || 'a0000000-0000-0000-0000-000000000001',
+      tenantId: request.headers['tenant-id'] || request.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001',
       role: request.headers['x-role'] || 'SALES_MANAGER',
       teamId: request.headers['x-team-id'] || 'b0000000-0000-0000-0000-000000000001',
       email: request.headers['x-email'] || 'sarah.manager@acme.com',
