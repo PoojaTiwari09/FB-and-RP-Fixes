@@ -5,6 +5,7 @@ import CoachingPlaybook from '@training/components/rep/Setup/CoachingPlaybook';
 import SetupClientShell from '@training/components/rep/Setup/SetupClientShell';
 
 import { cookies } from 'next/headers';
+import { getServerBackendHeaders } from '@shared/lib/backend-api.server';
 
 interface TrainingDetailPageProps {
   params: Promise<{ trainingId: string }>;
@@ -17,7 +18,8 @@ export default async function TrainingDetailPage({ params }: TrainingDetailPageP
   const cookieStore = await cookies();
   const createdStr = cookieStore.get('created_trainings')?.value;
   
-  const data = await fetchTrainingSetup(trainingId, createdStr);
+  const headers = await getServerBackendHeaders();
+  const data = await fetchTrainingSetup(trainingId, createdStr, headers);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">

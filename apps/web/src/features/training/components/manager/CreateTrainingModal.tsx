@@ -14,7 +14,7 @@ export default function CreateTrainingModal({ onClose }: CreateTrainingModalProp
   const [formData, setFormData] = useState<CreateTrainingRequest>({
     trainingTitle: '',
     dueDateIso: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default 1 week
-    repId: 'rep-001',
+    repId: '00000000-0000-0000-0000-000000000003',
     persona: {
       name: '',
       jobTitle: '',
@@ -98,7 +98,7 @@ export default function CreateTrainingModal({ onClose }: CreateTrainingModalProp
                       onChange={handleChange}
                       className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm appearance-none bg-white"
                     >
-                      <option value="rep-001">Alex Chen</option>
+                      <option value="00000000-0000-0000-0000-000000000003">Alex Chen</option>
                       <option value="rep-002">Jordan Lee</option>
                       <option value="rep-003">Sam Taylor</option>
                     </select>

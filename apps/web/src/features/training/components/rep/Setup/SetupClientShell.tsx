@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { VoiceOption } from '@training/types/trainingSetup.types';
-import { createTrainingSession } from '@training/services/trainingSetup.service';
+import { createTrainingSession } from '@training/services/trainingSetup.client';
 import VoiceSelector from './VoiceSelector';
 
 interface SetupClientShellProps {

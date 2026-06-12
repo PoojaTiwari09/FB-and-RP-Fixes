@@ -59,7 +59,7 @@ export async function fetchTrainingSetup(
 ): Promise<TrainingSetupPage> {
   const [res, liveVoices] = await Promise.all([
     serverBackendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     }),
     getVoices(),
   ]);
