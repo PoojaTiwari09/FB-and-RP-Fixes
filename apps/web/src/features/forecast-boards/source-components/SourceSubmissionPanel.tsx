@@ -97,9 +97,11 @@ export default function SourceSubmissionPanel({
 
   const isRepLocked = !isManagerView && (existingStatus === 'submitted' || existingStatus === 'approved');
   const canSave = !isSaving;
-  const saveLabel = isRepLocked
-    ? (isSaving ? 'Sending request...' : 'Send Request')
-    : (columnLabel === 'Best Case' ? 'Save best case' : 'Save commit');
+  const saveLabel = isManagerView
+    ? (isSaving ? 'Overriding...' : 'Override')
+    : (isRepLocked
+      ? (isSaving ? 'Sending request...' : 'Send Request')
+      : (columnLabel === 'Best Case' ? 'Save best case' : 'Save commit'));
 
   const handleApproveChange = async () => {
     setIsApproving(true);

@@ -135,34 +135,16 @@ export async function rephraseEmail(
     tone?: string;
   },
 ): Promise<{ rephrasedBody: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/v1/sales-engagement/tasks/${taskId}/ai-rephrase`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ taskId, ...emailData }),
-  });
+  const payload = await apiRequest<{ rephrasedBody?: string; data?: { rephrasedBody?: string } }>(
+    `/tasks/${taskId}/ai-rephrase`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, ...emailData }),
+    },
+  );
 
-  const text = await res.text();
-  if (!res.ok) {
-    let message = `Rephrase failed (${res.status})`;
-    try {
-      const err = JSON.parse(text) as { error?: string };
-      if (err.error) message = err.error;
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-
-  if (!text.trim()) {
-    throw new Error('Rephrase returned an empty response');
-  }
-
-  const payload = JSON.parse(text) as {
-    rephrasedBody?: string;
-    data?: { rephrasedBody?: string };
-  };
-
-  const rephrasedBody = payload.rephrasedBody || payload.data?.rephrasedBody;
+  const rephrasedBody = payload?.rephrasedBody || payload?.data?.rephrasedBody;
   if (!rephrasedBody) {
     throw new Error('Rephrase response missing body text');
   }

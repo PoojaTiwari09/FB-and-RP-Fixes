@@ -239,7 +239,7 @@ let M08SalesEngagementController = class M08SalesEngagementController {
     async reassignTask(taskId, body, req) {
         const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
         const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
-        return this.service.reassignEngageTask(req.tenantId, taskId, body.newAssigneeId, userId, userRole);
+        return this.service.reassignEngageTask(req.tenantId, taskId, body.newAssigneeId, userId, userRole, body.scope, body.reason);
     }
     async updateTask(taskId, body, req) {
         const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';

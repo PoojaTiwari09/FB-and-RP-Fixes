@@ -53,7 +53,7 @@ export default function SourceSubmissionHistoryAccordion({ boardId, repUserId, c
                           : { background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' }
                         }
                       >
-                        {entry.deltaDirection === 'up' ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                        {entry.deltaDirection === 'up' ? '⬆' : '⬇'}
                         {formatCurrency(entry.delta, true)}
                       </span>
                     )}

@@ -1,3 +1,5 @@
+import { SubmissionStatus } from './submission.types';
+
 export interface CrmDeal {
   id: string;
   dealName: string;
@@ -14,7 +16,7 @@ export interface CrmDeal {
   isPastDue: boolean;
   bestCase?: number | null;
   commit?: number | null;
-  submissionStatus?: 'draft' | 'not_started' | 'submitted' | 'approved' | 'reopened';
+  submissionStatus?: SubmissionStatus;
   managerAnnotation?: string | null;
   requestedBestCase?: number | null;
   requestedCommit?: number | null;

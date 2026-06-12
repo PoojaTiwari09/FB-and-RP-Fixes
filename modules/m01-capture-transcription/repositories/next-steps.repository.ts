@@ -39,15 +39,24 @@ export class NextStepsRepository {
   ): Promise<string[]> {
     const current = await this.findByCallId(callId, tenantId);
 
+    // Try to update existing transcript
     const updated = await this.prisma.transcript.updateMany({
       where: { callId, tenantid: tenantId },
       data:  { nextSteps: [...current, step] },
     });
 
     if (updated.count === 0) {
-      throw new NotFoundException(
-        `Transcript for call ${callId} not found or access denied`,
-      );
+      // No transcript yet (call just created) — auto-create a minimal one
+      // so next-steps can be stored before transcription completes
+      await this.prisma.transcript.create({
+        data: {
+          callId,
+          tenantid: tenantId,
+          fullText: '',
+          nextSteps: [step],
+        },
+      });
+      return [step];
     }
 
     return [...current, step];

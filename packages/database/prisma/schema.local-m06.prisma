@@ -1,0 +1,432 @@
+// ── M06 Local Development Schema ──────────────────────────────────────────
+// Stripped from packages/database/prisma/schema.prisma
+// Contains only the M06 Forecasting & Prediction models + shared Platform Core.
+// Used in the pooja branch for local development without Docker or pgvector.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+  output          = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public"]
+}
+
+// ─────────────────────────────────────────────────────────────
+// M06 — Forecasting & Prediction
+// ─────────────────────────────────────────────────────────────
+
+model ForecastPeriod {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid           String    @db.Uuid
+  name               String
+  startDate          DateTime
+  endDate            DateTime
+  revenueTarget      Float
+  status             String
+  isLocked           Boolean   @default(false)
+  submissionDeadline DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  snapshots          AiForecastSnapshot[]
+  submissions        ForecastSubmission[]
+  executiveSnapshots ForecastExecutiveSnapshot[]
+  predictionJobs     M06PredictionJob[]
+
+  @@index([tenantid, status])
+  @@map("forecast_periods")
+  @@schema("public")
+}
+
+model AiForecastSnapshot {
+  snapshotId          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid            String   @db.Uuid
+  periodId            String   @db.Uuid
+  predictedAmount     Float
+  confidenceRangeLow  Float
+  confidenceRangeHigh Float
+  modelInputs         Json
+  inputPipelineValue  Float?
+  regionBreakdown     Json?
+  computedAt          DateTime @default(now())
+  idempotencyKey      String   @unique
+
+  period ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantid, periodId, computedAt])
+  @@map("ai_forecast_snapshots")
+  @@schema("public")
+}
+
+model ForecastSubmission {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
+  periodId         String    @db.Uuid
+  repUserId        String    @db.Uuid
+  lob              String
+  version          Int       @default(1)
+  commitForecast   Float
+  bestCaseForecast Float?
+  notes            String?
+  status           String
+  submittedAt      DateTime?
+  managerOverride  Float?
+  managerComment   String?
+  managerId        String?   @db.Uuid
+  managerName      String?
+  approvedAt       DateTime?
+  reopenedAt       DateTime?
+  overriddenAt     DateTime?
+  committedDealIds Json?
+  idempotencyKey   String?   @unique
+  dealId           String?   @db.Uuid
+  bestCaseState    String    @default("editable")
+  commitState      String    @default("editable")
+  approvedBestCase Float?
+  approvedCommit   Float?
+  overriddenBy     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  period ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantid, periodId, repUserId])
+  @@index([tenantid, periodId, repUserId, dealId])
+  @@map("forecast_submissions")
+  @@schema("public")
+}
+
+model ForecastAuditLog {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid             String   @db.Uuid
+  forecastSubmissionId String
+  action               String
+  actorId              String   @db.Uuid
+  actorName            String?
+  actorRole            String
+  metadata             Json?
+  status               String?
+  notes                String?
+  createdAt            DateTime @default(now())
+
+  @@map("forecast_audit_log")
+  @@schema("public")
+}
+
+model ForecastExecutiveSnapshot {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid       String   @db.Uuid
+  periodId       String   @db.Uuid
+  baseline       String?
+  region         String?
+  submissionId   String?  @db.Uuid
+  payload        Json
+  computedAt     DateTime @default(now())
+  idempotencyKey String   @unique
+
+  period ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantid, periodId, computedAt])
+  @@map("forecast_executive_snapshots")
+  @@schema("public")
+}
+
+model M06PredictionJob {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid       String    @db.Uuid
+  periodId       String    @db.Uuid
+  status         String
+  trigger        String
+  idempotencyKey String    @unique
+  error          String?
+  createdAt      DateTime  @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+
+  period ForecastPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([tenantid, periodId, status])
+  @@map("m06_prediction_jobs")
+  @@schema("public")
+}
+
+model PipelineCoverageMetrics {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid              String   @db.Uuid
+  periodId              String   @db.Uuid
+  openPipelineValue     Float
+  weightedPipelineValue Float
+  closedWonAmount       Float
+  coverageRatio         Float
+  computedAt            DateTime @default(now())
+
+  @@map("pipeline_coverage_metrics")
+  @@schema("public")
+}
+
+model HistoricalConversionRate {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid           String   @db.Uuid
+  fromStage          String
+  toStage            String
+  conversionRate     Float
+  sampleSize         Int
+  computedFromPeriod String
+  periodName         String?
+  computedAt         DateTime @default(now())
+
+  @@map("historical_conversion_rates")
+  @@schema("public")
+}
+
+model ForecastNotification {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid      String   @db.Uuid
+  repId         String
+  repName       String?
+  submissionId  String   @db.Uuid
+  actionType    String
+  requestType   String?
+  dealName      String
+  finalValue    Float?
+  bestCaseValue Float?
+  commitValue   Float?
+  isSeen        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([tenantid, repId, isSeen])
+  @@map("forecast_notifications")
+  @@schema("public")
+}
+
+model PipelineValuesCache {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid      String   @db.Uuid
+  repId         String
+  dealId        String?  @db.Uuid
+  periodId      String   @db.Uuid
+  pipelineValue Float
+  computedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantid, periodId, repId, dealId])
+  @@map("pipeline_values_cache")
+  @@schema("public")
+}
+
+model CrmDeal {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid                String    @db.Uuid
+  dealName                String
+  stage                   String
+  amount                  Float
+  closeDate               DateTime
+  probability             Float?
+  isClosedWon             Boolean   @default(false)
+  isClosedLost            Boolean   @default(false)
+  region                  String?
+  lob                     String?
+  repUserId               String?   @db.Uuid
+  hubspotId               String?
+  lastActivityDate        DateTime?
+  riskReason              String?
+  source                  String    @default("seed")
+  createdBy               String    @default("system")
+  manualForecast          Float?
+  manualForecastUpdatedAt DateTime?
+  aiPredictionScore       Float?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([tenantid, hubspotId])
+  @@map("crm_deals")
+  @@schema("public")
+}
+
+/// M06 forecast module users
+model ForecastUser {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid  String   @db.Uuid
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  repId     String?
+  managerId String?  @db.Uuid
+  region    String?
+  teamName  String?
+  createdAt DateTime @default(now())
+
+  @@map("users")
+  @@schema("public")
+}
+
+model Quota {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid   String   @db.Uuid
+  periodId   String   @db.Uuid
+  repUserId  String   @db.Uuid
+  amount     Float
+  aprTarget  Float?
+  mayTarget  Float?
+  junTarget  Float?
+  managerId  String?  @db.Uuid
+  assignedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([tenantid, periodId, repUserId])
+  @@map("quotas")
+  @@schema("public")
+}
+
+model ForecastBoard {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String    @db.Uuid
+  name            String
+  scope           String?
+  periodType      String
+  activePeriod    String
+  periodStartDate DateTime?
+  periodEndDate   DateTime?
+  description     String?
+  status          String    @default("draft")
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  columns        BoardColumn[]
+  crmMapping     BoardCrmMapping?
+  reminderConfig BoardReminderConfig?
+  exclusions     BoardExclusion[]
+
+  @@index([tenantid, activePeriod, status])
+  @@map("forecast_boards")
+  @@schema("public")
+}
+
+model BoardColumn {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid       String   @db.Uuid
+  boardId        String   @db.Uuid
+  label          String
+  type           String
+  submissionMode String?
+  sortOrder      Int      @default(0)
+  isVisible      Boolean  @default(true)
+  isDeleted      Boolean  @default(false)
+  infoTooltip    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  board ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([tenantid, boardId, sortOrder])
+  @@map("m06_board_columns")
+  @@schema("public")
+}
+
+model BoardExclusion {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid   String   @db.Uuid
+  boardId    String   @db.Uuid
+  repUserId  String   @db.Uuid
+  excludedBy String?
+  excludedAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  board ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, repUserId])
+  @@map("m06_board_exclusions")
+  @@schema("public")
+}
+
+model BoardCrmMapping {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid              String   @db.Uuid
+  boardId               String   @unique @db.Uuid
+  crmConnection         String?
+  forecastCategoryField String?
+  pipelineSource        String?
+  closedSource          String?
+  closeDateField        String?
+  amountField           String?
+  columnMappings        Json?
+  stageMappings         Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  board ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("m06_board_crm_mappings")
+  @@schema("public")
+}
+
+model BoardReminderConfig {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String   @db.Uuid
+  boardId          String   @unique @db.Uuid
+  frequency        String?
+  sendDay          String?
+  sendTime         String?
+  timezoneBehavior String?
+  inAppEnabled     Boolean  @default(true)
+  slackEnabled     Boolean  @default(false)
+  autoDismiss      Boolean  @default(false)
+  messageTemplate  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  board ForecastBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("m06_board_reminder_configs")
+  @@schema("public")
+}
+
+model BoardSubmissionAnnotation {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String   @db.Uuid
+  boardId      String   @db.Uuid
+  submissionId String   @db.Uuid
+  managerId    String   @db.Uuid
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([boardId, submissionId])
+  @@map("m06_board_submission_annotations")
+  @@schema("public")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Platform Core — shared models needed by M06
+// ─────────────────────────────────────────────────────────────
+
+model Integration {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String    @db.Uuid
+  provider     String
+  status       String    @default("disconnected")
+  accountEmail String?
+  accountName  String?
+  accessToken  String?
+  refreshToken String?
+  tokenExpiry  DateTime?
+  scopes       String[]
+  metadata     Json?
+  connectedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([tenantid, provider])
+  @@index([tenantid])
+  @@map("integrations")
+  @@schema("public")
+}

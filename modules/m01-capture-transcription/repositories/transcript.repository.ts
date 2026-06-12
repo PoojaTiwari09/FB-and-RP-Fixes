@@ -1,5 +1,5 @@
 import { Prisma } from '@rri/database';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService }       from '../database/prisma.service';
 import { PiiRedactionService } from '../services/pii-redaction.service';
 
@@ -116,7 +116,7 @@ export class TranscriptRepository {
     const utterance = await this.prisma.utterance.findFirst({
       where: { id: utteranceId, transcript: { tenantid: tenantId } },
     });
-    if (!utterance) throw new Error(`Utterance ${utteranceId} not found`);
+    if (!utterance) throw new NotFoundException(`Utterance ${utteranceId} not found`);
 
     return this.prisma.utterance.update({
       where: { id: utteranceId },

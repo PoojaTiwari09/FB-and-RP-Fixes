@@ -55,37 +55,15 @@ export class SearchRepository {
       dateFrom, dateTo, ownerId, callType,
     } = dto;
 
-    // Build dynamic filter clauses for the raw SQL
-    const dateClauses: string[] = [];
-    const params: unknown[]     = [tenantId, q, limit, offset];
-    let   paramIdx              = 5;               // $1–$4 are already taken
+    const sqlParts: Prisma.Sql[] = [];
+    if (dateFrom) sqlParts.push(Prisma.sql`AND cr."callDate" >= ${dateFrom}`);
+    if (dateTo) sqlParts.push(Prisma.sql`AND cr."callDate" <= ${dateTo}`);
+    if (ownerId) sqlParts.push(Prisma.sql`AND cr."callOwner" = ${ownerId}`);
+    if (callType) sqlParts.push(Prisma.sql`AND cr."callType" = ${callType}`);
 
-    if (dateFrom) {
-      dateClauses.push(`AND cr."callDate" >= $${paramIdx}`);
-      params.push(dateFrom);
-      paramIdx++;
-    }
-    if (dateTo) {
-      dateClauses.push(`AND cr."callDate" <= $${paramIdx}`);
-      params.push(dateTo);
-      paramIdx++;
-    }
-    if (ownerId) {
-      dateClauses.push(`AND cr."callOwner" = $${paramIdx}`);
-      params.push(ownerId);
-      paramIdx++;
-    }
-    if (callType) {
-      dateClauses.push(`AND cr."callType" = $${paramIdx}`);
-      params.push(callType);
-      paramIdx++;
-    }
+    const filterSQLPart = sqlParts.length > 0 ? Prisma.join(sqlParts, ' ') : Prisma.empty;
+    const limitOffsetSQL = Prisma.raw(`LIMIT ${Number(limit)} OFFSET ${Number(offset)}`);
 
-    const filterSQL = dateClauses.join('\n        ');
-
-    // Main search query — GIN-accelerated via to_tsvector (US-06 GIN index)
-    // We construct the dynamic query safely using Prisma.sql and parameterize the variable inputs
-    const filterSQLPart = filterSQL ? Prisma.sql`AND ${Prisma.raw(filterSQL.replace(/AND /g, ''))}` : Prisma.empty;
     const results = await this.prisma.$queryRaw<OrgSearchResult[]>`
       SELECT
         u.id              AS "utteranceId",
@@ -95,24 +73,24 @@ export class SearchRepository {
         u.speaker         AS "speaker",
         u.text            AS "excerpt",
         u."startMs"       AS "startMs"
-      FROM utterances u
-      JOIN transcripts   t  ON t.id = u."transcriptId"
-      JOIN call_records  cr ON cr.id = t."callId"
-      WHERE cr."tenantid" = ${params[0]}::uuid
-        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', ${params[1]})
+      FROM ingestion.utterances u
+      JOIN ingestion.transcripts   t  ON t.id = u."transcriptId"
+      JOIN ingestion.call_records  cr ON cr.id = t."callId"
+      WHERE cr."tenantid" = ${tenantId}::uuid
+        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', ${q})
         ${filterSQLPart}
       ORDER BY cr."callDate" DESC
-      LIMIT ${params[params.length - 2]} OFFSET ${params[params.length - 1]}
+      ${limitOffsetSQL}
     `;
 
     // Count query for US-19 matchCount
     const countResult = await this.prisma.$queryRaw<[{ count: bigint }]>`
       SELECT COUNT(*) AS count
-      FROM utterances u
-      JOIN transcripts   t  ON t.id = u."transcriptId"
-      JOIN call_records  cr ON cr.id = t."callId"
-      WHERE cr."tenantid" = ${params[0]}::uuid
-        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', ${params[1]})
+      FROM ingestion.utterances u
+      JOIN ingestion.transcripts   t  ON t.id = u."transcriptId"
+      JOIN ingestion.call_records  cr ON cr.id = t."callId"
+      WHERE cr."tenantid" = ${tenantId}::uuid
+        AND to_tsvector('english', u.text) @@ plainto_tsquery('english', ${q})
         ${filterSQLPart}
     `;
 

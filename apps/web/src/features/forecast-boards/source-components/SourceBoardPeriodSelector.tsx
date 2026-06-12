@@ -6,7 +6,7 @@ import { getRepM06Headers, M06_API_BASE } from '../services/m06-api';
 
 interface SourceBoardPeriodSelectorProps {
   periodName: string;
-  onChange?: (periodName: string) => void;
+  onChange?: (periodName: string, periodId?: string) => void;
 }
 
 export default function SourceBoardPeriodSelector({ periodName, onChange }: SourceBoardPeriodSelectorProps) {
@@ -45,15 +45,15 @@ export default function SourceBoardPeriodSelector({ periodName, onChange }: Sour
       });
   }, []);
 
-  const handleSelectQuarter = (name: string) => {
+  const handleSelectQuarter = (name: string, id: string) => {
     setIsOpen(false);
-    if (onChange) onChange(name);
+    if (onChange) onChange(name, id);
   };
 
   const handleApplyCustom = () => {
     setIsOpen(false);
     if (onChange) {
-      onChange(`${selectedMonth} ${selectedYear}`);
+      onChange(`${selectedMonth} ${selectedYear}`, `custom-${selectedMonth.toLowerCase()}-${selectedYear}`);
     }
   };
 
@@ -83,7 +83,7 @@ export default function SourceBoardPeriodSelector({ periodName, onChange }: Sour
                 <button
                   key={p.periodId}
                   type="button"
-                  onClick={() => handleSelectQuarter(p.name)}
+                  onClick={() => handleSelectQuarter(p.name, p.periodId)}
                   className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 transition-colors ${
                     p.name === periodName ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
                   }`}

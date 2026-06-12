@@ -3,13 +3,17 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { getErrorMessage } from '../../source-utils/format';
+import SourceSubmissionHistoryAccordion from '../SourceSubmissionHistoryAccordion';
 
 interface OverrideSidePanelProps {
   repName: string;
   initialCommit: number | null;
   initialBestCase: number | null;
-  onClose: () => void;
   onSubmit: (commitVal: number, bestCaseVal: number, note: string) => Promise<void>;
+  boardId?: string;
+  repUserId?: string;
+  dealId?: string;
+  onClose: () => void;
 }
 
 export default function OverrideSidePanel({
@@ -18,6 +22,9 @@ export default function OverrideSidePanel({
   initialBestCase,
   onClose,
   onSubmit,
+  boardId,
+  repUserId,
+  dealId,
 }: OverrideSidePanelProps) {
   const [commitVal, setCommitVal] = useState(initialCommit !== null ? String(initialCommit) : '');
   const [bestCaseVal, setBestCaseVal] = useState(initialBestCase !== null ? String(initialBestCase) : '');
@@ -132,7 +139,7 @@ export default function OverrideSidePanel({
         )}
 
         {/* Action Button */}
-        <div className="mt-auto pt-4 border-t border-gray-200">
+        <div className="mt-4 border-t border-gray-200 pt-4 pb-4">
           <button
             type="submit"
             disabled={isSubmitting}
@@ -141,6 +148,18 @@ export default function OverrideSidePanel({
             {isSubmitting ? 'Saving...' : 'Send Override'}
           </button>
         </div>
+        
+        {/* Submission history */}
+        {boardId && repUserId && (
+          <div className="mt-2 pb-4">
+            <SourceSubmissionHistoryAccordion 
+              boardId={boardId} 
+              repUserId={repUserId} 
+              columnId="col-commit" 
+              dealId={dealId} 
+            />
+          </div>
+        )}
       </form>
     </div>
   );
