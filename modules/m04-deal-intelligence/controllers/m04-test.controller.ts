@@ -1,26 +1,27 @@
 import { Controller, Get, Post } from '@nestjs/common';
-import { DealRepository } from '@/repositories/deal.repository';
-import { DealBoardRepository } from '@/repositories/deal-board.repository';
-import { M04MemoryStore, M04_DEV_USER } from '../database/m04-memory.store';
+import { DealRepository } from '@m04/repositories/deal.repository';
+import { DealBoardRepository } from '@m04/repositories/deal-board.repository';
+import { M04_DEV_USER } from '../database/m04-prisma.repository';
+import { PrismaService } from '../database/prisma.service';
 import { Public } from '../interfaces/jwt.guard';
 @Controller('m04-test')
 export class M04TestController {
   constructor(
     private readonly deals: DealRepository,
     private readonly boards: DealBoardRepository,
-    private readonly store: M04MemoryStore,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Public()
   @Get('health')
-  health() {
+  async health() {
     return {
       success: true,
-      storage: 'memory',
+      storage: 'prisma',
       counts: {
-        deals: this.store.deals.size,
-        boards: this.store.boards.size,
-        users: this.store.users.size,
+        deals: await this.prisma.deal.count(),
+        boards: await this.prisma.m04DealBoard.count(),
+        users: await this.prisma.user.count(),
       },
       timestamp: new Date().toISOString(),
     };

@@ -16,14 +16,15 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { ExportService } from '@/services/export.service';
-import { ExportRequestDto, ExportResponseDto } from '@/schemas/export.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { ExportService } from '@m04/services/export.service';
+import { ExportRequestDto, ExportResponseDto } from '@m04/schemas/export.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Exports')
 @Controller('exports')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class ExportController {
   constructor(private readonly exportService: ExportService) {}

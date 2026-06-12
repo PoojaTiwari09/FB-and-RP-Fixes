@@ -36,6 +36,14 @@ export class FrontendApiExceptionFilter implements ExceptionFilter {
       this.logger.error(`${req.method} ${req.url} — ${text}`);
     }
 
+    const requestId =
+      req.headers['x-request-id'] ||
+      req.headers['x-trace-id'] ||
+      req.headers['trace-id'] ||
+      `req_err_${Date.now()}`;
+      
+    const timestamp = new Date().toISOString();
+
     res.status(status).json({
       success: false,
       error: {
@@ -43,6 +51,8 @@ export class FrontendApiExceptionFilter implements ExceptionFilter {
         message: text,
         details: typeof payload === 'object' ? payload : null,
       },
+      requestId,
+      timestamp,
     });
   }
 

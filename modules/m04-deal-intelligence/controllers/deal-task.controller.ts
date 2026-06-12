@@ -18,20 +18,21 @@ import {
   ApiQuery,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { DealTaskService } from '@/services/deal-task.service';
+import { DealTaskService } from '@m04/services/deal-task.service';
 import {
   CreateTaskDto,
   UpdateTaskDto,
   TaskResponseDto,
   TaskStatus,
   GenerateNextStepsDto,
-} from '@/schemas/task.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/task.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Deal Tasks')
 @Controller('deals/:dealId/tasks')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class DealTaskController {
   constructor(private readonly taskService: DealTaskService) {}
@@ -230,7 +231,7 @@ export class DealTaskController {
 
 @ApiTags('Tasks')
 @Controller('tasks')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class TaskManagementController {
   constructor(private readonly taskService: DealTaskService) {}

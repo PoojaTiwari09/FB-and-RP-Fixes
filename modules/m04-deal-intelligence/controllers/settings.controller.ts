@@ -15,7 +15,7 @@ import {
   ApiCookieAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { SettingsService } from '@/services/settings.service';
+import { SettingsService } from '@m04/services/settings.service';
 import {
   SaveFiltersRequestDto,
   GetFiltersResponseDto,
@@ -28,13 +28,14 @@ import {
   SaveGlobalSettingsRequestDto,
   GetGlobalSettingsResponseDto,
   AllSettingsResponseDto,
-} from '@/schemas/settings.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/settings.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Settings')
 @Controller('settings')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}

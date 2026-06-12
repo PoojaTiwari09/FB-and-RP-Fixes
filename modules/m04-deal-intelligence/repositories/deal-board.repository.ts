@@ -8,9 +8,9 @@ import {
   BoardStatus,
   BoardAudience,
   PermissionRole,
-} from '@/entities';
+} from '@m04/entities';
 import { InjectRepository } from '../database/inject-repository';
-import { M04EntityRepository } from '../database/m04-entity.repository';
+import { M04EntityRepository } from '../database/m04-prisma.repository';
 
 type FindOptionsWhere<T> = Partial<Record<keyof T & string, unknown>>;
 

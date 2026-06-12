@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { Deal } from '@/entities/deal.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { Deal } from '@m04/entities/deal.entity';
 import { AIClientService } from './ai-client.service';
 import { DealService } from './deal.service';
 import {
   AIScoreResponseDto,
   ScoreHistoryResponseDto,
   ScoreHistoryDto,
-} from '@/schemas/ai-score.dto';
+} from '@m04/schemas/ai-score.dto';
 
 interface ScoreRecord {
   score: number;

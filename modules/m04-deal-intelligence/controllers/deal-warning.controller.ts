@@ -16,27 +16,28 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { DealWarningService } from '@/services/deal-warning.service';
-import { AuthGuard } from '@/guards/auth.guard';
-import { RolesGuard } from '@/guards/roles.guard';
-import { Roles } from '@/decorators/roles.decorator';
-import { UserRole } from '@/interfaces/user-role.enum';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { DealWarningService } from '@m04/services/deal-warning.service';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { RolesGuard } from '../../platform-core/guards/roles.guard';
+import { Roles } from '../../platform-core/decorators/roles.decorator';
+import { UserRole } from '@rri/database';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 import {
   DealWarningResponseDto,
   WarningListResponseDto,
   QueryWarningDto,
-} from '@/schemas/deal-warning.dto';
+} from '@m04/schemas/deal-warning.dto';
 
 @ApiTags('Deal Warnings')
 @ApiBearerAuth()
 @Controller('deals/:dealId/warnings')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 export class DealWarningController {
   constructor(private readonly warningService: DealWarningService) {}
 
   @Post('generate')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Generate AI warnings for deal' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -57,7 +58,7 @@ export class DealWarningController {
   }
 
   @Get('active')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get active warnings for deal' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -73,7 +74,7 @@ export class DealWarningController {
   }
 
   @Get('history')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get warning history for deal' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -97,7 +98,7 @@ export class DealWarningController {
   }
 
   @Patch(':warningId/resolve')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Resolve a warning' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiParam({ name: 'warningId', description: 'Warning ID' })
@@ -122,7 +123,7 @@ export class DealWarningController {
 @ApiTags('Deal Warnings')
 @ApiBearerAuth()
 @Controller('warnings')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 export class WarningManagementController {
   constructor(private readonly warningService: DealWarningService) {}
 

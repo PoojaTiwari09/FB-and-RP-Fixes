@@ -13,14 +13,15 @@ import {
   ApiParam,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { DealService } from '@/services/deal.service';
-import { EscalateRiskDto, DeescalateRiskDto, RiskEscalationResponseDto } from '@/schemas/risk-escalation.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { DealService } from '@m04/services/deal.service';
+import { EscalateRiskDto, DeescalateRiskDto, RiskEscalationResponseDto } from '@m04/schemas/risk-escalation.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Risk Escalation')
 @Controller('deals/:dealId/risk')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class RiskEscalationController {
   constructor(private readonly dealService: DealService) {}

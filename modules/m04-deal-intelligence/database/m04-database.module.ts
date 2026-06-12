@@ -20,10 +20,11 @@ import {
   UserPreference,
 } from '../entities';
 import { getRepositoryToken } from './inject-repository';
-import { M04EntityRepository } from './m04-entity.repository';
-import { m04MemoryStore, M04CollectionKey, M04MemoryStore } from './m04-memory.store';
+import { M04PrismaRepository } from './m04-prisma.repository';
+import { PrismaService } from './prisma.service';
+import { PrismaModule } from './prisma.module';
 
-const ENTITY_BINDINGS: Array<{ entity: new () => unknown; collection: M04CollectionKey }> = [
+const ENTITY_BINDINGS: Array<{ entity: new () => unknown; collection: string }> = [
   { entity: Deal, collection: 'deals' },
   { entity: DealBoard, collection: 'boards' },
   { entity: BoardFilter, collection: 'boardFilters' },
@@ -46,17 +47,17 @@ const ENTITY_BINDINGS: Array<{ entity: new () => unknown; collection: M04Collect
 
 const repositoryProviders = ENTITY_BINDINGS.map(({ entity, collection }) => ({
   provide: getRepositoryToken(entity),
-  useFactory: (store: M04MemoryStore) =>
-    new M04EntityRepository(entity as new () => { id: string }, store, collection),
-  inject: [M04MemoryStore],
+  useFactory: (prisma: PrismaService) =>
+    new M04PrismaRepository(entity as new () => { id: string }, prisma, collection),
+  inject: [PrismaService],
 }));
 
 @Global()
 @Module({
+  imports: [PrismaModule],
   providers: [
-    { provide: M04MemoryStore, useValue: m04MemoryStore },
     ...repositoryProviders,
   ],
-  exports: [M04MemoryStore, ...repositoryProviders.map((p) => p.provide)],
+  exports: [...repositoryProviders.map((p) => p.provide)],
 })
 export class M04DatabaseModule {}

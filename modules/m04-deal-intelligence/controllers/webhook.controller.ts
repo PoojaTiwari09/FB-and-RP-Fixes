@@ -12,12 +12,12 @@ import {
   ApiResponse,
   ApiHeader,
 } from '@nestjs/swagger';
-import { WebhookService } from '@/services/webhook.service';
+import { WebhookService } from '@m04/services/webhook.service';
 import {
   HubSpotWebhookDto,
   WebhookBatchDto,
   WebhookResponseDto,
-} from '@/schemas/webhook.dto';
+} from '@m04/schemas/webhook.dto';
 import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Webhooks')

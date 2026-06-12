@@ -1,5 +1,11 @@
 import { randomUUID } from 'crypto';
-import { M04CollectionKey, M04MemoryStore } from './m04-memory.store';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+export const M04_DEV_TENANT = 'dev-tenant-m04-001';
+export const M04_DEV_USER = '00000000-0000-0000-0000-000000000004';
+export const M04_DEV_BOARD_1 = '00000000-0000-0000-0000-000000000101';
+export const M04_DEV_BOARD_2 = '00000000-0000-0000-0000-000000000102';
 
 export function Between<T>(from: T, to: T): { _type: 'between'; from: T; to: T } {
   return { _type: 'between', from, to };
@@ -25,27 +31,25 @@ export interface FindOneOptions<T> {
 
 type FindWhere<T> = Partial<Record<keyof T & string, unknown>>;
 
-const ENTITY_RELATIONS: Record<
-  string,
-  Record<string, { collection: M04CollectionKey; foreignKey: string }>
-> = {
-  Deal: {
-    warnings: { collection: 'dealWarnings', foreignKey: 'dealId' },
-    playbooks: { collection: 'dealPlaybooks', foreignKey: 'dealId' },
-    activities: { collection: 'dealActivities', foreignKey: 'dealId' },
-    comments: { collection: 'dealComments', foreignKey: 'dealId' },
-    tasks: { collection: 'dealTasks', foreignKey: 'dealId' },
-  },
-  DealBoard: {
-    filters: { collection: 'boardFilters', foreignKey: 'boardId' },
-    tabs: { collection: 'boardTabs', foreignKey: 'boardId' },
-    columns: { collection: 'boardColumns', foreignKey: 'boardId' },
-    permissions: { collection: 'boardPermissions', foreignKey: 'boardId' },
-  },
-  DealWarning: { deal: { collection: 'deals', foreignKey: 'id' } },
-  DealActivity: { deal: { collection: 'deals', foreignKey: 'id' } },
-  DealTask: { deal: { collection: 'deals', foreignKey: 'id' } },
-  DealPlaybook: { deal: { collection: 'deals', foreignKey: 'id' } },
+const ENTITY_TO_PRISMA_MODEL: Record<string, string> = {
+  Deal: 'deal',
+  DealBoard: 'm04DealBoard',
+  BoardFilter: 'm04BoardFilter',
+  BoardTab: 'm04BoardTab',
+  BoardColumn: 'm04BoardColumn',
+  BoardPermission: 'm04BoardPermission',
+  DealWarning: 'dealWarning',
+  DealPlaybook: 'dealPlaybook',
+  DealActivity: 'dealActivityEvent',
+  DealComment: 'dealComment',
+  DealTask: 'dealTask',
+  AuditLog: 'auditLog',
+  SyncLog: 'm04SyncLog',
+  DealSummary: 'm04DealSummary',
+  User: 'user',
+  Session: 'm04Session',
+  UserPreference: 'm04UserPreference',
+  AnalyticsSnapshot: 'm04AnalyticsSnapshot',
 };
 
 const JOIN_PARENT_FK: Record<string, string> = {
@@ -125,7 +129,7 @@ type JoinClause = {
   alias: string;
 };
 
-export class M04QueryBuilder<T extends { id: string }> {
+export class M04PrismaQueryBuilder<T extends { id: string }> {
   private wheres: WhereClause[] = [];
   private joins: JoinClause[] = [];
   private orderClauses: Array<{ field: string; direction: string }> = [];
@@ -136,7 +140,7 @@ export class M04QueryBuilder<T extends { id: string }> {
   private deleteMode = false;
 
   constructor(
-    private readonly repository: M04EntityRepository<T>,
+    private readonly repository: M04PrismaRepository<T>,
     private readonly alias: string,
   ) {}
 
@@ -204,10 +208,10 @@ export class M04QueryBuilder<T extends { id: string }> {
   }
 
   async execute(): Promise<{ affected?: number }> {
-    const rows = this.repository.getAllRows();
+    const rows = await this.repository.getAllRows();
     const toDelete = rows.filter((row) => this.evaluateRow(row as T, {}));
     for (const row of toDelete) {
-      this.repository.deleteFromStore(row.id);
+      await this.repository.deleteFromStore(row.id);
     }
     return { affected: toDelete.length };
   }
@@ -223,7 +227,7 @@ export class M04QueryBuilder<T extends { id: string }> {
       return [[], raw ? 1 : 0];
     }
 
-    const all = this.buildResultRows();
+    const all = await this.buildResultRows();
     const total = all.length;
     const sliced = all.slice(this.skipCount, this.takeCount !== undefined ? this.skipCount + this.takeCount : undefined);
     return [sliced, total];
@@ -235,7 +239,7 @@ export class M04QueryBuilder<T extends { id: string }> {
   }
 
   async getRawMany(): Promise<Record<string, unknown>[]> {
-    const rows = this.repository.getAllRows() as T[];
+    const rows = await this.repository.getAllRows() as T[];
     const filtered = rows.filter((row) => this.evaluateRow(row, {}));
 
     if (this.groupByFields.length > 0) {
@@ -269,7 +273,7 @@ export class M04QueryBuilder<T extends { id: string }> {
   async getRawOne(): Promise<Record<string, unknown> | undefined> {
     const expr = this.selectExprs[0]?.expr ?? '';
     if (expr.includes('SUM')) {
-      const rows = this.repository.getAllRows() as T[];
+      const rows = await this.repository.getAllRows() as T[];
       const filtered = rows.filter((row) => this.evaluateRow(row, {}));
       const field = expr.match(/SUM\([^)]*\.([^)]+)\)/i)?.[1] ?? 'amount';
       const sum = filtered.reduce((acc, row) => acc + Number(getFieldValue(row as Record<string, unknown>, field) ?? 0), 0);
@@ -280,12 +284,12 @@ export class M04QueryBuilder<T extends { id: string }> {
     return many[0];
   }
 
-  private buildResultRows(): T[] {
-    const rows = this.repository.getAllRows() as T[];
+  private async buildResultRows(): Promise<T[]> {
+    const rows = await this.repository.getAllRows() as T[];
     const result: T[] = [];
 
     for (const row of rows) {
-      const joined = this.resolveJoins(row);
+      const joined = await this.resolveJoins(row);
       if (!this.hasRequiredJoins(row, joined)) continue;
       if (!this.evaluateRow(row, joined)) continue;
 
@@ -296,7 +300,7 @@ export class M04QueryBuilder<T extends { id: string }> {
           (copy as Record<string, unknown>)[relName] = joined[join.alias];
         }
       }
-      this.repository.attachRelations(copy, this.joins.map((j) => j.relation.split('.')[1]));
+      await this.repository.attachRelations(copy, this.joins.map((j) => j.relation.split('.')[1]));
       result.push(copy);
     }
 
@@ -323,20 +327,23 @@ export class M04QueryBuilder<T extends { id: string }> {
     });
   }
 
-  private resolveJoins(row: T): Record<string, Record<string, unknown>> {
+  private async resolveJoins(row: T): Promise<Record<string, Record<string, unknown>>> {
     const joined: Record<string, Record<string, unknown>> = {};
     for (const join of this.joins) {
       const [, rel] = join.relation.split('.');
       const fk = JOIN_PARENT_FK[join.relation] ?? `${rel}Id`;
       const parentId = getFieldValue(row as Record<string, unknown>, fk);
+      
       if (rel === 'deal') {
-        const related = this.repository.store.getCollection('deals').get(String(parentId));
-        if (related) joined[join.alias] = related as Record<string, unknown>;
+        const related = await this.repository.prisma.deal.findUnique({ where: { id: String(parentId) } });
+        if (related) joined[join.alias] = related as any;
       } else if (rel === 'permissions') {
-        const perms = [...this.repository.store.getCollection('boardPermissions').values()].filter(
-          (p) => (p as BoardPermissionLike).boardId === row.id,
-        );
-        joined[join.alias] = (perms[0] as Record<string, unknown>) ?? {};
+        const perms = await this.repository.prisma.m04BoardPermission.findMany({
+          where: { boardId: row.id },
+        });
+        if (perms.length > 0) {
+          joined[join.alias] = perms[0] as any;
+        }
       }
     }
     return joined;
@@ -478,20 +485,17 @@ export class M04QueryBuilder<T extends { id: string }> {
   }
 }
 
-interface BoardPermissionLike {
-  boardId: string;
-  subjectId: string;
-}
-
-export class M04EntityRepository<T extends { id: string }> {
+export class M04PrismaRepository<T extends { id: string }> {
   readonly entityName: string;
+  readonly prismaModelName: string;
 
   constructor(
     private readonly entityClass: new () => T,
-    readonly store: M04MemoryStore,
-    private readonly collectionKey: M04CollectionKey,
+    readonly prisma: PrismaService,
+    private readonly collectionKey: string,
   ) {
     this.entityName = entityClass.name;
+    this.prismaModelName = ENTITY_TO_PRISMA_MODEL[this.entityName] || this.entityName.charAt(0).toLowerCase() + this.entityName.slice(1);
   }
 
   create(partial: Partial<T>[]): T[];
@@ -506,14 +510,14 @@ export class M04EntityRepository<T extends { id: string }> {
   private createOne(partial: Partial<T>): T {
     const entity = Object.assign(new this.entityClass(), partial);
     if (!entity.id) {
-      (entity as T & { id: string }).id = randomUUID();
+      entity.id = randomUUID();
     }
     const now = new Date();
-    if ('createdAt' in entity && !(entity as Record<string, unknown>).createdAt) {
-      (entity as Record<string, unknown>).createdAt = now;
+    if ('createdAt' in entity && !(entity as any).createdAt) {
+      (entity as any).createdAt = now;
     }
-    if ('updatedAt' in entity && !(entity as Record<string, unknown>).updatedAt) {
-      (entity as Record<string, unknown>).updatedAt = now;
+    if ('updatedAt' in entity && !(entity as any).updatedAt) {
+      (entity as any).updatedAt = now;
     }
     return entity;
   }
@@ -528,13 +532,43 @@ export class M04EntityRepository<T extends { id: string }> {
   }
 
   private async saveOne(entity: T): Promise<T> {
-    const collection = this.store.getCollection(this.collectionKey);
-    const now = new Date();
-    if ('updatedAt' in entity) {
-      (entity as Record<string, unknown>).updatedAt = now;
+    const client = this.prisma[this.prismaModelName] as any;
+    const dbData = this.mapToPrisma(entity);
+    const id = entity.id;
+
+    const existing = await client.findUnique({
+      where: { id },
+    });
+
+    let result;
+    if (existing) {
+      result = await client.update({
+        where: { id },
+        data: dbData,
+      });
+    } else {
+      result = await client.create({
+        data: dbData,
+      });
     }
-    collection.set(entity.id, { ...entity });
-    return entity;
+
+    const mapped = this.mapToEntity(result);
+    
+    // Auto attach relations if they were specified in the original entity
+    const relationsToAttach: string[] = [];
+    if ((entity as any).warnings) relationsToAttach.push('warnings');
+    if ((entity as any).playbooks) relationsToAttach.push('playbooks');
+    if ((entity as any).activities) relationsToAttach.push('activities');
+    if ((entity as any).comments) relationsToAttach.push('comments');
+    if ((entity as any).tasks) relationsToAttach.push('tasks');
+    if ((entity as any).filters) relationsToAttach.push('filters');
+    if ((entity as any).tabs) relationsToAttach.push('tabs');
+    if ((entity as any).columns) relationsToAttach.push('columns');
+    if ((entity as any).permissions) relationsToAttach.push('permissions');
+    if ((entity as any).deal) relationsToAttach.push('deal');
+
+    await this.attachRelations(mapped, relationsToAttach);
+    return mapped;
   }
 
   async find(options?: FindManyOptions<T>): Promise<T[]> {
@@ -543,20 +577,21 @@ export class M04EntityRepository<T extends { id: string }> {
   }
 
   async findOne(options: FindOneOptions<T>): Promise<T | null> {
-    let rows = this.getAllRows().filter((row) => matchesWhereClause(row as Record<string, unknown>, options.where));
-    if (rows.length === 0) return null;
+    const rows = await this.getAllRows();
+    let filtered = rows.filter((row) => matchesWhereClause(row as Record<string, unknown>, options.where));
+    if (filtered.length === 0) return null;
     if (options.order) {
-      rows = applyOrder(rows, options.order as any);
+      filtered = applyOrder(filtered, options.order as any);
     }
-    const entity = { ...rows[0] } as T;
+    const entity = filtered[0];
     if (options.relations?.length) {
-      this.attachRelations(entity, options.relations);
+      await this.attachRelations(entity, options.relations);
     }
     return entity;
   }
 
   async findAndCount(options?: FindManyOptions<T>): Promise<[T[], number]> {
-    let rows = this.getAllRows();
+    let rows = await this.getAllRows();
     rows = rows.filter((row) => matchesWhereClause(row as Record<string, unknown>, options?.where));
     rows = applyOrder(
       rows,
@@ -566,77 +601,345 @@ export class M04EntityRepository<T extends { id: string }> {
     const skip = options?.skip ?? 0;
     const take = options?.take;
     const sliced = rows.slice(skip, take !== undefined ? skip + take : undefined);
-    const result = sliced.map((row) => {
-      const entity = { ...row } as T;
-      if (options?.relations?.length) {
-        this.attachRelations(entity, options.relations);
-      }
-      return entity;
-    });
+    
+    const result = await Promise.all(
+      sliced.map(async (row) => {
+        if (options?.relations?.length) {
+          await this.attachRelations(row, options.relations);
+        }
+        return row;
+      })
+    );
     return [result, total];
   }
 
   async update(idOrCriteria: string | FindWhere<T>, partial: Partial<T>): Promise<void> {
+    const client = this.prisma[this.prismaModelName] as any;
+    const dbData = this.mapToPrisma(partial as any);
+    delete dbData.id; // cannot update ID
+
     if (typeof idOrCriteria === 'string') {
-      const existing = this.store.getCollection(this.collectionKey).get(idOrCriteria);
-      if (existing) {
-        await this.save({ ...(existing as T), ...partial, id: idOrCriteria });
-      }
+      await client.update({
+        where: { id: idOrCriteria },
+        data: dbData,
+      });
       return;
     }
-    const rows = this.getAllRows().filter((row) =>
+
+    const rows = await this.getAllRows();
+    const filtered = rows.filter((row) =>
       matchesWhereClause(row as Record<string, unknown>, idOrCriteria),
     );
-    for (const row of rows) {
-      await this.save({ ...row, ...partial });
+    for (const row of filtered) {
+      await client.update({
+        where: { id: row.id },
+        data: dbData,
+      });
     }
   }
 
   async delete(criteria: string | FindWhere<T>): Promise<void> {
+    const client = this.prisma[this.prismaModelName] as any;
+
     if (typeof criteria === 'string') {
-      this.deleteFromStore(criteria);
+      await client.delete({ where: { id: criteria } });
       return;
     }
-    const rows = this.getAllRows().filter((row) =>
+
+    const rows = await this.getAllRows();
+    const filtered = rows.filter((row) =>
       matchesWhereClause(row as Record<string, unknown>, criteria),
     );
-    for (const row of rows) {
-      this.deleteFromStore(row.id);
+    for (const row of filtered) {
+      await client.delete({ where: { id: row.id } });
     }
   }
 
   async remove(entity: T | T[]): Promise<T | T[]> {
     if (Array.isArray(entity)) {
-      for (const e of entity) this.deleteFromStore(e.id);
+      for (const e of entity) await this.delete(e.id);
       return entity;
     }
-    this.deleteFromStore(entity.id);
+    await this.delete(entity.id);
     return entity;
   }
 
-  createQueryBuilder(alias?: string): M04QueryBuilder<T> {
+  createQueryBuilder(alias?: string): M04PrismaQueryBuilder<T> {
     const al = alias ?? this.entityName.charAt(0).toLowerCase() + this.entityName.slice(1);
-    return new M04QueryBuilder(this, al);
+    return new M04PrismaQueryBuilder(this, al);
   }
 
-  getAllRows(): T[] {
-    return [...this.store.getCollection(this.collectionKey).values()] as T[];
+  async getAllRows(): Promise<T[]> {
+    const client = this.prisma[this.prismaModelName] as any;
+    const rows = await client.findMany();
+    return rows.map((r: any) => this.mapToEntity(r));
   }
 
-  deleteFromStore(id: string): void {
-    this.store.getCollection(this.collectionKey).delete(id);
+  async deleteFromStore(id: string): Promise<void> {
+    await this.delete(id);
   }
 
-  attachRelations(entity: T, relations: string[]): void {
-    const config = ENTITY_RELATIONS[this.entityName];
-    if (!config) return;
+  async attachRelations(entity: T, relations: string[]): Promise<void> {
+    if (!relations || relations.length === 0) return;
+    
     for (const rel of relations) {
-      const relConfig = config[rel];
-      if (!relConfig) continue;
-      const related = [...this.store.getCollection(relConfig.collection).values()].filter(
-        (item) => (item as Record<string, unknown>)[relConfig.foreignKey] === entity.id,
-      );
-      (entity as Record<string, unknown>)[rel] = related;
+      if (this.entityName === 'DealBoard') {
+        if (rel === 'filters') {
+          const filters = await this.prisma.m04BoardFilter.findMany({ where: { boardId: entity.id } });
+          (entity as any).filters = filters.map(f => {
+            const fe = new (require('../entities').BoardFilter)();
+            Object.assign(fe, f);
+            fe.fieldName = f.field;
+            fe.tenantId = f.tenantid;
+            return fe;
+          });
+        }
+        if (rel === 'tabs') {
+          const tabs = await this.prisma.m04BoardTab.findMany({ where: { boardId: entity.id } });
+          (entity as any).tabs = tabs.map(t => {
+            const te = new (require('../entities').BoardTab)();
+            Object.assign(te, t);
+            te.tenantId = t.tenantid;
+            return te;
+          });
+        }
+        if (rel === 'columns') {
+          const columns = await this.prisma.m04BoardColumn.findMany({ where: { boardId: entity.id } });
+          (entity as any).columns = columns.map(c => {
+            const ce = new (require('../entities').BoardColumn)();
+            Object.assign(ce, c);
+            ce.fieldKey = c.field;
+            ce.tenantId = c.tenantid;
+            return ce;
+          });
+        }
+        if (rel === 'permissions') {
+          const permissions = await this.prisma.m04BoardPermission.findMany({ where: { boardId: entity.id } });
+          (entity as any).permissions = permissions.map(p => {
+            const pe = new (require('../entities').BoardPermission)();
+            Object.assign(pe, p);
+            pe.subjectId = p.userId;
+            pe.tenantId = p.tenantid;
+            return pe;
+          });
+        }
+      } else if (this.entityName === 'Deal') {
+        if (rel === 'warnings') {
+          const warnings = await this.prisma.dealWarning.findMany({ where: { dealId: entity.id, status: 'active' } });
+          (entity as any).warnings = warnings.map(w => this.mapWarningToEntity(w));
+        }
+        if (rel === 'playbooks') {
+          const playbooks = await this.prisma.dealPlaybook.findMany({ where: { dealId: entity.id } });
+          (entity as any).playbooks = playbooks.map(p => this.mapPlaybookToEntity(p));
+        }
+        if (rel === 'activities') {
+          const activities = await this.prisma.dealActivityEvent.findMany({ where: { dealId: entity.id } });
+          (entity as any).activities = activities.map(a => this.mapActivityToEntity(a));
+        }
+        if (rel === 'comments') {
+          const comments = await this.prisma.dealComment.findMany({ where: { dealId: entity.id } });
+          (entity as any).comments = comments.map(c => this.mapCommentToEntity(c));
+        }
+        if (rel === 'tasks') {
+          const tasks = await this.prisma.dealTask.findMany({ where: { dealId: entity.id } });
+          (entity as any).tasks = tasks.map(t => this.mapTaskToEntity(t));
+        }
+      } else if (['DealWarning', 'DealActivity', 'DealTask', 'DealPlaybook'].includes(this.entityName)) {
+        if (rel === 'deal' && (entity as any).dealId) {
+          const deal = await this.prisma.deal.findUnique({ where: { id: (entity as any).dealId } });
+          if (deal) {
+            (entity as any).deal = {
+              id: deal.id,
+              tenantId: deal.tenantid,
+              crmDealId: deal.externalId || '',
+              name: deal.name,
+              stage: deal.stage,
+              amount: Number(deal.amount || 0),
+              forecastCategory: deal.forecastCategory || '',
+              ownerId: deal.ownerId || '',
+              ownerName: deal.ownerName || '',
+              probability: deal.probability || 0,
+              aiScore: deal.aiScore || 0,
+              warningCount: deal.warningsCount || 0,
+              nextStep: deal.nextStep || '',
+              lastActivityAt: deal.lastActivity || undefined,
+              createdAt: deal.createdAt,
+              updatedAt: deal.updatedAt,
+            };
+          }
+        }
+      }
     }
   }
+
+  private mapWarningToEntity(dbRow: any): any {
+    const e = new (require('../entities').DealWarning)();
+    Object.assign(e, dbRow);
+    e.tenantId = dbRow.tenantid;
+    e.message = dbRow.description;
+    e.recommendedAction = dbRow.suggestedAction;
+    e.isActive = dbRow.status === 'active';
+    return e;
+  }
+
+  private mapPlaybookToEntity(dbRow: any): any {
+    const e = new (require('../entities').DealPlaybook)();
+    Object.assign(e, dbRow);
+    e.tenantId = dbRow.tenantid;
+    e.criterion = dbRow.criterionName;
+    e.aiSuggestion = dbRow.aiSuggestedNote;
+    return e;
+  }
+
+  private mapActivityToEntity(dbRow: any): any {
+    const e = new (require('../entities').DealActivity)();
+    Object.assign(e, dbRow);
+    e.tenantId = dbRow.tenantid;
+    e.activityDate = dbRow.date ? new Date(dbRow.date) : dbRow.createdAt;
+    e.durationMinutes = dbRow.duration || 0;
+    return e;
+  }
+
+  private mapCommentToEntity(dbRow: any): any {
+    const e = new (require('../entities').DealComment)();
+    Object.assign(e, dbRow);
+    e.tenantId = dbRow.tenantid;
+    e.content = dbRow.comment;
+    return e;
+  }
+
+  private mapTaskToEntity(dbRow: any): any {
+    const e = new (require('../entities').DealTask)();
+    Object.assign(e, dbRow);
+    e.tenantId = dbRow.tenantid;
+    return e;
+  }
+
+  mapToEntity(dbRow: any): T {
+    if (!dbRow) return dbRow;
+    const entity = new this.entityClass() as any;
+    
+    Object.assign(entity, dbRow);
+    
+    if (dbRow.tenantid) {
+      entity.tenantId = dbRow.tenantid;
+    }
+    
+    if (this.entityName === 'BoardFilter') {
+      entity.fieldName = dbRow.field;
+    }
+    if (this.entityName === 'BoardColumn') {
+      entity.fieldKey = dbRow.field;
+    }
+    if (this.entityName === 'BoardPermission') {
+      entity.subjectId = dbRow.userId;
+    }
+    if (this.entityName === 'Deal') {
+      entity.crmDealId = dbRow.externalId || '';
+      entity.lastActivityAt = dbRow.lastActivity || undefined;
+      entity.warningCount = dbRow.warningsCount || 0;
+      entity.amount = Number(dbRow.amount || 0);
+    }
+    if (this.entityName === 'DealWarning') {
+      entity.message = dbRow.description;
+      entity.recommendedAction = dbRow.suggestedAction;
+      entity.isActive = dbRow.status === 'active';
+    }
+    if (this.entityName === 'DealPlaybook') {
+      entity.criterion = dbRow.criterionName;
+      entity.aiSuggestion = dbRow.aiSuggestedNote;
+    }
+    if (this.entityName === 'DealActivity') {
+      entity.activityDate = dbRow.date ? new Date(dbRow.date) : dbRow.createdAt;
+      entity.durationMinutes = dbRow.duration || 0;
+    }
+    if (this.entityName === 'DealComment') {
+      entity.content = dbRow.comment;
+    }
+    if (this.entityName === 'UserPreference') {
+      entity.preferenceKey = dbRow.key;
+      entity.preferenceValue = dbRow.value;
+    }
+    
+    return entity;
+  }
+
+  mapToPrisma(entity: any): any {
+    const dbData = { ...entity };
+    
+    delete dbData.warnings;
+    delete dbData.playbooks;
+    delete dbData.activities;
+    delete dbData.comments;
+    delete dbData.tasks;
+    delete dbData.filters;
+    delete dbData.tabs;
+    delete dbData.columns;
+    delete dbData.permissions;
+    delete dbData.deal;
+    delete dbData.user;
+    
+    if (entity.tenantId) {
+      dbData.tenantid = entity.tenantId;
+      delete dbData.tenantId;
+    } else {
+      dbData.tenantid = '00000000-0000-0000-0000-000000000000'; // Default fallback tenant
+    }
+    
+    if (this.entityName === 'BoardFilter') {
+      dbData.field = entity.fieldName;
+      delete dbData.fieldName;
+    }
+    if (this.entityName === 'BoardColumn') {
+      dbData.field = entity.fieldKey || entity.field;
+      delete dbData.fieldKey;
+    }
+    if (this.entityName === 'BoardPermission') {
+      dbData.userId = entity.subjectId;
+      delete dbData.subjectId;
+    }
+    if (this.entityName === 'Deal') {
+      dbData.externalId = entity.crmDealId;
+      dbData.lastActivity = entity.lastActivityAt;
+      dbData.warningsCount = entity.warningCount;
+      delete dbData.crmDealId;
+      delete dbData.lastActivityAt;
+      delete dbData.warningCount;
+    }
+    if (this.entityName === 'DealWarning') {
+      dbData.description = entity.message;
+      dbData.suggestedAction = entity.recommendedAction;
+      dbData.status = entity.isActive === false ? 'resolved' : 'active';
+      delete dbData.message;
+      delete dbData.recommendedAction;
+      delete dbData.isActive;
+    }
+    if (this.entityName === 'DealPlaybook') {
+      dbData.criterionName = entity.criterion;
+      dbData.aiSuggestedNote = entity.aiSuggestion;
+      delete dbData.criterion;
+      delete dbData.aiSuggestion;
+    }
+    if (this.entityName === 'DealActivity') {
+      dbData.date = entity.activityDate ? (entity.activityDate instanceof Date ? entity.activityDate.toISOString() : entity.activityDate) : new Date().toISOString();
+      dbData.duration = entity.durationMinutes;
+      delete dbData.activityDate;
+      delete dbData.durationMinutes;
+    }
+    if (this.entityName === 'DealComment') {
+      dbData.comment = entity.content;
+      delete dbData.content;
+    }
+    if (this.entityName === 'UserPreference') {
+      dbData.key = entity.preferenceKey;
+      dbData.value = entity.preferenceValue;
+      delete dbData.preferenceKey;
+      delete dbData.preferenceValue;
+    }
+    
+    return dbData;
+  }
 }
+
+export { M04PrismaRepository as M04EntityRepository };
+export { M04PrismaQueryBuilder as M04QueryBuilder };

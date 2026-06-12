@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { DealTask, TaskPriority } from '@/entities/deal-task.entity';
-import { Deal } from '@/entities/deal.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { DealTask, TaskPriority } from '@m04/entities/deal-task.entity';
+import { Deal } from '@m04/entities/deal.entity';
 import {
   CreateTaskDto,
   UpdateTaskDto,
   TaskResponseDto,
   TaskStatus,
   TaskSource,
-} from '@/schemas/task.dto';
+} from '@m04/schemas/task.dto';
 import { AIClientService } from './ai-client.service';
 
 @Injectable()

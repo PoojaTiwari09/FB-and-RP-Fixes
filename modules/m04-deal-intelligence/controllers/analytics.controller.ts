@@ -14,7 +14,7 @@ import {
   ApiCookieAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { AnalyticsService } from '@/services/analytics.service';
+import { AnalyticsService } from '@m04/services/analytics.service';
 import {
   GetAnalyticsRequestDto,
   AEAnalyticsResponseDto,
@@ -22,13 +22,14 @@ import {
   ExecutiveAnalyticsResponseDto,
   HistoricalMetricsRequestDto,
   HistoricalMetricsResponseDto,
-} from '@/schemas/analytics.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/analytics.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Analytics')
 @Controller('analytics')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
