@@ -119,18 +119,18 @@ export class M02FrontendCallReviewsController {
   }
 
   @Post(':reviewId/clone')
-  clone(@Param('reviewId') reviewId: string) {
-    return this.svc.cloneReview(reviewId);
+  clone(@Param('reviewId') reviewId: string, @Body('targetCallId') targetCallId: string) {
+    return this.svc.cloneReview(reviewId, targetCallId);
   }
 
   @Post(':reviewId/share')
-  share() {
-    return { success: true };
+  share(@Param('reviewId') reviewId: string, @Body() body: any, @Req() req: any) {
+    return this.svc.shareReview(req.tenantId, reviewId, body, req.userId, req.userRole);
   }
 
   @Post(':reviewId/reopen')
-  reopen(@Param('reviewId') reviewId: string, @Req() req: Record<string, string>) {
-    return this.svc.patchReview(req.tenantId, reviewId, {});
+  reopen(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.reopenReview(req.tenantId, reviewId, req.userId, req.userRole);
   }
 }
 
@@ -197,5 +197,15 @@ export class M02FrontendAnalyticsController {
   @Get('focus-areas')
   focusAreas(@Req() req: any) {
     return this.svc.focusAreas(req.userId, req.userRole);
+  }
+
+  @Get('common-tags')
+  commonTags() {
+    return this.svc.getCommonTags();
+  }
+
+  @Get('review-history')
+  reviewHistory(@Query() query: Record<string, string>) {
+    return this.svc.getReviewHistory(query);
   }
 }

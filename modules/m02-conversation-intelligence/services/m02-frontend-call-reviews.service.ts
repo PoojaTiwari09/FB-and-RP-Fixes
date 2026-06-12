@@ -127,7 +127,7 @@ export class M02FrontendCallReviewsService {
 
   private async getReview(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
     await this.ensureSeeded(tenantId, userId);
-    const where: any = { tenantId, reviewId };
+    const where: any = { tenantid: tenantId, reviewId };
     
     // Data Isolation: Sales Reps can only see their own reviews
     if (userRole === 'sales_rep' && userId) {
@@ -161,7 +161,7 @@ export class M02FrontendCallReviewsService {
     const q = CallReviewsListQuerySchema.parse(raw);
     await this.ensureSeeded(tenantId, userId);
 
-    const where: any = { tenantId };
+    const where: any = { tenantid: tenantId };
     
     // Data Isolation: Filter by Sales Rep if applicable
     if (userRole === 'sales_rep' && userId) {
@@ -277,6 +277,17 @@ export class M02FrontendCallReviewsService {
     const questionsJson = review.questions as any;
     const answeredCount = Array.isArray(questionsJson) ? questionsJson.length : 0;
     const sections = scorecardSectionsTemplate();
+    if (Array.isArray(questionsJson)) {
+      sections.forEach(sec => {
+        sec.questions.forEach(q => {
+          const ans = questionsJson.find(a => a.questionId === q.questionId);
+          if (ans) {
+            (q as any).existingAnswer = ans.value !== undefined ? ans.value : ans.answer;
+            (q as any).existingComment = ans.comment || '';
+          }
+        });
+      });
+    }
     return {
       totalQuestions: 11,
       answeredCount,
@@ -342,7 +353,12 @@ export class M02FrontendCallReviewsService {
       where: { reviewId },
       data: updateData,
     });
-    return { success: true, savedAt: new Date().toISOString(), score };
+
+    const sections = scorecardSectionsTemplate();
+    const totalRequired = sections.reduce((sum, sec) => sum + sec.questions.filter(q => q.required).length, 0);
+    const answeredCount = questionsJson.length;
+
+    return { success: true, savedAt: new Date().toISOString(), score, answeredCount, totalRequired };
   }
 
   async saveAnswersBatch(tenantId: string, reviewId: string, answers: any, userId?: string, userRole?: string) {
@@ -380,7 +396,10 @@ export class M02FrontendCallReviewsService {
       where: { reviewId },
       data: updateData,
     });
-    return { success: true, savedAt: new Date().toISOString() };
+
+    const answeredCount = Array.isArray(updateData.questions) ? updateData.questions.length : (Array.isArray(review.questions) ? review.questions.length : 0);
+
+    return { success: true, savedAt: new Date().toISOString(), answeredCount, totalQuestions: 11 };
   }
 
   async getCoaching(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
@@ -417,6 +436,7 @@ export class M02FrontendCallReviewsService {
     const questionsJson = review.questions as any;
     const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
     const { score, sections } = calculateCallReviewScore(review.questions);
+    const feedback = review.feedback as any;
     return {
       isReadyForSubmission: answered >= 8,
       overallScore: review.overallScore || score,
@@ -429,6 +449,12 @@ export class M02FrontendCallReviewsService {
       repName: review.salesRep,
       sectionScores: sections,
       aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
+      coachingPreview: {
+        strengths: feedback?.strengths || [],
+        improvements: feedback?.improvements || [],
+        coachingNotes: feedback?.coachingNotes || '',
+        recommendedActions: feedback?.recommendedActions || [],
+      },
     };
   }
 
@@ -487,6 +513,7 @@ export class M02FrontendCallReviewsService {
     return {
       callTitle: review.callTitle,
       salesRep: review.salesRep,
+      submittedBy: review.reviewer,
       finalScore: review.overallScore || score,
       finalTotal: 100,
       finalPercent: review.overallScore || score,
@@ -501,10 +528,21 @@ export class M02FrontendCallReviewsService {
     const submittedData = await this.getSubmitted(reviewId, userId, userRole);
     const { sections } = calculateCallReviewScore(review.questions);
     return {
-      ...submittedData,
-      reviewerName: review.reviewer,
-      scorecardName: review.scorecardName,
-      scorecardVersion: review.scorecardVersion,
+      callDetails: {
+        callTitle: review.callTitle,
+        salesRep: review.salesRep,
+        customer: review.customer || review.account || 'Acme Corp',
+        duration: review.duration,
+        dateTime: review.dateTime || review.callDate,
+      },
+      reviewInfo: {
+        reviewerName: review.reviewer,
+        scorecardName: review.scorecardName,
+        scorecardVersion: review.scorecardVersion,
+        submittedAt: review.updatedAt.toISOString(),
+        finalScore: submittedData.finalScore,
+        passingStatus: submittedData.passingStatus,
+      },
       aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
       sections,
       coaching: review.feedback || {},
@@ -522,8 +560,22 @@ export class M02FrontendCallReviewsService {
     };
   }
 
-  cloneReview(reviewId: string) {
-    return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}` };
+  cloneReview(reviewId: string, targetCallId?: string) {
+    return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}`, targetCallId };
+  }
+
+  async shareReview(tenantId: string, reviewId: string, body: any, userId?: string, userRole?: string) {
+    await this.getReview(tenantId, reviewId, userId, userRole);
+    return { success: true, sharedWith: body.recipientEmails || [] };
+  }
+
+  async reopenReview(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    await this.getReview(tenantId, reviewId, userId, userRole);
+    await this.prisma.callReview.update({
+      where: { reviewId },
+      data: { status: 'In Progress' },
+    });
+    return { success: true, newStatus: 'In Progress', redirectUrl: `/calls/reviews/${reviewId}/edit` };
   }
 
   async getAnalyticsSummary(userId?: string, userRole?: string) {
@@ -553,6 +605,7 @@ export class M02FrontendCallReviewsService {
       repAverageScore: avgScore,
       repAverageTrend: '+2%', // Mock trend for now
       teamAverageScore: 78,
+      teamComparison: 'above_average',
       completionRate: totalReviews > 0 ? Math.round((completedReviews.length / totalReviews) * 100) : 0,
       totalReviews: totalReviews,
     };

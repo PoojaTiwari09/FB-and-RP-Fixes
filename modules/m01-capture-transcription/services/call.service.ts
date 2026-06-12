@@ -298,9 +298,13 @@ export class CallService {
 
     const transcript = await this.transcripts.findByCallId(callId, tenantId);
     if (!transcript) {
-      throw new BadRequestException(
-        `Call ${callId} has no transcript yet — wait for transcription to complete`,
-      );
+      // No transcript yet — return 202 Accepted gracefully instead of crashing
+      return {
+        accepted: true,
+        callId,
+        transcriptId: null,
+        message: 'No transcript yet — AI extraction will trigger automatically when transcription completes',
+      };
     }
 
     const envelope = {

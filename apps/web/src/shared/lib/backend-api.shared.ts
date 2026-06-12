@@ -31,6 +31,25 @@ export function buildAuthHeaders(): Record<string, string> {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  // Always propagate dev header auth context for resilience in dev setups
+  const tenantId =
+    readCookie('tenant_id') ||
+    process.env.NEXT_PUBLIC_BACKEND_ORG_ID ||
+    '00000000-0000-0000-0000-000000000001';
+
+  const userId =
+    readCookie('user_id') ||
+    process.env.NEXT_PUBLIC_BACKEND_REP_USER_ID ||
+    '00000000-0000-0000-0000-000000000003';
+
+  const role =
+    readCookie('user_role') ||
+    'SALES_REP';
+
+  headers['x-tenant-id'] = tenantId;
+  headers['x-user-id'] = userId;
+  headers['x-user-role'] = role === 'sales_manager' || role === 'MANAGER' ? 'MANAGER' : 'SALES_REP';
+
   return headers;
 }
 

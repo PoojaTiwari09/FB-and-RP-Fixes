@@ -17,11 +17,26 @@ export default async function TrainingDashboardPage() {
     ? JSON.parse(decodeURIComponent(summariesStr))
     : {};
 
+  const token = cookieStore.get('access_token')?.value || cookieStore.get('rbac_token')?.value;
+  let currentUserId = '00000000-0000-0000-0000-000000000003';
+  if (token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        if (payload.sub) currentUserId = payload.sub;
+      }
+    } catch (e) {}
+  }
+
   // Merge backend trainings with custom trainings
   const existingIds = new Set(data.trainings.map(t => t.id));
   const trainings = [...data.trainings];
   
   for (const t of createdTrainings) {
+    // ONLY show trainings assigned to the current user
+    if (t.repId !== currentUserId) continue;
+
     if (!existingIds.has(t.id)) {
       const isCompleted = !!completedSummaries[t.id];
       trainings.push({

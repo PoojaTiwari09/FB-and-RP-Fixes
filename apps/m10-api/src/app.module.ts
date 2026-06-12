@@ -30,7 +30,10 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5178,http://l
         lazyConnect: true,
         enableOfflineQueue: false,
         maxRetriesPerRequest: null,
-        retryStrategy: (times: number) => Math.min(times * 200, 5000),
+        retryStrategy: (times: number) => {
+          if (process.env.DISABLE_REDIS === 'true') return null;
+          return Math.min(times * 200, 5000);
+        },
       },
     }),
     M10DataComplianceModule,

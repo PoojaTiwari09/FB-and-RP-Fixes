@@ -6,7 +6,10 @@
   "scripts": {
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push --skip-generate",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "db:push:local": "prisma db push --schema prisma/schema.local-m06.prisma",
+    "db:seed:m06": "npx tsx prisma/seed-m06.ts",
+    "db:reset:local": "prisma db push --schema prisma/schema.local-m06.prisma --force-reset && npx tsx prisma/seed-m06.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

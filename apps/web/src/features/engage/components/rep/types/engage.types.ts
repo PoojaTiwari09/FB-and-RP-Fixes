@@ -57,6 +57,8 @@ export interface TaskSummary {
   highPriorityCount: number;
   progressPercent: number;
   snoozedCount?: number;
+  completedTodayCount?: number;
+  totalTodayCount?: number;
 }
 
 export interface TaskDetailActivity {

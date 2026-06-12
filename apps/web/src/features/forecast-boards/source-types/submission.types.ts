@@ -1,4 +1,4 @@
-export type SubmissionStatus = 'submitted' | 'draft' | 'not_started' | 'approved' | 'reopened';
+export type SubmissionStatus = 'submitted' | 'draft' | 'not_started' | 'approved' | 'reopened' | 'overridden';
 
 export interface SubmissionCell {
   value: number | null;

@@ -850,7 +850,7 @@ let M08SalesEngagementService = class M08SalesEngagementService {
             createdAt: newTask.createdAt.toISOString(),
         };
     }
-    async reassignEngageTask(tenantId, taskId, newAssigneeId, userId, userRole) {
+    async reassignEngageTask(tenantId, taskId, newAssigneeId, userId, userRole, scope, reason) {
         await this.validateTaskAccess(tenantId, taskId, userId, userRole);
         const user = await this.repo.prisma.user.findUnique({
             where: { id: newAssigneeId },
@@ -870,6 +870,9 @@ let M08SalesEngagementService = class M08SalesEngagementService {
             assigneeName: updated.assigneeName,
             assigneeRole: updated.assigneeRole,
             updatedAt: updated.updatedAt.toISOString(),
+            scope: scope || 'this_task_only',
+            reason: reason || null,
+            status: 'reassigned',
         };
     }
     async markComplete(tenantId, taskId, userId, userRole) {

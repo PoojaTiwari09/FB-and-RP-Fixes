@@ -12,17 +12,18 @@ import {
 } from '@nestjs/common';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { TrackerService } from '../services/tracker.service';
+import { M02FrontendTrackersService } from '../services/m02-frontend-trackers.service';
 
 /**
- * Tracker management — keyword-trigger detections across calls & emails (TDD: AI Smart Tracker).
- *
- * `TenantGuard` is applied at the class level: missing or unverified tenant context
- * yields a 401 BEFORE any handler runs. Handlers therefore trust `req.tenantId`.
+ * Tracker management — keyword-trigger detections across calls & emails.
  */
 @Controller('api/v1/conversation-intelligence/trackers')
 @UseGuards(TenantGuard)
 export class TrackerController {
-  constructor(private readonly trackerService: TrackerService) {}
+  constructor(
+    private readonly trackerService: TrackerService,
+    private readonly frontendSvc: M02FrontendTrackersService,
+  ) {}
 
   @Post()
   async createTracker(@Req() req: Record<string, any>, @Body() body: any) {
@@ -30,7 +31,12 @@ export class TrackerController {
   }
 
   @Get()
-  async getTrackers(@Req() req: Record<string, any>) {
+  async getTrackers(@Req() req: Record<string, any>, @Query() query: any) {
+    return this.frontendSvc.listTrackers(req.tenantId, query);
+  }
+
+  @Get('admin-all')
+  async getAllTrackers(@Req() req: Record<string, any>) {
     return this.trackerService.getTrackers(req.tenantId);
   }
 
@@ -55,6 +61,21 @@ export class TrackerController {
       entityId,
       entityType as 'call' | 'email',
     );
+  }
+
+  @Get(':trackerId/detail')
+  detail(@Param('trackerId') trackerId: string, @Req() req: Record<string, string>, @Query() query: any) {
+    return this.frontendSvc.getTrackerDetail(req.tenantId, trackerId, query);
+  }
+
+  @Post(':trackerId/ask')
+  ask(
+    @Param('trackerId') trackerId: string,
+    @Body() body: { question?: string },
+    @Req() req: Record<string, string>,
+    @Query() query: any,
+  ) {
+    return this.frontendSvc.askTracker(req.tenantId, trackerId, body?.question ?? '', query);
   }
 
   @Put(':id')

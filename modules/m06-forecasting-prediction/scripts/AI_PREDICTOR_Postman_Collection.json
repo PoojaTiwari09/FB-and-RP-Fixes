@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "M06 — AI Revenue Predictor APIs",
+    "description": "Comprehensive E2E validation for AI Revenue Predictor",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 — Get Open Forecast Periods",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const res = pm.response.json();",
+              "pm.test('Has periods', function () {",
+              "    pm.expect(res.data.length).to.be.above(0);",
+              "});",
+              "pm.collectionVariables.set('PERIOD_ID', res.data[0].periodId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Tenant-ID",
+            "value": "{{TENANT_ID}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/forecasting/periods",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "forecasting",
+            "periods"
+          ]
+        }
+      }
+    },
+    {
+      "name": "02 — Get AI Prediction Math Breakdown",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const res = pm.response.json();",
+              "pm.test('Success is true', function () {",
+              "    pm.expect(res.success).to.be.true;",
+              "});",
+              "pm.test('Has AI Prediction and Math Breakdown', function () {",
+              "    pm.expect(res.data.aiPrediction).to.be.a('number');",
+              "    pm.expect(res.data.math.closedWon).to.be.an('object');",
+              "    pm.expect(res.data.math.weightedPipeline).to.be.an('object');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Tenant-ID",
+            "value": "{{TENANT_ID}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/forecasting/periods/{{PERIOD_ID}}/math",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "forecasting",
+            "periods",
+            "{{PERIOD_ID}}",
+            "math"
+          ]
+        }
+      }
+    },
+    {
+      "name": "03 — Get AI Predictor Team Board",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const res = pm.response.json();",
+              "pm.test('Matches Frontend Figma Contract', function () {",
+              "    pm.expect(res.success).to.be.true;",
+              "    pm.expect(res.data.teamName).to.exist;",
+              "    pm.expect(res.data.mathData).to.exist;",
+              "    pm.expect(res.data.reps).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Tenant-ID",
+            "value": "{{TENANT_ID}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/forecasting/team/board?periodId={{PERIOD_ID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "forecasting",
+            "team",
+            "board"
+          ],
+          "query": [
+            {
+              "key": "periodId",
+              "value": "{{PERIOD_ID}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "04 — Get Rep Drill Down View",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const res = pm.response.json();",
+              "pm.test('Matches Frontend Contract for single rep', function () {",
+              "    pm.expect(res.success).to.be.true;",
+              "    pm.expect(res.data.repId).to.equal(pm.collectionVariables.get('REP_ID'));",
+              "    pm.expect(res.data.mathData).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Tenant-ID",
+            "value": "{{TENANT_ID}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/forecasting/team/reps/{{REP_ID}}?periodId={{PERIOD_ID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "forecasting",
+            "team",
+            "reps",
+            "{{REP_ID}}"
+          ],
+          "query": [
+            {
+              "key": "periodId",
+              "value": "{{PERIOD_ID}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "TENANT_ID",
+      "value": "00000000-0000-0000-0000-000000000001"
+    },
+    {
+      "key": "PERIOD_ID",
+      "value": ""
+    },
+    {
+      "key": "REP_ID",
+      "value": "00000000-0000-0000-0000-000000000003"
+    }
+  ]
+}

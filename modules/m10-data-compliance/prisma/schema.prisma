@@ -262,32 +262,193 @@ model M10CrmSyncState {
 // CONFIGURE COMPLIANCE — POLICIES (TDD §3.2)
 // ─────────────────────────────────────────────────────────────
 model M10CompliancePolicy {
-  id         String   @id @default(uuid())
-  tenantId   String
-  name       String
-  channel    String   // email | call | sms
-  region     String?  // GDPR | CCPA | global
-  isActive   Boolean  @default(true)
-  rules      Json     @default("{}")
-  createdBy  String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String   @id @default(uuid())
+  tenantId       String
+  name           String
+  description    String?
+  channel        String   // email | call | sms | data_export
+  region         String?  // GDPR | CCPA | GLOBAL
+  regionFamily   String   @default("GLOBAL") // TDD §6.1 region_family
+  ruleDefinition Json     @default("{}")      // TDD §6.1 rule_definition
+  isActive       Boolean  @default(true)
+  version        Int      @default(1)          // TDD FR-5 versioning
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  auditEntries M10ComplianceAuditEntry[]
 
   @@index([tenantId, isActive])
+  @@index([tenantId, channel])
   @@map("m10_compliance_policies")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONFIGURE COMPLIANCE — CRM OPT-OUTS (TDD §6.1)
+// Contact-level opt-out cache synced from CRM adapter.
+// ─────────────────────────────────────────────────────────────
+model M10CrmOptOut {
+  id             String   @id @default(uuid())
+  tenantId       String
+  contactEmail   String
+  channel        String   // email | call | sms
+  isOptedOut     Boolean  @default(false)
+  lastSyncedAt   DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, contactEmail, channel])
+  @@index([tenantId, contactEmail])
+  @@index([tenantId, isOptedOut])
+  @@map("m10_crm_optouts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONFIGURE COMPLIANCE — CONSENT LOGS (TDD §6.1)
+// Lawful basis consent ledger (GDPR explicit grants/revocations).
+// ─────────────────────────────────────────────────────────────
+model M10ConsentLog {
+  id           String   @id @default(uuid())
+  tenantId     String
+  contactEmail String
+  consentType  String   // e.g. email_marketing | data_processing
+  status       String   // granted | revoked
+  source       String   // web_form | manual_crm | opt_in_email | api
+  loggedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, contactEmail])
+  @@index([tenantId, status])
+  @@map("m10_consent_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONFIGURE COMPLIANCE — AUDIT ENTRIES (TDD §6.1)
+// Immutable ledger of every allow/block evaluation decision.
+// ─────────────────────────────────────────────────────────────
+model M10ComplianceAuditEntry {
+  id                  String   @id @default(uuid())
+  tenantId            String
+  correlationId       String   @unique
+  recipientEmail      String
+  channel             String
+  decision            String   // allow | block
+  reasonCode          String   // POLICY_PASSED | CRM_OPTED_OUT | GDPR_CONSENT_REQUIRED | CCPA_RESTRICTED | FAIL_CLOSED_MISSING_DATA
+  explanation         String?
+  triggeredPolicyId   String?
+  evaluationMetadata  Json     @default("{}")
+  createdAt           DateTime @default(now())
+
+  policy M10CompliancePolicy? @relation(fields: [triggeredPolicyId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, recipientEmail])
+  @@index([tenantId, decision])
+  @@map("m10_compliance_audit_entries")
+}
+
+// ─────────────────────────────────────────────────────────────
+// GDPR & ePrivacy COMPLIANCE
+// ─────────────────────────────────────────────────────────────
+
+model M10GdprDataSubjectRequest {
+  id              String   @id @default(uuid())
+  tenantId        String
+  contactEmail    String
+  requestType     String   // erasure | portability | access | rectification
+  status          String   @default("pending") // pending | in_progress | completed | rejected
+  requestDate     DateTime @default(now())
+  completionDate  DateTime?
+  details         Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId, contactEmail])
+  @@index([tenantId, status])
+  @@map("m10_gdpr_data_subject_requests")
+}
+
+model M10GdprProcessingRecord {
+  id              String   @id @default(uuid())
+  tenantId        String
+  purpose         String
+  dataCategories  String[]
+  lawfulBasis     String
+  retentionPeriod String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("m10_gdpr_processing_records")
+}
+
+model M10GdprDataBreachRecord {
+  id              String   @id @default(uuid())
+  tenantId        String
+  incidentDate    DateTime
+  detectionDate   DateTime
+  description     String
+  affectedData    String[]
+  status          String   @default("investigating") // investigating | mitigated | reported
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("m10_gdpr_data_breach_records")
+}
+
+model M10EPrivacyConsent {
+  id              String   @id @default(uuid())
+  tenantId        String
+  contactEmail    String
+  channel         String   // email | call | sms
+  purpose         String   // marketing | tracking | essential
+  status          String   // granted | revoked
+  source          String   // cookie_banner | preference_center
+  loggedAt        DateTime @default(now())
+
+  @@index([tenantId, contactEmail])
+  @@map("m10_eprivacy_consents")
+}
+
+model M10SuppressionEntry {
+  id              String   @id @default(uuid())
+  tenantId        String
+  contactEmail    String
+  reason          String   // global_dnc | eprivacy_revoke | spam_complaint
+  addedAt         DateTime @default(now())
+
+  @@unique([tenantId, contactEmail])
+  @@map("m10_suppression_entries")
+}
+
+model M10GdprDeletion {
+  id              String   @id @default(uuid())
+  tenantId        String
+  dsarId          String
+  contactEmail    String
+  tablesAffected  String[]
+  deletedRows     Int      @default(0)
+  executionDate   DateTime @default(now())
+
+  @@index([tenantId, dsarId])
+  @@map("m10_gdpr_deletions")
 }
 
 // ─────────────────────────────────────────────────────────────
 // DATA CLOUD — CONNECTION CONFIG (TDD §3.3)
 // ─────────────────────────────────────────────────────────────
 model M10DataCloudConnection {
-  id          String   @id @default(uuid())
-  tenantId    String
-  destination String   // snowflake | bigquery | s3 | databricks | redshift
-  config      Json     @default("{}")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String   @id @default(uuid())
+  tenantId              String
+  destination           String   @default("postgres") // postgres | snowflake | bigquery | s3 | databricks | redshift
+  destinationName       String   @default("default")
+  credentialSecretRef   String?                       // reference key in Doppler/AWS Secrets Manager (never plaintext)
+  config                Json     @default("{}")
+  status                String   @default("inactive") // active | inactive | suspended
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   exportRuns M10DataCloudExportRun[]
 

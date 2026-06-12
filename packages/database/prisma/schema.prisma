@@ -7,7 +7,6 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [vector]
   schemas    = ["dashboards", "public", "ingestion", "revenuegraph"]
 }
 
@@ -899,6 +898,8 @@ model ForecastAuditLog {
   actorName            String?
   actorRole            String
   metadata             Json?
+  status               String?
+  notes                String?
   createdAt            DateTime @default(now())
 
   @@map("forecast_audit_log")
@@ -1027,6 +1028,7 @@ model CrmDeal {
   createdBy               String    @default("system")
   manualForecast          Float?
   manualForecastUpdatedAt DateTime?
+  aiPredictionScore       Float?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -1598,14 +1600,15 @@ model M10CrmSyncState {
 }
 
 model M10DataCloudConnection {
-  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantid    String                  @db.Uuid
-  destination String
-  config      Json                    @default("{}")
-  isActive    Boolean                 @default(true)
-  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime                @updatedAt @db.Timestamptz(6)
-  exportRuns  M10DataCloudExportRun[]
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String                  @db.Uuid
+  destination     String
+  destinationName String                  @default("default")
+  config          Json                    @default("{}")
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime                @updatedAt @db.Timestamptz(6)
+  exportRuns      M10DataCloudExportRun[]
 
   @@index([tenantid])
   @@map("m10_data_cloud_connections")

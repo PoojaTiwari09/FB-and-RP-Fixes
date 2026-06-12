@@ -29,12 +29,19 @@ export function mapTrainingSetup(scenario: any) {
   if (scenario.context_text) {
     const trimmed = scenario.context_text.trim();
     
-    // First try matching any JSON object at the start
-    const firstJsonMatch = trimmed.match(/^(\{.*?\})/s);
-    if (firstJsonMatch) {
+    // If the entire text is a JSON object, parse it directly
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       try {
-        metadata = JSON.parse(firstJsonMatch[1]);
+        metadata = JSON.parse(trimmed);
       } catch {}
+    } else {
+      // Fallback: try matching any JSON object at the start
+      const firstJsonMatch = trimmed.match(/^(\{.*?\})/s);
+      if (firstJsonMatch) {
+        try {
+          metadata = JSON.parse(firstJsonMatch[1]);
+        } catch {}
+      }
     }
     
     // Also try matching SCENARIO_METADATA block and merge

@@ -115,7 +115,8 @@ export async function fetchTrainingResults(
   sessionId: string,
   transcript?: TranscriptMessage[],
   rubric?: PlaybookSection[],
-  ctx?: SessionContext
+  ctx?: SessionContext,
+  headers?: Record<string, string>
 ): Promise<TrainingResultsPage> {
   // Try backend first (for when a real backend exists)
   try {
@@ -124,10 +125,11 @@ export async function fetchTrainingResults(
     while (attempts < 10) {
       const res = await fetch(
         `${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/results`,
-        { cache: 'no-store' }
+        { headers, cache: 'no-store' }
       );
       if (!res.ok) throw new Error(`API error: ${res.status}`);
-      raw = await res.json();
+      const responseData = await res.json();
+      raw = responseData.data && responseData.success ? responseData.data : responseData;
       if (raw.resultsReady) {
         return adaptTrainingResults(raw as Record<string, unknown>, trainingId);
       }

@@ -3,6 +3,7 @@ import TrainingSetupHeader from '@training/components/rep/Setup/TrainingSetupHea
 import ContactPersonaCard from '@training/components/rep/Setup/ContactPersonaCard';
 import CoachingPlaybook from '@training/components/rep/Setup/CoachingPlaybook';
 import TrainingSetupFooter from '@training/components/rep/Setup/TrainingSetupFooter';
+import { getServerBackendHeaders } from '@shared/lib/backend-api.server';
 
 interface TrainingSetupPageProps {
   params: Promise<{ trainingId: string }>;
@@ -10,7 +11,8 @@ interface TrainingSetupPageProps {
 
 export default async function TrainingSetupPage({ params }: TrainingSetupPageProps) {
   const { trainingId } = await params;
-  const data = await fetchTrainingSetup(trainingId);
+  const headers = await getServerBackendHeaders();
+  const data = await fetchTrainingSetup(trainingId, undefined, headers);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">

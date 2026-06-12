@@ -3,6 +3,7 @@ export interface ForecastPeriod {
   name: string;
   startDate: string;
   endDate: string;
+  submissionDeadline?: string;
   isLocked: boolean;
 }
 
