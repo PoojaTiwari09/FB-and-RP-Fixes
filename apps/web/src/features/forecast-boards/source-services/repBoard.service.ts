@@ -38,6 +38,36 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
   const summaryEnvelope = await summaryRes.json();
   const summary = summaryEnvelope.data || { pipeline_total: 0, best_case_total: 0, commit_total: 0, closed_won_total: 0 };
 
+  // 3b. Fetch closed deals
+  const closedRes = await fetch(`/api/forecast/closed-deals/${repUserId}?period_id=${periodId}`, { headers: headers(), cache: 'no-store' });
+  let closedWonTotal = summary.closed_won_total;
+  if (closedRes.ok) {
+    const closedEnvelope = await closedRes.json();
+    if (closedEnvelope.data && closedEnvelope.data.total_closed_value != null) {
+      closedWonTotal = closedEnvelope.data.total_closed_value;
+    }
+  }
+
+  // 3c. Fetch pipeline
+  const pipelineRes = await fetch(`/api/forecast/pipeline/${repUserId}?period_id=${periodId}`, { headers: headers(), cache: 'no-store' });
+  let pipelineTotal = summary.pipeline_total;
+  if (pipelineRes.ok) {
+    const pipelineEnvelope = await pipelineRes.json();
+    if (pipelineEnvelope.data && pipelineEnvelope.data.total_pipeline_value != null) {
+      pipelineTotal = pipelineEnvelope.data.total_pipeline_value;
+    }
+  }
+
+  // 3d. Fetch AI Prediction Score
+  const aiRes = await fetch(`/api/forecast/ai-predictor/scores/${repUserId}`, { headers: headers(), cache: 'no-store' });
+  let aiScore = 70;
+  if (aiRes.ok) {
+    const aiEnvelope = await aiRes.json();
+    if (aiEnvelope.data && aiEnvelope.data.ai_prediction_score != null) {
+      aiScore = aiEnvelope.data.ai_prediction_score;
+    }
+  }
+
   // 4. Fetch targets for period to get rep's target
   const targetsRes = await fetch(`/api/forecast/targets/${periodId}`, { headers: headers(), cache: 'no-store' });
   let quotaVal = 5000000; // default seed fallback
@@ -64,8 +94,8 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
     isClosedWon: Boolean(d.is_closed_won),
     isClosedLost: Boolean(d.is_closed_lost),
     isPastDue: Boolean(d.is_past_due),
-    bestCase: d.best_case_value != null ? Number(d.best_case_value) : 0,
-    commit: d.commit_value != null ? Number(d.commit_value) : 0,
+    bestCase: (d.best_case_state === 'approved' || d.best_case_state === 'overridden') ? Number(d.approved_best_case ?? 0) : (d.best_case_value != null ? Number(d.best_case_value) : null),
+    commit: (d.commit_state === 'approved' || d.commit_state === 'overridden') ? Number(d.approved_commit ?? 0) : (d.commit_value != null ? Number(d.commit_value) : null),
     submissionStatus: String(d.commit_state ?? 'draft'),
     bestCaseState: d.best_case_state ?? 'editable',
     commitState: d.commit_state ?? 'editable',
@@ -81,9 +111,11 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
   const hasApproved = deals.every((d: any) => d.bestCaseState === 'approved' || d.commitState === 'approved');
   const overallStatus = hasApproved ? 'approved' : hasSubmitted ? 'submitted' : 'draft';
 
+  const totalLockedCommit = deals.reduce((acc: number, d: any) => acc + (d.commit ?? 0), 0);
+
   const cells = {
     'col-pipeline': {
-      value: summary.pipeline_total,
+      value: pipelineTotal,
       submissionId: null,
       lastUpdatedAt: null,
       isAutoSubmit: true,
@@ -107,7 +139,7 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
       managerAnnotation: null,
     },
     'col-closed': {
-      value: summary.closed_won_total,
+      value: closedWonTotal,
       submissionId: null,
       lastUpdatedAt: null,
       isAutoSubmit: true,
@@ -139,6 +171,7 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
       name: currentPeriod.name,
       startDate: currentPeriod.start_date,
       endDate: currentPeriod.end_date,
+      submissionDeadline: currentPeriod.submission_deadline,
       isLocked: false,
     },
     columns,
@@ -149,24 +182,24 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
       cells,
       targetAttainment: {
         quota: quotaVal,
-        closed: summary.closed_won_total,
-        attainmentPct: quotaVal > 0 ? Math.round(((summary.closed_won_total + summary.commit_total) / quotaVal) * 100) : 0,
+        closed: closedWonTotal,
+        attainmentPct: quotaVal > 0 ? Math.round(((closedWonTotal + totalLockedCommit) / quotaVal) * 100) : 0,
       },
-      aiPredictionScore: 95,
+      aiPredictionScore: aiScore,
       submissionStatus: overallStatus as any,
     },
     deals,
     rollup: {
       cells: {
-        'col-pipeline': summary.pipeline_total,
+        'col-pipeline': pipelineTotal,
         'col-best-case': summary.best_case_total,
         'col-commit': summary.commit_total,
-        'col-closed': summary.closed_won_total,
+        'col-closed': closedWonTotal,
       },
       targetAttainment: {
         totalQuota: quotaVal,
-        totalClosed: summary.closed_won_total,
-        attainmentPct: quotaVal > 0 ? Math.round(((summary.closed_won_total + summary.commit_total) / quotaVal) * 100) : 0,
+        totalClosed: closedWonTotal,
+        attainmentPct: quotaVal > 0 ? Math.round(((closedWonTotal + totalLockedCommit) / quotaVal) * 100) : 0,
       },
       submittedCount: deals.filter((d: any) => d.commitState === 'submitted' || d.bestCaseState === 'submitted').length,
       totalCount: deals.length,

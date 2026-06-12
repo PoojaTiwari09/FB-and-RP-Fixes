@@ -7,6 +7,7 @@ import type {
   ManagerBoardViewResponse,
   PendingApprovalEntry,
   RepDrillDownResponse,
+  SubmissionStatus,
 } from '../../source-types';
 
 import { getManagerBoardView, getRepDrillDown, bulkUploadTargets, assignTargets } from '../../source-services/managerBoard.service';
@@ -179,7 +180,7 @@ export default function SourceForecastBoardsManagerView() {
   };
 
   // Inline approval / reopen updates
-  const handleStatusChange = (repId: string, newStatus: 'approved' | 'reopened' | 'submitted') => {
+  const handleStatusChange = (repId: string, newStatus: SubmissionStatus) => {
     setData((prev) => {
       if (!prev) return prev;
       return {
@@ -218,6 +219,30 @@ export default function SourceForecastBoardsManagerView() {
   };
 
   // Save representative targets (quotas)
+  const handleBulkAssign = async () => {
+    if (!bulkTargetValue) return;
+    const numericQuota = parseCurrencyInput(bulkTargetValue);
+    if (!numericQuota || numericQuota <= 0) return;
+
+    const repsToAssign = data?.rows.filter(row => checkedReps[row.repUserId]) || [];
+    if (repsToAssign.length === 0) return;
+
+    const assignments = repsToAssign.map(row => ({
+      repUserId: row.repUserId,
+      targetValue: numericQuota
+    }));
+
+    try {
+      await assignTargets(boardId, data!.period.id, assignments);
+      showToast('Targets assigned successfully');
+      loadBoardData(boardId);
+      setCheckedReps({});
+      setBulkTargetValue('');
+    } catch (e) {
+      showToast('Failed to assign targets');
+    }
+  };
+
   const handleSaveTargets = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data) return;
@@ -277,11 +302,14 @@ export default function SourceForecastBoardsManagerView() {
   };
 
   // Pending approval panel action wraps
-  const onApproveRequest = async (subId: string, repName: string) => {
+  const onApproveRequest = async (subId: string, repName: string, requestType: string) => {
     const rep = approvals.find((a) => a.submissionId === subId);
-    await approve(subId);
+    await approve(subId, requestType);
     if (rep) {
       handleStatusChange(rep.repUserId, 'approved');
+      if (rep.repUserId === drilldownRepId) {
+        refreshDrilldown();
+      }
     }
     showToast(`Forecast for ${repName} Approved!`);
   };
@@ -291,6 +319,9 @@ export default function SourceForecastBoardsManagerView() {
     await reopen(subId);
     if (rep) {
       handleStatusChange(rep.repUserId, 'reopened');
+      if (rep.repUserId === drilldownRepId) {
+        refreshDrilldown();
+      }
     }
     showToast(`Forecast for ${repName} Reopened!`);
   };
@@ -300,7 +331,7 @@ export default function SourceForecastBoardsManagerView() {
     await override(overrideRep.repUserId, 'col-commit', commitVal, note, false);
     await override(overrideRep.repUserId, 'col-best-case', bestCaseVal, note);
     handleOverrideValues(overrideRep.repUserId, commitVal, bestCaseVal);
-    handleStatusChange(overrideRep.repUserId, 'submitted');
+    handleStatusChange(overrideRep.repUserId, 'overridden');
     showToast(`Override values applied for ${overrideRep.repName}!`);
   };
 
@@ -360,7 +391,13 @@ export default function SourceForecastBoardsManagerView() {
                 Sales Manager
               </span>
             </div>
-            <SourceBoardPeriodSelector periodName={displayPeriodName} onChange={setSelectedPeriodName} />
+            <SourceBoardPeriodSelector
+              periodName={selectedPeriodName || 'Q2 FY26'}
+              onChange={(name, id) => {
+                setSelectedPeriodName(name);
+                if (id) setBoardId(id);
+              }}
+            />
           </div>
 
           {/* Deadline banner */}
@@ -476,55 +513,48 @@ export default function SourceForecastBoardsManagerView() {
                               </td>
 
                               {/* Pipeline */}
-                              <td className="py-3 px-4 text-right text-xs font-semibold text-gray-700">
-                                {formatCurrency(row.cells['col-pipeline']?.value)}
+                              <td className="py-3 px-4">
+                                <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center">
+                                  {formatCurrency(row.cells['col-pipeline']?.value)}
+                                </div>
                               </td>
 
                               {/* Best Case */}
                               <td className="py-3 px-4 text-center">
-                                <div className="flex justify-center">
-                                  <SourceSubmissionCell
-                                    cell={row.cells['col-best-case'] ?? { value: null, submissionId: null, lastUpdatedAt: null, isAutoSubmit: false, note: null, managerAnnotation: null }}
-                                    status={row.submissionStatus}
-                                    emptyLabel="$0"
-                                    isActive={false}
-                                    isEditable={false}
-                                    onClick={() => handleOpenDrilldown(row.repUserId)}
-                                  />
+                                <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center mx-auto" style={{ width: '85px' }}>
+                                  {formatCurrency(row.cells['col-best-case']?.value)}
                                 </div>
                               </td>
 
                               {/* Commit */}
                               <td className="py-3 px-4 text-center">
-                                <div className="flex justify-center">
-                                  <SourceSubmissionCell
-                                    cell={row.cells['col-commit'] ?? { value: null, submissionId: null, lastUpdatedAt: null, isAutoSubmit: false, note: null, managerAnnotation: null }}
-                                    status={row.submissionStatus}
-                                    emptyLabel="$0"
-                                    isActive={false}
-                                    isEditable={false}
-                                    onClick={() => handleOpenDrilldown(row.repUserId)}
-                                  />
+                                <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center mx-auto" style={{ width: '85px' }}>
+                                  {formatCurrency(row.cells['col-commit']?.value)}
                                 </div>
                               </td>
 
                               {/* Closed */}
-                              <td className="py-3 px-4 text-right text-xs font-semibold text-gray-700">
-                                {formatCurrency(row.cells['col-closed']?.value)}
+                              <td className="py-3 px-4">
+                                <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center">
+                                  {formatCurrency(row.cells['col-closed']?.value)}
+                                </div>
                               </td>
 
                               {/* AI Prediction Score */}
-                              <td className="py-3 px-4 text-center text-xs font-semibold text-gray-700">
-                                {row.aiPredictionScore ?? '-'}
+                              <td className="py-3 px-4">
+                                <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center mx-auto" style={{ width: '60px' }}>
+                                  {row.aiPredictionScore ?? 0}
+                                </div>
                               </td>
 
                               {/* Target quota progress */}
                               <td className="py-3 px-4">
-                                <SourceTargetProgressBar
-                                  quota={row.targetAttainment.quota}
-                                  closed={row.targetAttainment.closed}
-                                  commit={row.cells['col-commit']?.value}
-                                />
+                                  <SourceTargetProgressBar
+                                    quota={row.targetAttainment.quota}
+                                    closed={row.targetAttainment.closed}
+                                    commit={row.cells['col-commit']?.value}
+                                    isLocked={row.submissionStatus === 'approved' || row.submissionStatus === 'overridden'}
+                                  />
                               </td>
                             </tr>
                           );
@@ -594,18 +624,11 @@ export default function SourceForecastBoardsManagerView() {
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!bulkTargetValue) return;
-                    const nextInputs = { ...targetInputs };
-                    const repsToAssign = data.rows.filter(row => checkedReps[row.repUserId]);
-                    repsToAssign.forEach(row => {
-                      nextInputs[row.repUserId] = bulkTargetValue;
-                    });
-                    setTargetInputs(nextInputs);
-                  }}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                  disabled={!data || data.rows.filter(r => checkedReps[r.repUserId]).length === 0 || !bulkTargetValue}
+                  onClick={handleBulkAssign}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg cursor-pointer transition-colors"
                 >
-                  Assign Selected
+                  Assign to Selected Reps
                 </button>
               </div>
 
@@ -620,6 +643,23 @@ export default function SourceForecastBoardsManagerView() {
                   className="flex-1 text-xs outline-none bg-transparent text-gray-700 placeholder:text-gray-400 font-medium"
                 />
               </div>
+
+              {/* Select All Checkbox */}
+              {data && data.rows.length > 0 && (
+                <div className="flex items-center gap-2 px-1">
+                  <input
+                    type="checkbox"
+                    checked={data.rows.length > 0 && data.rows.every(r => checkedReps[r.repUserId])}
+                    onChange={(e) => {
+                      const next = { ...checkedReps };
+                      data.rows.forEach(r => { next[r.repUserId] = e.target.checked; });
+                      setCheckedReps(next);
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                  />
+                  <span className="text-[11px] font-bold text-gray-600">Select All Reps</span>
+                </div>
+              )}
 
               <div className="flex flex-col gap-3.5 max-h-[50vh] overflow-y-auto pr-1">
                 {data.rows
@@ -701,8 +741,8 @@ export default function SourceForecastBoardsManagerView() {
           onApprove={onApproveRequest}
           onReopen={onReopenRequest}
           onOverride={(rep) => {
-            setOverrideRep(rep);
             setShowReviewRequests(false);
+            setOverrideRep(rep);
           }}
         />
       )}

@@ -9,7 +9,7 @@ interface PendingApprovalsPanelProps {
   approvals: PendingApprovalEntry[];
   isLoading: boolean;
   onClose: () => void;
-  onApprove: (submissionId: string, repName: string) => Promise<void>;
+  onApprove: (submissionId: string, repName: string, requestType: string) => Promise<void>;
   onReopen: (submissionId: string, repName: string) => Promise<void>;
   onOverride: (entry: PendingApprovalEntry) => void;
 }
@@ -23,15 +23,18 @@ export default function PendingApprovalsPanel({
   onOverride,
 }: PendingApprovalsPanelProps) {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'info'; title: string; desc: string } | null>(null);
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
+
+  const toggleLog = (id: string) => setExpandedLogs(prev => ({ ...prev, [id]: !prev[id] }));
 
   const triggerFeedback = (type: 'success' | 'info', title: string, desc: string) => {
     setFeedback({ type, title, desc });
     setTimeout(() => setFeedback(null), 3000);
   };
 
-  const handleApprove = async (subId: string, repName: string) => {
+  const handleApprove = async (subId: string, repName: string, reqType?: string) => {
     try {
-      await onApprove(subId, repName);
+      await onApprove(subId, repName, reqType || 'both');
       triggerFeedback(
         'success',
         'Forecast Approved Successfully ✓',
@@ -114,15 +117,23 @@ export default function PendingApprovalsPanel({
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Rep profile and values */}
-                    <div className="flex items-start gap-3">
-                      <div className="h-9 w-9 rounded-full bg-violet-100 border border-violet-200 text-violet-700 flex items-center justify-center font-bold text-xs shrink-0 select-none">
+                    <div className="flex flex-col w-full gap-2 border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-200">
+                          {rep.requestType === 'best_case' ? 'Best Case Request' : rep.requestType === 'commit' ? 'Commit Request' : 'Best Case & Commit Request'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 w-full">
+                      <div className="h-9 w-9 rounded-full bg-violet-100 border border-violet-200 text-violet-700 flex items-center justify-center font-bold text-xs shrink-0 select-none mt-1">
                         {rep.avatarInitials}
                       </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-bold text-gray-950">{rep.repName}</span>
-                        <span className="text-[10px] text-gray-400">Submitted {rep.submittedAt ? new Date(rep.submittedAt).toLocaleDateString() : ''}</span>
+                      <div className="flex flex-col gap-0.5 w-full">
+                        <span className="text-xs font-bold text-gray-950">Rep Name: {rep.repName}</span>
+                        <span className="text-xs text-gray-700 font-semibold">Deal: {rep.dealName ?? 'None'}</span>
+                        <span className="text-[10px] text-gray-400 mb-1">Submitted: {rep.submittedAt ? new Date(rep.submittedAt).toLocaleDateString() : ''}</span>
                         
-                        <div className="flex items-center gap-4 mt-2 bg-white px-3 py-2 border border-gray-100 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-4 mt-2 bg-white px-3 py-2 border border-gray-100 rounded-lg shadow-sm w-max">
                           <div className="flex flex-col">
                             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Best Case</span>
                             <span className="text-xs font-bold text-gray-950">{formatCurrency(rep.bestCaseValue)}</span>
@@ -137,10 +148,10 @@ export default function PendingApprovalsPanel({
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 mt-2">
                       <button
                         type="button"
-                        onClick={() => handleApprove(rep.submissionId, rep.repName)}
+                        onClick={() => handleApprove(rep.submissionId, rep.repName, rep.requestType)}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold text-white bg-green-600 hover:bg-green-700 hover:shadow-sm transition-all duration-150 cursor-pointer"
                       >
                         <Check size={12} />
@@ -174,21 +185,33 @@ export default function PendingApprovalsPanel({
                   )}
 
                   {rep.activity && rep.activity.length > 0 && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-3">
-                      <span className="font-bold text-gray-400 text-[9px] uppercase tracking-wider block mb-2">Activity status</span>
-                      <div className="flex flex-col gap-2">
-                        {rep.activity.map((entry) => (
-                          <div key={entry.id} className="flex items-start gap-2">
-                            <div className="mt-0.5 h-5 w-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                              <Clock size={11} />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[11px] font-semibold text-gray-800">{entry.description}</span>
-                              <span className="text-[10px] text-gray-500">{entry.actorName} | {entry.occurredAt}</span>
-                            </div>
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                      <button 
+                        onClick={() => toggleLog(rep.submissionId)}
+                        className="w-full flex items-center justify-between p-3 bg-gray-50/50 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="font-bold text-gray-600 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                          📋 Activity Log
+                        </span>
+                      </button>
+                      
+                      {expandedLogs[rep.submissionId] && (
+                        <div className="p-3 border-t border-gray-100 bg-white">
+                          <div className="flex flex-col border border-gray-200 rounded text-[11px] font-mono divide-y divide-gray-200">
+                            {rep.activity.map((entry) => (
+                              <div key={entry.id} className="flex flex-col p-2">
+                                <div className="flex justify-between w-full font-bold text-gray-800">
+                                  <span>{entry.description}</span>
+                                  <span className="text-gray-500 font-normal">{entry.occurredAt}</span>
+                                </div>
+                                <div className="text-gray-600 mt-1">
+                                  By {entry.actorName}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

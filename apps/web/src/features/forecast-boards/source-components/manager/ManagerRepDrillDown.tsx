@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import type { RepDrillDownResponse, RollupData } from '../../source-types';
+import type { RepDrillDownResponse, RollupData, RepDrillDownDeal, SubmissionStatus } from '../../source-types';
 import { formatCurrency, parseCustomMonth } from '../../source-utils/format';
 import { approveSubmission, reopenSubmission } from '../../source-services/approval.service';
 import { submitForecast } from '../../source-services/repBoard.service';
@@ -20,7 +20,7 @@ const matchCustomMonth = (closeDateStr: string, customMonth: string, customYear:
 import SourceTargetProgressBar from '../SourceTargetProgressBar';
 import SourceSubmissionCell from '../SourceSubmissionCell';
 import SourceColumnInfoTooltip from '../SourceColumnInfoTooltip';
-import SourceSubmissionPanel from '../SourceSubmissionPanel';
+import OverrideSidePanel from './OverrideSidePanel';
 
 interface ManagerRepDrillDownProps {
   boardId: string;
@@ -29,7 +29,7 @@ interface ManagerRepDrillDownProps {
   rollup: RollupData;
   teamName: string;
   periodName: string;
-  onStatusChange: (repUserId: string, newStatus: 'approved' | 'reopened' | 'submitted') => void;
+  onStatusChange: (repUserId: string, newStatus: SubmissionStatus) => void;
   onOverrideValues: (repUserId: string, commit: number, bestCase: number) => void;
   refreshDrilldown?: () => Promise<void>;
 }
@@ -45,8 +45,8 @@ export default function ManagerRepDrillDown({
   onOverrideValues,
   refreshDrilldown,
 }: ManagerRepDrillDownProps) {
-  const [repStatus, setRepStatus] = useState<'approved' | 'reopened' | 'submitted'>(
-    drilldownData.submission?.status === 'approved' || drilldownData.submission?.status === 'reopened'
+  const [repStatus, setRepStatus] = useState<SubmissionStatus>(
+    drilldownData.submission?.status === 'approved' || drilldownData.submission?.status === 'reopened' || drilldownData.submission?.status === 'overridden'
       ? drilldownData.submission.status
       : 'submitted'
   );
@@ -100,9 +100,9 @@ export default function ManagerRepDrillDown({
       if (deal.id !== activeDealId) return deal;
       return {
         ...deal,
-        ...(activeColumnKey === 'bestCase' ? { bestCase: newValue } : { commit: newValue }),
+        ...(activeColumnKey === 'bestCase' ? { bestCase: newValue, bestCaseState: 'overridden' as const } : { commit: newValue, commitState: 'overridden' as const }),
         managerAnnotation: note || deal.managerAnnotation,
-        submissionStatus: 'submitted' as const,
+        submissionStatus: 'overridden' as const,
       };
     });
     const nextCommit = nextDeals.reduce((sum, d) => sum + (d.commit ?? 0), 0);
@@ -115,12 +115,15 @@ export default function ManagerRepDrillDown({
         value: newValue,
         note: note || undefined,
         dealId: activeDealId,
-        status: 'submitted',
+        status: 'overridden',
       });
       setDeals(nextDeals);
-      setRepStatus('submitted');
+      setRepStatus('overridden');
       onOverrideValues(drilldownData.rep.id, nextCommit, nextBestCase);
-      onStatusChange(drilldownData.rep.id, 'submitted');
+      onStatusChange(drilldownData.rep.id, 'overridden');
+      if (refreshDrilldown) {
+        await refreshDrilldown();
+      }
     } catch (e) {
       console.error('Failed to override deal forecast', e);
     }
@@ -176,30 +179,6 @@ export default function ManagerRepDrillDown({
                  <h2 className="text-lg font-bold text-gray-900 leading-none">{drilldownData.rep.name}</h2>
                  <span className="text-xs text-gray-500 mt-1">Quota Attainment: {drilldownData.targetAttainment.quota && drilldownData.targetAttainment.quota > 0 ? Math.min(Math.round(((drilldownData.targetAttainment.closed + (totalCommit ?? 0)) / drilldownData.targetAttainment.quota) * 100), 100) : 0}%</span>
               </div>
-            </div>
-
-            {/* Approval controls */}
-            <div className="flex items-center gap-2">
-              {drilldownData.submission?.id && (
-                <div className="flex items-center gap-1.5 ml-2">
-                  {repStatus === 'submitted' && (
-                    <button
-                      onClick={handleApprove}
-                      className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
-                    >
-                      Approve
-                    </button>
-                  )}
-                  {(repStatus === 'submitted' || repStatus === 'approved') && (
-                    <button
-                      onClick={handleReopen}
-                      className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
-                    >
-                      Reopen
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -269,8 +248,10 @@ export default function ManagerRepDrillDown({
                       </td>
 
                       {/* Pipeline */}
-                      <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
-                        {deal.isClosedWon || deal.isClosedLost ? '$0' : formatCurrency(deal.amount)}
+                      <td className="py-3 px-4">
+                        <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center">
+                          {deal.isClosedWon || deal.isClosedLost ? '$0' : formatCurrency(deal.amount)}
+                        </div>
                       </td>
 
                       {/* Best Case cell */}
@@ -286,9 +267,10 @@ export default function ManagerRepDrillDown({
                               managerAnnotation: deal.managerAnnotation ?? null,
                             }}
                             status={deal.bestCaseState}
-                            emptyLabel="$0"
+                            emptyLabel="0"
                             isActive={activeColumnKey === 'bestCase' && activeDealId === deal.id}
                             isEditable={['editable', 'submitted', 'reopened'].includes(deal.bestCaseState ?? 'editable')}
+                            isManagerView={true}
                             onClick={() => {
                               setActiveColumnKey('bestCase');
                               setActiveDealId(deal.id);
@@ -311,9 +293,10 @@ export default function ManagerRepDrillDown({
                               managerAnnotation: deal.managerAnnotation ?? null,
                             }}
                             status={deal.commitState}
-                            emptyLabel="$0"
+                            emptyLabel="0"
                             isActive={activeColumnKey === 'commit' && activeDealId === deal.id}
                             isEditable={['editable', 'submitted', 'reopened'].includes(deal.commitState ?? 'editable')}
+                            isManagerView={true}
                             onClick={() => {
                               setActiveColumnKey('commit');
                               setActiveDealId(deal.id);
@@ -324,22 +307,29 @@ export default function ManagerRepDrillDown({
                       </td>
 
                       {/* Closed */}
-                      <td className="py-3 px-4 text-right text-xs font-medium text-gray-700">
-                        {deal.isClosedWon ? formatCurrency(deal.amount) : '$0'}
+                      <td className="py-3 px-4">
+                        <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center">
+                          {deal.isClosedWon ? formatCurrency(deal.amount) : '$0'}
+                        </div>
                       </td>
 
                       {/* AI Prediction Score */}
-                      <td className="py-3 px-4 text-center text-xs font-semibold text-gray-700">
-                        {deal.aiPredictionScore ?? '-'}
+                      <td className="py-3 px-4">
+                        <div className="border border-gray-200 rounded-md px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-50 flex justify-center items-center mx-auto" style={{ width: '60px' }}>
+                          {deal.aiPredictionScore ?? 0}
+                        </div>
                       </td>
 
                       {/* Target quota progress */}
                       <td className="py-3 px-4">
-                        <SourceTargetProgressBar
-                          quota={drilldownData.targetAttainment.quota}
-                          closed={drilldownData.targetAttainment.closed}
-                          commit={deal.commit}
-                        />
+                        <div className="border border-gray-200 rounded-md p-1.5 bg-gray-50 flex items-center justify-center">
+                          <SourceTargetProgressBar
+                            quota={drilldownData.targetAttainment.quota}
+                            closed={deal.isClosedWon ? deal.amount : 0}
+                            commit={deal.commit}
+                            isLocked={deal.commitState === 'approved' || deal.commitState === 'overridden'}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
@@ -353,36 +343,31 @@ export default function ManagerRepDrillDown({
           </p>
         </div>
 
-        {/* Standard Commit Submission Panel */}
-        {activeColumnKey && (activeColumnKey === 'bestCase' ? bestCaseCol : commitCol) && activeDeal && (
-          <SourceSubmissionPanel
-            columnLabel={activeColumnLabel}
-            columnId={activeColumnId}
-            periodName={periodName}
+        {/* Sidebar Override panel */}
+        {activeColumnKey && activeDealId && (
+          <OverrideSidePanel
+            repName={drilldownData.rep.name}
+            initialCommit={drilldownData.deals.find(d => d.id === activeDealId)?.commit ?? null}
+            initialBestCase={drilldownData.deals.find(d => d.id === activeDealId)?.bestCase ?? null}
             boardId={boardId}
             repUserId={drilldownData.rep.id}
-            initialValue={activeValue}
-            initialNote={drilldownData.submission?.notes ?? null}
-            rollup={rollup}
-            targetAttainment={drilldownData.targetAttainment}
-            teamName={teamName}
-            isManagerView={true}
-            existingAnnotation={activeDeal.managerAnnotation}
-            existingStatus={activeDeal.submissionStatus}
-            teamSubmissions={[]} // Rollup submissions aren't strictly required in rep drilldown panel
-            requestedValue={activeColumnKey === 'bestCase' ? activeDeal.requestedBestCase : activeDeal.requestedCommit}
-            requestedNote={activeColumnKey === 'bestCase' ? activeDeal.requestedBestCaseNote : activeDeal.requestedCommitNote}
-            onSaveSuccess={(v, note) => {
-              handleOverrideSubmit(v, note || '');
-            }}
-            onApproveRequestSuccess={async () => {
-              if (refreshDrilldown) {
-                await refreshDrilldown();
-              }
+            dealId={activeDealId}
+            onClose={() => {
               setActiveColumnKey(null);
               setActiveDealId(null);
             }}
-            onClose={() => {
+            onSubmit={async (commitVal, bestCaseVal, note) => {
+              await handleOverrideSubmit(commitVal, note);
+              // bestCase isn't fully supported to be passed back to handleOverrideSubmit in the same tick if we only patched one, but the backend accepts both. 
+              // We'll trust the user's manual override API via `submitForecast`
+              await submitForecast(boardId, {
+                columnId: activeColumnKey === 'bestCase' ? 'col-commit' : 'col-best-case', // Submit the other column manually if needed
+                repUserId: drilldownData.rep.id,
+                value: activeColumnKey === 'bestCase' ? commitVal : bestCaseVal,
+                note: note || undefined,
+                dealId: activeDealId,
+                status: 'overridden',
+              });
               setActiveColumnKey(null);
               setActiveDealId(null);
             }}

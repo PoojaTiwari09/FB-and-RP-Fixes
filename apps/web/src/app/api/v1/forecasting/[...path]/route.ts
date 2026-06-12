@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3002';
+const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 const DEMO_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const DEMO_MANAGER_ID = '00000000-0000-0000-0000-000000000002';
 const DEMO_REP_ID = '00000000-0000-0000-0000-000000000003';

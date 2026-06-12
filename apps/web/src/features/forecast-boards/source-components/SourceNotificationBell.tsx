@@ -133,7 +133,7 @@ export default function SourceNotificationBell({ repUserId }: Props) {
                   hour: '2-digit',
                   minute: '2-digit',
                   hour12: true,
-                });
+                }).replace(',', '');
 
                 return (
                   <div key={n.id} className={`p-4 flex flex-col gap-2 transition-colors hover:bg-gray-50/60 ${bgClass}`}>

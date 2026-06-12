@@ -3,23 +3,25 @@ import { ForecastBoardsService } from './services/forecast-boards.service';
 
 const prisma = new PrismaClient();
 // @ts-ignore
-const service = new ForecastBoardsService(prisma);
+const service = new ForecastBoardsService(undefined, prisma);
 
 async function runTests() {
-  const tenantId = 'demo-tenant-01';
+  const tenantId = '184e2880-2e36-4388-a457-4afbc0aa59f2';
 
   // Seed some minimal data to test with
   console.log('Seeding minimal test data...');
   
+  const rep1Id = '922800ef-1a7c-4ce6-a201-144a2788040d';
   const rep1 = await prisma.forecastUser.upsert({
-    where: { id: 'rep-test-1' },
-    create: { id: 'rep-test-1', tenantid: tenantId, email: 'rep1@test.com', name: 'Rep 1', role: 'sales_rep', region: 'NA', password: 'placeholder-hash' },
+    where: { id: rep1Id },
+    create: { id: rep1Id, tenantid: tenantId, email: 'rep1@test.com', name: 'Rep 1', role: 'sales_rep', region: 'NA', password: 'placeholder-hash' },
     update: {}
   });
 
+  const managerId = 'a2cd419f-f782-4f53-ba2e-1e1571490abf';
   const manager = await prisma.forecastUser.upsert({
-    where: { id: 'mgr-test-1' },
-    create: { id: 'mgr-test-1', tenantid: tenantId, email: 'mgr1@test.com', name: 'Manager 1', role: 'manager', region: 'NA', password: 'placeholder-hash' },
+    where: { id: managerId },
+    create: { id: managerId, tenantid: tenantId, email: 'mgr1@test.com', name: 'Manager 1', role: 'manager', region: 'NA', password: 'placeholder-hash' },
     update: {}
   });
 
@@ -29,24 +31,43 @@ async function runTests() {
     data: { managerId: manager.id }
   });
 
-  const board = await prisma.forecastBoard.upsert({
-    where: { id: 'board-test-1' },
+  const periodId = 'dcb5886d-ea68-4669-9c9d-0e3c4f9eca9c';
+  const period = await prisma.forecastPeriod.upsert({
+    where: { id: periodId },
     create: {
-      id: 'board-test-1',
+      id: periodId,
       tenantid: tenantId,
-      name: 'Test Board',
-      activePeriod: 'Q1-2026',
-      periodType: 'Quarterly',
-      scope: 'Global',
+      name: 'Q1 FY26',
+      startDate: new Date('2026-01-01'),
+      endDate: new Date('2026-03-31'),
+      revenueTarget: 1000000,
       status: 'active'
     },
     update: {}
   });
 
-  const column1 = await prisma.boardColumn.upsert({
-    where: { id: 'col-test-commit' },
+  const boardId = 'a19d380c-a6e4-4034-bf6e-eb1c0774b75d';
+  const board = await prisma.forecastBoard.upsert({
+    where: { id: boardId },
     create: {
-      id: 'col-test-commit',
+      id: boardId,
+      tenantid: tenantId,
+      name: 'Test Board',
+      activePeriod: periodId,
+      periodType: 'Quarterly',
+      scope: 'Global',
+      status: 'active'
+    },
+    update: {
+      activePeriod: periodId
+    }
+  });
+
+  const column1Id = '16cea9e3-dc14-4772-bd81-5eff877f667f';
+  const column1 = await prisma.boardColumn.upsert({
+    where: { id: column1Id },
+    create: {
+      id: column1Id,
       tenantid: tenantId,
       boardId: board.id,
       label: 'Commit',
