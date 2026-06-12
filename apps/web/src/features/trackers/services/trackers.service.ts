@@ -24,7 +24,14 @@ export async function fetchTrackers(filters: Filters): Promise<Tracker[]> {
   const res = await fetch(url, { cache: 'no-store', headers: getBridgeHeaders() });
   if (!res.ok) throw new Error(`Failed to load trackers: ${res.status}`);
   const json = (await res.json()) as Record<string, unknown>;
-  return unwrap<Tracker[]>(json);
+  const unwrapped = unwrap<any>(json);
+  
+  // Handle backend paginated structure { data: [...], totalCount: number, page: number }
+  if (unwrapped && Array.isArray(unwrapped.data)) {
+    return unwrapped.data as Tracker[];
+  }
+  
+  return Array.isArray(unwrapped) ? unwrapped : [];
 }
 
 export async function fetchTrackerDetail(trackerId: string): Promise<TrackerDetail> {
@@ -34,7 +41,13 @@ export async function fetchTrackerDetail(trackerId: string): Promise<TrackerDeta
   });
   if (!res.ok) throw new Error(`Failed to load tracker detail: ${res.status}`);
   const json = (await res.json()) as Record<string, unknown>;
-  return unwrap<TrackerDetail>(json);
+  const unwrapped = unwrap<any>(json);
+  
+  if (unwrapped && unwrapped.data && unwrapped.percentage === undefined) {
+    return unwrapped.data as TrackerDetail;
+  }
+  
+  return unwrapped as TrackerDetail;
 }
 
 export async function postTrackerQuestion(trackerId: string, question: string): Promise<string> {
