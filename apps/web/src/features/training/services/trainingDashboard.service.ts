@@ -21,7 +21,7 @@ export async function fetchTrainingDashboard(): Promise<TrainingDashboardPage> {
   const headers = await getServerBackendHeaders();
   const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings`, {
     headers,
-    next: { revalidate: 60 },
+    cache: 'no-store',
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const raw = await res.json();

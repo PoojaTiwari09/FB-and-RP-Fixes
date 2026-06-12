@@ -4,9 +4,11 @@ import ManagerDashboardHeader from '@training/components/manager/ManagerDashboar
 import ManagerActiveTable from '@training/components/manager/ManagerActiveTable';
 import { cookies } from 'next/headers';
 import { ManagerActiveTraining } from '@training/types/trainingCreate.types';
+import { getServerBackendHeaders } from '@shared/lib/backend-api.server';
 
 export default async function ManagerTrainingDashboardPage() {
-  const data = await fetchManagerDashboard();
+  const headers = await getServerBackendHeaders();
+  const data = await fetchManagerDashboard(headers);
   const cookieStore = await cookies();
   
   // 1. Process Created Trainings (Active Assignments)

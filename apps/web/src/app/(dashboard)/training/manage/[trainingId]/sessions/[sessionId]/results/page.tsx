@@ -3,6 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 import { fetchTrainingResults } from '@training/services/trainingResults.service';
 import OverallScoreCard from '@training/components/rep/Results/OverallScoreCard';
 import ResultsTabSwitcher from '@training/components/rep/Results/ResultsTabSwitcher';
+import { getServerBackendHeaders } from '@shared/lib/backend-api.server';
 
 interface ManagerResultsPageProps {
   params: Promise<{ trainingId: string; sessionId: string }>;
@@ -10,7 +11,8 @@ interface ManagerResultsPageProps {
 
 export default async function ManagerResultsPage({ params }: ManagerResultsPageProps) {
   const { trainingId, sessionId } = await params;
-  const data = await fetchTrainingResults(trainingId, sessionId);
+  const headers = await getServerBackendHeaders();
+  const data = await fetchTrainingResults(trainingId, sessionId, undefined, undefined, undefined, headers);
 
   return (
     <div className="h-full overflow-y-auto bg-gray-50">

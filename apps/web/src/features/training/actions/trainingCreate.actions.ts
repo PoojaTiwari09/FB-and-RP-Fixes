@@ -18,7 +18,7 @@ export async function createTrainingAction(
   // We need to look up rep name. In real app, backend does this.
   // We'll just hardcode some mappings for demo.
   const repNames: Record<string, string> = {
-    'rep-001': 'Alex Chen',
+    '00000000-0000-0000-0000-000000000003': 'Alex Chen',
     'rep-002': 'Jordan Lee',
     'rep-003': 'Sam Taylor',
   };
