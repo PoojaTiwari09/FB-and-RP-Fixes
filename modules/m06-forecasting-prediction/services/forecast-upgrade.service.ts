@@ -52,35 +52,42 @@ export class ForecastUpgradeService {
       orderBy: { version: 'desc' },
     });
 
-    const version = (latest?.version ?? 0) + 1;
     const isBestCase = field === 'best_case';
 
-    const bestCaseForecast = isBestCase ? value : (latest?.bestCaseForecast ?? 0);
-    const commitForecast = !isBestCase ? value : (latest?.commitForecast ?? 0);
+    let sub;
+    if (latest && latest.status === 'draft' && latest.bestCaseState === 'editable' && latest.commitState === 'editable') {
+      sub = await this.prisma.forecastSubmission.update({
+        where: { id: latest.id },
+        data: {
+          bestCaseForecast: isBestCase ? value : latest.bestCaseForecast,
+          commitForecast: !isBestCase ? value : latest.commitForecast,
+        }
+      });
+    } else {
+      const version = (latest?.version ?? 0) + 1;
+      const bestCaseForecast = isBestCase ? value : (latest?.bestCaseForecast ?? 0);
+      const commitForecast = !isBestCase ? value : (latest?.commitForecast ?? 0);
 
-    const sub = await this.prisma.forecastSubmission.create({
-      data: {
-        tenantid: (latest as any)?.tenantid ?? '00000000-0000-0000-0000-000000000001',
-        periodId,
-        repUserId: repId,
-        dealId,
-        lob: latest?.lob ?? 'Enterprise',
-        version,
-        bestCaseForecast,
-        commitForecast,
-        bestCaseState: latest?.bestCaseState ?? 'editable',
-        commitState: latest?.commitState ?? 'editable',
-        approvedBestCase: latest?.approvedBestCase ?? null,
-        approvedCommit: latest?.approvedCommit ?? null,
-        status: latest?.status ?? 'draft',
-      },
-    });
+      sub = await this.prisma.forecastSubmission.create({
+        data: {
+          tenantid: (latest as any)?.tenantid ?? '00000000-0000-0000-0000-000000000001',
+          periodId,
+          repUserId: repId,
+          dealId,
+          lob: latest?.lob ?? 'Enterprise',
+          version,
+          bestCaseForecast,
+          commitForecast,
+          bestCaseState: latest?.bestCaseState ?? 'editable',
+          commitState: latest?.commitState ?? 'editable',
+          approvedBestCase: latest?.approvedBestCase ?? null,
+          approvedCommit: latest?.approvedCommit ?? null,
+          status: latest?.status ?? 'draft',
+        },
+      });
+    }
 
-    const hasLog = await this.prisma.forecastAuditLog.findFirst({
-      where: { forecastSubmissionId: sub.id, action: 'draft_created' },
-    });
-
-    if (!hasLog) {
+    if (!latest) {
       await this.logActivity(sub.id, 'draft_created', repId, `Draft created for deal: ${dealId}`);
     }
 
@@ -263,7 +270,7 @@ export class ForecastUpgradeService {
     await this.logActivity(sub.id, 'overridden', managerId, `Overrode ${field} with value ${overrideValue}`);
 
     const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
-    const rep = await this.prisma.user.findFirst({ where: { id: latest.repUserId } });
+    const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
 
     await this.createNotification(
       latest.repUserId,
@@ -497,7 +504,7 @@ export class ForecastUpgradeService {
           tenantid: '00000000-0000-0000-0000-000000000001',
           periodId,
           repId,
-          dealId: '',
+          dealId: '00000000-0000-0000-0000-000000000000',
         },
       },
     });
@@ -511,7 +518,7 @@ export class ForecastUpgradeService {
             tenantid: '00000000-0000-0000-0000-000000000001',
             periodId,
             repId,
-            dealId: '',
+            dealId: '00000000-0000-0000-0000-000000000000',
           },
         },
       });
@@ -599,14 +606,14 @@ export class ForecastUpgradeService {
           tenantid: '00000000-0000-0000-0000-000000000001',
           periodId,
           repId,
-          dealId: '',
+          dealId: '00000000-0000-0000-0000-000000000000',
         },
       },
       create: {
         tenantid: '00000000-0000-0000-0000-000000000001',
         periodId,
         repId,
-        dealId: '',
+        dealId: '00000000-0000-0000-0000-000000000000',
         pipelineValue: totalVal,
       },
       update: { pipelineValue: totalVal, computedAt: new Date() },
@@ -616,26 +623,15 @@ export class ForecastUpgradeService {
   // ── B9. AI REVENUE PREDICTOR SYNC ──────────────────────────────────────────
 
   async getAiPredictionScores(repId: string) {
-    const snaps = await this.prisma.aiForecastSnapshot.findMany({
-      orderBy: { computedAt: 'desc' },
-      take: 1,
+    const deals = await this.prisma.crmDeal.findMany({
+      where: { repUserId: repId, isClosedWon: false, isClosedLost: false, aiPredictionScore: { not: null } },
+      select: { id: true, aiPredictionScore: true },
     });
-    if (!snaps.length) return [];
-    const explainability = snaps[0].modelInputs as any;
-    const deals = explainability?.deals ?? [];
 
-    const result = [];
-    for (const d of deals) {
-      // Find CRM deal ID
-      const crmDeal = await this.prisma.crmDeal.findFirst({ where: { dealName: d.deal } });
-      if (crmDeal && crmDeal.repUserId === repId) {
-        result.push({
-          deal_id: crmDeal.id,
-          ai_prediction_score: d.aiConf === 'High' ? 95 : d.aiConf === 'Med' ? 70 : 40,
-        });
-      }
-    }
-    return result;
+    return deals.map(d => ({
+      deal_id: d.id,
+      ai_prediction_score: d.aiPredictionScore,
+    }));
   }
 
   async syncManualForecast(repId: string, dealId: string, periodId: string, finalValue: number) {
@@ -724,7 +720,7 @@ export class ForecastUpgradeService {
   async getManagerBoard(managerId: string, periodId: string) {
     // Find all reps under this manager
     const reps = await this.prisma.forecastUser.findMany({
-      where: { tenantid: '00000000-0000-0000-0000-000000000001', role: 'sales_rep' },
+      where: { tenantid: '00000000-0000-0000-0000-000000000001', role: 'sales_rep', managerId },
     });
 
     const result = [];
@@ -735,7 +731,7 @@ export class ForecastUpgradeService {
       });
 
       const scores = await this.getAiPredictionScores(rep.id);
-      const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s.ai_prediction_score, 0) / scores.length) : 75;
+      const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + (s.ai_prediction_score ?? 0), 0) / scores.length) : 75;
 
       const targetVal = quota ? quota.amount : 0;
       const progress = targetVal > 0 ? ((summary.closed_won_total + summary.commit_total) / targetVal) * 100 : 0;

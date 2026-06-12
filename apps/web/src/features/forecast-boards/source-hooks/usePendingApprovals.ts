@@ -28,8 +28,8 @@ export function usePendingApprovals(boardId: string, onStateChange?: () => void)
     void Promise.resolve().then(refresh);
   }, [refresh]);
 
-  const approve = useCallback(async (submissionId: string) => {
-    await approveSubmission(boardId, submissionId);
+  const approve = useCallback(async (submissionId: string, requestType: string) => {
+    await approveSubmission(boardId, submissionId, requestType as any);
     setApprovals((prev) => prev.filter((a) => a.submissionId !== submissionId));
     setPendingCount((prev) => Math.max(prev - 1, 0));
     if (onStateChange) onStateChange();

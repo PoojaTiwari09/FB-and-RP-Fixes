@@ -10,7 +10,7 @@ export async function getManagerBoardView(boardId: string): Promise<ManagerBoard
   const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
   // 1. Fetch manager board rows (reps list)
-  const mbRes = await fetch(`/api/forecast/manager-board/${managerId}?period_id=${periodId}`, {
+  const mbRes = await fetch(`/api/forecast/periods/${periodId}/reps`, {
     headers: headers(),
     cache: 'no-store',
   });
@@ -146,8 +146,8 @@ export async function getRepDrillDown(boardId: string, repUserId: string): Promi
     isClosedWon: Boolean(d.is_closed_won),
     isClosedLost: Boolean(d.is_closed_lost),
     isPastDue: Boolean(d.is_past_due),
-    bestCase: d.best_case_value != null ? Number(d.best_case_value) : 0,
-    commit: d.commit_value != null ? Number(d.commit_value) : 0,
+    bestCase: (d.best_case_state === 'approved' || d.best_case_state === 'overridden') ? Number(d.approved_best_case ?? 0) : (d.best_case_value != null ? Number(d.best_case_value) : 0),
+    commit: (d.commit_state === 'approved' || d.commit_state === 'overridden') ? Number(d.approved_commit ?? 0) : (d.commit_value != null ? Number(d.commit_value) : 0),
     submissionStatus: d.commit_state === 'submitted' || d.best_case_state === 'submitted' ? 'submitted' : d.commit_state === 'approved' && d.best_case_state === 'approved' ? 'approved' : 'draft',
     bestCaseState: d.best_case_state ?? 'editable',
     commitState: d.commit_state ?? 'editable',
@@ -236,16 +236,16 @@ export async function getPendingApprovals(boardId: string): Promise<PendingAppro
               note: deal.requested_best_case_note || deal.requested_commit_note || 'Forecast submitted',
               submissionId: deal.id ?? `sub-${deal.deal_id}`,
               activity: activityList.map((a: any) => ({
-                id: a.id,
-                status: a.status,
-                performedByName: a.performed_by_name,
-                timestamp: a.timestamp,
-                notes: a.notes,
+                id: a.id || a.activity_id,
+                action: a.status || 'BOARD_SUBMIT',
+                actorName: a.performed_by_name || 'System',
+                occurredAt: a.timestamp || new Date().toISOString(),
+                description: a.notes || '',
               })),
-              request_type: reqType,
-              deal_name: deal.deal_name,
-              deal_id: deal.deal_id,
-            } as any);
+              requestType: reqType as any,
+              dealName: deal.deal_name,
+              dealId: deal.deal_id,
+            });
           }
         }
       }
@@ -273,16 +273,15 @@ export async function assignTargets(boardId: string, periodId: string, assignmen
   const managerId = headers()['x-user-id'] || '00000000-0000-0000-0000-000000000002';
   const mappedPeriodId = periodId === 'board-q1' ? 'q1-fy26-demo' : periodId === 'board-q2' ? 'q2-fy26-demo' : periodId;
 
-  const res = await fetch(`/api/forecast/targets/assign`, {
+  const res = await fetch(`${M06_API_BASE}/boards/targets/assign`, {
     method: 'POST',
     headers: {
       ...headers(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      period_id: mappedPeriodId,
-      manager_id: managerId,
-      assignments: assignments.map((a) => ({ rep_id: a.repUserId, target_value: a.targetValue }))
+      periodId: mappedPeriodId,
+      assignments: assignments.map((a) => ({ repUserId: a.repUserId, targetValue: a.targetValue }))
     }),
   });
   if (!res.ok) throw new Error(await res.text());

@@ -12,9 +12,10 @@ interface SourceSubmissionCellProps {
   emptyLabel?: string;
   onClick: () => void;
   requestedValue?: number | null;
+  isManagerView?: boolean;
 }
 
-export default function SourceSubmissionCell({ cell, isActive, isEditable, status, emptyLabel = 'Not started', onClick, requestedValue }: SourceSubmissionCellProps) {
+export default function SourceSubmissionCell({ cell, isActive, isEditable, status, emptyLabel = '0', onClick, requestedValue, isManagerView }: SourceSubmissionCellProps) {
   const isEmpty = cell.value === null;
   const formattedVal = isEmpty ? emptyLabel : formatCurrency(cell.value);
   const hasManagerFeedback = !!cell.managerAnnotation;
@@ -37,13 +38,25 @@ export default function SourceSubmissionCell({ cell, isActive, isEditable, statu
     );
     tooltip = `Approved — ${formattedVal} (final)`;
   } else if (isPending) {
-    borderStyle = 'border-gray-200 bg-gray-50 text-gray-500';
-    badge = (
-      <div className="absolute -top-1.5 -right-1.5 bg-amber-100 text-amber-700 rounded-full p-0.5 border border-amber-200 shadow-sm" title="Pending Approval">
-        <div className="text-[8px] leading-none px-0.5 font-extrabold">🕐</div>
-      </div>
-    );
-    tooltip = 'Pending approval — submitted';
+    if (isManagerView) {
+      borderStyle = isActive
+        ? 'border-2 border-blue-600 bg-blue-50/20 text-blue-700'
+        : 'border-2 border-blue-500 hover:border-blue-600 bg-white text-gray-900 shadow-xs';
+      badge = (
+        <div className="absolute -top-1.5 -right-1.5 bg-amber-100 text-amber-700 rounded-full p-0.5 border border-amber-200 shadow-sm" title="Pending Approval">
+          <div className="text-[8px] leading-none px-0.5 font-extrabold">🕐</div>
+        </div>
+      );
+      tooltip = 'Pending approval — click to review or override';
+    } else {
+      borderStyle = 'border-gray-200 bg-gray-50 text-gray-500';
+      badge = (
+        <div className="absolute -top-1.5 -right-1.5 bg-amber-100 text-amber-700 rounded-full p-0.5 border border-amber-200 shadow-sm" title="Pending Approval">
+          <div className="text-[8px] leading-none px-0.5 font-extrabold">🕐</div>
+        </div>
+      );
+      tooltip = cell.lastUpdatedAt ? `Pending approval — submitted on ${new Date(cell.lastUpdatedAt).toLocaleDateString()}` : 'Pending approval — submitted';
+    }
   } else if (isReopened) {
     borderStyle = isActive
       ? 'border-2 border-blue-600 bg-blue-50/20 text-blue-700'
@@ -90,12 +103,23 @@ export default function SourceSubmissionCell({ cell, isActive, isEditable, statu
     );
   }
 
+  const handleClick = () => {
+    if (isManagerView) {
+      if (isApproved || isOverridden) return;
+    } else {
+      if (isPending || isApproved || isOverridden) return;
+    }
+    onClick();
+  };
+
+  const isLocked = isManagerView ? (isApproved || isOverridden) : (isPending || isApproved || isOverridden);
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       title={tooltip}
-      className={`relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold min-w-[104px] border select-none text-center cursor-pointer transition-all duration-150 outline-none ${borderStyle} ${isEmpty ? 'text-gray-400 italic' : ''}`}
+      className={`relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-bold min-w-[104px] border select-none text-center transition-all duration-150 outline-none ${borderStyle} ${isEmpty ? 'text-gray-400 italic' : ''} ${isLocked ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'}`}
     >
       {formattedVal}
       {badge}
