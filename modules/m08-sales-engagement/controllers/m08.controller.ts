@@ -341,10 +341,10 @@ export class M08SalesEngagementController {
   }
 
   @Patch('tasks/:taskId/reassign')
-  async reassignTask(@Param('taskId') taskId: string, @Body() body: { newAssigneeId: string }, @Req() req: any) {
+  async reassignTask(@Param('taskId') taskId: string, @Body() body: { newAssigneeId: string; scope?: string; reason?: string }, @Req() req: any) {
     const userId = req.userId || req.user?.id || req.user?.sub || req.headers['x-user-id'] || '00000000-0000-0000-0000-000000000000';
     const userRole = req.userRole || req.user?.role || req.headers['x-user-role'] || 'SALES_REP';
-    return this.service.reassignEngageTask(req.tenantId, taskId, body.newAssigneeId, userId, userRole);
+    return this.service.reassignEngageTask(req.tenantId, taskId, body.newAssigneeId, userId, userRole, body.scope, body.reason);
   }
 
   @Patch('tasks/:taskId')
