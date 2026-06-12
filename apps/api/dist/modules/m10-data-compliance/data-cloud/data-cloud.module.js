@@ -9,8 +9,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataCloudModule = void 0;
 const common_1 = require("@nestjs/common");
 const bullmq_1 = require("@nestjs/bullmq");
+const schedule_1 = require("@nestjs/schedule");
 const data_cloud_controller_1 = require("./controllers/data-cloud.controller");
 const data_cloud_service_1 = require("./services/data-cloud.service");
+const data_cloud_scheduler_service_1 = require("./services/data-cloud-scheduler.service");
 const data_cloud_worker_1 = require("./workers/data-cloud.worker");
 const data_cloud_repository_1 = require("./repositories/data-cloud.repository");
 const data_cloud_events_1 = require("./events/data-cloud.events");
@@ -23,6 +25,7 @@ exports.DataCloudModule = DataCloudModule;
 exports.DataCloudModule = DataCloudModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            schedule_1.ScheduleModule.forRoot(),
             bullmq_1.BullModule.registerQueue({
                 name: data_cloud_events_1.M10_DATA_CLOUD_QUEUES.EXPORT,
                 defaultJobOptions: {
@@ -35,7 +38,15 @@ exports.DataCloudModule = DataCloudModule = __decorate([
             bullmq_1.BullModule.registerQueue({ name: 'platform-events' }),
         ],
         controllers: [data_cloud_controller_1.DataCloudController],
-        providers: [data_cloud_service_1.DataCloudService, data_cloud_worker_1.DataCloudWorker, data_cloud_repository_1.DataCloudRepository, prisma_service_1.PrismaService, export_storage_service_1.ExportStorageService, warehouse_registry_1.WarehouseRegistry],
+        providers: [
+            data_cloud_service_1.DataCloudService,
+            data_cloud_scheduler_service_1.DataCloudSchedulerService,
+            data_cloud_worker_1.DataCloudWorker,
+            data_cloud_repository_1.DataCloudRepository,
+            prisma_service_1.PrismaService,
+            export_storage_service_1.ExportStorageService,
+            warehouse_registry_1.WarehouseRegistry,
+        ],
         exports: [data_cloud_service_1.DataCloudService],
     })
 ], DataCloudModule);

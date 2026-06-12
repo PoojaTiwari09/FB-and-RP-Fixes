@@ -1598,14 +1598,15 @@ model M10CrmSyncState {
 }
 
 model M10DataCloudConnection {
-  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantid    String                  @db.Uuid
-  destination String
-  config      Json                    @default("{}")
-  isActive    Boolean                 @default(true)
-  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime                @updatedAt @db.Timestamptz(6)
-  exportRuns  M10DataCloudExportRun[]
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String                  @db.Uuid
+  destination     String
+  destinationName String                  @default("default")
+  config          Json                    @default("{}")
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime                @updatedAt @db.Timestamptz(6)
+  exportRuns      M10DataCloudExportRun[]
 
   @@index([tenantid])
   @@map("m10_data_cloud_connections")
@@ -2097,5 +2098,174 @@ model DealNotification {
   read      Boolean  @default(false)
 
   @@map("m04_deal_notifications")
+  @@schema("revenuegraph")
+}
+
+// ─────────────────────────────────────────────────────────────
+// M10 — Configure Compliance (Policies, Opt-Outs, Consent, GDPR, ePrivacy)
+// ─────────────────────────────────────────────────────────────
+
+model M10CompliancePolicy {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid       String   @db.Uuid
+  name           String
+  description    String?
+  channel        String
+  region         String?
+  regionFamily   String   @default("GLOBAL")
+  ruleDefinition Json     @default("{}")
+  isActive       Boolean  @default(true)
+  version        Int      @default(1)
+  createdBy      String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(6)
+
+  auditEntries M10ComplianceAuditEntry[]
+
+  @@index([tenantid, isActive])
+  @@index([tenantid, channel])
+  @@map("m10_compliance_policies")
+  @@schema("revenuegraph")
+}
+
+model M10CrmOptOut {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String   @db.Uuid
+  contactEmail String
+  channel      String
+  isOptedOut   Boolean  @default(false)
+  lastSyncedAt DateTime @default(now()) @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenantid, contactEmail, channel])
+  @@index([tenantid, contactEmail])
+  @@map("m10_crm_optouts")
+  @@schema("revenuegraph")
+}
+
+model M10ConsentLog {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String   @db.Uuid
+  contactEmail String
+  consentType  String
+  status       String
+  source       String
+  loggedAt     DateTime @default(now()) @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantid, contactEmail])
+  @@map("m10_consent_logs")
+  @@schema("revenuegraph")
+}
+
+model M10ComplianceAuditEntry {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid           String               @db.Uuid
+  correlationId      String               @unique
+  recipientEmail     String
+  channel            String
+  decision           String
+  reasonCode         String
+  explanation        String?
+  triggeredPolicyId  String?              @db.Uuid
+  evaluationMetadata Json                 @default("{}")
+  createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+
+  policy M10CompliancePolicy? @relation(fields: [triggeredPolicyId], references: [id])
+
+  @@index([tenantid])
+  @@index([tenantid, recipientEmail])
+  @@map("m10_compliance_audit_entries")
+  @@schema("revenuegraph")
+}
+
+model M10GdprDataSubjectRequest {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid       String    @db.Uuid
+  contactEmail   String
+  requestType    String
+  status         String    @default("pending")
+  requestDate    DateTime  @default(now()) @db.Timestamptz(6)
+  completionDate DateTime? @db.Timestamptz(6)
+  details        Json?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([tenantid, contactEmail])
+  @@index([tenantid, status])
+  @@map("m10_gdpr_data_subject_requests")
+  @@schema("revenuegraph")
+}
+
+model M10GdprProcessingRecord {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String   @db.Uuid
+  purpose         String
+  dataCategories  String[]
+  lawfulBasis     String
+  retentionPeriod String
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([tenantid])
+  @@map("m10_gdpr_processing_records")
+  @@schema("revenuegraph")
+}
+
+model M10GdprDataBreachRecord {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid      String   @db.Uuid
+  incidentDate  DateTime @db.Timestamptz(6)
+  detectionDate DateTime @db.Timestamptz(6)
+  description   String
+  affectedData  String[]
+  status        String   @default("investigating")
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([tenantid])
+  @@map("m10_gdpr_data_breach_records")
+  @@schema("revenuegraph")
+}
+
+model M10EPrivacyConsent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String   @db.Uuid
+  contactEmail String
+  channel      String
+  purpose      String
+  status       String
+  source       String
+  loggedAt     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantid, contactEmail])
+  @@map("m10_eprivacy_consents")
+  @@schema("revenuegraph")
+}
+
+model M10SuppressionEntry {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String   @db.Uuid
+  contactEmail String
+  reason       String
+  addedAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([tenantid, contactEmail])
+  @@map("m10_suppression_entries")
+  @@schema("revenuegraph")
+}
+
+model M10GdprDeletion {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid       String   @db.Uuid
+  dsarId         String   @db.Uuid
+  contactEmail   String
+  tablesAffected String[]
+  deletedRows    Int      @default(0)
+  executionDate  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenantid, dsarId])
+  @@map("m10_gdpr_deletions")
   @@schema("revenuegraph")
 }

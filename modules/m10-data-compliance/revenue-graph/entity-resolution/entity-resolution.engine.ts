@@ -3,7 +3,7 @@
  * Reproducible, tenant-scoped scoring for Activities → Accounts/Contacts/Deals.
  */
 
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
+export type ConfidenceLevel = "high" | "medium" | "low";
 
 export interface MatchCandidate {
   id: string;
@@ -14,7 +14,12 @@ export interface MatchCandidate {
 }
 
 const FREE_DOMAINS = new Set([
-  'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'aol.com',
+  "gmail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+  "icloud.com",
+  "aol.com",
 ]);
 
 export function normalizeEmail(email: string): string {
@@ -23,7 +28,7 @@ export function normalizeEmail(email: string): string {
 
 export function extractDomain(email: string): string | null {
   const n = normalizeEmail(email);
-  const at = n.indexOf('@');
+  const at = n.indexOf("@");
   if (at < 0) return null;
   return n.slice(at + 1) || null;
 }
@@ -36,9 +41,9 @@ export function isFreeMailDomain(domain: string): boolean {
 export function normalizeName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\b(inc|llc|ltd|corp|corporation|company|co)\b/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\b(inc|llc|ltd|corp|corporation|company|co)\b/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -48,13 +53,19 @@ export function levenshtein(a: string, b: string): number {
   const n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array(n + 1).fill(0),
+  );
   for (let i = 0; i <= m; i++) dp[i][0] = i;
   for (let j = 0; j <= n; j++) dp[0][j] = j;
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      );
     }
   }
   return dp[m][n];
@@ -71,8 +82,8 @@ export function stringSimilarity(a: string, b: string): number {
 }
 
 export function tokenOverlapScore(a: string, b: string): number {
-  const ta = new Set(normalizeName(a).split(' ').filter(Boolean));
-  const tb = new Set(normalizeName(b).split(' ').filter(Boolean));
+  const ta = new Set(normalizeName(a).split(" ").filter(Boolean));
+  const tb = new Set(normalizeName(b).split(" ").filter(Boolean));
   if (ta.size === 0 || tb.size === 0) return 0;
   let overlap = 0;
   for (const t of ta) if (tb.has(t)) overlap++;
@@ -85,10 +96,14 @@ export function combinedSimilarity(a: string, b: string): number {
   return lev * 0.6 + tok * 0.4;
 }
 
-export function scoreToConfidence(score: number, high = 0.88, medium = 0.72): ConfidenceLevel {
-  if (score >= high) return 'high';
-  if (score >= medium) return 'medium';
-  return 'low';
+export function scoreToConfidence(
+  score: number,
+  high = 0.88,
+  medium = 0.72,
+): ConfidenceLevel {
+  if (score >= high) return "high";
+  if (score >= medium) return "medium";
+  return "low";
 }
 
 export function rankAccountCandidates(
@@ -98,26 +113,34 @@ export function rankAccountCandidates(
   opts: { minScore?: number; ignoredDomains?: string[] } = {},
 ): MatchCandidate[] {
   const minScore = opts.minScore ?? 0.72;
-  const ignored = new Set((opts.ignoredDomains ?? []).map(d => d.toLowerCase()));
+  const ignored = new Set(
+    (opts.ignoredDomains ?? []).map((d) => d.toLowerCase()),
+  );
   const candidates: MatchCandidate[] = [];
 
   for (const acc of accounts) {
     const signals: string[] = [];
     let score = 0;
 
-    if (queryDomain && acc.domain && acc.domain.toLowerCase() === queryDomain.toLowerCase()) {
+    if (
+      queryDomain &&
+      acc.domain &&
+      acc.domain.toLowerCase() === queryDomain.toLowerCase()
+    ) {
       score = 1;
-      signals.push('email_domain_exact_match');
+      signals.push("email_domain_exact_match");
     } else if (queryName) {
       const sim = combinedSimilarity(queryName, acc.name);
       if (sim >= minScore) {
         score = sim;
-        signals.push('fuzzy_company_name');
-        if (levenshtein(normalizeName(queryName), normalizeName(acc.name)) <= 2) {
-          signals.push('levenshtein_close');
+        signals.push("fuzzy_company_name");
+        if (
+          levenshtein(normalizeName(queryName), normalizeName(acc.name)) <= 2
+        ) {
+          signals.push("levenshtein_close");
         }
         if (tokenOverlapScore(queryName, acc.name) >= 0.5) {
-          signals.push('token_overlap');
+          signals.push("token_overlap");
         }
       }
     }
@@ -128,7 +151,12 @@ export function rankAccountCandidates(
         score,
         confidence: scoreToConfidence(score),
         signals,
-        explanation: { queryName, queryDomain, matchedName: acc.name, matchedDomain: acc.domain },
+        explanation: {
+          queryName,
+          queryDomain,
+          matchedName: acc.name,
+          matchedDomain: acc.domain,
+        },
       });
     }
   }
@@ -152,12 +180,12 @@ export function rankContactCandidates(
 
     if (qEmail && normalizeEmail(c.email) === qEmail) {
       score = 1;
-      signals.push('email_exact_match');
+      signals.push("email_exact_match");
     } else if (queryName && c.name) {
       const sim = combinedSimilarity(queryName, c.name);
       if (sim >= minScore) {
         score = sim;
-        signals.push('fuzzy_contact_name');
+        signals.push("fuzzy_contact_name");
       }
     }
 
@@ -176,14 +204,19 @@ export function rankContactCandidates(
 }
 
 /** Ambiguity when top two scores are within epsilon */
-export function detectAmbiguity(candidates: MatchCandidate[], epsilon = 0.05): boolean {
+export function detectAmbiguity(
+  candidates: MatchCandidate[],
+  epsilon = 0.05,
+): boolean {
   if (candidates.length < 2) return false;
   return Math.abs(candidates[0].score - candidates[1].score) < epsilon;
 }
 
-export function pickBestCandidate(
-  candidates: MatchCandidate[],
-): { best: MatchCandidate | null; ambiguous: boolean; rejected: MatchCandidate[] } {
+export function pickBestCandidate(candidates: MatchCandidate[]): {
+  best: MatchCandidate | null;
+  ambiguous: boolean;
+  rejected: MatchCandidate[];
+} {
   if (candidates.length === 0) {
     return { best: null, ambiguous: false, rejected: [] };
   }
@@ -191,7 +224,11 @@ export function pickBestCandidate(
   if (ambiguous) {
     return { best: null, ambiguous: true, rejected: candidates };
   }
-  return { best: candidates[0], ambiguous: false, rejected: candidates.slice(1) };
+  return {
+    best: candidates[0],
+    ambiguous: false,
+    rejected: candidates.slice(1),
+  };
 }
 
 export function inferAccountFromContacts(
