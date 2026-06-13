@@ -1,6 +1,13 @@
+// @ts-ignore
+import * as dotenv from 'dotenv';
+// @ts-ignore
+import * as path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
 import { PrismaClient } from '../node_modules/.prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { seedEngageData } from './seed-engage';
+import { seedM05 } from './seed-m05';
 
 const prisma = new PrismaClient();
 
@@ -14,6 +21,11 @@ async function main() {
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
   console.log('Seeding Tenant...');
+  // Remove any tenant with the same slug but a different id (left over from
+  // a previous run where the id was auto-generated rather than fixed).
+  await prisma.tenant.deleteMany({
+    where: { slug: TENANT_SLUG, NOT: { id: TENANT_ID } },
+  });
   await prisma.tenant.upsert({
     where: { id: TENANT_ID },
     update: { name: 'Relanto', slug: TENANT_SLUG, status: 'ACTIVE' },
@@ -253,6 +265,8 @@ async function main() {
       },
     });
   }
+
+  await seedM05(prisma);
 
   console.log(`--- Database Seeding Completed (default password: ${DEFAULT_PASSWORD}) ---`);
 }

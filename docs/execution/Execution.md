@@ -1,3 +1,4 @@
+
 # Revenue Intelligence Monorepo Execution Guide
 
 This guide documents how to set up, execute, and verify the Revenue Intelligence Monorepo. The codebase supports two execution topologies: the default **Unified Monolith Mode** (recommended for low footprint) and the **Standalone Modules Mode** (which runs each module on independent host ports).

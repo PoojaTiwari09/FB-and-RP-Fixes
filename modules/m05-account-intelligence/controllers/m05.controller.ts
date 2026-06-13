@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
+import { Public } from '../../platform-core/decorators/public.decorator';
 import { getM05Enabled } from '../config/m05-env';
 
 /**
  * Module metadata only — account CRUD/list lives under AccountsController (/accounts).
  */
+@Public()
 @Controller('api/v1/account-intelligence')
 export class M05AccountIntelligenceController {
   @Get()

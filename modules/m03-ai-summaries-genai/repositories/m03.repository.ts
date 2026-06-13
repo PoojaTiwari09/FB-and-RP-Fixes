@@ -48,7 +48,7 @@ export class M03AiSummariesGenaiRepository {
         return await delegate.upsert({
           where: {
             tenantid_briefType_entityId: {
-              tenantid: row.tenantid ?? row.tenantId,
+              tenantid: row.tenantid,
               briefType: row.briefType,
               entityId: row.entityId,
             },
@@ -67,7 +67,7 @@ export class M03AiSummariesGenaiRepository {
 
     m03DataStore.insertBrief({
       id: row.id,
-      org_id: row.tenantId,
+      org_id: row.tenantid,
       brief_type: row.briefType,
       entity_id: row.entityId,
       generated_summary: row.generatedSummary,
@@ -167,8 +167,8 @@ export class M03AiSummariesGenaiRepository {
 
     m03DataStore.chatHistory.unshift({
       id: row.id,
-      tenant_id: row.tenantId,
-      org_id: row.tenantId,
+      tenant_id: row.tenantid,
+      org_id: row.tenantid,
       user_id: row.userId,
       question: row.question,
       answer: row.answer,

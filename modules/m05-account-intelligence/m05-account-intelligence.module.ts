@@ -14,6 +14,8 @@ import { SyncController } from './controllers/sync.controller';
 import { TodosController } from './controllers/todos.controller';
 import { WebhookController } from './controllers/webhook.controller';
 import { AiController } from './controllers/ai.controller';
+import { M05FrontendAccountsController } from './controllers/m05-frontend-accounts.controller';
+import { M05FrontendDealsController } from './controllers/m05-frontend-deals.controller';
 
 import { M05AccountIntelligenceService } from './services/m05.service';
 import { AccountsService } from './services/accounts.service';
@@ -49,6 +51,8 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     TodosController,
     WebhookController,
     AiController,
+    M05FrontendAccountsController,
+    M05FrontendDealsController,
   ],
   providers: [
     M05AccountIntelligenceService,

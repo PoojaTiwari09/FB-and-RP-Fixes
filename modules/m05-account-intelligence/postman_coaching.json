@@ -1,0 +1,330 @@
+{
+  "info": {
+    "_postman_id": "c0ach1ng-1n51ghts-m09",
+    "name": "M09 - Coaching Insights",
+    "description": "Endpoints for the Revenue Manager Coaching Insights page.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "00000000-0000-0000-0000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "bearer_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMzMzMzMzMy0zMzMzLTMzMzMtMzMzMy0zMzMzMzMzMzMzMzMiLCJ0ZW5hbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsInJvbGUiOiJTQUxFU19SRVAiLCJwZXJtaXNzaW9ucyI6WyJ0YXNrLnZpZXciLCJ0YXNrLmNyZWF0ZSIsInRhc2sudXBkYXRlIiwib3Bwb3J0dW5pdHkudmlldyIsIm9wcG9ydHVuaXR5LmNyZWF0ZSIsIm9wcG9ydHVuaXR5LnVwZGF0ZSIsImN1c3RvbWVyLnZpZXciLCJjdXN0b21lci5jcmVhdGUiLCJjdXN0b21lci51cGRhdGUiLCJhaS5xdWVyeSJdLCJlbWFpbCI6InNhcmFoLmNoZW5AcmVsYW50by5jb20iLCJuYW1lIjoiU2FyYWggQ2hlbiIsImlhdCI6MTc4MTE3NjQwMiwiZXhwIjoxNzgxMjYyODAyLCJhdWQiOiJyLXJldmVudWUtYXBpIiwiaXNzIjoici1yZXZlbnVlLWFwaSJ9.OzqnPY2oixYHZjqu8N19eBGtImvAPzhukADDHMazNME",
+      "type": "string"
+    },
+    {
+      "key": "rep_id",
+      "value": "00000000-0000-0000-0000-000000000006",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearer_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Coaching API",
+      "item": [
+        {
+          "name": "Get Coaching Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/filters",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "filters"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has periods and teams', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.have.property('periods');",
+                  "  pm.expect(body).to.have.property('teams');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Coaching Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/activity?period=Last 30 days&teamId=team_001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "activity"],
+              "query": [
+                { "key": "period", "value": "Last 30 days" },
+                { "key": "teamId", "value": "team_001" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns an array of reps', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Coaching Interaction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/interaction?period=Last 30 days&teamId=team_001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "interaction"],
+              "query": [
+                { "key": "period", "value": "Last 30 days" },
+                { "key": "teamId", "value": "team_001" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns an object with reps array', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.have.property('reps');",
+                  "  pm.expect(body.reps).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Coaching Responsiveness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/responsiveness?period=Last 30 days&teamId=team_001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "responsiveness"],
+              "query": [
+                { "key": "period", "value": "Last 30 days" },
+                { "key": "teamId", "value": "team_001" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns an array of reps', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Coaching Scorecards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/scorecards?period=Last 30 days&teamId=team_001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "scorecards"],
+              "query": [
+                { "key": "period", "value": "Last 30 days" },
+                { "key": "teamId", "value": "team_001" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns an array of reps', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get AI Insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/ai-insights?period=Last 30 days&teamId=team_001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "ai-insights"],
+              "query": [
+                { "key": "period", "value": "Last 30 days" },
+                { "key": "teamId", "value": "team_001" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns an array of insights', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Team vs Benchmark",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/team-vs-benchmark?period=Last 30 days&teamId=team_001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "team-vs-benchmark"],
+              "query": [
+                { "key": "period", "value": "Last 30 days" },
+                { "key": "teamId", "value": "team_001" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns an array of metrics', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Coaching Rep Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/manager/coaching/rep/{{rep_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "manager", "coaching", "rep", "{{rep_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns rep details object', () => {",
+                  "  const body = pm.response.json().data || pm.response.json();",
+                  "  pm.expect(body).to.have.property('header');",
+                  "  pm.expect(body).to.have.property('kpis');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

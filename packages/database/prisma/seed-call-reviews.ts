@@ -25,7 +25,7 @@ function buildReview(tenantId: string, c: any, index: number) {
   const statuses = ['Pending', 'In Progress', 'Completed', 'Completed'];
   const priorities = ['High', 'Medium', 'High', 'Medium'];
   return {
-    tenantId: tenantid: tenantId,
+    tenantid: tenantId,
     reviewId: `rv_${String(index + 1).padStart(3, '0')}`,
     callTitle: c.title,
     scorecardName:

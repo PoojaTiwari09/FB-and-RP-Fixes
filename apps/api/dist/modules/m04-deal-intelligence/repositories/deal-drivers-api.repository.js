@@ -20,7 +20,7 @@ let DealDriversApiRepository = class DealDriversApiRepository {
     findMany(filters) {
         return this.prisma.m04DealDriver.findMany({
             where: {
-                tenantId: filters.tenantId ?? '00000000-0000-0000-0000-000000000001',
+                tenantid: filters.tenantId ?? '00000000-0000-0000-0000-000000000001',
                 ...(filters.dealId ? { dealId: filters.dealId } : {}),
                 ...(filters.boardId ? { boardId: filters.boardId } : {}),
             },
@@ -33,7 +33,7 @@ let DealDriversApiRepository = class DealDriversApiRepository {
     create(tenantId, dto) {
         return this.prisma.m04DealDriver.create({
             data: {
-                tenantId: tenantId,
+                tenantid: tenantId,
                 dealId: dto.dealId,
                 boardId: dto.boardId ?? null,
                 name: dto.name,

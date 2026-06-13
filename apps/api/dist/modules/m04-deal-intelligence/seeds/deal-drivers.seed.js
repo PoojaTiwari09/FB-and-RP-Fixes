@@ -76,7 +76,7 @@ async function main() {
             continue;
         await prisma.m04DealDriver.create({
             data: {
-                tenantId: '00000000-0000-0000-0000-000000000001',
+                tenantid: '00000000-0000-0000-0000-000000000001',
                 dealId: d.dealId,
                 boardId: d.boardId,
                 name: d.name,

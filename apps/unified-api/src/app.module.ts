@@ -11,6 +11,7 @@ import { M09CoachingTrainingModule } from '../../../modules/m09-coaching-trainin
 import { M08SalesEngagementModule } from '../../../modules/m08-sales-engagement/m08-sales-engagement.module';
 import { M06ForecastingPredictionModule } from '../../../modules/m06-forecasting-prediction/m06-forecasting-prediction.module';
 import { M04DealIntelligenceModule } from '../../../modules/m04-deal-intelligence/m04-deal-intelligence.module';
+import { M05AccountIntelligenceModule } from '../../../modules/m05-account-intelligence/m05-account-intelligence.module';
 import { M11AiDeepResearcherModule } from '../../../modules/m11-ai-deep-researcher/m11-ai-deep-researcher.module';
 import { M07RevenueDashboardsModule } from '../../../modules/m07-revenue-dashboards/m07-revenue-dashboards.module';
 import { PlatformAuthModule } from '../../../modules/platform-core/auth/auth.module';
@@ -53,6 +54,7 @@ const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://1
     M08SalesEngagementModule,
     M06ForecastingPredictionModule,
     M04DealIntelligenceModule,
+    M05AccountIntelligenceModule,
     M11AiDeepResearcherModule,
     M07RevenueDashboardsModule,
     PlatformAuthModule,

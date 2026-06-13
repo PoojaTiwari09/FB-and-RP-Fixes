@@ -14,7 +14,7 @@ const CALLS = [
         callSource: 'zoom',
         participants: ['Emily Thompson (Rep)', 'John Smith (XYZ Corp)'],
         callOwner: 'Emily Thompson',
-        accountId: 'xyz-corp',
+        accountId: null,
         dealType: 'New Business',
         audioUrl: demo_transcript_data_1.AUDIO_2MIN,
         bundle: demo_transcript_data_1.DEMO_2MIN,
@@ -27,7 +27,7 @@ const CALLS = [
         callSource: 'teams',
         participants: ['Alex Rodriguez (Rep)', 'Michael Chen (Prospect)'],
         callOwner: 'Alex Rodriguez',
-        accountId: 'northwind-systems',
+        accountId: null,
         dealType: 'New Business',
         audioUrl: demo_transcript_data_1.AUDIO_3MIN,
         bundle: demo_transcript_data_1.DEMO_3MIN,
@@ -40,7 +40,7 @@ const CALLS = [
         callSource: 'zoom',
         participants: ['MedProCRM Rep (Rep)', 'Dr. Smith (Prospect)'],
         callOwner: 'Sarah Chen',
-        accountId: 'medpro-practice',
+        accountId: null,
         dealType: 'New Business',
         audioUrl: demo_transcript_data_1.AUDIO_10MIN,
         bundle: demo_transcript_data_1.DEMO_10MIN,
@@ -53,7 +53,7 @@ const CALLS = [
         callSource: 'phone',
         participants: ['Parker Scarves Agent (Rep)', 'Charlie Johnson (Customer)'],
         callOwner: 'Michael Rodriguez',
-        accountId: 'parker-scarves',
+        accountId: null,
         dealType: 'Support',
         audioUrl: demo_transcript_data_1.AUDIO_RESOURCES,
         bundle: demo_transcript_data_1.DEMO_RESOURCES,
@@ -61,7 +61,7 @@ const CALLS = [
 ];
 function transcriptCreate(tenantId, bundle) {
     return {
-        tenantId: tenantId,
+        tenantid: tenantId,
         fullText: bundle.fullText,
         summary: bundle.summary,
         keyHighlights: bundle.keyHighlights,
@@ -69,7 +69,7 @@ function transcriptCreate(tenantId, bundle) {
         talkRatio: bundle.talkRatio,
         utterances: {
             create: bundle.utterances.map((u) => ({
-                tenantId: tenantId,
+                tenantid: tenantId,
                 speaker: u.speaker,
                 text: u.text,
                 startMs: u.startMs,
@@ -93,7 +93,7 @@ async function upsertCall(c) {
     await prisma.callRecord.create({
         data: {
             id: c.id,
-            tenantId: TENANT_ID,
+            tenantid: TENANT_ID,
             title: c.title,
             callDate: new Date(c.callDate),
             durationSeconds: c.bundle.durationSeconds,
@@ -115,7 +115,7 @@ async function main() {
         await upsertCall(c);
     }
     const total = await prisma.callRecord.count({
-        where: { tenantId: TENANT_ID, id: { in: [...demo_transcript_data_1.DEMO_CALL_IDS] } },
+        where: { tenantid: TENANT_ID, id: { in: [...demo_transcript_data_1.DEMO_CALL_IDS] } },
     });
     console.log(`M01 seed — done (${total} demo calls in DB)`);
 }

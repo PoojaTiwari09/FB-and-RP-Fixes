@@ -37,6 +37,7 @@ let SyncController = SyncController_1 = class SyncController {
 exports.SyncController = SyncController;
 __decorate([
     (0, common_1.Post)('trigger'),
+    (0, common_1.HttpCode)(200),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

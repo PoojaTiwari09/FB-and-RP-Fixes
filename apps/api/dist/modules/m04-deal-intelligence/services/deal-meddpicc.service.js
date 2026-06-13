@@ -39,7 +39,7 @@ let DealMeddpiccService = DealMeddpiccService_1 = class DealMeddpiccService {
             where: { dealExternalId },
         });
         const payload = {
-            tenantId: tenantId,
+            tenantid: tenantId,
             dealExternalId,
             score: result.score,
             metrics: result.categoryAnswers.metrics || null,

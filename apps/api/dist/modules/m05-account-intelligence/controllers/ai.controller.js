@@ -39,6 +39,7 @@ __decorate([
 ], AiController.prototype, "health", null);
 __decorate([
     (0, common_1.Post)('summary'),
+    (0, common_1.HttpCode)(200),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -46,6 +47,7 @@ __decorate([
 ], AiController.prototype, "generateSummary", null);
 __decorate([
     (0, common_1.Post)('chat'),
+    (0, common_1.HttpCode)(200),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

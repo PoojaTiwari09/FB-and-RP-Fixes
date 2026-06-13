@@ -158,7 +158,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
             const callDelegate = this.callRecordDelegate;
             if (callDelegate?.findFirst) {
                 const c = await callDelegate.findFirst({
-                    where: { id, tenantId },
+                    where: { id, tenantid: tenantId },
                     include: callDelegate === this.prisma.callRecord
                         ? { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } }
                         : undefined,
@@ -168,7 +168,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
             }
             const emailDelegate = this.emailDelegate;
             if (emailDelegate?.findFirst) {
-                const e = await emailDelegate.findFirst({ where: { id, tenantId } });
+                const e = await emailDelegate.findFirst({ where: { id, tenantid: tenantId } });
                 if (e)
                     return this.mapEmailToConversation(e);
             }
@@ -186,7 +186,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
         try {
             const delegate = this.savedSearchDelegate;
             if (delegate?.findMany) {
-                const searches = await delegate.findMany({ where: { tenantId } });
+                const searches = await delegate.findMany({ where: { tenantid: tenantId } });
                 if (searches.length > 0) {
                     return searches.map((s) => ({
                         id: s.id,
@@ -220,7 +220,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
             if (delegate?.create) {
                 const newSearch = await delegate.create({
                     data: {
-                        tenantId,
+                        tenantid: tenantId,
                         userId,
                         name: data.name,
                         queryString: data.queryString || '',
@@ -229,7 +229,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
                 });
                 return {
                     id: newSearch.id,
-                    tenantId: newSearch.tenantId,
+                    tenantId: newSearch.tenantid ?? newSearch.tenantId,
                     userId: newSearch.userId,
                     name: newSearch.name,
                     queryString: newSearch.queryString || '',
@@ -263,7 +263,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
         try {
             const delegate = this.syncLogDelegate;
             if (delegate?.findMany) {
-                const logs = await delegate.findMany({ where: { tenantId } });
+                const logs = await delegate.findMany({ where: { tenantid: tenantId } });
                 if (logs.length > 0) {
                     return logs.map((l) => ({
                         id: l.id,
@@ -293,7 +293,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
             if (delegate?.create) {
                 const newLog = await delegate.create({
                     data: {
-                        tenantId,
+                        tenantid: tenantId,
                         entityType: data.entityType,
                         entityId: data.entityId,
                         syncStatus: 'COMPLETED',
@@ -303,7 +303,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
                 });
                 return {
                     id: newLog.id,
-                    tenantId: newLog.tenantId,
+                    tenantId: newLog.tenantid ?? newLog.tenantId,
                     entityType: newLog.entityType,
                     idempotencyKey: newLog.idempotencyKey,
                     indexedAt: newLog.indexedAt?.toISOString?.(),
@@ -333,7 +333,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
         try {
             const isUnified = delegate === this.prisma.callRecord;
             return await delegate.findMany({
-                where: { tenantId },
+                where: { tenantid: tenantId },
                 ...(isUnified
                     ? { include: { transcript: { include: { utterances: { orderBy: { sequenceIndex: 'asc' } } } } } }
                     : {}),
@@ -350,7 +350,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
         if (!delegate?.findMany)
             return [];
         try {
-            return await delegate.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+            return await delegate.findMany({ where: { tenantid: tenantId }, orderBy: { createdAt: 'desc' } });
         }
         catch (err) {
             M02ConversationIntelligenceRepository_1.logger.warn(`findAllConversations.emails failed: ${err.message}`);
@@ -503,8 +503,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
                 { speaker: 'Speaker 1 (Agent)', text: transcript.substring(Math.floor(transcript.length / 2)), start: 49, end: 80 }
             ];
             corpus.push({
-                id: `call-${100 + i}`,
-                tenantId,
+                id: `call-${100 + i}`, tenantid: tenantId,
                 title,
                 channel: 'call',
                 customerName: `${company} Team`,
@@ -660,8 +659,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
             date.setDate(date.getDate() - (i % 90));
             date.setHours(9 + (i % 8), 10 + (i % 40), 0, 0);
             corpus.push({
-                id: `email-${200 + i}`,
-                tenantId,
+                id: `email-${200 + i}`, tenantid: tenantId,
                 title: subject,
                 channel: 'email',
                 customerName: `${company} Contact`,
@@ -696,8 +694,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
     generateSampleSavedSearches(tenantId) {
         return [
             {
-                id: 'saved-search-001',
-                tenantId,
+                id: 'saved-search-001', tenantid: tenantId,
                 userId: M02ConversationIntelligenceRepository_1.DEV_SEED_USER_ID,
                 name: 'Enterprise Pricing Calls',
                 queryString: 'pricing volume discount',
@@ -706,8 +703,7 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
                 updatedAt: '2026-05-18T12:00:00Z'
             },
             {
-                id: 'saved-search-002',
-                tenantId,
+                id: 'saved-search-002', tenantid: tenantId,
                 userId: M02ConversationIntelligenceRepository_1.DEV_SEED_USER_ID,
                 name: 'Negative Sentiment Alerts',
                 queryString: '',
@@ -720,16 +716,14 @@ let M02ConversationIntelligenceRepository = class M02ConversationIntelligenceRep
     generateSampleSyncLogs(tenantId) {
         return [
             {
-                id: 'sync-log-001',
-                tenantId,
+                id: 'sync-log-001', tenantid: tenantId,
                 entityType: 'transcript',
                 lastSyncedAt: '2026-05-19T02:00:00Z',
                 recordsSynced: 100,
                 idempotencyKey: 'sync-1'
             },
             {
-                id: 'sync-log-002',
-                tenantId,
+                id: 'sync-log-002', tenantid: tenantId,
                 entityType: 'email',
                 lastSyncedAt: '2026-05-19T03:00:00Z',
                 recordsSynced: 100,

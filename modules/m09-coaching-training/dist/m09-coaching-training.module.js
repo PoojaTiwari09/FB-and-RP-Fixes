@@ -33,7 +33,7 @@ exports.M09CoachingTrainingModule = M09CoachingTrainingModule = __decorate([
                 global: true,
                 secret: process.env.JWT_SECRET ||
                     process.env.M09_JWT_SECRET ||
-                    'dev-only-m09-jwt-secret-change-me',
+                    'local-dev-secret',
                 signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
             }),
             prisma_module_1.PrismaModule,

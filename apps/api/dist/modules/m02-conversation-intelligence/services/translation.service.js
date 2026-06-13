@@ -124,7 +124,7 @@ let TranslationService = class TranslationService {
         try {
             if (this.prisma && this.prisma.m02TranslatedText) {
                 existing = await this.prisma.m02TranslatedText.findFirst({
-                    where: { tenantId, entityType, entityId, targetLanguage: targetLang }
+                    where: { tenantid: tenantId, entityType, entityId, targetLanguage: targetLang }
                 });
             }
         }
@@ -168,7 +168,7 @@ let TranslationService = class TranslationService {
         const delegate = this.workspaceDelegate;
         if (delegate?.findUnique) {
             try {
-                let settings = await delegate.findUnique({ where: { tenantId } });
+                let settings = await delegate.findUnique({ where: { tenantid: tenantId } });
                 if (!settings) {
                     settings = await delegate.create({
                         data: {
@@ -207,7 +207,7 @@ let TranslationService = class TranslationService {
         if (delegate?.upsert) {
             try {
                 const updated = await delegate.upsert({
-                    where: { tenantId },
+                    where: { tenantid: tenantId },
                     update: {
                         ...(data.defaultLanguage && { defaultLanguage: data.defaultLanguage }),
                         ...(data.fallbackLanguage && { fallbackLanguage: data.fallbackLanguage }),

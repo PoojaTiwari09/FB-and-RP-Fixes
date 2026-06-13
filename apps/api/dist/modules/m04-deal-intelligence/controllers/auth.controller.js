@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("@/services/auth.service");
 const schemas_1 = require("@/schemas");
 const auth_guard_1 = require("@/guards/auth.guard");
+const jwt_guard_1 = require("../interfaces/jwt.guard");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -27,16 +28,20 @@ let AuthController = class AuthController {
         return this.authService.register(registerDto);
     }
     async login(loginDto, session) {
-        const user = await this.authService.login(loginDto, session.id);
-        session.userId = user.id;
+        const sessionObj = session || { id: 'mock-session-id' };
+        const user = await this.authService.login(loginDto, sessionObj.id);
+        sessionObj.userId = user.id;
         return {
             message: 'Login successful',
             user,
         };
     }
     async logout(session) {
-        await this.authService.logout(session.id);
-        session.destroy();
+        const sessionObj = session || { id: 'mock-session-id', destroy: () => { } };
+        await this.authService.logout(sessionObj.id);
+        if (typeof sessionObj.destroy === 'function') {
+            sessionObj.destroy();
+        }
         return {
             message: 'Logout successful',
         };
@@ -56,6 +61,7 @@ let AuthController = class AuthController {
 };
 exports.AuthController = AuthController;
 __decorate([
+    (0, jwt_guard_1.Public)(),
     (0, common_1.Post)('register'),
     (0, swagger_1.ApiOperation)({
         summary: 'Register a new user',
@@ -76,6 +82,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
+    (0, jwt_guard_1.Public)(),
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({

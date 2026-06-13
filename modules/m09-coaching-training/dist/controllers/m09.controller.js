@@ -817,7 +817,11 @@ let TestController = class TestController {
         return this.ensureSeedData();
     }
     async generateToken(dto) {
-        const user = await this.repository.getUserById(dto.userId);
+        let userId = dto.userId;
+        if (!userId || userId === 'mock_data' || !userId.includes('-')) {
+            userId = '00000000-0000-0000-0000-000000000002';
+        }
+        const user = await this.repository.getUserById(userId);
         const token = this.jwtService.sign({
             sub: user.id,
             email: user.email,

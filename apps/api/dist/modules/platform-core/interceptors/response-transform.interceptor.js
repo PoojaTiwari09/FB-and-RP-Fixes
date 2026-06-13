@@ -21,6 +21,10 @@ let ResponseTransformInterceptor = class ResponseTransformInterceptor {
             if (res.headersSent) {
                 return data;
             }
+            const url = req.url || '';
+            if (url.includes('/api/manager/')) {
+                return data;
+            }
             const requestId = req.headers['x-request-id'] ||
                 req.headers['x-trace-id'] ||
                 req.headers['trace-id'] ||

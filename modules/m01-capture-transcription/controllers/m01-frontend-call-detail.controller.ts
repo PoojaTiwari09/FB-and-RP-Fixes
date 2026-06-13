@@ -181,7 +181,7 @@ export class M01FrontendCallDetailController {
   async createNote(
     @Param('callId') callId: string,
     @Body() body: { note?: string; content?: string; userId?: string },
-    @Req() req: Record<string, string>,
+    @Req() req: Record<string, any>,
   ) {
     const noteText = body.note || body.content;
     if (!noteText) {

@@ -24,10 +24,12 @@ let M09FrontendAuthGuard = class M09FrontendAuthGuard {
         if (auth?.startsWith('Bearer ')) {
             try {
                 const payload = this.jwt.verify(auth.split(' ')[1]);
+                const backendRole = String(payload.role ?? '').toUpperCase();
+                const m09Role = backendRole === 'MANAGER' || backendRole === 'SALES_MANAGER' ? 'manager' : 'rep';
                 req.user = {
                     id: payload.sub,
                     org_id: payload.org_id || payload.tenantId || m09_memory_store_1.M09_DEV_ORG_ID,
-                    role: payload.role || 'rep',
+                    role: m09Role,
                 };
                 req.orgId = req.user.org_id;
                 return true;

@@ -1,3 +1,4 @@
+import path from 'path';
 import type { NextConfig } from 'next';
 
 const backendUrl =
@@ -11,6 +12,9 @@ const m07ApiUrl =
   `http://127.0.0.1:${process.env.M07_API_PORT ?? process.env.PORT ?? '3001'}`;
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname, '../../'),
+  },
   async rewrites() {
     return {
       beforeFiles: [

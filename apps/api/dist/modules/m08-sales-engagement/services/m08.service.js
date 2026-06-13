@@ -203,7 +203,7 @@ let M08SalesEngagementService = class M08SalesEngagementService {
         else if (targetAssigneeId === 'me') {
             targetAssigneeId = userId;
         }
-        const whereClause = { tenantId };
+        const whereClause = { tenantid: tenantId };
         if (targetAssigneeId && targetAssigneeId !== 'all') {
             whereClause.userId = targetAssigneeId;
         }
@@ -293,7 +293,7 @@ let M08SalesEngagementService = class M08SalesEngagementService {
             targetAssigneeId = userId;
         else if (targetAssigneeId === 'me')
             targetAssigneeId = userId;
-        const whereClause = { tenantId };
+        const whereClause = { tenantid: tenantId };
         if (targetAssigneeId && targetAssigneeId !== 'all')
             whereClause.userId = targetAssigneeId;
         const rawTasks = await this.repo.prisma.task.findMany({ where: whereClause });
@@ -327,10 +327,10 @@ let M08SalesEngagementService = class M08SalesEngagementService {
         };
     }
     async fetchTeamMembers(tenantId) {
-        const users = await this.repo.prisma.user.findMany({ where: { tenantId } });
+        const users = await this.repo.prisma.user.findMany({ where: { tenantid: tenantId } });
         return {
             status: 'success',
-            data: users.map((u) => ({ id: u.id, name: u.name, role: u.role })),
+            data: users.map((u) => ({ id: u.id, name: u.name ?? u.email, role: u.role })),
         };
     }
     async searchLinkedEntities(tenantId, search) {

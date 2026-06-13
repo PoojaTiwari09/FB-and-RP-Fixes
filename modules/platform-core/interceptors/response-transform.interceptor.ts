@@ -26,6 +26,12 @@ export class ResponseTransformInterceptor implements NestInterceptor {
           return data;
         }
 
+        // Bypass response wrapping for manager/frontend API routes
+        const url = req.url || '';
+        if (url.includes('/api/manager/')) {
+          return data;
+        }
+
         const requestId =
           req.headers['x-request-id'] ||
           req.headers['x-trace-id'] ||

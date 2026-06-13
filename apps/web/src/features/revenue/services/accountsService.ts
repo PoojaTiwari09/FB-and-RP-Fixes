@@ -4,6 +4,8 @@
 // Base URL: process.env.NEXT_PUBLIC_API_BASE_URL
 // ============================================================
 
+import { buildAuthHeaders } from '@/shared/lib/backend-api.shared';
+
 import type {
   AlertBannerData,
   KpiSummaryResponse,
@@ -26,8 +28,11 @@ const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: {
+      ...buildAuthHeaders(),   // Bearer token from login cookie
+      ...(init?.headers as Record<string, string> | undefined),
+    },
   });
   if (!res.ok) {
     throw new Error(`API error ${res.status} on ${path}`);

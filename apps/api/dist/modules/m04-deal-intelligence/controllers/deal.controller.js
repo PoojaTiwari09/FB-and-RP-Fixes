@@ -17,7 +17,9 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const deal_service_1 = require("@/services/deal.service");
 const auth_guard_1 = require("@/guards/auth.guard");
-const permissions_decorator_1 = require("../../platform-core/decorators/permissions.decorator");
+const roles_guard_1 = require("@/guards/roles.guard");
+const roles_decorator_1 = require("@/decorators/roles.decorator");
+const user_role_enum_1 = require("@/interfaces/user-role.enum");
 const deal_dto_1 = require("@/schemas/deal.dto");
 let DealController = class DealController {
     dealService;
@@ -76,7 +78,7 @@ let DealController = class DealController {
 exports.DealController = DealController;
 __decorate([
     (0, common_1.Get)(),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get all deals with filters' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -91,7 +93,7 @@ __decorate([
 ], DealController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('stats'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get deal statistics' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -105,7 +107,7 @@ __decorate([
 ], DealController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Get)('high-risk'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get high risk deals' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -119,7 +121,7 @@ __decorate([
 ], DealController.prototype, "getHighRiskDeals", null);
 __decorate([
     (0, common_1.Get)('closing-soon'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get deals closing soon (next 30 days)' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -133,7 +135,7 @@ __decorate([
 ], DealController.prototype, "getDealsClosingSoon", null);
 __decorate([
     (0, common_1.Get)('my-deals'),
-    (0, permissions_decorator_1.RequirePermissions)('task.view'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get deals for current user' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -147,7 +149,7 @@ __decorate([
 ], DealController.prototype, "getMyDeals", null);
 __decorate([
     (0, common_1.Get)('notifications/recent'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get recent deal updates' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -160,7 +162,7 @@ __decorate([
 ], DealController.prototype, "getRecentNotifications", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Get deal by ID' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -180,7 +182,7 @@ __decorate([
 ], DealController.prototype, "findById", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, permissions_decorator_1.RequirePermissions)('system.manage'),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
     (0, swagger_1.ApiOperation)({ summary: 'Update deal' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -203,7 +205,7 @@ exports.DealController = DealController = __decorate([
     (0, swagger_1.ApiTags)('Deals'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('deals'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [deal_service_1.DealService])
 ], DealController);
 //# sourceMappingURL=deal.controller.js.map

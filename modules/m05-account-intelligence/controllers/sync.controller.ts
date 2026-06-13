@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, Logger, HttpCode } from '@nestjs/common';
 import { SyncService } from '../services/sync.service';
 
 @Controller('api/v1/account-intelligence/sync')
@@ -13,6 +13,7 @@ export class SyncController {
    * Body: { role: string }  (only admin allowed)
    */
   @Post('trigger')
+  @HttpCode(200)
   async triggerSync(@Body() body: { role: string }) {
     if (body.role !== 'admin') {
       return { success: false, error: 'Only admin role can trigger sync' };

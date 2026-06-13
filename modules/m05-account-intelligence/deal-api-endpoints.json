@@ -1,0 +1,143 @@
+[
+  {
+    "name": "Get Deal Overview",
+    "method": "GET",
+    "url": "/api/manager/revenue/deals/:dealId/overview",
+    "description": "Fetch the AI risks and objections details for the given deal, supporting dynamic severity levels (HIGH, MEDIUM, LOW) based on parent company risk score and close date check.",
+    "response_example": {
+      "risksAndObjections": [
+        {
+          "title": "High AI Risk Score",
+          "severity": "HIGH",
+          "mentionedCount": 3,
+          "lastMentioned": "Yesterday"
+        },
+        {
+          "title": "Past Close Date",
+          "severity": "HIGH",
+          "mentionedCount": 1,
+          "lastMentioned": "Date Check"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Get Deal Activity",
+    "method": "GET",
+    "url": "/api/manager/revenue/deals/:dealId/activity",
+    "description": "Retrieve historical activity/engagement events belonging to the parent company associated with this deal.",
+    "response_example": {
+      "items": [
+        {
+          "type": "Call",
+          "datetime": "2026-06-11T12:00:00.000Z",
+          "with": "Contact",
+          "subject": "Discovery Call",
+          "createdBy": "Unassigned"
+        }
+      ],
+      "total": 1,
+      "page": 1,
+      "totalPages": 1
+    }
+  },
+  {
+    "name": "Get Deal Briefs",
+    "method": "GET",
+    "url": "/api/manager/revenue/deals/:dealId/briefs",
+    "description": "Retrieve the generated/cached AI summary and briefs of the parent company associated with this deal.",
+    "response_example": {
+      "briefContent": "**Deal Summary for Acme Expansion**\n\nThis account is performing well but has upcoming renewals."
+    }
+  },
+  {
+    "name": "Get Deal To-dos",
+    "method": "GET",
+    "url": "/api/manager/revenue/deals/:dealId/todos",
+    "description": "Retrieve list of actionable/pending todos belonging to the parent company of the deal.",
+    "response_example": {
+      "todos": [
+        {
+          "id": "todo_1",
+          "title": "Follow up on Q3 goals",
+          "dueDate": "2026-06-12T12:00:00.000Z",
+          "assignee": "Rep",
+          "completed": false
+        }
+      ]
+    }
+  },
+  {
+    "name": "Toggle Deal Todo Completion",
+    "method": "PATCH",
+    "url": "/api/manager/revenue/deals/:dealId/todos/:todoId",
+    "description": "Mark a todo item complete or incomplete.",
+    "request_payload": {
+      "completed": true
+    },
+    "response_example": {
+      "success": true,
+      "completed": true
+    }
+  },
+  {
+    "name": "Get Deal Notes",
+    "method": "GET",
+    "url": "/api/manager/revenue/deals/:dealId/notes",
+    "description": "Retrieve account/deal intelligence manager notes from the parent company's supplementary info.",
+    "response_example": {
+      "notes": "Acme is evaluating competitors.",
+      "updatedAt": "2026-06-12T12:00:00.000Z"
+    }
+  },
+  {
+    "name": "Save Deal Notes",
+    "method": "PATCH",
+    "url": "/api/manager/revenue/deals/:dealId/notes",
+    "description": "Update/save manager notes on the parent company's supplementary account info.",
+    "request_payload": {
+      "notes": "Acme is evaluating competitors. Need to schedule a follow up call."
+    },
+    "response_example": {
+      "success": true
+    }
+  },
+  {
+    "name": "Get Deal CRM",
+    "method": "GET",
+    "url": "/api/manager/revenue/deals/:dealId/crm",
+    "description": "Retrieve CRM fields (Name, Stage, Amount, Type, Close Date) combined with parent company metadata.",
+    "response_example": {
+      "crmFields": [
+        {
+          "label": "Deal Name",
+          "value": "Acme Expansion"
+        },
+        {
+          "label": "Stage",
+          "value": "Proposal Sent"
+        },
+        {
+          "label": "Amount",
+          "value": "150000"
+        },
+        {
+          "label": "Deal Type",
+          "value": "Upsell"
+        },
+        {
+          "label": "Close Date",
+          "value": "Tue Jun 30 2026"
+        },
+        {
+          "label": "Company Name",
+          "value": "Acme Corp"
+        },
+        {
+          "label": "Industry",
+          "value": "Software"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,1 @@
+import { createM05DbClient } from './modules/m05-account-intelligence/database/m05-db.client'; async function run() { const p = createM05DbClient(); const count = await p.from('m05_board_columns').select('*').eq('board_id', 'brd-demo'); console.log(count.data?.length); } run().catch(console.error);

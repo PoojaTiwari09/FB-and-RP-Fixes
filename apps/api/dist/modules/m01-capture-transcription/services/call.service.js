@@ -124,6 +124,17 @@ let CallService = class CallService {
     async searchWithinCall(callId, tenantId, query) {
         return this.search.searchWithinCall(callId, tenantId, query.q);
     }
+    async listNotes(callId, tenantId, authorId) {
+        const rows = await this.notes.findByCallId(callId, tenantId, authorId);
+        return rows.map((n) => ({
+            noteId: n.id,
+            callId: n.callId,
+            note: n.content,
+            userId: n.authorId,
+            timestamp: n.createdAt.toISOString(),
+            createdAt: n.createdAt.toISOString(),
+        }));
+    }
     async createNote(callId, tenantId, authorId, dto) {
         return this.notes.create(callId, tenantId, authorId, dto);
     }

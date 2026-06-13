@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { getSupabase } from '../config/supabase';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class BoardsService {
-  private supabase = getSupabase();
+  constructor(private readonly prisma: PrismaService) {}
 
   private readonly COLUMN_TYPES: Record<string, string> = {
     name: 'system',
@@ -18,32 +18,19 @@ export class BoardsService {
   };
 
   async getAllBoards() {
-    // Fetch board configs
-    const { data: boards, error: boardError } = await this.supabase
-      .from('board_config')
-      .select('*')
-      .order('created_at', { ascending: true });
+    const boards = await this.prisma.m05BoardConfig.findMany({
+      orderBy: { created_at: 'asc' },
+    });
 
-    if (boardError) throw new Error(boardError.message);
+    const tabs = await this.prisma.m05BoardTab.findMany({
+      orderBy: { order: 'asc' },
+    });
 
-    // Fetch all tabs
-    const { data: tabs, error: tabError } = await this.supabase
-      .from('board_tabs')
-      .select('*')
-      .order('order', { ascending: true });
+    const columns = await this.prisma.m05BoardColumn.findMany({
+      orderBy: { order: 'asc' },
+    });
 
-    if (tabError) throw new Error(tabError.message);
-
-    // Fetch all columns
-    const { data: columns, error: colError } = await this.supabase
-      .from('board_columns')
-      .select('*')
-      .order('order', { ascending: true });
-
-    if (colError) throw new Error(colError.message);
-
-    // Assemble response
-    return (boards || []).map((board) => ({
+    return boards.map((board) => ({
       id: board.board_id,
       name: board.name,
       slug: board.slug,
@@ -57,19 +44,19 @@ export class BoardsService {
       aggregation_method: board.aggregation_method || 'count',
       created_by_user_id: board.created_by_user_id || null,
       date_filter_field: board.date_filter_field || 'activity_date',
-      tabs: (tabs || [])
+      tabs: tabs
         .filter((t) => t.board_id === board.board_id)
         .map((t) => ({
-          id: t.tab_id,
+          id: t.tab_id.replace(board.board_id + '_', ''), // Strip prefix
           label: t.label,
           order: t.order,
           is_default: t.is_default,
           filter_logic: t.filter_logic,
         })),
-      columns: (columns || [])
+      columns: columns
         .filter((c) => c.board_id === board.board_id)
         .map((c) => ({
-          id: c.col_id ?? c.column_id,
+          id: c.col_id.replace(board.board_id + '_', ''),
           field_key: c.field_key,
           label: c.label,
           order: c.order,
@@ -88,19 +75,14 @@ export class BoardsService {
   }
 
   async getPermissions(role: string) {
-    const { data, error } = await this.supabase
-      .from('permission_profiles')
-      .select('*')
-      .eq('role', role)
-      .single();
-
-    if (error) throw new Error(error.message);
+    const data = await this.prisma.m05PermissionProfile.findUnique({
+      where: { role },
+    });
+    if (!data) throw new Error('Permissions not found');
     return data;
   }
 
   async getTeam() {
-    // Read from seed data — team is not stored in Supabase
-    // In production this would come from a users table
     return [
       { id: 'rep_01', name: 'Sarah Mitchell', role: 'rep', title: 'Account Executive' },
       { id: 'rep_02', name: 'James Torres', role: 'rep', title: 'Senior Account Executive' },
@@ -112,23 +94,17 @@ export class BoardsService {
   async updateBoard(slug: string, data: any) {
     const VALID_SORT_FIELDS = ['name', 'exit_arr', 'last_activity_date', 'employee_count'];
 
-    // Validate sort field if provided
     if (data.default_sort_field && !VALID_SORT_FIELDS.includes(data.default_sort_field)) {
-      throw new BadRequestException(
-        `default_sort_field must be one of: ${VALID_SORT_FIELDS.join(', ')}`,
-      );
+      throw new BadRequestException(`default_sort_field must be one of: ${VALID_SORT_FIELDS.join(', ')}`);
     }
 
-    // Verify board exists
-    const { data: existing, error: findErr } = await this.supabase
-      .from('board_config')
-      .select('board_id')
-      .eq('slug', slug)
-      .single();
-    if (findErr || !existing) throw new NotFoundException(`Board '${slug}' not found`);
+    const existing = await this.prisma.m05BoardConfig.findUnique({
+      where: { slug },
+      select: { board_id: true }
+    });
+    if (!existing) throw new NotFoundException(`Board '${slug}' not found`);
 
-    // Build update payload — only set defined fields
-    const patch: Record<string, any> = { updated_at: new Date().toISOString() };
+    const patch: any = { updated_at: new Date() };
     if (data.name !== undefined) patch.name = data.name;
     if (data.description !== undefined) patch.description = data.description;
     if (data.date_filter_enabled !== undefined) patch.date_filter_enabled = data.date_filter_enabled;
@@ -151,40 +127,58 @@ export class BoardsService {
       patch.date_filter_field = data.date_filter_field;
     }
 
-    const { error: configError } = await this.supabase
-      .from('board_config')
-      .update(patch)
-      .eq('slug', slug);
-    if (configError) throw new Error(configError.message);
+    await this.prisma.m05BoardConfig.update({
+      where: { slug },
+      data: patch,
+    });
 
-    // If tabs provided, upsert them
     if (data.tabs) {
       for (const tab of data.tabs) {
-        await this.supabase.from('board_tabs').upsert({
-          tab_id: tab.id,
-          board_id: tab.board_id,
-          label: tab.label,
-          order: tab.order,
-          filter_logic: tab.filter_logic,
-          is_default: tab.is_default,
-        }, { onConflict: 'tab_id' });
+        await this.prisma.m05BoardTab.upsert({
+          where: { tab_id: `${tab.board_id}_${tab.id}` },
+          create: {
+            tab_id: `${tab.board_id}_${tab.id}`,
+            board_id: tab.board_id,
+            label: tab.label,
+            order: tab.order,
+            filter_logic: tab.filter_logic,
+            is_default: tab.is_default,
+          },
+          update: {
+            label: tab.label,
+            order: tab.order,
+            filter_logic: tab.filter_logic,
+            is_default: tab.is_default,
+          }
+        });
       }
     }
 
-    // If columns provided, upsert them
     if (data.columns) {
       for (const col of data.columns) {
-        await this.supabase.from('board_columns').upsert({
-          col_id: col.id,
-          board_id: col.board_id,
-          field_key: col.field_key,
-          label: col.label,
-          order: col.order,
-          width: col.width,
-          sortable: col.sortable,
-          editable: col.editable,
-          visible_to_roles: col.visible_to_roles,
-        }, { onConflict: 'col_id' });
+        await this.prisma.m05BoardColumn.upsert({
+          where: { col_id: `${col.board_id}_${col.id}` },
+          create: {
+            col_id: `${col.board_id}_${col.id}`,
+            board_id: col.board_id,
+            field_key: col.field_key,
+            label: col.label,
+            order: col.order,
+            width: col.width,
+            sortable: col.sortable,
+            editable: col.editable,
+            visible_to_roles: col.visible_to_roles,
+          },
+          update: {
+            field_key: col.field_key,
+            label: col.label,
+            order: col.order,
+            width: col.width,
+            sortable: col.sortable,
+            editable: col.editable,
+            visible_to_roles: col.visible_to_roles,
+          }
+        });
       }
     }
 
@@ -192,134 +186,100 @@ export class BoardsService {
   }
 
   async duplicateBoard(slug: string) {
-    // Fetch original board
-    const { data: original, error: fetchErr } = await this.supabase
-      .from('board_config')
-      .select('*')
-      .eq('slug', slug)
-      .single();
-    if (fetchErr || !original) throw new NotFoundException(`Board '${slug}' not found`);
+    try {
+      const original = await this.prisma.m05BoardConfig.findUnique({ where: { slug } });
+      if (!original) throw new NotFoundException(`Board '${slug}' not found`);
 
-    // Fetch original tabs & columns
-    const { data: origTabs } = await this.supabase
-      .from('board_tabs')
-      .select('*')
-      .eq('board_id', original.board_id)
-      .order('order', { ascending: true });
+      const origTabs = await this.prisma.m05BoardTab.findMany({
+        where: { board_id: original.board_id },
+        orderBy: { order: 'asc' }
+      });
 
-    const { data: origCols } = await this.supabase
-      .from('board_columns')
-      .select('*')
-      .eq('board_id', original.board_id)
-      .order('order', { ascending: true });
+      const origCols = await this.prisma.m05BoardColumn.findMany({
+        where: { board_id: original.board_id },
+        orderBy: { order: 'asc' }
+      });
 
-    // Generate new IDs
-    const newBoardId = `board_${Date.now()}`;
-    const baseSlug = `${original.slug}-copy`;
-    // Ensure unique slug
-    const { data: slugCheck } = await (this.supabase.from('board_config').select('slug') as any).like('slug', `${baseSlug}%`);
-    const existingSlugs = (slugCheck || []).map((r: any) => r.slug);
-    let newSlug = baseSlug;
-    let counter = 2;
-    while (existingSlugs.includes(newSlug)) {
-      newSlug = `${baseSlug}-${counter++}`;
+      const newBoardId = `board_${Date.now()}`;
+      const baseSlug = `${original.slug}-copy`;
+      
+      const slugCheck = await this.prisma.m05BoardConfig.findMany({ select: { slug: true } });
+      const existingSlugs = slugCheck.map(r => r.slug).filter(s => s.startsWith(baseSlug));
+      let newSlug = baseSlug;
+      let counter = 2;
+      while (existingSlugs.includes(newSlug)) {
+        newSlug = `${baseSlug}-${counter++}`;
+      }
+
+      const now = new Date();
+
+      await this.prisma.m05BoardConfig.create({
+        data: {
+          board_id: newBoardId,
+          name: `${original.name} (Copy)`,
+          slug: newSlug,
+          description: original.description,
+          default_sort_field: original.default_sort_field,
+          default_sort_dir: original.default_sort_dir,
+          date_filter_enabled: original.date_filter_enabled,
+          ai_briefs_enabled: original.ai_briefs_enabled,
+          brief_type: original.brief_type || 'full',
+          brief_period_days: original.brief_period_days ?? 30,
+          aggregation_method: original.aggregation_method || 'count',
+          created_by_user_id: original.created_by_user_id || null,
+          parent_board_slug: original.slug,
+          created_at: now,
+          updated_at: now,
+        }
+      });
+
+      if (origTabs.length > 0) {
+        await this.prisma.m05BoardTab.createMany({
+          data: origTabs.map(t => ({
+            tab_id: `${newBoardId}_tab_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            board_id: newBoardId,
+            label: t.label,
+            order: t.order,
+            is_default: t.is_default,
+            filter_logic: t.filter_logic || {},
+          }))
+        });
+      }
+
+      if (origCols.length > 0) {
+        await this.prisma.m05BoardColumn.createMany({
+          data: origCols.map(c => ({
+            col_id: `${newBoardId}_col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            board_id: newBoardId,
+            field_key: c.field_key,
+            label: c.label,
+            order: c.order,
+            width: c.width,
+            sortable: c.sortable,
+            editable: c.editable,
+            visible_to_roles: c.visible_to_roles,
+          }))
+        });
+      }
+
+      return this.getBoardBySlug(newSlug);
+    } catch (e: any) {
+      throw new BadRequestException(`Duplicate Error: ${e.message}`);
     }
-
-    const now = new Date().toISOString();
-
-    // Insert new board_config
-    const { error: insertErr } = await this.supabase.from('board_config').insert({
-      board_id: newBoardId,
-      name: `${original.name} (Copy)`,
-      slug: newSlug,
-      description: original.description,
-      default_sort_field: original.default_sort_field,
-      default_sort_dir: original.default_sort_dir,
-      date_filter_enabled: original.date_filter_enabled,
-      ai_briefs_enabled: original.ai_briefs_enabled,
-      brief_type: original.brief_type || 'full',
-      brief_period_days: original.brief_period_days ?? 30,
-      aggregation_method: original.aggregation_method || 'count',
-      created_by_user_id: original.created_by_user_id || null,
-      parent_board_slug: original.slug,   // ← resolves company pool from source board
-      created_at: now,
-      updated_at: now,
-    });
-    if (insertErr) throw new Error(insertErr.message);
-
-    // Copy tabs
-    if (origTabs && origTabs.length > 0) {
-      const newTabs = origTabs.map((t: any) => ({
-        tab_id: `tab_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        board_id: newBoardId,
-        label: t.label,
-        order: t.order,
-        is_default: t.is_default,
-        filter_logic: t.filter_logic,
-      }));
-      const { error: tabErr } = await this.supabase.from('board_tabs').insert(newTabs);
-      if (tabErr) throw new Error(tabErr.message);
-    }
-
-    // Copy columns
-    if (origCols && origCols.length > 0) {
-      const newCols = origCols.map((c: any) => ({
-        col_id: `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        board_id: newBoardId,
-        field_key: c.field_key,
-        label: c.label,
-        order: c.order,
-        width: c.width,
-        sortable: c.sortable,
-        editable: c.editable,
-        visible_to_roles: c.visible_to_roles,
-      }));
-      const { error: colErr } = await this.supabase.from('board_columns').insert(newCols);
-      if (colErr) throw new Error(colErr.message);
-    }
-
-    return this.getBoardBySlug(newSlug);
   }
 
   async deleteBoard(slug: string) {
-    // Fetch the board to get board_id
-    const { data: board, error: fetchErr } = await this.supabase
-      .from('board_config')
-      .select('board_id')
-      .eq('slug', slug)
-      .single();
-    if (fetchErr || !board) throw new NotFoundException(`Board '${slug}' not found`);
+    const board = await this.prisma.m05BoardConfig.findUnique({ where: { slug }, select: { board_id: true } });
+    if (!board) throw new NotFoundException(`Board '${slug}' not found`);
 
     const boardId = board.board_id;
 
-    // Cascade: delete columns → tabs → config
-    const { error: colErr } = await this.supabase
-      .from('board_columns')
-      .delete()
-      .eq('board_id', boardId);
-    if (colErr) throw new Error(colErr.message);
-
-    const { error: tabErr } = await this.supabase
-      .from('board_tabs')
-      .delete()
-      .eq('board_id', boardId);
-    if (tabErr) throw new Error(tabErr.message);
-
-    const { error: cfgErr } = await this.supabase
-      .from('board_config')
-      .delete()
-      .eq('board_id', boardId);
-    if (cfgErr) throw new Error(cfgErr.message);
+    // Prisma Cascade handles deletion of tabs and columns
+    await this.prisma.m05BoardConfig.delete({ where: { board_id: boardId } });
 
     return { success: true, deleted_slug: slug };
   }
 
-  // ── 3A. Board Creation Wizard ────────────────────────────────────────
-  /**
-   * Multi-step board creation.
-   * Steps 1–3: validate only, return errors.
-   * Step 4: validate + atomically write board_config, board_tabs, board_columns.
-   */
   async createBoard(step: number, data: any) {
     switch (step) {
       case 1: return this.validateStep1(data);
@@ -362,7 +322,7 @@ export class BoardsService {
     const AVAILABLE_FIELDS = [
       'name', 'exit_arr', 'contacts_count', 'activity_timeline',
       'last_activity_date', 'manager_note', 'open_deals_summary',
-      'renewal_date', 'employee_count',
+      'renewal_date', 'employee_count', 'custom_score'
     ];
     if (!data.columns || !Array.isArray(data.columns) || data.columns.length === 0) {
       errors.push('at least 1 column is required');
@@ -384,20 +344,17 @@ export class BoardsService {
   }
 
   private async finalizeBoard(data: any) {
-    // Validate all steps
     this.validateStep1(data);
     this.validateStep2(data);
     this.validateStep3(data);
 
-    // Generate slug from name (lowercase, replace spaces/special chars with hyphens)
     const baseSlug = data.name.trim()
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-    // Ensure unique slug
-    const { data: slugCheck } = await (this.supabase.from('board_config').select('slug') as any).like('slug', `${baseSlug}%`);
-    const existingSlugs = (slugCheck || []).map((r: any) => r.slug);
+    const slugCheck = await this.prisma.m05BoardConfig.findMany({ select: { slug: true } });
+    const existingSlugs = slugCheck.map(r => r.slug).filter(s => s.startsWith(baseSlug));
     let newSlug = baseSlug;
     let counter = 2;
     while (existingSlugs.includes(newSlug)) {
@@ -405,42 +362,40 @@ export class BoardsService {
     }
 
     const newBoardId = `board_${Date.now()}`;
-    const now = new Date().toISOString();
+    const now = new Date();
 
-    // Insert board_config
-    const { error: cfgErr } = await this.supabase.from('board_config').insert({
-      board_id: newBoardId,
-      name: data.name.trim(),
-      slug: newSlug,
-      description: data.description?.trim() || '',
-      default_sort_field: 'exit_arr',
-      default_sort_dir: 'desc',
-      date_filter_enabled: true,
-      ai_briefs_enabled: data.ai_briefs_enabled ?? true,
-      aggregation_method: data.aggregation_method,
-      created_by_user_id: data.created_by_user_id || null,
-      date_filter_field: data.date_filter_field || 'activity_date',
-      parent_board_slug: data.parent_board_slug || null,
-      created_at: now,
-      updated_at: now,
-    });
-    if (cfgErr) throw new Error(cfgErr.message);
-
-    // Insert tabs
-    if (data.tabs && data.tabs.length > 0) {
-      const tabRows = data.tabs.map((tab: any, i: number) => ({
-        tab_id: `tab_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    await this.prisma.m05BoardConfig.create({
+      data: {
         board_id: newBoardId,
-        label: tab.label.trim(),
-        order: i,
-        is_default: i === 0,
-        filter_logic: tab.filter_logic || { operator: 'AND', conditions: [] },
-      }));
-      const { error: tabErr } = await this.supabase.from('board_tabs').insert(tabRows);
-      if (tabErr) throw new Error(tabErr.message);
+        name: data.name.trim(),
+        slug: newSlug,
+        description: data.description?.trim() || '',
+        default_sort_field: 'exit_arr',
+        default_sort_dir: 'desc',
+        date_filter_enabled: true,
+        ai_briefs_enabled: data.ai_briefs_enabled ?? true,
+        aggregation_method: data.aggregation_method,
+        created_by_user_id: data.created_by_user_id || null,
+        date_filter_field: data.date_filter_field || 'activity_date',
+        parent_board_slug: data.parent_board_slug || null,
+        created_at: now,
+        updated_at: now,
+      }
+    });
+
+    if (data.tabs && data.tabs.length > 0) {
+      await this.prisma.m05BoardTab.createMany({
+        data: data.tabs.map((tab: any, i: number) => ({
+          tab_id: `${newBoardId}_tab_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          board_id: newBoardId,
+          label: tab.label.trim(),
+          order: i,
+          is_default: i === 0,
+          filter_logic: tab.filter_logic || {},
+        }))
+      });
     }
 
-    // Insert columns
     if (data.columns && data.columns.length > 0) {
       const SYSTEM_FIELDS: Record<string, Partial<any>> = {
         name: { label: 'Account', width: 220, sortable: true, editable: false },
@@ -454,69 +409,61 @@ export class BoardsService {
         employee_count: { label: 'Employees', width: 100, sortable: true, editable: false },
       };
 
-      const colRows = data.columns.map((col: any, i: number) => {
-        const defaults = SYSTEM_FIELDS[col.field_key] || {};
-        return {
-          col_id: `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          board_id: newBoardId,
-          field_key: col.field_key,
-          label: col.label || defaults.label || col.field_key,
-          order: i,
-          width: col.width || defaults.width || 120,
-          sortable: col.sortable ?? defaults.sortable ?? false,
-          editable: col.editable ?? defaults.editable ?? false,
-          visible_to_roles: col.visible_to_roles || ['rep', 'manager', 'admin'],
-          column_type: col.column_type || this.COLUMN_TYPES[col.field_key] || 'crm',
-        };
+      await this.prisma.m05BoardColumn.createMany({
+        data: data.columns.map((col: any, i: number) => {
+          const defaults = SYSTEM_FIELDS[col.field_key] || {};
+          return {
+            col_id: `${newBoardId}_col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            board_id: newBoardId,
+            field_key: col.field_key,
+            label: col.label || defaults.label || col.field_key,
+            order: i,
+            width: col.width || defaults.width || 120,
+            sortable: col.sortable ?? defaults.sortable ?? false,
+            editable: col.editable ?? defaults.editable ?? false,
+            visible_to_roles: col.visible_to_roles || ['rep', 'manager', 'admin'],
+            column_type: col.column_type || this.COLUMN_TYPES[col.field_key] || 'crm',
+          };
+        })
       });
-      const { error: colErr } = await this.supabase.from('board_columns').insert(colRows);
-      if (colErr) throw new Error(colErr.message);
     }
 
     return this.getBoardBySlug(newSlug);
   }
 
-  // ── 3B. Column Configuration API ────────────────────────────────────
-
   async addColumn(slug: string, col: any) {
     const MAX_COLUMNS = 15;
 
-    // Get board
-    const { data: board, error: boardErr } = await this.supabase
-      .from('board_config')
-      .select('board_id')
-      .eq('slug', slug)
-      .single();
-    if (boardErr || !board) throw new NotFoundException(`Board '${slug}' not found`);
+    const board = await this.prisma.m05BoardConfig.findUnique({ where: { slug }, select: { board_id: true } });
+    if (!board) throw new NotFoundException(`Board '${slug}' not found`);
 
-    // Count existing columns
-    const { count } = await this.supabase
-      .from('board_columns')
-      .select('col_id', { count: 'exact', head: true } as any)
-      .eq('board_id', board.board_id);
-
-    if ((count || 0) >= MAX_COLUMNS) {
+    const count = await this.prisma.m05BoardColumn.count({ where: { board_id: board.board_id } });
+    if (count >= MAX_COLUMNS) {
       throw new BadRequestException(`Maximum ${MAX_COLUMNS} columns per board allowed`);
     }
 
-    // Validate field_key
     const AVAILABLE_FIELDS = [
       'name', 'exit_arr', 'contacts_count', 'activity_timeline',
       'last_activity_date', 'manager_note', 'open_deals_summary',
-      'renewal_date', 'employee_count',
+      'renewal_date', 'employee_count', 'custom_score'
     ];
     if (!col.field_key || !AVAILABLE_FIELDS.includes(col.field_key)) {
       throw new BadRequestException(`field_key must be one of: ${AVAILABLE_FIELDS.join(', ')}`);
     }
 
-    // Get next order
-    const { data: existing } = await this.supabase
-      .from('board_columns')
-      .select('order')
-      .eq('board_id', board.board_id)
-      .order('order', { ascending: false })
-      .limit(1);
-    const nextOrder = existing && existing.length > 0 ? existing[0].order + 1 : 0;
+    // Prevent duplicate columns
+    const alreadyExists = await this.prisma.m05BoardColumn.findFirst({
+      where: { board_id: board.board_id, field_key: col.field_key }
+    });
+    if (alreadyExists) {
+      return alreadyExists;
+    }
+
+    const existing = await this.prisma.m05BoardColumn.findFirst({
+      where: { board_id: board.board_id },
+      orderBy: { order: 'desc' }
+    });
+    const nextOrder = existing ? existing.order + 1 : 0;
 
     const inferredType = col.column_type || this.COLUMN_TYPES[col.field_key] || 'crm';
     if (inferredType === 'system') {
@@ -525,55 +472,44 @@ export class BoardsService {
       );
     }
 
-    const newCol = {
-      col_id: `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      board_id: board.board_id,
-      field_key: col.field_key,
-      label: col.label || col.field_key,
-      order: nextOrder,
-      width: col.width || 120,
-      sortable: col.sortable ?? false,
-      editable: col.editable ?? false,
-      visible_to_roles: col.visible_to_roles || ['rep', 'manager', 'admin'],
-      column_type: inferredType,
-    };
+    const newColId = `${board.board_id}_col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const newCol = await this.prisma.m05BoardColumn.create({
+      data: {
+        col_id: newColId,
+        board_id: board.board_id,
+        field_key: col.field_key,
+        label: col.label || col.field_key,
+        order: nextOrder,
+        width: col.width || 120,
+        sortable: col.sortable ?? false,
+        editable: col.editable ?? false,
+        visible_to_roles: col.visible_to_roles || ['rep', 'manager', 'admin'],
+        column_type: inferredType,
+      }
+    });
 
-    const { error } = await this.supabase.from('board_columns').insert(newCol);
-    if (error) throw new Error(error.message);
-
-    return newCol;
+    return { ...newCol, col_id: newCol.col_id.replace(board.board_id + '_', '') };
   }
 
   async updateColumn(slug: string, colId: string, updates: any) {
-    // Validate board exists
-    const { data: board } = await this.supabase
-      .from('board_config')
-      .select('board_id')
-      .eq('slug', slug)
-      .single();
+    const board = await this.prisma.m05BoardConfig.findUnique({ where: { slug }, select: { board_id: true } });
     if (!board) throw new NotFoundException(`Board '${slug}' not found`);
 
-    // Validate column belongs to board
-    const { data: col } = await this.supabase
-      .from('board_columns')
-      .select('col_id, field_key')
-      .eq('col_id', colId)
-      .eq('board_id', board.board_id)
-      .single();
-    if (!col) throw new NotFoundException(`Column '${colId}' not found on board '${slug}'`);
+    const realColId = colId.startsWith(board.board_id + '_') ? colId : `${board.board_id}_${colId}`;
 
-    // Only allow updating safe fields
-    const patch: Record<string, any> = {};
+    const col = await this.prisma.m05BoardColumn.findUnique({ where: { col_id: realColId } });
+    if (!col || col.board_id !== board.board_id) throw new NotFoundException(`Column '${colId}' not found on board '${slug}'`);
+
+    const patch: any = {};
     if (updates.label !== undefined) patch.label = updates.label;
     if (updates.display_order !== undefined) patch.order = updates.display_order;
     if (updates.visible_to_roles !== undefined) patch.visible_to_roles = updates.visible_to_roles;
     if (updates.width !== undefined) patch.width = updates.width;
 
-    const { error } = await this.supabase
-      .from('board_columns')
-      .update(patch)
-      .eq('col_id', colId);
-    if (error) throw new Error(error.message);
+    await this.prisma.m05BoardColumn.update({
+      where: { col_id: realColId },
+      data: patch,
+    });
 
     return { col_id: colId, ...patch };
   }
@@ -581,35 +517,22 @@ export class BoardsService {
   async deleteColumn(slug: string, colId: string) {
     const PROTECTED_FIELDS = ['name', 'exit_arr'];
 
-    const { data: board } = await this.supabase
-      .from('board_config')
-      .select('board_id')
-      .eq('slug', slug)
-      .single();
+    const board = await this.prisma.m05BoardConfig.findUnique({ where: { slug }, select: { board_id: true } });
     if (!board) throw new NotFoundException(`Board '${slug}' not found`);
 
-    const { data: col } = await this.supabase
-      .from('board_columns')
-      .select('col_id, field_key')
-      .eq('col_id', colId)
-      .eq('board_id', board.board_id)
-      .single();
-    if (!col) throw new NotFoundException(`Column '${colId}' not found on board '${slug}'`);
+    const realColId = colId.startsWith(board.board_id + '_') ? colId : `${board.board_id}_${colId}`;
+    const col = await this.prisma.m05BoardColumn.findUnique({ where: { col_id: realColId } });
+    if (!col || col.board_id !== board.board_id) throw new NotFoundException(`Column '${colId}' not found on board '${slug}'`);
 
     if (PROTECTED_FIELDS.includes(col.field_key)) {
       throw new BadRequestException(`Cannot remove the "${col.field_key}" column — it is required on all boards`);
     }
 
-    const { error } = await this.supabase
-      .from('board_columns')
-      .delete()
-      .eq('col_id', colId);
-    if (error) throw new Error(error.message);
+    await this.prisma.m05BoardColumn.delete({ where: { col_id: realColId } });
 
     return { success: true, deleted_col_id: colId };
   }
 
-  // ── 4A. Brief Config (BF-04) ─────────────────────────────────────────
   async updateBriefConfig(slug: string, config: {
     ai_briefs_enabled?: boolean;
     brief_type?: string;
@@ -618,18 +541,12 @@ export class BoardsService {
     const VALID_BRIEF_TYPES = ['full', 'summary', 'risk_only'];
     const VALID_PERIODS = [7, 30, 60, 90];
 
-    const { data: board } = await this.supabase
-      .from('board_config')
-      .select('board_id')
-      .eq('slug', slug)
-      .single();
+    const board = await this.prisma.m05BoardConfig.findUnique({ where: { slug }, select: { board_id: true } });
     if (!board) throw new NotFoundException(`Board '${slug}' not found`);
 
-    const patch: Record<string, any> = { updated_at: new Date().toISOString() };
+    const patch: any = { updated_at: new Date() };
 
-    if (config.ai_briefs_enabled !== undefined) {
-      patch.ai_briefs_enabled = config.ai_briefs_enabled;
-    }
+    if (config.ai_briefs_enabled !== undefined) patch.ai_briefs_enabled = config.ai_briefs_enabled;
     if (config.brief_type !== undefined) {
       if (!VALID_BRIEF_TYPES.includes(config.brief_type)) {
         throw new BadRequestException(`brief_type must be one of: ${VALID_BRIEF_TYPES.join(', ')}`);
@@ -643,11 +560,7 @@ export class BoardsService {
       patch.brief_period_days = config.brief_period_days;
     }
 
-    const { error } = await this.supabase
-      .from('board_config')
-      .update(patch)
-      .eq('slug', slug);
-    if (error) throw new Error(error.message);
+    await this.prisma.m05BoardConfig.update({ where: { slug }, data: patch });
 
     return this.getBoardBySlug(slug);
   }
