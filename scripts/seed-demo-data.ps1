@@ -78,6 +78,12 @@ pnpm run seed:m04
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Seed warning: pnpm run seed:m04 exited $LASTEXITCODE" -ForegroundColor Yellow
 }
+
+Write-Host "[9/9] M07 Revenue Dashboards demo deals (Q1 + Q2 2026)..." -ForegroundColor Yellow
+pnpm run seed:m07
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Seed warning: pnpm run seed:m07 exited $LASTEXITCODE" -ForegroundColor Yellow
+}
 Pop-Location
 
 if ($code -ne 0) {
