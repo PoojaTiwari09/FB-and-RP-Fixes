@@ -37,10 +37,10 @@ export default function SourceBoardPeriodSelector({ periodName, onChange }: Sour
       })
       .catch(() => {
         setPeriods([
-          { periodId: 'q2-fy26-demo', name: 'Q2 FY26' },
-          { periodId: 'q1-fy26-demo', name: 'Q1 FY26' },
+          { periodId: '00000000-0000-0000-0000-0000000000b2', name: 'Q2 FY26' },
+          { periodId: '00000000-0000-0000-0000-0000000000b1', name: 'Q1 FY26' },
           { periodId: 'q4-fy25-demo', name: 'Q4 FY25' },
-          { periodId: 'q2-fy25-demo', name: 'Q2 FY25' }
+          { periodId: 'q2-fy25-demo', name: 'Q2 FY25' },
         ]);
       });
   }, []);

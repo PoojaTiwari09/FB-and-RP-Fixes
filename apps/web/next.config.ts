@@ -21,8 +21,6 @@ const nextConfig: NextConfig = {
         },
       ],
       afterFiles: [
-        { source: '/api/v1/:path*',           destination: `${backendUrl}/api/v1/:path*` },
-        { source: '/api/forecast/:path*',     destination: `${backendUrl}/api/forecast/:path*` },
         { source: '/api/deals/:path*',        destination: `${backendUrl}/api/deals/:path*` },
         { source: '/api/deal-boards/:path*',  destination: `${backendUrl}/api/deal-boards/:path*` },
         { source: '/api/notifications/:path*', destination: `${backendUrl}/api/notifications/:path*` },

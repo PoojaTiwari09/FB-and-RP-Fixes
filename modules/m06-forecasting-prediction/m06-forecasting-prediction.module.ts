@@ -5,7 +5,6 @@ import { M06ForecastingPredictionController } from './controllers/m06.controller
 import { M06ExecutiveController } from './controllers/executive.controller';
 import { HubSpotController } from './controllers/hubspot.controller';
 import { AdminForecastBoardsController } from './controllers/admin-forecast-boards.controller';
-import { ForecastBoardsController } from './controllers/forecast-boards.controller';
 import { M06ForecastingPredictionService } from './services/m06.service';
 import { ForecastBoardsService } from './services/forecast-boards.service';
 import { AdminForecastBoardsService } from './services/admin-forecast-boards.service';
@@ -34,7 +33,6 @@ import { ForecastUpgradeService } from './services/forecast-upgrade.service';
     M06ExecutiveController,
     HubSpotController,
     AdminForecastBoardsController,
-    ForecastBoardsController,
     ForecastUpgradeController,
   ],
   providers: [

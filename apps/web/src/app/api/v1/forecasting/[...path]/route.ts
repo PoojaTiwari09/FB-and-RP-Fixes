@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001';
 const DEMO_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const DEMO_MANAGER_ID = '00000000-0000-0000-0000-000000000002';
 const DEMO_REP_ID = '00000000-0000-0000-0000-000000000003';
@@ -8,28 +8,44 @@ const DEMO_REP_ID = '00000000-0000-0000-0000-000000000003';
 const FORWARD_REQUEST_HEADERS = ['x-user-id', 'x-user-role', 'content-type', 'authorization'];
 
 async function proxyForecasting(req: NextRequest, pathSegments: string[]) {
-  const path = pathSegments.join('/');
-  const target = `${BACKEND_ORIGIN}/api/v1/forecasting/${path}${req.nextUrl.search}`;
+  let path = pathSegments.join('/');
+  path = path.replace('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000002');
+  path = path.replace('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000003');
+  path = path.replace(/q2-fy26-demo/g, '00000000-0000-0000-0000-0000000000b2');
+  path = path.replace(/q1-fy26-demo/g, '00000000-0000-0000-0000-0000000000b1');
+  
+  let search = req.nextUrl.search;
+  search = search.replace(/q2-fy26-demo/g, '00000000-0000-0000-0000-0000000000b2');
+  search = search.replace(/q1-fy26-demo/g, '00000000-0000-0000-0000-0000000000b1');
 
-  const headers = new Headers();
-  headers.set('x-tenant-id', DEMO_TENANT_ID);
-  headers.set('X-Tenant-ID', DEMO_TENANT_ID);
-  headers.set('x-org-id', DEMO_TENANT_ID);
+  const target = `${BACKEND_ORIGIN}/api/v1/forecasting/${path}${search}`;
+
+  const headers: Record<string, string> = {
+    'x-tenant-id': DEMO_TENANT_ID,
+    'x-org-id': DEMO_TENANT_ID,
+  };
 
   for (const key of FORWARD_REQUEST_HEADERS) {
     const value = req.headers.get(key);
-    if (value) headers.set(key, value);
+    if (value) headers[key] = value;
   }
 
-  if (!headers.get('x-user-id')) {
+  if (headers['x-user-id'] === '22222222-2222-2222-2222-222222222222') {
+    headers['x-user-id'] = '00000000-0000-0000-0000-000000000002';
+  }
+  if (headers['x-user-id'] === '33333333-3333-3333-3333-333333333333') {
+    headers['x-user-id'] = '00000000-0000-0000-0000-000000000003';
+  }
+
+  if (!headers['x-user-id']) {
     const role = req.headers.get('x-user-role');
-    headers.set('x-user-id', role === 'manager' ? DEMO_MANAGER_ID : DEMO_REP_ID);
+    headers['x-user-id'] = role === 'manager' ? DEMO_MANAGER_ID : DEMO_REP_ID;
   }
-  if (!headers.get('x-user-role')) {
-    headers.set('x-user-role', 'manager');
+  if (!headers['x-user-role']) {
+    headers['x-user-role'] = 'manager';
   }
-  if (!headers.get('content-type') && req.method !== 'GET' && req.method !== 'HEAD') {
-    headers.set('content-type', 'application/json');
+  if (!headers['content-type'] && req.method !== 'GET' && req.method !== 'HEAD') {
+    headers['content-type'] = 'application/json';
   }
 
   const body =

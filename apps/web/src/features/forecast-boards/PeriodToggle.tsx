@@ -3,7 +3,7 @@ import type { ForecastPeriod } from './api';
 
 export const PERIODS = [
   { id: 'current', label: 'Q2 FY26 (Current)' },
-  { id: 'q1-fy26-demo', label: 'Q1 FY26' },
+  { id: '00000000-0000-0000-0000-0000000000b1', label: 'Q1 FY26' },
   { id: 'q4-fy25-demo', label: 'Q4 FY25' },
 ];
 

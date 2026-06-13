@@ -8,6 +8,19 @@ import { calculateTargetAttainment, formatCurrency, parseCurrencyInput, formatPe
 import SourceSubmissionHistoryAccordion from './SourceSubmissionHistoryAccordion';
 import { fetchTeamBoard, getRepM06Headers } from '../services/m06-api';
 import { approveChangeRequest } from '../source-services/repBoard.service';
+import AuditLog from '../AuditLog';
+import { useSubmissionHistory } from '../source-hooks/useSubmissionHistory';
+
+function AuditLogWrapper({ boardId, repUserId, columnId, dealId, existingStatus }: any) {
+  const { activity, isLoading } = useSubmissionHistory(boardId, repUserId, columnId, true, dealId);
+  if (isLoading) return <div className="text-xs text-gray-500 py-4">Loading activity log...</div>;
+  if (!activity || activity.length === 0) return null;
+  return (
+    <div className="mt-4">
+      <AuditLog logs={activity} submission={{ status: existingStatus }} />
+    </div>
+  );
+}
 
 interface SourceSubmissionPanelProps {
   columnLabel: 'Best Case' | 'Commit';
@@ -276,8 +289,11 @@ export default function SourceSubmissionPanel({
           </div>
         )}
 
-        {/* Submission history */}
+        {/* Submission history & Activity Log */}
         <SourceSubmissionHistoryAccordion boardId={boardId} repUserId={repUserId} columnId={columnId} dealId={dealId} />
+
+        {/* Audit Log rendered directly */}
+        <AuditLogWrapper boardId={boardId} repUserId={repUserId} columnId={columnId} dealId={dealId} existingStatus={existingStatus} />
 
         {saveError && (
           <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">{saveError}</p>

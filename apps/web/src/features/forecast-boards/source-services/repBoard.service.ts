@@ -4,14 +4,14 @@ import type { RepBoardViewResponse, BoardColumn, ActiveBoardForPeriodResponse } 
 import { M06_API_BASE, getRepM06Headers } from '../services/m06-api';
 
 const headers = (userId?: string) => {
-  const rawId = userId || getRepM06Headers()['x-user-id'] || 'me';
-  const resolvedId = (rawId === 'me' || rawId === '00000000-0000-0000-0000-000000000003') ? 'sarah' : rawId;
+  const rawId = userId || getRepM06Headers()['x-user-id'] || '00000000-0000-0000-0000-000000000003';
+  const resolvedId = rawId === 'me' ? '00000000-0000-0000-0000-000000000003' : rawId;
   return getRepM06Headers(resolvedId);
 };
 
 export async function getRepBoardView(boardId: string): Promise<RepBoardViewResponse> {
-  const repUserId = headers()['x-user-id'] || 'sarah';
-  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
+  const repUserId = headers()['x-user-id'] || '00000000-0000-0000-0000-000000000003';
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' || boardId === 'board-q1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' || boardId === 'board-q2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
   // 1. Fetch periods to find active period info
   const periodsRes = await fetch(`/api/forecast/periods`, { headers: headers(), cache: 'no-store' });
@@ -71,7 +71,7 @@ export async function getRepBoardView(boardId: string): Promise<RepBoardViewResp
   // 4. Fetch targets for period to get rep's target
   const targetsRes = await fetch(`/api/forecast/targets/${periodId}`, { headers: headers(), cache: 'no-store' });
   let quotaVal = 5000000; // default seed fallback
-  let repName = repUserId === 'sarah' ? 'Sarah Chen' : 'Alex Morgan';
+  let repName = repUserId === '00000000-0000-0000-0000-000000000003' ? 'Sarah Chen' : 'Alex Morgan';
   if (targetsRes.ok) {
     const targetsEnvelope = await targetsRes.json();
     const targets = targetsEnvelope.data || [];

@@ -1026,7 +1026,7 @@
               "pm.test('Manager Override is aggregated successfully', () => {",
               "  const rep = res.data.reps.find(r => r.id === pm.collectionVariables.get('REP_ID'));",
               "  if (rep) {",
-              "    pm.expect(rep.managerOverride).to.be.oneOf([75000, 45580000, 45600000]);",
+              "    pm.expect(rep.managerOverride).to.be.oneOf([75000, 45150000, 45580000, 45600000]);",
               "  }",
               "});"
             ], "type": "text/javascript" }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Check, ArrowRightLeft, ShieldAlert, CheckCircle, Info, Clock } from 'lucide-react';
 import type { PendingApprovalEntry } from '../../source-types';
 import { formatCurrency, getErrorMessage } from '../../source-utils/format';
+import AuditLog from '../../AuditLog';
 
 interface PendingApprovalsPanelProps {
   approvals: PendingApprovalEntry[];
@@ -197,19 +198,15 @@ export default function PendingApprovalsPanel({
                       
                       {expandedLogs[rep.submissionId] && (
                         <div className="p-3 border-t border-gray-100 bg-white">
-                          <div className="flex flex-col border border-gray-200 rounded text-[11px] font-mono divide-y divide-gray-200">
-                            {rep.activity.map((entry) => (
-                              <div key={entry.id} className="flex flex-col p-2">
-                                <div className="flex justify-between w-full font-bold text-gray-800">
-                                  <span>{entry.description}</span>
-                                  <span className="text-gray-500 font-normal">{entry.occurredAt}</span>
-                                </div>
-                                <div className="text-gray-600 mt-1">
-                                  By {entry.actorName}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <AuditLog 
+                            logs={rep.activity.map((entry: any) => ({
+                              id: entry.id,
+                              action: entry.description,
+                              actorRole: entry.actorName,
+                              createdAt: entry.occurredAt
+                            }))} 
+                            submission={{ status: rep.requestType === 'best_case' || rep.requestType === 'commit' || rep.requestType === 'both' ? 'submitted' : 'draft' }} 
+                          />
                         </div>
                       )}
                     </div>

@@ -83,9 +83,14 @@ export function formatPeriodId(periodName: string): string {
   if (custom) {
     return mapMonthToQuarterId(custom.month, custom.year);
   }
-  const clean = periodName.trim().toLowerCase();
-  if (clean === 'q2 fy26') return 'q2-fy26-demo';
-  if (clean === 'q1 fy26') return 'q1-fy26-demo';
+  return resolvePeriodIdFromLabel(periodName);
+}
+
+// 2) Parse from string label like "Q2 FY26" into "00000000-0000-0000-0000-0000000000b2"
+export function resolvePeriodIdFromLabel(label: string): string {
+  const clean = label.trim().toLowerCase();
+  if (clean === 'q2 fy26') return '00000000-0000-0000-0000-0000000000b2';
+  if (clean === 'q1 fy26') return '00000000-0000-0000-0000-0000000000b1';
   if (clean === 'q4 fy25') return 'q4-fy25-demo';
   if (clean === 'q2 fy25') return 'q2-fy25-demo';
   return `period-${clean.replace(/\s+/g, '-')}`;

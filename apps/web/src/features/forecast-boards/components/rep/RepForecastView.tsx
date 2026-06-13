@@ -24,7 +24,7 @@ import {
   type ForecastPeriod,
 } from '../../api';
 
-const REP_USER_ID = (BACKEND_REP_USER_ID as string) === 'me' ? 'sarah' : BACKEND_REP_USER_ID;
+const REP_USER_ID = (BACKEND_REP_USER_ID as string) === 'me' ? '00000000-0000-0000-0000-000000000003' : BACKEND_REP_USER_ID;
 
 export default function RepForecastView() {
   const [boardData, setBoardData] = useState<Record<string, unknown> | null>(null);

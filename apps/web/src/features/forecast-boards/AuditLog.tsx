@@ -20,6 +20,7 @@ const ACTION_STYLES: Record<string, { bg: string; dot: string }> = {
   'Approved': { bg: 'bg-green-50', dot: 'bg-green-500' },
   'Reopened': { bg: 'bg-orange-50', dot: 'bg-orange-500' },
   'Resubmitted': { bg: 'bg-blue-50', dot: 'bg-blue-500' },
+  'Overridden': { bg: 'bg-purple-50', dot: 'bg-purple-500' },
   'No drafts yet': { bg: 'bg-gray-50', dot: 'bg-gray-300' },
 };
 

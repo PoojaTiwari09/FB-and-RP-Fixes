@@ -79,7 +79,7 @@ function ReviewModal({ rep, user, onClose, onRefresh, selectedPeriod }:{ rep:any
     let boardId = '';
     let columnId = 'col-commit';
     try {
-      const boardsRes = await fetch(`${API}/boards/by-period/${selectedPeriod === 'current' ? 'q2-fy26-demo' : selectedPeriod}`, { headers: { 'x-tenant-id': TENANT } });
+      const boardsRes = await fetch(`${API}/boards/by-period/${selectedPeriod === 'current' ? '00000000-0000-0000-0000-0000000000b2' : selectedPeriod}`, { headers: { 'x-tenant-id': TENANT } });
       const boardsPayload = await boardsRes.json();
       const board = boardsPayload.board ?? boardsPayload[0];
       boardId = board?.id;
@@ -236,7 +236,7 @@ export default function ManagerDashboard({ user, onLogout }:{ user:any; onLogout
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
     try {
-      const resolvedPeriodId = periodId === 'current' ? 'q2-fy26-demo' : periodId;
+      const resolvedPeriodId = periodId === 'current' ? '00000000-0000-0000-0000-0000000000b2' : periodId;
       const [res, atRiskRes, tddRes] = await Promise.all([
         fetch(url, { headers: { 'x-tenant-id': TENANT }, signal: controller.signal }),
         fetch(`${API}/team/at-risk-deals?periodId=${periodId}`, { headers: { 'x-tenant-id': TENANT }, signal: controller.signal }),

@@ -7,10 +7,10 @@ const headers = () => getManagerM06Headers();
 
 export async function getManagerBoardView(boardId: string): Promise<ManagerBoardViewResponse> {
   const managerId = headers()['x-user-id'] || '00000000-0000-0000-0000-000000000002';
-  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' || boardId === 'board-q1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' || boardId === 'board-q2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
-  // 1. Fetch manager board rows (reps list)
-  const mbRes = await fetch(`/api/forecast/periods/${periodId}/reps`, {
+  // 1. Fetch manager board rows (reps list with full metrics)
+  const mbRes = await fetch(`/api/forecast/manager-board/${managerId}?period_id=${periodId}`, {
     headers: headers(),
     cache: 'no-store',
   });
@@ -105,7 +105,7 @@ export async function getManagerBoardView(boardId: string): Promise<ManagerBoard
 }
 
 export async function getRepDrillDown(boardId: string, repUserId: string): Promise<RepDrillDownResponse> {
-  const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' || boardId === 'board-q1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' || boardId === 'board-q2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
   // 1. Fetch rep's drilldown (deals list)
   const ddRes = await fetch(`/api/forecast/drill-down/${repUserId}?period_id=${periodId}`, {
@@ -196,7 +196,7 @@ export async function getRepDrillDown(boardId: string, repUserId: string): Promi
 
 export async function getPendingApprovals(boardId: string): Promise<PendingApprovalEntry[]> {
   const managerId = headers()['x-user-id'] || '00000000-0000-0000-0000-000000000002';
-  const periodId = boardId === 'board-q1' ? 'q1-fy26-demo' : boardId === 'board-q2' ? 'q2-fy26-demo' : boardId;
+  const periodId = boardId === '00000000-0000-0000-0000-0000000000a1' || boardId === 'board-q1' ? '00000000-0000-0000-0000-0000000000b1' : boardId === '00000000-0000-0000-0000-0000000000a2' || boardId === 'board-q2' ? '00000000-0000-0000-0000-0000000000b2' : boardId;
 
   const mRes = await fetch(`/api/forecast/manager-board/${managerId}?period_id=${periodId}`, { headers: headers(), cache: 'no-store' });
   if (!mRes.ok) return [];
@@ -271,17 +271,18 @@ export async function bulkUploadTargets(boardId: string, file: File): Promise<{ 
 
 export async function assignTargets(boardId: string, periodId: string, assignments: { repUserId: string; targetValue: number }[]): Promise<any> {
   const managerId = headers()['x-user-id'] || '00000000-0000-0000-0000-000000000002';
-  const mappedPeriodId = periodId === 'board-q1' ? 'q1-fy26-demo' : periodId === 'board-q2' ? 'q2-fy26-demo' : periodId;
+  const mappedPeriodId = periodId === '00000000-0000-0000-0000-0000000000a1' || periodId === 'board-q1' ? '00000000-0000-0000-0000-0000000000b1' : periodId === '00000000-0000-0000-0000-0000000000a2' || periodId === 'board-q2' ? '00000000-0000-0000-0000-0000000000b2' : periodId;
 
-  const res = await fetch(`${M06_API_BASE}/boards/targets/assign`, {
+  const res = await fetch(`/api/forecast/targets/assign`, {
     method: 'POST',
     headers: {
       ...headers(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      periodId: mappedPeriodId,
-      assignments: assignments.map((a) => ({ repUserId: a.repUserId, targetValue: a.targetValue }))
+      period_id: mappedPeriodId,
+      manager_id: managerId,
+      assignments: assignments.map((a) => ({ rep_id: a.repUserId, target_value: a.targetValue }))
     }),
   });
   if (!res.ok) throw new Error(await res.text());

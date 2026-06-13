@@ -76,9 +76,25 @@ export async function getSubmissionHistory(
       prevValue = val;
     });
 
-    return { history: history.reverse() }; // newest first
+    const rawActivity = activityLogs.map((log: any) => {
+      let action = 'Draft created';
+      if (log.status === 'submitted') action = 'Submitted';
+      if (log.status === 'approved') action = 'Approved';
+      if (log.status === 'reopened') action = 'Reopened';
+      if (log.status === 'overridden') action = 'Overridden';
+
+      return {
+        id: log.id,
+        action,
+        actorRole: log.performed_by_name || 'System',
+        createdAt: log.timestamp,
+        notes: log.notes,
+      };
+    });
+
+    return { history: history.reverse(), activity: rawActivity.reverse() };
   } catch (e) {
     console.error('getSubmissionHistory error:', e);
-    return { history: [] };
+    return { history: [], activity: [] };
   }
 }
