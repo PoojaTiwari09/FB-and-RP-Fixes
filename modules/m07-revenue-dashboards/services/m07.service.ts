@@ -177,34 +177,109 @@ export class M07DealAccountService {
       return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     };
 
-    // Deterministic "last updated" from deal id (avoids random on every call)
-    const lastUpdated = (id: string): string =>
-      `${(id.charCodeAt(5) % 20) + 5}d`;
-
-    // Deterministic contact count (1 or 2 based on deal id)
-    const contactCount = (id: string, riskFlags: string[]): number =>
-      riskFlags.includes("SINGLE_THREADED") ? 1 : (id.charCodeAt(3) % 2) + 1;
-
     // ── fetch deals ─────────────────────────────────────────────────────────────
-    // Always try the caller's tenant first; fall back to the demo tenant
     const TRACKER_TENANT = "00000000-0000-0000-0000-000000000001";
     const DEALS_DEMO_TENANT = "11111111-1111-1111-1111-111111111111";
 
     const activeStages = ["Discovery", "Proposal", "Negotiation"];
+    const { quarterLabel, startDate, endDate, isCurrentQuarter } = this.parsePeriod(period);
+
+    // Current quarter → active-stage pipeline. Past quarter → all deals for that quarter.
+    const periodWhere: any = isCurrentQuarter
+      ? { stage: { in: activeStages } }
+      : { OR: [{ quarter: quarterLabel }, { closeDate: { gte: startDate, lte: endDate } }] };
+
     let deals = await this.prisma.deal.findMany({
-      where: { tenantid: tenantId, stage: { in: activeStages } },
+      where: { tenantid: tenantId, ...periodWhere },
       include: { account: true },
       orderBy: { amount: "desc" },
     });
 
-    // Fall back to demo tenant if the current tenant has insufficient deals for a dashboard view (< 5)
     if (deals.length < 5) {
-      deals = await this.prisma.deal.findMany({
-        where: { tenantid: DEALS_DEMO_TENANT, stage: { in: activeStages } },
+      let demoDeals = await this.prisma.deal.findMany({
+        where: { tenantid: DEALS_DEMO_TENANT, ...periodWhere },
         include: { account: true },
         orderBy: { amount: "desc" },
       });
+      // No period-specific data in demo either → fall back to active pipeline so the dashboard isn't blank
+      if (demoDeals.length === 0 && !isCurrentQuarter) {
+        demoDeals = await this.prisma.deal.findMany({
+          where: { tenantid: DEALS_DEMO_TENANT, stage: { in: activeStages } },
+          include: { account: true },
+          orderBy: { amount: "desc" },
+        });
+      }
+      if (demoDeals.length > deals.length) deals = demoDeals;
     }
+
+    // ── fetch call records and calls for real activity / participant data ───────
+    const activeTenantId = deals.length > 0 ? deals[0].tenantid : DEALS_DEMO_TENANT;
+    const dealIds = deals.map((d) => d.id);
+
+    let callRecordsForDeals: any[] = [];
+    try {
+      callRecordsForDeals = await (this.prisma as any).callRecord.findMany({
+        where: { tenantid: activeTenantId, opportunityId: { in: dealIds } },
+        select: { opportunityId: true, participants: true },
+      });
+    } catch { /* callRecord table unavailable */ }
+
+    let recentCallsForDeals: any[] = [];
+    try {
+      recentCallsForDeals = await this.prisma.call.findMany({
+        where: { tenantid: activeTenantId, dealId: { in: dealIds } },
+        select: { dealId: true, occurredAt: true },
+        orderBy: { occurredAt: 'desc' },
+      });
+    } catch { /* call table unavailable */ }
+
+    // Map dealId → latest call date
+    const dealLatestCallMap = new Map<string, Date>();
+    for (const call of recentCallsForDeals) {
+      if (!call.dealId) continue;
+      const existing = dealLatestCallMap.get(call.dealId);
+      const callDate = new Date(call.occurredAt);
+      if (!existing || callDate > existing) dealLatestCallMap.set(call.dealId, callDate);
+    }
+
+    // Build participant maps from call records
+    const VP_ROLE_SIGNALS = ['vp', 'vice president', 'svp', 'evp', 'chief', 'ceo', 'cro', 'cto', 'cfo', 'director'];
+    const dealHasVPMap = new Set<string>();
+    const dealParticipantSets = new Map<string, Set<string>>();
+    for (const cr of callRecordsForDeals) {
+      if (!cr.opportunityId) continue;
+      if (!dealParticipantSets.has(cr.opportunityId)) dealParticipantSets.set(cr.opportunityId, new Set());
+      const participants: any[] = Array.isArray(cr.participants) ? cr.participants : [];
+      for (const p of participants) {
+        const key = p.email ?? p.name ?? p.id ?? JSON.stringify(p);
+        dealParticipantSets.get(cr.opportunityId)!.add(key);
+        const role = (p.role ?? p.title ?? p.jobTitle ?? '').toLowerCase();
+        if (VP_ROLE_SIGNALS.some((sig) => role.includes(sig))) dealHasVPMap.add(cr.opportunityId);
+      }
+    }
+    const dealParticipantMap = new Map<string, number>(
+      [...dealParticipantSets.entries()].map(([id, pSet]) => [id, pSet.size]),
+    );
+
+    // Last activity: use deal.updatedAt or most recent call occurredAt, whichever is later
+    const lastUpdated = (deal: any): string => {
+      const callDate = dealLatestCallMap.get(deal.id);
+      const dealUpdated = deal.updatedAt ? new Date(deal.updatedAt) : null;
+      const latestActivity = callDate && dealUpdated
+        ? (callDate > dealUpdated ? callDate : dealUpdated)
+        : (callDate ?? dealUpdated);
+      if (!latestActivity) return 'N/A';
+      const daysAgo = Math.floor((Date.now() - latestActivity.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysAgo <= 0) return 'Today';
+      return `${daysAgo}d`;
+    };
+
+    // Participant count from call records; falls back to riskFlags signal if no call data
+    const contactCount = (id: string, riskFlags: string[]): number => {
+      const fromCalls = dealParticipantMap.get(id);
+      if (fromCalls !== undefined && fromCalls > 0) return fromCalls;
+      return riskFlags.includes('SINGLE_THREADED') ? 1 : 1;
+    };
 
     // ── fetch M02 tracker detections (competitor + pricing) ──────────────────
     // Tracker data is always under the demo tenant (seeded by seed-trackers.ts)
@@ -291,8 +366,11 @@ export class M07DealAccountService {
     // Late-stage opps missing pricing discussion
     const missingPricing = lateStageDeals.filter((d) => !hasPricing(d));
 
-    // Closing opps without VP: Negotiation stage (about-to-close signal)
-    const closingNoVP = deals.filter((d) => d.stage === "Negotiation");
+    // Closing opps without VP: late-stage deals with no VP-level participant in call records
+    // Falls back to Negotiation stage filter when no call record data is available
+    const closingNoVP = callRecordsForDeals.length > 0
+      ? lateStageDeals.filter((d) => !dealHasVPMap.has(d.id))
+      : deals.filter((d) => d.stage === 'Negotiation');
 
     // ── totals & breakdown ───────────────────────────────────────────────────
     const totalPipeline = deals.reduce((s, d) => s + Number(d.amount), 0);
@@ -354,7 +432,7 @@ export class M07DealAccountService {
         account: d.account?.name ?? d.name,
         stage: d.stage,
         amount: fmt(Number(d.amount)),
-        lastUpdated: lastUpdated(d.id),
+        lastUpdated: lastUpdated(d),
       })),
       closingNoVP: closingNoVP.slice(0, 4).map((d) => ({
         id: d.id,
@@ -389,18 +467,31 @@ export class M07DealAccountService {
     const TRACKER_TENANT = '00000000-0000-0000-0000-000000000001';
     const DEALS_DEMO_TENANT = '11111111-1111-1111-1111-111111111111';
 
-    // Fetch ALL deals (active + closed won/lost) to compute win rates
+    // Fetch ALL deals (active + closed won/lost) for the requested period
+    const { quarterLabel: caQuarterLabel, startDate: caStart, endDate: caEnd, isCurrentQuarter: caIsCurrent } = this.parsePeriod(period);
+    const caPeriodWhere: any = caIsCurrent
+      ? {}
+      : { OR: [{ quarter: caQuarterLabel }, { closeDate: { gte: caStart, lte: caEnd } }] };
+
     let allDeals = await this.prisma.deal.findMany({
-      where: { tenantid: tenantId },
+      where: { tenantid: tenantId, ...caPeriodWhere },
       include: { account: true },
       orderBy: { amount: 'desc' },
     });
     if (allDeals.length < 5) {
-      allDeals = await this.prisma.deal.findMany({
-        where: { tenantid: DEALS_DEMO_TENANT },
+      let demoDeals = await this.prisma.deal.findMany({
+        where: { tenantid: DEALS_DEMO_TENANT, ...caPeriodWhere },
         include: { account: true },
         orderBy: { amount: 'desc' },
       });
+      if (demoDeals.length === 0 && !caIsCurrent) {
+        demoDeals = await this.prisma.deal.findMany({
+          where: { tenantid: DEALS_DEMO_TENANT },
+          include: { account: true },
+          orderBy: { amount: 'desc' },
+        });
+      }
+      if (demoDeals.length > allDeals.length) allDeals = demoDeals;
     }
 
     // Active pipeline deals only
@@ -547,17 +638,6 @@ export class M07DealAccountService {
         winRate: won + lost > 0 ? Math.round((won / (won + lost)) * 100) : 0,
       }));
 
-    // If no historical data, synthesize from active deals
-    if (historicalWinRates.length === 0) {
-      const base = overallWinRate || 40;
-      historicalWinRates.push(
-        { quarter: 'Q1-2025', winRate: Math.max(10, base - 6) },
-        { quarter: 'Q2-2025', winRate: Math.max(10, base - 3) },
-        { quarter: 'Q3-2025', winRate: Math.min(90, base + 4) },
-        { quarter: 'Q4-2025', winRate: base },
-      );
-    }
-
     // ── % competitive won opps per Q (bucketed from closed deals) ───────────
     const perQMap: Record<string, { totalWon: number; compWon: number }> = {};
     for (const d of wonDeals) {
@@ -610,6 +690,19 @@ export class M07DealAccountService {
         { quarter: 'Q1 FY2025', value: '$1.04M', barWidth: 82,  color: '#7c3aed' },
         { quarter: 'Q2 FY2025', value: '$1.18M', barWidth: 95,  color: '#e91e8c' },
       );
+    }
+
+    // ── value won delta (QoQ) computed from real data ─────────────────────────
+    const sortedValueQEntries = Object.entries(valueQMap).sort(([a], [b]) => a.localeCompare(b));
+    let valueWonDelta = '';
+    if (sortedValueQEntries.length >= 2) {
+      const latestRaw = sortedValueQEntries[sortedValueQEntries.length - 1][1];
+      const prevRaw   = sortedValueQEntries[sortedValueQEntries.length - 2][1];
+      const delta     = latestRaw - prevRaw;
+      const prevQLabel = sortedValueQEntries[sortedValueQEntries.length - 2][0].replace('-', ' FY');
+      valueWonDelta = `${delta >= 0 ? '+' : ''}${fmt(delta)} vs ${prevQLabel}`;
+    } else if (sortedValueQEntries.length === 1) {
+      valueWonDelta = fmt(sortedValueQEntries[0][1]);
     }
 
     // ── win rate by competitor grid (for the bottom full-width section) ───────
@@ -669,6 +762,7 @@ export class M07DealAccountService {
         pctWonOppsDelta: pctDelta,
         valueOfWonOpps: latestValue,
         valuePrevQuarter: prevValue,
+        valueWonDelta,
         winRateCompetitive: overallWinRate,
         winRateDelta: `vs ${Math.min(99, overallWinRate + 12)}% overall`,
       },
@@ -1003,18 +1097,31 @@ export class M07DealAccountService {
     const TRACKER_TENANT  = '00000000-0000-0000-0000-000000000001';
     const DEALS_DEMO_TENANT = '11111111-1111-1111-1111-111111111111';
 
-    // ── 1. Load deals (prefer caller tenant, fallback to demo) ────────────────
+    // ── 1. Load deals for the requested period (prefer caller tenant, fallback to demo) ─────
+    const { quarterLabel: epQuarterLabel, startDate: epStart, endDate: epEnd, isCurrentQuarter: epIsCurrent } = this.parsePeriod(period);
+    const epPeriodWhere: any = epIsCurrent
+      ? {}
+      : { OR: [{ quarter: epQuarterLabel }, { closeDate: { gte: epStart, lte: epEnd } }] };
+
     let allDeals = await this.prisma.deal.findMany({
-      where: { tenantid: tenantId },
+      where: { tenantid: tenantId, ...epPeriodWhere },
       include: { account: true },
       orderBy: { amount: 'desc' },
     });
     if (allDeals.length < 5) {
-      allDeals = await this.prisma.deal.findMany({
-        where: { tenantid: DEALS_DEMO_TENANT },
+      let demoDeals = await this.prisma.deal.findMany({
+        where: { tenantid: DEALS_DEMO_TENANT, ...epPeriodWhere },
         include: { account: true },
         orderBy: { amount: 'desc' },
       });
+      if (demoDeals.length === 0 && !epIsCurrent) {
+        demoDeals = await this.prisma.deal.findMany({
+          where: { tenantid: DEALS_DEMO_TENANT },
+          include: { account: true },
+          orderBy: { amount: 'desc' },
+        });
+      }
+      if (demoDeals.length > allDeals.length) allDeals = demoDeals;
     }
     const dealsTenant = allDeals.length > 0 ? (allDeals[0].tenantid) : DEALS_DEMO_TENANT;
 
@@ -1263,7 +1370,12 @@ export class M07DealAccountService {
       }));
 
     const topIndustryInsight = industryBreakdown.length > 0
-      ? `${industryBreakdown[0].industry} most impacted — budget concerns mentioned in ${industryBreakdown[0].count} open opps`
+      ? (() => {
+          const top = industryBreakdown[0];
+          const totalEpCount = industryBreakdown.reduce((s, i) => s + i.count, 0);
+          const pct = totalEpCount > 0 ? Math.round((top.count / totalEpCount) * 100) : 0;
+          return `${top.industry} leads EP exposure with ${top.count} impacted deal${top.count !== 1 ? 's' : ''} (${pct}% of EP-impacted pipeline)`;
+        })()
       : '';
 
     // ── 10. Account types ─────────────────────────────────────────────────────
@@ -1336,6 +1448,25 @@ export class M07DealAccountService {
       ? `Win rate gap between EP-impacted and overall deals increased from ${Math.abs(prevRow.delta)}pp in ${prevRow.quarter} to ${Math.abs(latestRow.delta)}pp in ${latestRow.quarter}. Recommend proactive economic ROI talk track and earlier executive sponsorship on EP-flagged deals.`
       : `EP-impacted win rate is ${Math.abs(latestRow.delta)}pp below overall. Focus on value-based selling and budget justification for EP-flagged accounts.`;
 
+    // Dynamic account type insight derived from actual distribution
+    const topAccountEntry = Object.entries(accountTypeMap)
+      .filter(([, count]) => count > 0)
+      .sort(([, a], [, b]) => b - a)[0];
+
+    const accountTypeInsight = (() => {
+      if (!topAccountEntry) return 'No account type data available for EP-impacted deals';
+      const [topType, topCount] = topAccountEntry;
+      const total = Object.values(accountTypeMap).reduce((s, c) => s + c, 0);
+      const pct = total > 0 ? Math.round((topCount / total) * 100) : 0;
+      const messageMap: Record<string, string> = {
+        Prospect: `Prospects represent ${pct}% of EP-impacted deals — elevated risk of deal delays among new opportunities`,
+        Customer: `Customers account for ${pct}% of EP-impacted deals — budget pressure may affect renewals and expansions`,
+        Partner:  `Partner accounts make up ${pct}% of EP-impacted deals — downstream pipeline exposure elevated`,
+        Renewal:  `Renewal accounts represent ${pct}% of EP-impacted deals — retention at risk from budget scrutiny`,
+      };
+      return messageMap[topType] ?? `${topType} accounts are the most EP-impacted segment at ${pct}% of affected pipeline`;
+    })();
+
     return {
       period,
       trackerTerms: EP_KEYWORDS,
@@ -1366,7 +1497,7 @@ export class M07DealAccountService {
       industryBreakdown,
       topIndustryInsight,
       accountTypes,
-      accountTypeInsight: 'Prospects mention EP signals most frequently — indicating deal delays and budget scrutiny',
+      accountTypeInsight,
       winRatesByQuarter,
       aiInsight,
     };
@@ -1523,6 +1654,41 @@ export class M07DealAccountService {
       grouped.set(label, bucket);
     }
     return [...grouped.entries()].map(([label, bucket]) => ({ label, value: valueSelector(bucket) }));
+  }
+
+  private parsePeriod(period: string): {
+    quarterLabel: string;
+    startDate: Date;
+    endDate: Date;
+    isCurrentQuarter: boolean;
+  } {
+    const now = new Date();
+    const currentQNum = Math.ceil((now.getMonth() + 1) / 3);
+    const currentYear = now.getFullYear();
+
+    let qNum = currentQNum;
+    let qYear = currentYear;
+
+    const norm = period.toLowerCase().trim();
+    if (norm === 'last quarter' || norm === 'last_quarter') {
+      qNum = currentQNum === 1 ? 4 : currentQNum - 1;
+      qYear = currentQNum === 1 ? currentYear - 1 : currentYear;
+    } else {
+      // Accept "Q1-2026" or "Q1 FY2026" formats
+      const match = period.match(/Q([1-4])[-\s](?:FY)?(\d{4})/i);
+      if (match) {
+        qNum = parseInt(match[1], 10);
+        qYear = parseInt(match[2], 10);
+      }
+    }
+
+    const isCurrentQuarter = qNum === currentQNum && qYear === currentYear;
+    const quarterLabel = `Q${qNum}-${qYear}`;
+    const startMonth = (qNum - 1) * 3;
+    const startDate = new Date(qYear, startMonth, 1);
+    const endDate = new Date(qYear, startMonth + 3, 0, 23, 59, 59, 999);
+
+    return { quarterLabel, startDate, endDate, isCurrentQuarter };
   }
 
   private resolveQuarter(timeRange: "CURRENT_QUARTER" | "LAST_QUARTER") {

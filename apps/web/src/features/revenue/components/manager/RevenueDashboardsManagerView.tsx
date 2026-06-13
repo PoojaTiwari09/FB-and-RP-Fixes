@@ -45,7 +45,8 @@ export default function RevenueDashboardsManagerView() {
       if (!endpoint) return;
       
       const response = await fetch(`/api/manager/revenue-dashboards/${endpoint}?period=${encodeURIComponent(period)}`, {
-        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' }
+        credentials: 'include',
+        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
       });
       
       if (!response.ok) {
@@ -53,7 +54,8 @@ export default function RevenueDashboardsManagerView() {
       }
       
       const result = await response.json();
-      setData(result);
+      // Unwrap the API's { success, data, meta } envelope if present
+      setData(result.data ?? result);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
