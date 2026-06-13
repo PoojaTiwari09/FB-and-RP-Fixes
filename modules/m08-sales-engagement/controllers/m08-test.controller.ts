@@ -1,6 +1,8 @@
 import { Controller, Get, Post } from '@nestjs/common';
+import { Public } from '../../platform-core/decorators/public.decorator';
 
 @Controller('api/v1/sales-engagement/test')
+@Public()
 export class M08TestController {
   @Get('health')
   health() {

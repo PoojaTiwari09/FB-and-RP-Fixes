@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsEnum, IsNumber, IsDate, IsBoolean, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DealStage, ForecastCategory } from '@/entities';
+import { DealStage, ForecastCategory } from '@m04/entities';
 
 export class QueryDealDto {
   @ApiPropertyOptional({ description: 'Owner ID filter' })

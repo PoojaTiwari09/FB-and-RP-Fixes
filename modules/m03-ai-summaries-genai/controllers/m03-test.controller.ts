@@ -74,11 +74,14 @@ export class M03TestController {
       });
     }
 
+    const ACCT_MODUS = 'a0300000-0000-0000-0000-000000000001';
+    const ACCT_ACME  = 'a0300000-0000-0000-0000-000000000002';
+
     const accounts = await Promise.all([
       prisma.account.upsert({
-        where: { id: 'm03-seed-acct-modus' },
+        where: { id: ACCT_MODUS },
         create: {
-          id: 'm03-seed-acct-modus', tenantid: tenantId,
+          id: ACCT_MODUS, tenantid: tenantId,
           name: 'Moduslink',
           industry: 'Technology',
           ownerName: 'Demo Rep',
@@ -86,9 +89,9 @@ export class M03TestController {
         update: { name: 'Moduslink', industry: 'Technology' },
       }),
       prisma.account.upsert({
-        where: { id: 'm03-seed-acct-acme' },
+        where: { id: ACCT_ACME },
         create: {
-          id: 'm03-seed-acct-acme', tenantid: tenantId,
+          id: ACCT_ACME, tenantid: tenantId,
           name: 'Acme Corp',
           industry: 'Manufacturing',
           ownerName: 'Demo Rep',
@@ -97,30 +100,33 @@ export class M03TestController {
       }),
     ]);
 
+    const DEAL_MODUS = 'd0300000-0000-0000-0000-000000000001';
+    const DEAL_ACME  = 'd0300000-0000-0000-0000-000000000002';
+
     const deals = await Promise.all([
       prisma.deal.upsert({
-        where: { id: 'm03-seed-deal-modus' },
+        where: { id: DEAL_MODUS },
         create: {
-          id: 'm03-seed-deal-modus', tenantid: tenantId,
-          accountId: 'm03-seed-acct-modus',
+          id: DEAL_MODUS, tenantid: tenantId,
+          accountId: ACCT_MODUS,
           name: 'Moduslink Expansion',
           amount: 125000,
           stage: 'Negotiation',
           quarter,
         },
-        update: { stage: 'Negotiation', accountId: 'm03-seed-acct-modus' },
+        update: { stage: 'Negotiation', accountId: ACCT_MODUS },
       }),
       prisma.deal.upsert({
-        where: { id: 'm03-seed-deal-acme' },
+        where: { id: DEAL_ACME },
         create: {
-          id: 'm03-seed-deal-acme', tenantid: tenantId,
-          accountId: 'm03-seed-acct-acme',
+          id: DEAL_ACME, tenantid: tenantId,
+          accountId: ACCT_ACME,
           name: 'Acme Platform Renewal',
           amount: 85000,
           stage: 'Proposal',
           quarter,
         },
-        update: { stage: 'Proposal', accountId: 'm03-seed-acct-acme' },
+        update: { stage: 'Proposal', accountId: ACCT_ACME },
       }),
     ]);
 
@@ -135,8 +141,8 @@ export class M03TestController {
       await prisma.callRecord.update({
         where: { id: call.id },
         data: {
-          accountId: isModus ? 'm03-seed-acct-modus' : 'm03-seed-acct-acme',
-          opportunityId: isModus ? 'm03-seed-deal-modus' : 'm03-seed-deal-acme',
+          accountId: isModus ? ACCT_MODUS : ACCT_ACME,
+          opportunityId: isModus ? DEAL_MODUS : DEAL_ACME,
           participants: call.participants?.length
             ? call.participants
             : ['Demo Rep', 'Buyer Contact'],

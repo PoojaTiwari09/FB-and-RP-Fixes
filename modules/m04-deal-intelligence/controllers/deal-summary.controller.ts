@@ -16,28 +16,29 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { DealSummaryService } from '@/services/deal-summary.service';
-import { AuthGuard } from '@/guards/auth.guard';
-import { RolesGuard } from '@/guards/roles.guard';
-import { Roles } from '@/decorators/roles.decorator';
-import { UserRole } from '@/interfaces/user-role.enum';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { DealSummaryService } from '@m04/services/deal-summary.service';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { RolesGuard } from '../../platform-core/guards/roles.guard';
+import { Roles } from '../../platform-core/decorators/roles.decorator';
+import { UserRole } from '@rri/database';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 import {
   DealSummaryResponseDto,
   SummaryHistoryResponseDto,
   WeeklyChangesResponseDto,
   QuerySummaryDto,
-} from '@/schemas/deal-summary.dto';
+} from '@m04/schemas/deal-summary.dto';
 
 @ApiTags('Deal Summaries')
 @ApiBearerAuth()
 @Controller('deals/:dealId/summaries')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 export class DealSummaryController {
   constructor(private readonly summaryService: DealSummaryService) {}
 
   @Post('generate')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Generate AI summary for deal' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -58,7 +59,7 @@ export class DealSummaryController {
   }
 
   @Get('current')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get current summary for deal' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -78,7 +79,7 @@ export class DealSummaryController {
   }
 
   @Get('history')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get summary history for deal' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -102,7 +103,7 @@ export class DealSummaryController {
   }
 
   @Get('weekly-changes')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Detect weekly changes in deal summary' })
   @ApiParam({ name: 'dealId', description: 'Deal ID' })
   @ApiResponse({
@@ -155,7 +156,7 @@ export class DealSummaryController {
 @ApiTags('Deal Summaries')
 @ApiBearerAuth()
 @Controller('summaries')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 export class SummaryManagementController {
   constructor(private readonly summaryService: DealSummaryService) {}
 

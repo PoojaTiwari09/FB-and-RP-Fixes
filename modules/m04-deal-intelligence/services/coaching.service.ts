@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { Deal } from '@/entities/deal.entity';
-import { DealPlaybook } from '@/entities/deal-playbook.entity';
-import { DealWarning } from '@/entities/deal-warning.entity';
-import { DealActivity } from '@/entities/deal-activity.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { Deal } from '@m04/entities/deal.entity';
+import { DealPlaybook } from '@m04/entities/deal-playbook.entity';
+import { DealWarning } from '@m04/entities/deal-warning.entity';
+import { DealActivity } from '@m04/entities/deal-activity.entity';
 import { AIClientService } from './ai-client.service';
 import {
   GenerateCoachingPromptsDto,
   CoachingPromptsResponseDto,
-} from '@/schemas/coaching.dto';
+} from '@m04/schemas/coaching.dto';
 
 @Injectable()
 export class CoachingService {

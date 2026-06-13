@@ -77,9 +77,9 @@ export default function TrackerDetailPanel({
           <div>
             <p className="text-xs font-semibold text-gray-500 mb-3">TOP ACCOUNTS</p>
             <div className="space-y-2">
-              {detail.topAccounts.map((account) => (
-                <div key={account} className="border rounded-lg px-3 py-2 text-sm text-gray-900">
-                  {account}
+              {detail.topAccounts.map((account: any) => (
+                <div key={account.accountId || account} className="border rounded-lg px-3 py-2 text-sm text-gray-900">
+                  {account.accountName || account}
                 </div>
               ))}
             </div>
@@ -98,9 +98,9 @@ export default function TrackerDetailPanel({
           <div>
             <p className="text-xs font-semibold text-gray-500 mb-3">TOP REPS</p>
             <div className="space-y-2">
-              {detail.topReps.map((rep) => (
-                <div key={rep} className="border rounded-lg px-3 py-2 text-sm text-gray-900">
-                  {rep}
+              {detail.topReps.map((rep: any) => (
+                <div key={rep.repId || rep} className="border rounded-lg px-3 py-2 text-sm text-gray-900">
+                  {rep.repName || rep}
                 </div>
               ))}
             </div>

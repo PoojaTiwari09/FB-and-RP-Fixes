@@ -27,7 +27,7 @@ export class VocabularyCorrectionService {
     variations: string[] = []
   ) {
     const newRule = {
-      id: Date.now().toString(), tenantid: tenantId,
+      id: Date.now().toString(), tenantid: tenantId, tenantId: tenantId,
       incorrectTerm,
       correctTerm,
       language,

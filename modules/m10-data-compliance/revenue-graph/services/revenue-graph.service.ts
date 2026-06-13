@@ -7,14 +7,14 @@
 //   4. AI semantic fallback (Python service) — only when deterministic score is ambiguous
 //   5. Durable save + publish revenue_graph.entity.linked
 
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { randomUUID } from 'crypto';
+import { Injectable, Logger, HttpException, HttpStatus } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { firstValueFrom } from "rxjs";
+import { randomUUID } from "crypto";
 
-import { RevenueGraphRepository } from '../repositories/revenue-graph.repository';
-import { EventPublisherService } from '../../../platform-core/events/event-publisher.service';
-import { M10_REVENUE_GRAPH_EVENTS } from '../events/revenue-graph.events';
+import { RevenueGraphRepository } from "../repositories/revenue-graph.repository";
+import { EventPublisherService } from "../../../platform-core/events/event-publisher.service";
+import { M10_REVENUE_GRAPH_EVENTS } from "../events/revenue-graph.events";
 
 import {
   NormalizedIntake,
@@ -22,7 +22,7 @@ import {
   AiResolutionRequestSchema,
   AiResolutionResponseSchema,
   ConfidenceLevel,
-} from '../schemas/revenue-graph.schema';
+} from "../schemas/revenue-graph.schema";
 
 import type {
   AccountResponseDto,
@@ -31,7 +31,7 @@ import type {
   CrmSyncStatusResponseDto,
   PaginatedResponseDto,
   RelationshipGraphDto,
-} from '../dto/response-revenue-graph.dto';
+} from "../dto/response-revenue-graph.dto";
 
 import {
   rankAccountCandidates,
@@ -41,14 +41,17 @@ import {
   extractDomain,
   isFreeMailDomain,
   normalizeName,
-} from '../entity-resolution/entity-resolution.engine';
+} from "../entity-resolution/entity-resolution.engine";
 
 // Env-driven configuration — M10_ prefix per monorepo convention (TDD §8)
-const MIN_CONFIDENCE = parseFloat(process.env.M10_ENTITY_RESOLUTION_MIN_CONFIDENCE ?? '0.78');
-const AI_ENABLED = process.env.M10_REVENUE_GRAPH_ENABLED !== 'false';
-const WRITE_ENABLED = process.env.M10_REVENUE_GRAPH_WRITE_ENABLED !== 'false';
-const PUBLISH_EVENTS = process.env.M10_REVENUE_GRAPH_PUBLISH_EVENTS !== 'false';
-const AI_SERVICE_BASE_URL = process.env.M10_AI_SERVICE_BASE_URL ?? 'http://localhost:8000';
+const MIN_CONFIDENCE = parseFloat(
+  process.env.M10_ENTITY_RESOLUTION_MIN_CONFIDENCE ?? "0.78",
+);
+const AI_ENABLED = process.env.M10_REVENUE_GRAPH_ENABLED !== "false";
+const WRITE_ENABLED = process.env.M10_REVENUE_GRAPH_WRITE_ENABLED !== "false";
+const PUBLISH_EVENTS = process.env.M10_REVENUE_GRAPH_PUBLISH_EVENTS !== "false";
+const AI_SERVICE_BASE_URL =
+  process.env.M10_AI_SERVICE_BASE_URL ?? "http://localhost:8000";
 
 @Injectable()
 export class RevenueGraphService {
@@ -84,9 +87,16 @@ export class RevenueGraphService {
     };
   }
 
-  async getAccountById(tenantId: string, accountId: string): Promise<AccountResponseDto> {
+  async getAccountById(
+    tenantId: string,
+    accountId: string,
+  ): Promise<AccountResponseDto> {
     const a = await this.repo.findAccountById(tenantId, accountId);
-    if (!a) throw new HttpException(`Account ${accountId} not found`, HttpStatus.NOT_FOUND);
+    if (!a)
+      throw new HttpException(
+        `Account ${accountId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
     return {
       accountId: a.id,
       tenantId: a.tenantId,
@@ -101,7 +111,13 @@ export class RevenueGraphService {
 
   async getDeals(
     tenantId: string,
-    opts: { accountId?: string; isActive?: boolean; stage?: string; page?: number; limit?: number } = {},
+    opts: {
+      accountId?: string;
+      isActive?: boolean;
+      stage?: string;
+      page?: number;
+      limit?: number;
+    } = {},
   ): Promise<PaginatedResponseDto<DealResponseDto>> {
     const { data, total } = await this.repo.findDeals(tenantId, opts);
     return {
@@ -112,21 +128,35 @@ export class RevenueGraphService {
     };
   }
 
-  async getDealById(tenantId: string, dealId: string): Promise<DealResponseDto> {
+  async getDealById(
+    tenantId: string,
+    dealId: string,
+  ): Promise<DealResponseDto> {
     const d = await this.repo.findDealById(tenantId, dealId);
-    if (!d) throw new HttpException(`Deal ${dealId} not found`, HttpStatus.NOT_FOUND);
+    if (!d)
+      throw new HttpException(`Deal ${dealId} not found`, HttpStatus.NOT_FOUND);
     return this.mapDeal(d);
   }
 
-  async getDealRelationship(tenantId: string, dealId: string): Promise<RelationshipGraphDto> {
+  async getDealRelationship(
+    tenantId: string,
+    dealId: string,
+  ): Promise<RelationshipGraphDto> {
     const d = await this.repo.findDealById(tenantId, dealId);
-    if (!d) throw new HttpException(`Deal ${dealId} not found`, HttpStatus.NOT_FOUND);
+    if (!d)
+      throw new HttpException(`Deal ${dealId} not found`, HttpStatus.NOT_FOUND);
     return {
       dealId: d.id,
       dealName: d.name,
-      stage: d.stage ?? 'Unknown',
+      stage: d.stage ?? "Unknown",
       amount: d.amount ?? undefined,
-      account: d.account ? { accountId: d.account.id, name: d.account.name, domain: d.account.domain } : undefined,
+      account: d.account
+        ? {
+            accountId: d.account.id,
+            name: d.account.name,
+            domain: d.account.domain,
+          }
+        : undefined,
       contacts: (d.dealContacts ?? []).map((dc: any) => ({
         contactId: dc.contact.id,
         name: dc.contact.name ?? undefined,
@@ -143,9 +173,16 @@ export class RevenueGraphService {
     };
   }
 
-  async getContactById(tenantId: string, contactId: string): Promise<ContactResponseDto> {
+  async getContactById(
+    tenantId: string,
+    contactId: string,
+  ): Promise<ContactResponseDto> {
     const c = await this.repo.findContactById(tenantId, contactId);
-    if (!c) throw new HttpException(`Contact ${contactId} not found`, HttpStatus.NOT_FOUND);
+    if (!c)
+      throw new HttpException(
+        `Contact ${contactId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
     return {
       contactId: c.id,
       tenantId: c.tenantId,
@@ -179,11 +216,18 @@ export class RevenueGraphService {
   ): Promise<{ message: string; jobIds: string[] }> {
     const jobIds: string[] = [];
     for (const entityType of entityTypes) {
-      await this.repo.upsertCrmSyncState(tenantId, crmSource, entityType, { status: 'syncing' });
+      await this.repo.upsertCrmSyncState(tenantId, crmSource, entityType, {
+        status: "syncing",
+      });
       jobIds.push(randomUUID());
     }
-    this.logger.log(`CRM sync triggered for tenant ${tenantId}, source ${crmSource}`);
-    return { message: `CRM sync initiated for ${entityTypes.join(', ')}`, jobIds };
+    this.logger.log(
+      `CRM sync triggered for tenant ${tenantId}, source ${crmSource}`,
+    );
+    return {
+      message: `CRM sync initiated for ${entityTypes.join(", ")}`,
+      jobIds,
+    };
   }
 
   // ─── CORE ENTITY LINKING PIPELINE (TDD §5.2) ─────────────────────────────────
@@ -194,7 +238,9 @@ export class RevenueGraphService {
    */
   async processInteractionLinking(intake: NormalizedIntake): Promise<void> {
     if (!AI_ENABLED) {
-      this.logger.warn('Revenue Graph disabled — M10_REVENUE_GRAPH_ENABLED=false');
+      this.logger.warn(
+        "Revenue Graph disabled — M10_REVENUE_GRAPH_ENABLED=false",
+      );
       return;
     }
 
@@ -213,48 +259,100 @@ export class RevenueGraphService {
       transcriptId: intake.artifacts.transcriptId,
       calendarEventId: intake.artifacts.calendarEventId,
       emailThreadId: intake.artifacts.emailThreadId,
-      status: 'mapping_in_progress',
+      status: "mapping_in_progress",
     });
 
     // Guard: already linked — skip idempotently
-    if (activity.status === 'linked' || activity.status === 'linked_low_confidence') {
+    if (
+      activity.status === "linked" ||
+      activity.status === "linked_low_confidence"
+    ) {
       this.logger.debug(`[${idempotencyKey}] Already linked — skipping`);
       return;
     }
 
     try {
-      await this.repo.updateActivityStatus(activity.id, 'mapping_in_progress');
+      await this.repo.updateActivityStatus(activity.id, "mapping_in_progress");
 
-      const rulesConfig = await this.repo.getActiveMappingRules(tenantId)
+      const rulesConfig = await this.repo
+        .getActiveMappingRules(tenantId)
         .then((r: any) => (r?.config as Record<string, any>) ?? {});
 
       // Step 2: Resolve contacts — email exact match (TDD §5.2.1, FR-3)
       const resolvedContacts = await this.resolveContacts(tenantId, intake);
 
       // Step 3: Resolve account — domain match (TDD §5.2.2)
-      const resolvedAccount = await this.resolveAccount(tenantId, intake, resolvedContacts, rulesConfig);
+      const resolvedAccount = await this.resolveAccount(
+        tenantId,
+        intake,
+        resolvedContacts,
+        rulesConfig,
+      );
 
       // Step 4: Resolve deal — open deals on account (TDD §5.2.3)
-      const resolvedDeal = await this.resolveDeal(tenantId, intake, resolvedAccount, resolvedContacts, rulesConfig);
+      const resolvedDeal = await this.resolveDeal(
+        tenantId,
+        intake,
+        resolvedAccount,
+        resolvedContacts,
+        rulesConfig,
+      );
 
       // Step 5: Build link array
       let finalLinks: EntityLinkResult[] = [
-        ...resolvedContacts.map(c => ({ entityType: 'contact' as const, entityId: c.id, confidence: c.confidence, signals: c.signals, aiAssisted: false })),
-        ...(resolvedAccount ? [{ entityType: 'account' as const, entityId: resolvedAccount.id, confidence: resolvedAccount.confidence, signals: resolvedAccount.signals, aiAssisted: false }] : []),
-        ...(resolvedDeal ? [{ entityType: 'deal' as const, entityId: resolvedDeal.id, confidence: resolvedDeal.confidence, signals: resolvedDeal.signals, aiAssisted: false }] : []),
+        ...resolvedContacts.map((c) => ({
+          entityType: "contact" as const,
+          entityId: c.id,
+          confidence: c.confidence,
+          signals: c.signals,
+          aiAssisted: false,
+        })),
+        ...(resolvedAccount
+          ? [
+              {
+                entityType: "account" as const,
+                entityId: resolvedAccount.id,
+                confidence: resolvedAccount.confidence,
+                signals: resolvedAccount.signals,
+                aiAssisted: false,
+              },
+            ]
+          : []),
+        ...(resolvedDeal
+          ? [
+              {
+                entityType: "deal" as const,
+                entityId: resolvedDeal.id,
+                confidence: resolvedDeal.confidence,
+                signals: resolvedDeal.signals,
+                aiAssisted: false,
+              },
+            ]
+          : []),
       ];
 
       // Step 6: AI fallback — only when deterministic is insufficient (TDD §5.2.4, FR-3)
-      const overallConfidence = this.calculateOverallConfidence(resolvedContacts, resolvedAccount, resolvedDeal);
+      const overallConfidence = this.calculateOverallConfidence(
+        resolvedContacts,
+        resolvedAccount,
+        resolvedDeal,
+      );
       let aiAssisted = false;
 
       const needsAi =
         finalLinks.length === 0 ||
         (resolvedAccount === null && resolvedContacts.length > 0) ||
-        overallConfidence === 'low';
+        overallConfidence === "low";
 
       if (AI_ENABLED && needsAi) {
-        const aiResult = await this.callAiEntityResolution(tenantId, activity.id, intake, resolvedContacts, resolvedAccount, resolvedDeal);
+        const aiResult = await this.callAiEntityResolution(
+          tenantId,
+          activity.id,
+          intake,
+          resolvedContacts,
+          resolvedAccount,
+          resolvedDeal,
+        );
         if (aiResult) {
           aiAssisted = true;
           finalLinks = this.mergeAiResults(finalLinks, aiResult);
@@ -263,18 +361,25 @@ export class RevenueGraphService {
 
       // Step 7: Persist links (FR-5: idempotent upsert)
       if (WRITE_ENABLED && finalLinks.length > 0) {
-        await this.repo.upsertInteractionLinks(tenantId, activity.id, finalLinks as any);
+        await this.repo.upsertInteractionLinks(
+          tenantId,
+          activity.id,
+          finalLinks as any,
+        );
       }
 
       // Step 8: Update activity status
-      const finalConfidence = finalLinks.length > 0 ? overallConfidence : 'low';
-      const finalStatus = finalLinks.length === 0
-        ? 'unresolved'
-        : finalConfidence === 'low' ? 'linked_low_confidence' : 'linked';
+      const finalConfidence = finalLinks.length > 0 ? overallConfidence : "low";
+      const finalStatus =
+        finalLinks.length === 0
+          ? "unresolved"
+          : finalConfidence === "low"
+            ? "linked_low_confidence"
+            : "linked";
 
-      const primaryAccount = finalLinks.find(l => l.entityType === 'account');
-      const primaryContact = finalLinks.find(l => l.entityType === 'contact');
-      const primaryDeal = finalLinks.find(l => l.entityType === 'deal');
+      const primaryAccount = finalLinks.find((l) => l.entityType === "account");
+      const primaryContact = finalLinks.find((l) => l.entityType === "contact");
+      const primaryDeal = finalLinks.find((l) => l.entityType === "deal");
 
       await this.repo.updateActivityStatus(activity.id, finalStatus, {
         accountId: primaryAccount?.entityId,
@@ -287,7 +392,11 @@ export class RevenueGraphService {
       await this.repo.createLinkDecisionLog(tenantId, {
         activityId: activity.id,
         idempotencyKey,
-        candidatesJson: { contacts: resolvedContacts, account: resolvedAccount, deal: resolvedDeal },
+        candidatesJson: {
+          contacts: resolvedContacts,
+          account: resolvedAccount,
+          deal: resolvedDeal,
+        },
         selectedLinks: finalLinks,
         rejectedLinks: {},
         aiRequestSent: aiAssisted,
@@ -296,14 +405,24 @@ export class RevenueGraphService {
       });
 
       // Step 10: Publish event — ONLY after durable write (TDD §5.2.5)
-      if (PUBLISH_EVENTS && finalStatus !== 'unresolved') {
-        await this.publishEntityLinkedEvent(tenantId, activity, finalLinks, finalConfidence as ConfidenceLevel, aiAssisted);
+      if (PUBLISH_EVENTS && finalStatus !== "unresolved") {
+        await this.publishEntityLinkedEvent(
+          tenantId,
+          activity,
+          finalLinks,
+          finalConfidence as ConfidenceLevel,
+          aiAssisted,
+        );
       }
 
-      this.logger.log(`[${idempotencyKey}] Done — status: ${finalStatus}, confidence: ${finalConfidence}, links: ${finalLinks.length}, ${processingMs}ms`);
+      this.logger.log(
+        `[${idempotencyKey}] Done — status: ${finalStatus}, confidence: ${finalConfidence}, links: ${finalLinks.length}, ${processingMs}ms`,
+      );
     } catch (error) {
-      this.logger.error(`[${idempotencyKey}] Failed: ${(error as Error).message}`);
-      await this.repo.updateActivityStatus(activity.id, 'failed');
+      this.logger.error(
+        `[${idempotencyKey}] Failed: ${(error as Error).message}`,
+      );
+      await this.repo.updateActivityStatus(activity.id, "failed");
       await this.repo.createLinkDecisionLog(tenantId, {
         activityId: activity.id,
         idempotencyKey,
@@ -312,7 +431,7 @@ export class RevenueGraphService {
         rejectedLinks: {},
         aiRequestSent: false,
         processingMs: Date.now() - startMs,
-        outcome: 'failed',
+        outcome: "failed",
         failureReason: (error as Error).message,
       });
       throw error; // Re-throw for BullMQ retry
@@ -322,16 +441,24 @@ export class RevenueGraphService {
   // ─── PRIVATE: DETERMINISTIC RESOLUTION (TDD §5.2) ────────────────────────────
 
   private async resolveContacts(tenantId: string, intake: NormalizedIntake) {
-    const results: Array<{ id: string; confidence: ConfidenceLevel; signals: string[] }> = [];
+    const results: Array<{
+      id: string;
+      confidence: ConfidenceLevel;
+      signals: string[];
+    }> = [];
     const allContacts = await this.repo.listContactsForMatching(tenantId);
 
     for (const p of intake.participants) {
-      if (p.role !== 'external') continue;
+      if (p.role !== "external") continue;
 
       if (p.email) {
         const contact = await this.repo.findContactByEmail(tenantId, p.email);
         if (contact) {
-          results.push({ id: contact.id, confidence: 'high', signals: ['email_exact_match'] });
+          results.push({
+            id: contact.id,
+            confidence: "high",
+            signals: ["email_exact_match"],
+          });
           continue;
         }
       }
@@ -339,11 +466,11 @@ export class RevenueGraphService {
       if (p.name) {
         const ranked = rankContactCandidates(p.email, p.name, allContacts);
         const { best, ambiguous } = pickBestCandidate(ranked);
-        if (best && !ambiguous && !results.find(r => r.id === best.id)) {
+        if (best && !ambiguous && !results.find((r) => r.id === best.id)) {
           results.push({
             id: best.id,
             confidence: best.confidence as ConfidenceLevel,
-            signals: [...best.signals, 'layer2_fuzzy_contact'],
+            signals: [...best.signals, "layer2_fuzzy_contact"],
           });
         }
       }
@@ -351,8 +478,12 @@ export class RevenueGraphService {
 
     for (const crmContactId of intake.crmHints?.contactIds ?? []) {
       const contact = await this.repo.findContactById(tenantId, crmContactId);
-      if (contact && !results.find(r => r.id === contact.id)) {
-        results.push({ id: contact.id, confidence: 'high', signals: ['crm_hint_contact_id'] });
+      if (contact && !results.find((r) => r.id === contact.id)) {
+        results.push({
+          id: contact.id,
+          confidence: "high",
+          signals: ["crm_hint_contact_id"],
+        });
       }
     }
 
@@ -366,52 +497,73 @@ export class RevenueGraphService {
     rulesConfig: Record<string, any>,
   ) {
     if (intake.crmHints?.accountId) {
-      const account = await this.repo.findAccountById(tenantId, intake.crmHints.accountId);
-      if (account) return { id: account.id, confidence: 'high' as ConfidenceLevel, signals: ['crm_hint_account_id'] };
+      const account = await this.repo.findAccountById(
+        tenantId,
+        intake.crmHints.accountId,
+      );
+      if (account)
+        return {
+          id: account.id,
+          confidence: "high" as ConfidenceLevel,
+          signals: ["crm_hint_account_id"],
+        };
     }
 
-    const ignoredDomains: string[] = rulesConfig.ignoredDomains ?? ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
+    const ignoredDomains: string[] = rulesConfig.ignoredDomains ?? [
+      "gmail.com",
+      "yahoo.com",
+      "outlook.com",
+      "hotmail.com",
+    ];
     const allAccounts = await this.repo.listAccountsForMatching(tenantId);
 
     const externalDomains = intake.participants
-      .filter(p => p.role === 'external' && p.email?.includes('@'))
-      .map(p => extractDomain(p.email)!)
-      .filter(d => d && !ignoredDomains.includes(d) && !isFreeMailDomain(d));
+      .filter((p) => p.role === "external" && p.email?.includes("@"))
+      .map((p) => extractDomain(p.email)!)
+      .filter((d) => d && !ignoredDomains.includes(d) && !isFreeMailDomain(d));
 
     for (const domain of [...new Set(externalDomains)]) {
-      const match = allAccounts.find((a: any) => (a.domain ?? '').toLowerCase() === domain.toLowerCase());
+      const match = allAccounts.find(
+        (a: any) => (a.domain ?? "").toLowerCase() === domain.toLowerCase(),
+      );
       if (match) {
-        return { id: match.id, confidence: 'high' as ConfidenceLevel, signals: ['email_domain_exact_match'] };
+        return {
+          id: match.id,
+          confidence: "high" as ConfidenceLevel,
+          signals: ["email_domain_exact_match"],
+        };
       }
     }
 
     const companyHints = intake.participants
-      .filter(p => p.role === 'external' && p.name)
-      .map(p => normalizeName(p.name!))
+      .filter((p) => p.role === "external" && p.name)
+      .map((p) => normalizeName(p.name!))
       .filter(Boolean);
 
     for (const hint of companyHints) {
-      const ranked = rankAccountCandidates(hint, undefined, allAccounts, { ignoredDomains });
+      const ranked = rankAccountCandidates(hint, undefined, allAccounts, {
+        ignoredDomains,
+      });
       const { best, ambiguous } = pickBestCandidate(ranked);
       if (best && !ambiguous) {
         return {
           id: best.id,
           confidence: best.confidence as ConfidenceLevel,
-          signals: [...best.signals, 'layer2_fuzzy_account'],
+          signals: [...best.signals, "layer2_fuzzy_account"],
         };
       }
     }
 
     const contactRows = await this.repo.listContactsForMatching(tenantId);
     const linked = resolvedContacts
-      .map(rc => contactRows.find((c: any) => c.id === rc.id))
+      .map((rc) => contactRows.find((c: any) => c.id === rc.id))
       .filter(Boolean) as Array<{ id: string; accountId?: string | null }>;
     const inferredId = inferAccountFromContacts(linked);
     if (inferredId) {
       return {
         id: inferredId,
-        confidence: 'medium' as ConfidenceLevel,
-        signals: ['layer3_contact_account_inference'],
+        confidence: "medium" as ConfidenceLevel,
+        signals: ["layer3_contact_account_inference"],
       };
     }
 
@@ -428,16 +580,35 @@ export class RevenueGraphService {
     if (intake.crmHints?.dealId) {
       const { data: deals } = await this.repo.findDeals(tenantId, {});
       const deal = deals.find((d: any) => d.id === intake.crmHints!.dealId);
-      if (deal) return { id: deal.id, confidence: 'high' as ConfidenceLevel, signals: ['crm_hint_deal_id'] };
+      if (deal)
+        return {
+          id: deal.id,
+          confidence: "high" as ConfidenceLevel,
+          signals: ["crm_hint_deal_id"],
+        };
     }
 
     if (resolvedAccount) {
-      const openDeals = await this.repo.findOpenDealsByAccount(tenantId, resolvedAccount.id);
+      const openDeals = await this.repo.findOpenDealsByAccount(
+        tenantId,
+        resolvedAccount.id,
+      );
       const preferOpen: boolean = rulesConfig.preferOpenDeals !== false;
       if (preferOpen && openDeals.length === 1) {
-        return { id: openDeals[0].id, confidence: 'high' as ConfidenceLevel, signals: ['single_open_deal_on_account'] };
+        return {
+          id: openDeals[0].id,
+          confidence: "high" as ConfidenceLevel,
+          signals: ["single_open_deal_on_account"],
+        };
       } else if (openDeals.length > 1) {
-        return { id: openDeals[0].id, confidence: 'medium' as ConfidenceLevel, signals: ['most_recent_open_deal_on_account', 'ambiguous_multiple_open_deals'] };
+        return {
+          id: openDeals[0].id,
+          confidence: "medium" as ConfidenceLevel,
+          signals: [
+            "most_recent_open_deal_on_account",
+            "ambiguous_multiple_open_deals",
+          ],
+        };
       }
     }
 
@@ -446,9 +617,16 @@ export class RevenueGraphService {
       for (const rc of resolvedContacts) {
         const row = contactRows.find((c: any) => c.id === rc.id);
         if (row?.accountId) {
-          const openDeals = await this.repo.findOpenDealsByAccount(tenantId, row.accountId);
+          const openDeals = await this.repo.findOpenDealsByAccount(
+            tenantId,
+            row.accountId,
+          );
           if (openDeals.length === 1) {
-            return { id: openDeals[0].id, confidence: 'medium' as ConfidenceLevel, signals: ['layer3_deal_via_contact_account'] };
+            return {
+              id: openDeals[0].id,
+              confidence: "medium" as ConfidenceLevel,
+              signals: ["layer3_deal_via_contact_account"],
+            };
           }
         }
       }
@@ -462,52 +640,86 @@ export class RevenueGraphService {
     account: { confidence: ConfidenceLevel } | null,
     deal: { confidence: ConfidenceLevel } | null,
   ): ConfidenceLevel {
-    const score = (l: ConfidenceLevel) => l === 'high' ? 1.0 : l === 'medium' ? 0.65 : 0.35;
+    const score = (l: ConfidenceLevel) =>
+      l === "high" ? 1.0 : l === "medium" ? 0.65 : 0.35;
     const scores = [
-      ...contacts.map(c => score(c.confidence)),
+      ...contacts.map((c) => score(c.confidence)),
       ...(account ? [score(account.confidence)] : []),
       ...(deal ? [score(deal.confidence)] : []),
     ];
-    if (scores.length === 0) return 'low';
+    if (scores.length === 0) return "low";
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-    return avg >= MIN_CONFIDENCE ? 'high' : avg >= 0.5 ? 'medium' : 'low';
+    return avg >= MIN_CONFIDENCE ? "high" : avg >= 0.5 ? "medium" : "low";
   }
 
   // ─── PRIVATE: AI RESOLUTION (TDD §5.2.4) — Python HTTP only ─────────────────
 
   private async callAiEntityResolution(
-    tenantId: string, activityId: string, intake: NormalizedIntake,
-    contacts: any[], account: any, deal: any,
+    tenantId: string,
+    activityId: string,
+    intake: NormalizedIntake,
+    contacts: any[],
+    account: any,
+    deal: any,
   ) {
     try {
       const body = AiResolutionRequestSchema.parse({
-        tenantId, activityId,
+        tenantId,
+        activityId,
         transcriptId: intake.artifacts.transcriptId,
         participants: intake.participants,
-        candidateAccounts: account ? [{ id: account.id, name: 'unknown' }] : [],
-        candidateDeals: deal ? [{ id: deal.id, name: 'unknown' }] : [],
-        candidateContacts: contacts.map(c => ({ id: c.id, email: 'unknown' })),
+        candidateAccounts: account ? [{ id: account.id, name: "unknown" }] : [],
+        candidateDeals: deal ? [{ id: deal.id, name: "unknown" }] : [],
+        candidateContacts: contacts.map((c) => ({
+          id: c.id,
+          email: "unknown",
+        })),
       });
       const response = await firstValueFrom(
-        this.http.post(`${AI_SERVICE_BASE_URL}/v1/resolve-entities`, body, { timeout: 10000 }),
+        this.http.post(`${AI_SERVICE_BASE_URL}/v1/resolve-entities`, body, {
+          timeout: 10000,
+        }),
       );
       const parsed = AiResolutionResponseSchema.safeParse(response.data);
       return parsed.success ? parsed.data : null;
     } catch (err) {
-      this.logger.warn(`AI resolution failed (non-fatal): ${(err as Error).message}`);
+      this.logger.warn(
+        `AI resolution failed (non-fatal): ${(err as Error).message}`,
+      );
       return null;
     }
   }
 
-  private mergeAiResults(existing: EntityLinkResult[], ai: any): EntityLinkResult[] {
+  private mergeAiResults(
+    existing: EntityLinkResult[],
+    ai: any,
+  ): EntityLinkResult[] {
     const merged = [...existing];
-    if (ai.accountId && !merged.find(l => l.entityType === 'account'))
-      merged.push({ entityType: 'account', entityId: ai.accountId, confidence: ai.confidence, signals: ai.signals, aiAssisted: true });
-    if (ai.dealId && !merged.find(l => l.entityType === 'deal'))
-      merged.push({ entityType: 'deal', entityId: ai.dealId, confidence: ai.confidence, signals: ai.signals, aiAssisted: true });
-    for (const cId of (ai.contactIds ?? [])) {
-      if (!merged.find(l => l.entityType === 'contact' && l.entityId === cId))
-        merged.push({ entityType: 'contact', entityId: cId, confidence: ai.confidence, signals: ai.signals, aiAssisted: true });
+    if (ai.accountId && !merged.find((l) => l.entityType === "account"))
+      merged.push({
+        entityType: "account",
+        entityId: ai.accountId,
+        confidence: ai.confidence,
+        signals: ai.signals,
+        aiAssisted: true,
+      });
+    if (ai.dealId && !merged.find((l) => l.entityType === "deal"))
+      merged.push({
+        entityType: "deal",
+        entityId: ai.dealId,
+        confidence: ai.confidence,
+        signals: ai.signals,
+        aiAssisted: true,
+      });
+    for (const cId of ai.contactIds ?? []) {
+      if (!merged.find((l) => l.entityType === "contact" && l.entityId === cId))
+        merged.push({
+          entityType: "contact",
+          entityId: cId,
+          confidence: ai.confidence,
+          signals: ai.signals,
+          aiAssisted: true,
+        });
     }
     return merged;
   }
@@ -515,27 +727,38 @@ export class RevenueGraphService {
   // ─── PRIVATE: EVENT PUBLICATION (TDD §5.2.5) ─────────────────────────────────
 
   private async publishEntityLinkedEvent(
-    tenantId: string, activity: any, links: EntityLinkResult[],
-    confidence: ConfidenceLevel, aiAssisted: boolean,
+    tenantId: string,
+    activity: any,
+    links: EntityLinkResult[],
+    confidence: ConfidenceLevel,
+    aiAssisted: boolean,
   ) {
-    const accountLink = links.find(l => l.entityType === 'account');
-    const dealLink = links.find(l => l.entityType === 'deal');
-    const contactLinks = links.filter(l => l.entityType === 'contact');
+    const accountLink = links.find((l) => l.entityType === "account");
+    const dealLink = links.find((l) => l.entityType === "deal");
+    const contactLinks = links.filter((l) => l.entityType === "contact");
 
-    await this.events.publish(M10_REVENUE_GRAPH_EVENTS.PUBLISHED.ENTITY_LINKED, {
-      tenantId,
-      activityId: activity.id,
-      sourceType: activity.sourceType,
-      sourceRecordId: activity.sourceRecordId,
-      accountId: accountLink?.entityId ?? null,
-      dealId: dealLink?.entityId ?? null,
-      contactIds: contactLinks.map(l => l.entityId),
-      confidence,
-      linkedAt: new Date().toISOString(),
-      explanation: { signals: [...new Set(links.flatMap(l => l.signals))], aiAssisted },
-    });
+    await this.events.publish(
+      M10_REVENUE_GRAPH_EVENTS.PUBLISHED.ENTITY_LINKED,
+      {
+        tenantId,
+        activityId: activity.id,
+        sourceType: activity.sourceType,
+        sourceRecordId: activity.sourceRecordId,
+        accountId: accountLink?.entityId ?? null,
+        dealId: dealLink?.entityId ?? null,
+        contactIds: contactLinks.map((l) => l.entityId),
+        confidence,
+        linkedAt: new Date().toISOString(),
+        explanation: {
+          signals: [...new Set(links.flatMap((l) => l.signals))],
+          aiAssisted,
+        },
+      },
+    );
 
-    this.logger.log(`Published ${M10_REVENUE_GRAPH_EVENTS.PUBLISHED.ENTITY_LINKED} — activity ${activity.id}`);
+    this.logger.log(
+      `Published ${M10_REVENUE_GRAPH_EVENTS.PUBLISHED.ENTITY_LINKED} — activity ${activity.id}`,
+    );
   }
 
   // ─── PRIVATE: HELPERS ─────────────────────────────────────────────────────────
@@ -550,7 +773,9 @@ export class RevenueGraphService {
       currency: d.currency ?? undefined,
       closeDate: d.closeDate?.toISOString(),
       isActive: d.isActive,
-      account: d.account ? { accountId: d.account.id, name: d.account.name } : undefined,
+      account: d.account
+        ? { accountId: d.account.id, name: d.account.name }
+        : undefined,
       contacts: (d.dealContacts ?? []).map((dc: any) => ({
         contactId: dc.contact.id,
         name: dc.contact.name ?? undefined,

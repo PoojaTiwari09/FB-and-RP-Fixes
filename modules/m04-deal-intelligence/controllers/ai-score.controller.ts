@@ -12,16 +12,17 @@ import {
   ApiParam,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { AIScoreService } from '@/services/ai-score.service';
+import { AIScoreService } from '@m04/services/ai-score.service';
 import {
   AIScoreResponseDto,
   ScoreHistoryResponseDto,
-} from '@/schemas/ai-score.dto';
-import { AuthGuard } from '@/guards/auth.guard';
+} from '@m04/schemas/ai-score.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 
 @ApiTags('AI Score')
 @Controller('deals/:dealId/score')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class AIScoreController {
   constructor(private readonly scoreService: AIScoreService) {}

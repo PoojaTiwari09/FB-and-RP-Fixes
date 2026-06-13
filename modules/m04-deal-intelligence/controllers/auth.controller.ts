@@ -15,10 +15,11 @@ import {
   ApiResponse,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { AuthService } from '@/services/auth.service';
-import { LoginDto, RegisterDto, AuthResponseDto, UserResponseDto } from '@/schemas';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { AuthService } from '@m04/services/auth.service';
+import { LoginDto, RegisterDto, AuthResponseDto, UserResponseDto } from '@m04/schemas';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 import { Public } from '../interfaces/jwt.guard';
 
 @ApiTags('Authentication')
@@ -79,7 +80,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard, TenantGuard)
   @ApiCookieAuth()
   @ApiOperation({
     summary: 'Logout user',
@@ -102,7 +103,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard, TenantGuard)
   @ApiCookieAuth()
   @ApiOperation({
     summary: 'Get current user',

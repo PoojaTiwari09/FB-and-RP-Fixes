@@ -51,36 +51,35 @@ export class M09Repository {
   // ─── USER ───────────────────────────────────────────────────────────────────
 
   async getUserById(userId: string) {
-    const mem = this.store.users.get(userId);
-    if (mem) return mem;
-
     const delegate = this.unifiedUserDelegate();
     if (delegate) {
       const u = await delegate.findUnique({ where: { id: userId } });
-      if (!u) throw new NotFoundException('User not found');
-      return this.mapUnifiedUser(u);
+      if (u) return this.mapUnifiedUser(u);
     }
 
     if (this.hasLegacyModels()) {
       const user = await (this.prisma as any).user.findUnique({ where: { id: userId } });
-      if (!user) throw new NotFoundException('User not found');
-      return user;
+      if (user) return user;
     }
+
+    const mem = this.store.users.get(userId);
+    if (mem) return mem;
 
     throw new NotFoundException('User not found');
   }
 
   async findUserByEmail(email: string) {
-    for (const u of this.store.users.values()) {
-      if (u.email === email) return u;
-    }
     const delegate = this.unifiedUserDelegate();
     if (delegate) {
       const u = await delegate.findFirst({ where: { email } });
-      return u ? this.mapUnifiedUser(u) : null;
+      if (u) return this.mapUnifiedUser(u);
     }
     if (this.hasLegacyModels()) {
-      return (this.prisma as any).user.findUnique({ where: { email } });
+      const user = await (this.prisma as any).user.findUnique({ where: { email } });
+      if (user) return user;
+    }
+    for (const u of this.store.users.values()) {
+      if (u.email === email) return u;
     }
     return null;
   }
@@ -151,45 +150,44 @@ export class M09Repository {
   // ─── SCENARIOS ──────────────────────────────────────────────────────────────
 
   async findAllScenarios(orgId: string) {
-    const mem = [...this.store.scenarios.values()].filter((s) => s.org_id === orgId);
-    if (mem.length) return mem.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-
     const delegate = this.scenarioDelegate();
     if (delegate) {
       const rows = await delegate.findMany({
         where: { tenantid: orgId },
         orderBy: { createdat: 'desc' },
       });
-      return rows.map(scenarioFromUnified);
+      if (rows && rows.length > 0) return rows.map(scenarioFromUnified);
     }
 
     if (this.hasLegacyModels()) {
-      return (this.prisma as any).trainingScenario.findMany({
+      const rows = await (this.prisma as any).trainingScenario.findMany({
         where: { org_id: orgId },
         orderBy: { created_at: 'desc' },
       });
+      if (rows && rows.length > 0) return rows;
     }
-    return [];
+
+    const mem = [...this.store.scenarios.values()].filter((s) => s.org_id === orgId);
+    return mem.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
   }
 
   async findScenarioById(id: string, orgId: string) {
-    const mem = this.store.scenarios.get(id);
-    if (mem && mem.org_id === orgId) return mem;
-
     const delegate = this.scenarioDelegate();
     if (delegate) {
       const row = await delegate.findFirst({ where: { scenarioid: id, tenantid: orgId } });
-      if (!row) throw new NotFoundException('Scenario not found');
-      return scenarioFromUnified(row);
+      if (row) return scenarioFromUnified(row);
     }
 
     if (this.hasLegacyModels()) {
       const scenario = await (this.prisma as any).trainingScenario.findFirst({
         where: { id, org_id: orgId },
       });
-      if (!scenario) throw new NotFoundException('Scenario not found');
-      return scenario;
+      if (scenario) return scenario;
     }
+
+    const mem = this.store.scenarios.get(id);
+    if (mem && mem.org_id === orgId) return mem;
+
     throw new NotFoundException('Scenario not found');
   }
 
@@ -268,25 +266,20 @@ export class M09Repository {
   }
 
   async findAllSessions(repId: string, orgId: string) {
-    const sessions = [...this.store.sessions.values()].filter(
-      (s) => s.rep_id === repId && this.store.scenarios.get(s.scenario_id)?.org_id === orgId,
-    );
-    if (sessions.length) {
-      return sessions.map((s) => this.parseSession(s)).sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-    }
-
     const delegate = this.sessionDelegate();
     if (delegate) {
       const rows = await delegate.findMany({
         where: { userid: repId, tenantid: orgId },
         orderBy: { createdat: 'desc' },
       });
-      return Promise.all(
-        rows.map(async (r: any) => {
-          const sc = await this.findScenarioById(r.scenarioid, orgId).catch(() => null);
-          return this.parseSession(sessionFromUnified(r, sc));
-        }),
-      );
+      if (rows && rows.length > 0) {
+        return Promise.all(
+          rows.map(async (r: any) => {
+            const sc = await this.findScenarioById(r.scenarioid, orgId).catch(() => null);
+            return this.parseSession(sessionFromUnified(r, sc));
+          }),
+        );
+      }
     }
 
     if (this.hasLegacyModels()) {
@@ -295,9 +288,13 @@ export class M09Repository {
         include: { scenario: true },
         orderBy: { created_at: 'desc' },
       });
-      return rows.map((s: any) => this.parseSession(s));
+      if (rows && rows.length > 0) return rows.map((s: any) => this.parseSession(s));
     }
-    return [];
+
+    const sessions = [...this.store.sessions.values()].filter(
+      (s) => s.rep_id === repId && this.store.scenarios.get(s.scenario_id)?.org_id === orgId,
+    );
+    return sessions.map((s) => this.parseSession(s)).sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
   }
 
   async findCompletedSessions(repId: string, orgId: string) {
@@ -306,21 +303,13 @@ export class M09Repository {
   }
 
   async findSessionById(id: string, orgId: string) {
-    const mem = this.store.sessions.get(id);
-    if (mem) {
-      const sc = this.store.scenarios.get(mem.scenario_id);
-      if (sc?.org_id !== orgId) throw new NotFoundException('Session not found');
-      const parsed = this.parseSession(mem);
-      parsed.scenario = sc;
-      return parsed;
-    }
-
     const delegate = this.sessionDelegate();
     if (delegate) {
       const row = await delegate.findFirst({ where: { sessionid: id, tenantid: orgId } });
-      if (!row) throw new NotFoundException('Session not found');
-      const sc = await this.findScenarioById(row.scenarioid, orgId);
-      return this.parseSession(sessionFromUnified(row, sc));
+      if (row) {
+        const sc = await this.findScenarioById(row.scenarioid, orgId);
+        return this.parseSession(sessionFromUnified(row, sc));
+      }
     }
 
     if (this.hasLegacyModels()) {
@@ -328,22 +317,48 @@ export class M09Repository {
         where: { id, rep: { org_id: orgId } },
         include: { scenario: true, rep: true },
       });
-      if (!session) throw new NotFoundException('Session not found');
-      return this.parseSession(session);
+      if (session) return this.parseSession(session);
+    }
+
+    const mem = this.store.sessions.get(id);
+    if (mem) {
+      // Find scenario properly
+      const sc = await this.findScenarioById(mem.scenario_id, orgId).catch(() => null);
+      if (!sc) throw new NotFoundException('Session not found');
+      if (sc.org_id !== orgId) throw new NotFoundException('Session not found');
+      const parsed = this.parseSession(mem);
+      parsed.scenario = sc;
+      return parsed;
     }
     throw new NotFoundException('Session not found');
   }
 
   async findSessionByIdWithoutOrg(id: string) {
-    const mem = this.store.sessions.get(id);
-    if (mem) return this.parseSession(mem);
+    const delegate = this.sessionDelegate();
+    if (delegate) {
+      const row = await delegate.findFirst({ where: { sessionid: id } });
+      if (row) {
+        const sc = await this.findScenarioById(row.scenarioid, row.tenantid).catch(() => null);
+        return this.parseSession(sessionFromUnified(row, sc));
+      }
+    }
     if (this.hasLegacyModels()) {
       const session = await (this.prisma as any).trainingSession.findUnique({
         where: { id },
         include: { scenario: true },
       });
-      if (!session) throw new NotFoundException('Session not found');
-      return this.parseSession(session);
+      if (session) return this.parseSession(session);
+    }
+    const mem = this.store.sessions.get(id);
+    if (mem) {
+      // For mem store, we have to look through scenarios manually to get the orgId or just return it
+      let sc = null;
+      for (const org of this.store.scenarios.values()) {
+        if (org.id === mem.scenario_id) { sc = org; break; }
+      }
+      const parsed = this.parseSession(mem);
+      if (sc) parsed.scenario = sc;
+      return parsed;
     }
     throw new NotFoundException('Session not found');
   }
@@ -355,8 +370,10 @@ export class M09Repository {
     selected_voice_id?: string;
     is_practice?: boolean;
   }) {
-    const scenario = this.store.scenarios.get(data.scenario_id);
-    const orgId = scenario?.org_id;
+    // Look up user to get their orgId
+    const user = await this.getUserById(data.rep_id).catch(() => null);
+    const orgId = user?.org_id;
+
     const id = randomUUID();
     const row = {
       id,
@@ -406,7 +423,14 @@ export class M09Repository {
       });
       return this.parseSession(session);
     }
-    return this.parseSession(row);
+    
+    // Resolve proper scenario for the returned session object
+    const parsed = this.parseSession(row);
+    if (orgId) {
+      const sc = await this.findScenarioById(data.scenario_id, orgId).catch(() => null);
+      if (sc) parsed.scenario = sc;
+    }
+    return parsed;
   }
 
   async updateSessionLifecycle(
@@ -490,15 +514,15 @@ export class M09Repository {
   }
 
   async getVoices() {
-    const voices = [...this.store.voices.values()].filter((v) => v.is_active);
-    if (voices.length) return voices.sort((a, b) => a.name.localeCompare(b.name));
     if (this.hasLegacyModels()) {
-      return (this.prisma as any).aiVoice.findMany({
+      const rows = await (this.prisma as any).aiVoice.findMany({
         where: { is_active: true },
         orderBy: { name: 'asc' },
       });
+      if (rows && rows.length > 0) return rows;
     }
-    return voices;
+    const voices = [...this.store.voices.values()].filter((v) => v.is_active);
+    return voices.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   // ─── ASSIGNMENTS (memory-only until unified model exists) ─────────────────

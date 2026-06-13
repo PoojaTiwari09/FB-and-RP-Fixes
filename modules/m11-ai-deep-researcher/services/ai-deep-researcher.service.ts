@@ -237,7 +237,9 @@ export class AiDeepResearcherService {
     };
   }
 
-  async getRepCalls(repId: string): Promise<any> {
+    async getRepCalls(repId: string): Promise<any> {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(repId);
+    if (!isUuid) return { calls: [] };
     const rep = await this.prisma.user.findUnique({ where: { id: repId } });
     const calls = await this.prisma.callRecord.findMany({
       where: { callOwner: rep?.name || undefined },
@@ -276,8 +278,11 @@ export class AiDeepResearcherService {
   }
 
   async getAccountDetails(accountId: string): Promise<any> {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(accountId);
     const account = await this.prisma.account.findFirst({
-      where: { OR: [{ id: accountId }, { name: accountId }] },
+      where: isUuid
+        ? { OR: [{ id: accountId }, { name: accountId }] }
+        : { name: accountId },
     });
     return account || { id: accountId, name: accountId, status: 'not_found' };
   }
@@ -438,78 +443,15 @@ IMPORTANT: Return ONLY the raw JSON object. No markdown, no code blocks, just JS
       this.logger.log(`Job ${jobId}: Groq analysis complete`);
     } catch (err) {
       this.logger.error(`Groq LLM call failed for job ${jobId}:`, err);
-      // Build report from raw DB data without LLM
-      job.report = this.buildReportFromDB(params, callCount, repCount, deals, callRecords, reps);
-      job.evidence = this.buildEvidenceFromDB(callRecords);
+      job.status = 'failed';
+      job.steps[5].status = 'failed';
+      job.steps[5].detail = `Analysis failed: ${err instanceof Error ? err.message : String(err)}`;
+      return;
     }
 
     job.progressPercent = 100;
     job.status = 'complete';
     job.steps[5].status = 'complete';
     job.steps[5].detail = 'Analysis complete.';
-  }
-
-  // ── Fallback: build report directly from DB data when Groq fails ───
-  private buildReportFromDB(params: any, callCount: number, repCount: number, deals: any[], callRecords: any[], reps: any[]) {
-    const wonDeals = deals.filter((d) => d.isWon).length;
-    const lostDeals = deals.filter((d) => !d.isWon).length;
-    const avgAmount = deals.length > 0 ? deals.reduce((s, d) => s + Number(d.amount || 0), 0) / deals.length : 0;
-
-    const segment = params.segment || params.filters?.segment || 'Mid-Market';
-    const dateRange = params.dateRange || params.filters?.dateRange || 'Last 60 days';
-    const callStage = params.callStage || params.filters?.callStage || 'Discovery';
-    const region = params.region || params.filters?.region || 'West';
-
-    return {
-      reportTitle: `${segment} ${callStage} Analysis — ${region} Team`,
-      filterTags: [`${callCount} calls`, `${repCount} reps`, segment, `${callStage} stage`, region, dateRange],
-      tabs: ['Key Findings', 'Evidence', 'Trends', 'Risks & Opps', 'Recommendations', 'Escalation'],
-      execSummary: `Analysis of ${callCount} calls across ${repCount} reps. From ${deals.length} deals examined, ${wonDeals} were won and ${lostDeals} were lost. Average deal value is $${Math.round(avgAmount).toLocaleString()}. Key patterns identified from call transcripts and deal outcomes are summarized below.`,
-      totalCalls: callCount,
-      totalReps: repCount,
-      keyFindings: {
-        objections: [
-          { rank: 1, objection: 'Integration complexity', frequencyPct: 71, resolutionRatePct: 43, trend: 'up' },
-          { rank: 2, objection: 'Pricing / budget', frequencyPct: 58, resolutionRatePct: 61, trend: 'flat' },
-          { rank: 3, objection: 'Incumbent vendor loyalty', frequencyPct: 44, resolutionRatePct: 28, trend: 'up' },
-          { rank: 4, objection: 'Security & compliance', frequencyPct: 39, resolutionRatePct: 82, trend: 'down' },
-          { rank: 5, objection: 'Timeline / urgency', frequencyPct: 31, resolutionRatePct: 54, trend: 'flat' },
-        ],
-        lowResolutionAlerts: [{ objection: 'Incumbent vendor loyalty', resolutionRatePct: 28, unaddressedRatePct: 72 }],
-        repPerformance: reps.slice(0, 4).map((r, i) => ({
-          repId: r.id,
-          repName: r.name,
-          initials: this.getInitials(r.name),
-          avatarColor: ['#6366f1', '#0ea5e9', '#f59e0b', '#ef4444'][i],
-          objection: 'Integration Complexity',
-          resolutionRatePct: [78, 69, 42, 31][i] || 50,
-          coachingNeeded: i >= 2,
-        })),
-      },
-      recommendations: [
-        { recommendationId: 'rec_001', priority: 'high', title: 'Coaching Priority: Objection Handling', description: `Reps with lower resolution rates need targeted coaching on competitive differentiation based on ${deals.length} recent deals.`, basedOnTags: ['Key Finding #3', 'Rep Analysis'] },
-        { recommendationId: 'rec_002', priority: 'high', title: 'Develop Integration Playbook', description: 'Integration complexity is the top objection. Create a standardized response framework.', basedOnTags: ['Key Finding #1', 'Cross-rep analysis'] },
-        { recommendationId: 'rec_003', priority: 'medium', title: 'Update Discovery Questions', description: 'Surface integration concerns and incumbent relationships earlier in discovery.', basedOnTags: ['Trend Analysis'] },
-      ],
-      trends: `Based on ${callCount} calls and ${deals.length} deals, integration complexity objections correlate with longer sales cycles. Pricing objections appear more frequently in ${segment} segment. Timeline urgency is seasonal.`,
-      risksAndOpportunities: `RISK: ${lostDeals} lost deals indicate possible pipeline issues. Low objection resolution rates could reduce close rates by 8-12%.\n\nOPPORTUNITY: ${wonDeals} won deals show strong patterns that can be replicated. Security & compliance objection handling is strong and can be used for peer coaching.`,
-    };
-  }
-
-  private buildEvidenceFromDB(callRecords: any[]) {
-    const evidence = callRecords.slice(0, 4).map((c, i) => ({
-      evidenceId: `ev_${String(i + 1).padStart(3, '0')}`,
-      callId: c.id,
-      finding: ['integration_complexity', 'pricing_budget', 'incumbent_vendor_loyalty', 'security_compliance'][i % 4],
-      repName: c.callOwner || 'Unknown Rep',
-      prospectName: `Prospect ${i + 1}`,
-      accountName: c.accountId || `Account ${i + 1}`,
-      accountId: `acc_${i + 1}`,
-      callDate: c.callDate ? new Date(c.callDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A',
-      quote: c.transcript?.summary || `Key discussion point from ${c.title}`,
-      callTimestampSeconds: 800 + i * 500,
-    }));
-
-    return { total: evidence.length, page: 1, totalPages: 1, evidence };
   }
 }

@@ -18,6 +18,21 @@ const DEFAULT_PASSWORD = 'Password123!';
 async function main() {
   console.log('--- Database Seeding Started ---');
 
+  console.log('Cleaning up existing database records...');
+  // Clear module tables first
+  await prisma.engageTask.deleteMany({});
+  await prisma.engageContact.deleteMany({});
+  await prisma.emailDraft.deleteMany({});
+  await prisma.emailTemplate.deleteMany({});
+  await prisma.callReview.deleteMany({});
+  await prisma.transcript.deleteMany({});
+  await prisma.callRecord.deleteMany({});
+  await prisma.trainerscenarios.deleteMany({});
+
+  // Clear core platform tables (User and Tenant)
+  // Deleting Tenant cascades to Account, Deal, Call, Dataset, Dashboard, Widget, User, and RefreshToken.
+  await prisma.tenant.deleteMany({});
+
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
   console.log('Seeding Tenant...');

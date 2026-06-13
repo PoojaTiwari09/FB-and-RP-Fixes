@@ -20,6 +20,7 @@
     "seed:m06": "pnpm exec tsx packages/database/prisma/seed-m06.ts",
     "seed:revenue": "pnpm exec tsx packages/database/prisma/seed-revenue.ts",
     "seed:m04": "pnpm exec tsx modules/m04-deal-intelligence/seeds/deal-drivers.seed.ts && pnpm exec tsx packages/database/prisma/seed-m04-dealboards.ts",
+    "seed:m07": "pnpm exec tsx packages/database/prisma/seed-m07-revenue-dashboards.ts",
     "seed:all": "pnpm exec tsx packages/database/prisma/seed-all.ts",
     "dev:m09-web": "pnpm --filter @rri/m09-web run dev",
     "dev:m03": "pnpm run dev:m03-api & pnpm run dev:m03-web",
@@ -62,6 +63,7 @@
   "dependencies": {
     "@nestjs/event-emitter": "^2.1.1",
     "@nestjs/passport": "^11.0.5",
+    "@nestjs/schedule": "^6.1.3",
     "@nestjs/serve-static": "^4.0.2",
     "@types/express": "^5.0.6",
     "express": "^5.2.1",

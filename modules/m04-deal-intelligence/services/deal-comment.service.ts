@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { DealComment } from '@/entities/deal-comment.entity';
-import { Deal } from '@/entities/deal.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { DealComment } from '@m04/entities/deal-comment.entity';
+import { Deal } from '@m04/entities/deal.entity';
 import {
   CreateCommentDto,
   UpdateCommentDto,
   CommentResponseDto,
-} from '@/schemas/comment.dto';
+} from '@m04/schemas/comment.dto';
 
 @Injectable()
 export class DealCommentService {

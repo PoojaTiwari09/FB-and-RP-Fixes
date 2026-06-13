@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 import { M01FrontendCallsService } from '../services/m01-frontend-calls.service';
+import { S3_RECORDINGS_CATALOG } from '../services/s3-recordings-catalog';
 
 /**
  * New frontend contract (Figma / Call_List Sales_Rep.txt).
@@ -15,6 +16,18 @@ export class M01FrontendCallsController {
   @Get()
   listCalls(@Query() query: Record<string, string>, @Req() req: any) {
     return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
+  }
+
+  /** S3 recordings catalog — static path before :callId */
+  @Get('s3-recordings')
+  listS3Recordings() {
+    return {
+      recordings: S3_RECORDINGS_CATALOG.map(({ id, displayName, sourceUrl }) => ({
+        id,
+        displayName,
+        sourceUrl,
+      })),
+    };
   }
 
   /** 5. Search — must be before :callId */

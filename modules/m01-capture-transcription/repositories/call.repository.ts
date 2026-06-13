@@ -63,18 +63,22 @@ export class CallRepository {
 
   // ── Full call detail (CT-13) ──────────────────────────────────────────
   async findById(id: string, tenantId: string) {
-    return this.prisma.callRecord.findFirst({
-      where: { id, tenantid: tenantId },
-      include: {
-        transcript: {
-          include: {
-            utterances: { orderBy: { sequenceIndex: 'asc' } },
+    try {
+      return await this.prisma.callRecord.findFirst({
+        where: { id, tenantid: tenantId },
+        include: {
+          transcript: {
+            include: {
+              utterances: { orderBy: { sequenceIndex: 'asc' } },
+            },
           },
+          notes:  { orderBy: { createdAt: 'desc' } },
+          shares: true,
         },
-        notes:  { orderBy: { createdAt: 'desc' } },
-        shares: true,
-      },
-    });
+      });
+    } catch {
+      return null;
+    }
   }
 
   // ── Update status / failure ───────────────────────────────────────────

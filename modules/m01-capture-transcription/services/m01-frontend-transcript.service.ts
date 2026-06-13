@@ -41,7 +41,7 @@ export class M01FrontendTranscriptService {
   constructor(
     private readonly calls: CallService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   private async loadCall(callId: string, tenantId: string) {
     const record = await this.calls.getCallDetail(callId, tenantId);
@@ -75,11 +75,13 @@ export class M01FrontendTranscriptService {
   async getSummary(callId: string, tenantId: string) {
     const record = await this.loadCall(callId, tenantId);
     const t = record.transcript;
+    const rawDate = t?.updatedAt || t?.createdAt;
+    const generatedAt = rawDate
+      ? new Date(rawDate).toISOString()
+      : new Date().toISOString();
     return {
       summary: t?.summary || '—',
-      generatedAt: (t?.updatedAt || t?.createdAt || new Date()).toISOString?.()
-        ? new Date(t.updatedAt || t.createdAt).toISOString()
-        : new Date().toISOString(),
+      generatedAt,
     };
   }
 
@@ -141,10 +143,10 @@ export class M01FrontendTranscriptService {
       t?.summary?.trim() ||
       (utterances.length > 0
         ? utterances
-            .slice(0, 3)
-            .map((u: any) => u.text)
-            .join(' ')
-            .slice(0, 500)
+          .slice(0, 3)
+          .map((u: any) => u.text)
+          .join(' ')
+          .slice(0, 500)
         : 'No summary available yet.');
     const account = record.accountId || record.accountName || '';
     return {

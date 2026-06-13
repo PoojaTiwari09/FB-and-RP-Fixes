@@ -21,7 +21,12 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     }
     async createConnection(tenantId, data) {
         return this.prisma.m10DataCloudConnection.create({
-            data: { tenantid: tenantId, destination: data.destination, config: data.config },
+            data: {
+                tenantid: tenantId,
+                destination: data.destination,
+                destinationName: data.destinationName ?? `${data.destination} Connection`,
+                config: data.config,
+            },
         });
     }
     async findConnections(tenantId) {

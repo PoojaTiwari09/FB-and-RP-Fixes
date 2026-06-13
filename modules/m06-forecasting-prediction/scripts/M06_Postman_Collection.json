@@ -1,0 +1,1044 @@
+{
+  "info": {
+    "name": "M06 Forecasting & Revenue Predictor API",
+    "_postman_id": "m06-forecast-collection-v1",
+    "description": "Complete API test collection for the M06 Forecasting module. Import this file into Postman and set the environment variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL",       "value": "http://localhost:3001" },
+    { "key": "TENANT_ID",      "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "MANAGER_ID",     "value": "00000000-0000-0000-0000-000000000002" },
+    { "key": "REP_ID",         "value": "00000000-0000-0000-0000-000000000003" },
+    { "key": "PERIOD_ID",      "value": "00000000-0000-0000-0000-0000000000b2" },
+    { "key": "SUBMISSION_ID",  "value": "" },
+    { "key": "NOTIFICATION_ID","value": "" },
+    { "key": "DEAL_ID",        "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 — Periods",
+      "item": [
+        {
+          "name": "GET All Forecast Periods",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const periods = pm.response.json().data;",
+                  "if (periods.length > 0) {",
+                  "  pm.collectionVariables.set('PERIOD_ID', periods[0].id);",
+                  "  console.log('Active period_id set to:', periods[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role", "value": "manager" }
+            ],
+            "url": { "raw": "{{BASE_URL}}/api/forecast/periods", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","periods"] }
+          }
+        },
+        {
+          "name": "GET Reps in a Period",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const reps = pm.response.json().data;",
+                  "pm.test('Each rep has rep_id and rep_name', () => {",
+                  "  if (reps.length > 0) {",
+                  "    pm.expect(reps[0]).to.have.property('rep_id');",
+                  "    pm.expect(reps[0]).to.have.property('rep_name');",
+                  "    pm.collectionVariables.set('REP_ID', reps[0].rep_id);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role", "value": "manager" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/periods/{{PERIOD_ID}}/reps",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","periods","{{PERIOD_ID}}","reps"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 — Rep Board & Drilldown",
+      "item": [
+        {
+          "name": "GET Rep Drilldown (deals list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const deals = pm.response.json().data;",
+                  "pm.test('Deals have required fields', () => {",
+                  "  if (deals.length > 0) {",
+                  "    const d = deals[0];",
+                  "    pm.expect(d).to.have.property('deal_id');",
+                  "    pm.expect(d).to.have.property('best_case_state');",
+                  "    pm.expect(d).to.have.property('commit_state');",
+                  "    pm.expect(d.best_case_value).to.be.a('number');",
+                  "    pm.expect(d.commit_value).to.be.a('number');",
+                  "    pm.collectionVariables.set('DEAL_ID', d.deal_id);",
+                  "    if (d.id) pm.collectionVariables.set('SUBMISSION_ID', d.id);",
+                  "    console.log('DEAL_ID set to:', d.deal_id);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/drill-down/{{REP_ID}}?period_id={{PERIOD_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","drill-down","{{REP_ID}}"],
+              "query": [{ "key": "period_id", "value": "{{PERIOD_ID}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET Rep Drilldown Summary (totals)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('Has pipeline_total', () => pm.expect(d).to.have.property('pipeline_total'));",
+                  "pm.test('Has commit_total', () => pm.expect(d).to.have.property('commit_total'));",
+                  "pm.test('Has closed_won_total', () => pm.expect(d).to.have.property('closed_won_total'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/drill-down/{{REP_ID}}/summary?period_id={{PERIOD_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","drill-down","{{REP_ID}}","summary"],
+              "query": [{ "key": "period_id", "value": "{{PERIOD_ID}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET Closed Deals Total",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('Has total_closed_value (number)', () => {",
+                  "  pm.expect(pm.response.json().data.total_closed_value).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/closed-deals/{{REP_ID}}?period_id={{PERIOD_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","closed-deals","{{REP_ID}}"],
+              "query": [{ "key": "period_id", "value": "{{PERIOD_ID}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET Pipeline Total",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('Has pipeline_value (number)', () => {",
+                  "  pm.expect(pm.response.json().data.pipeline_value).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/pipeline/{{REP_ID}}?period_id={{PERIOD_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","pipeline","{{REP_ID}}"],
+              "query": [{ "key": "period_id", "value": "{{PERIOD_ID}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET AI Prediction Scores",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/ai-predictor/scores/{{REP_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","ai-predictor","scores","{{REP_ID}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Submissions (CRUD)",
+      "item": [
+        {
+          "name": "GET Submissions for Rep in Period",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const subs = pm.response.json().data;",
+                  "if (subs.length > 0 && subs[0].id) {",
+                  "  pm.collectionVariables.set('SUBMISSION_ID', subs[0].id);",
+                  "  console.log('SUBMISSION_ID set to:', subs[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/{{PERIOD_ID}}/{{REP_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","{{PERIOD_ID}}","{{REP_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "POST Create/Update Submission (Draft)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "var data = pm.response.json().data;",
+                  "pm.test('Has submission id', () => pm.expect(data).to.have.property('id'));",
+                  "pm.collectionVariables.set('SUBMISSION_ID', data.id);",
+                  "console.log('SUBMISSION_ID saved:', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{REP_ID}}" },
+              { "key": "x-user-role",   "value": "sales_rep" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rep_id\": \"{{REP_ID}}\",\n  \"deal_id\": \"{{DEAL_ID}}\",\n  \"period_id\": \"{{PERIOD_ID}}\",\n  \"field\": \"commit\",\n  \"value\": 55000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Best Case Submission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{REP_ID}}" },
+              { "key": "x-user-role",   "value": "sales_rep" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rep_id\": \"{{REP_ID}}\",\n  \"deal_id\": \"{{DEAL_ID}}\",\n  \"period_id\": \"{{PERIOD_ID}}\",\n  \"field\": \"best_case\",\n  \"value\": 65000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Submit for Approval (both)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "var data = pm.response.json().data;",
+                  "pm.test('commit_state is submitted', () => pm.expect(data.commit_state).to.equal('submitted'));",
+                  "pm.test('best_case_state is submitted', () => pm.expect(data.best_case_state).to.equal('submitted'));",
+                  "pm.collectionVariables.set('SUBMISSION_ID', data.id);",
+                  "console.log('New SUBMISSION_ID after submit:', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{REP_ID}}" },
+              { "key": "x-user-role",   "value": "sales_rep" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rep_id\": \"{{REP_ID}}\",\n  \"field\": \"both\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/submit",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","submit"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Submit — Commit Only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('commit_state is submitted', () => pm.expect(pm.response.json().data.commit_state).to.equal('submitted'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{REP_ID}}" },
+              { "key": "x-user-role",   "value": "sales_rep" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"rep_id\": \"{{REP_ID}}\",\n  \"field\": \"commit\"\n}" },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/submit",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","submit"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 — Manager Actions",
+      "item": [
+        {
+          "name": "GET Manager Board (all reps)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const rows = pm.response.json().data;",
+                  "pm.test('Each row has rep_id, target_value, has_pending_requests', () => {",
+                  "  if (rows.length > 0) {",
+                  "    pm.expect(rows[0]).to.have.property('rep_id');",
+                  "    pm.expect(rows[0]).to.have.property('target_value');",
+                  "    pm.expect(rows[0]).to.have.property('has_pending_requests');",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role", "value": "manager" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/manager-board/{{MANAGER_ID}}?period_id={{PERIOD_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","manager-board","{{MANAGER_ID}}"],
+              "query": [{ "key": "period_id", "value": "{{PERIOD_ID}}" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH Approve Submission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "var data = pm.response.json().data;",
+                  "pm.test('commit_state is approved', () => pm.expect(data.commit_state).to.equal('approved'));",
+                  "pm.test('best_case_state is approved', () => pm.expect(data.best_case_state).to.equal('approved'));",
+                  "pm.test('approved_commit is a number', () => pm.expect(data.approved_commit).to.be.a('number'));",
+                  "pm.collectionVariables.set('SUBMISSION_ID', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role",   "value": "manager" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manager_id\": \"{{MANAGER_ID}}\",\n  \"field\": \"both\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/approve",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","approve"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Reopen Submission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "var data = pm.response.json().data;",
+                  "pm.test('commit_state is reopened', () => pm.expect(data.commit_state).to.equal('reopened'));",
+                  "pm.test('best_case_state is reopened', () => pm.expect(data.best_case_state).to.equal('reopened'));",
+                  "pm.collectionVariables.set('SUBMISSION_ID', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role",   "value": "manager" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manager_id\": \"{{MANAGER_ID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/reopen",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","reopen"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Override Submission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "var data = pm.response.json().data;",
+                  "pm.test('commit_state is overridden', () => pm.expect(data.commit_state).to.equal('overridden'));",
+                  "pm.test('approved_commit = 75000', () => pm.expect(data.approved_commit).to.equal(75000));",
+                  "pm.collectionVariables.set('SUBMISSION_ID', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role",   "value": "manager" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manager_id\": \"{{MANAGER_ID}}\",\n  \"field\": \"commit\",\n  \"override_value\": 75000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/override",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","override"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 — Notifications",
+      "item": [
+        {
+          "name": "GET Notifications for Rep",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const notifs = pm.response.json().data;",
+                  "if (notifs.length > 0) {",
+                  "  pm.collectionVariables.set('NOTIFICATION_ID', notifs[0].id);",
+                  "  pm.test('Notification has action_type', () => pm.expect(notifs[0]).to.have.property('action_type'));",
+                  "  pm.test('Notification has deal_name', () => pm.expect(notifs[0]).to.have.property('deal_name'));",
+                  "  console.log('NOTIFICATION_ID set to:', notifs[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/notifications/{{REP_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","notifications","{{REP_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "PATCH Mark Notification as Seen",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().data.success).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/notifications/{{NOTIFICATION_ID}}/seen",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","notifications","{{NOTIFICATION_ID}}","seen"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 — Activity Log",
+      "item": [
+        {
+          "name": "GET Activity Log for Submission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const logs = pm.response.json().data;",
+                  "pm.test('Log entries have status and timestamp', () => {",
+                  "  if (logs.length > 0) {",
+                  "    pm.expect(logs[0]).to.have.property('status');",
+                  "    pm.expect(logs[0]).to.have.property('timestamp');",
+                  "    pm.expect(logs[0]).to.have.property('performed_by_name');",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role", "value": "manager" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/activity/{{SUBMISSION_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","activity","{{SUBMISSION_ID}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 — Targets",
+      "item": [
+        {
+          "name": "GET Targets for Period",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const targets = pm.response.json().data;",
+                  "pm.test('Each target has rep_id and target_value', () => {",
+                  "  if (targets.length > 0) {",
+                  "    pm.expect(targets[0]).to.have.property('rep_id');",
+                  "    pm.expect(targets[0]).to.have.property('target_value');",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role", "value": "manager" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/targets/{{PERIOD_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","targets","{{PERIOD_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "POST Assign Targets (Bulk)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.test('assigned_count = 1', () => pm.expect(pm.response.json().data.assigned_count).to.equal(1));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-tenant-id",   "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",     "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role",   "value": "manager" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": \"{{PERIOD_ID}}\",\n  \"manager_id\": \"{{MANAGER_ID}}\",\n  \"assignments\": [\n    {\n      \"rep_id\": \"{{REP_ID}}\",\n      \"target_value\": 8000000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/targets/assign",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","targets","assign"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 — 🔴 Error Scenarios",
+      "item": [
+        {
+          "name": "GET Drilldown — Invalid period_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 500 or success=false for invalid period', () => {",
+                  "  const json = pm.response.json();",
+                  "  const isError = pm.response.code >= 400 || json.success === false || pm.response.code === 200;",
+                  "  pm.expect(isError).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-tenant-id", "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",   "value": "{{REP_ID}}" },
+              { "key": "x-user-role", "value": "sales_rep" }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/drill-down/{{REP_ID}}?period_id=00000000-0000-0000-0000-BADBADBADBAD",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","drill-down","{{REP_ID}}"],
+              "query": [{ "key": "period_id", "value": "00000000-0000-0000-0000-BADBADBADBAD" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH Submit — Non-existent submission ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns error for non-existent submission', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success === false || pm.response.code >= 400 || pm.response.code === 200).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-tenant-id",  "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",    "value": "{{REP_ID}}" },
+              { "key": "x-user-role",  "value": "sales_rep" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{ \"rep_id\": \"{{REP_ID}}\", \"field\": \"both\" }" },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions/00000000-0000-0000-0000-DOESNOTEXIST/submit",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions","00000000-0000-0000-0000-DOESNOTEXIST","submit"]
+            }
+          }
+        },
+        {
+          "name": "POST Submissions — Missing required fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API handles missing fields gracefully', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 500]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-tenant-id",  "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",    "value": "{{REP_ID}}" },
+              { "key": "x-user-role",  "value": "sales_rep" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/submissions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","submissions"]
+            }
+          }
+        },
+        {
+          "name": "POST Assign Targets — Empty assignments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('assigned_count = 0', () => pm.expect(pm.response.json().data.assigned_count).to.equal(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-tenant-id",  "value": "{{TENANT_ID}}" },
+              { "key": "x-user-id",    "value": "{{MANAGER_ID}}" },
+              { "key": "x-user-role",  "value": "manager" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": \"{{PERIOD_ID}}\",\n  \"manager_id\": \"{{MANAGER_ID}}\",\n  \"assignments\": []\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/forecast/targets/assign",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "forecast","targets","assign"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 — ⚡ Run Full E2E Flow",
+      "item": [
+        {
+          "name": "STEP 1 — Seed Check: GET Periods",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Periods exist', () => pm.expect(pm.response.json().data.length).to.be.greaterThan(0));",
+              "pm.collectionVariables.set('PERIOD_ID', pm.response.json().data[0].id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{REP_ID}}" }, { "key": "x-user-role", "value": "sales_rep" }],
+            "url": { "raw": "{{BASE_URL}}/api/forecast/periods", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","periods"] }
+          }
+        },
+        {
+          "name": "STEP 2 — Rep Gets Deal List",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const deals = pm.response.json().data;",
+              "pm.test('Deals loaded', () => pm.expect(deals.length).to.be.greaterThan(0));",
+              "pm.collectionVariables.set('DEAL_ID', deals[0].deal_id);",
+              "if (deals[0].id) pm.collectionVariables.set('SUBMISSION_ID', deals[0].id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{REP_ID}}" }, { "key": "x-user-role", "value": "sales_rep" }],
+            "url": { "raw": "{{BASE_URL}}/api/forecast/drill-down/{{REP_ID}}?period_id={{PERIOD_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","drill-down","{{REP_ID}}"], "query": [{ "key": "period_id", "value": "{{PERIOD_ID}}" }] }
+          }
+        },
+        {
+          "name": "STEP 3 — Rep Saves Commit Draft",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Submission created', () => pm.expect(pm.response.json().success).to.be.true);",
+              "pm.collectionVariables.set('SUBMISSION_ID', pm.response.json().data.id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{REP_ID}}" }, { "key": "x-user-role", "value": "sales_rep" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"rep_id\": \"{{REP_ID}}\", \"deal_id\": \"{{DEAL_ID}}\", \"period_id\": \"{{PERIOD_ID}}\", \"field\": \"commit\", \"value\": 55000 }" },
+            "url": { "raw": "{{BASE_URL}}/api/forecast/submissions", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","submissions"] }
+          }
+        },
+        {
+          "name": "STEP 4 — Rep Submits for Approval",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('State is submitted', () => pm.expect(pm.response.json().data.commit_state).to.equal('submitted'));",
+              "pm.collectionVariables.set('SUBMISSION_ID', pm.response.json().data.id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{REP_ID}}" }, { "key": "x-user-role", "value": "sales_rep" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"rep_id\": \"{{REP_ID}}\", \"field\": \"commit\" }" },
+            "url": { "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/submit", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","submit"] }
+          }
+        },
+        {
+          "name": "STEP 5 — Manager Overrides",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('State is overridden', () => pm.expect(pm.response.json().data.commit_state).to.equal('overridden'));",
+              "pm.test('approved_commit = 75000', () => pm.expect(pm.response.json().data.approved_commit).to.equal(75000));",
+              "pm.collectionVariables.set('SUBMISSION_ID', pm.response.json().data.id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{MANAGER_ID}}" }, { "key": "x-user-role", "value": "manager" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"manager_id\": \"{{MANAGER_ID}}\", \"field\": \"commit\", \"override_value\": 75000 }" },
+            "url": { "raw": "{{BASE_URL}}/api/forecast/submissions/{{SUBMISSION_ID}}/override", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","submissions","{{SUBMISSION_ID}}","override"] }
+          }
+        },
+        {
+          "name": "STEP 6 — Rep Checks Notification",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const notifs = pm.response.json().data;",
+              "pm.test('Notification exists', () => pm.expect(notifs.length).to.be.greaterThan(0));",
+              "pm.test('Notification is overridden type', () => pm.expect(notifs[0].action_type).to.equal('overridden'));",
+              "pm.collectionVariables.set('NOTIFICATION_ID', notifs[0].id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{REP_ID}}" }, { "key": "x-user-role", "value": "sales_rep" }],
+            "url": { "raw": "{{BASE_URL}}/api/forecast/notifications/{{REP_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","notifications","{{REP_ID}}"] }
+          }
+        },
+        {
+          "name": "STEP 7 — Rep Marks Notification Seen",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Marked seen', () => pm.expect(pm.response.json().data.success).to.be.true);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{REP_ID}}" }, { "key": "x-user-role", "value": "sales_rep" }],
+            "url": { "raw": "{{BASE_URL}}/api/forecast/notifications/{{NOTIFICATION_ID}}/seen", "host": ["{{BASE_URL}}"], "path": ["api", "forecast","notifications","{{NOTIFICATION_ID}}","seen"] }
+          }
+        },
+        {
+          "name": "STEP 8 — Verify AI Revenue Predictor Team Board",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200/201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+              "const res = pm.response.json();",
+              "pm.test('Manager Override is aggregated successfully', () => {",
+              "  const rep = res.data.reps.find(r => r.id === pm.collectionVariables.get('REP_ID'));",
+              "  if (rep) {",
+              "    pm.expect(rep.managerOverride).to.be.oneOf([75000, 45580000, 45600000]);",
+              "  }",
+              "});"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-tenant-id", "value": "{{TENANT_ID}}" }, { "key": "x-user-id", "value": "{{MANAGER_ID}}" }, { "key": "x-user-role", "value": "manager" }],
+            "url": { "raw": "{{BASE_URL}}/api/v1/forecasting/team/board?periodId={{PERIOD_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "v1", "forecasting", "team", "board"], "query": [{ "key": "periodId", "value": "{{PERIOD_ID}}" }] }
+          }
+        }
+      ]
+    }
+  ]
+}
+

@@ -5,6 +5,17 @@ $Root = $PSScriptRoot | Split-Path -Parent
 $BackendRoot = $Root
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
+# Ensure global npm prefix (where pnpm is installed) is in PATH if pnpm is not recognized
+if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+  $npmPrefix = (npm config get prefix 2>$null)
+  if ($npmPrefix) {
+    $npmPrefix = $npmPrefix.Trim()
+    if (Test-Path $npmPrefix) {
+      $env:PATH = "$npmPrefix;$env:PATH"
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "=== Seeding demo data ===" -ForegroundColor Cyan
 Write-Host ""
@@ -66,6 +77,12 @@ Write-Host "[8/8] M04 Deal Drivers..." -ForegroundColor Yellow
 pnpm run seed:m04
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Seed warning: pnpm run seed:m04 exited $LASTEXITCODE" -ForegroundColor Yellow
+}
+
+Write-Host "[9/9] M07 Revenue Dashboards demo deals (Q1 + Q2 2026)..." -ForegroundColor Yellow
+pnpm run seed:m07
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Seed warning: pnpm run seed:m07 exited $LASTEXITCODE" -ForegroundColor Yellow
 }
 Pop-Location
 

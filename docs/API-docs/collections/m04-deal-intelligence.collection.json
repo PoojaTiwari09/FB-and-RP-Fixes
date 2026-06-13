@@ -1,0 +1,1722 @@
+{
+  "info": {
+    "name": "M04 Deal Intelligence (Compliant)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "",
+          "pm.test('API follows standard response envelope', function () {",
+          "    var jsonData = pm.response.json();",
+          "    pm.expect(jsonData).to.have.property('success');",
+          "    ",
+          "    if (pm.response.code >= 200 && pm.response.code < 300) {",
+          "        pm.expect(jsonData.success).to.be.true;",
+          "        pm.expect(jsonData).to.have.property('data');",
+          "    } else {",
+          "        pm.expect(jsonData.success).to.be.false;",
+          "        pm.expect(jsonData).to.have.property('error');",
+          "    }",
+          "});",
+          "",
+          "pm.test('Response includes requestId and timestamp metadata', function () {",
+          "    var jsonData = pm.response.json();",
+          "    if (jsonData.meta) {",
+          "        pm.expect(jsonData.meta).to.have.property('requestId');",
+          "        pm.expect(jsonData.meta).to.have.property('timestamp');",
+          "    }",
+          "});",
+          ""
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Deal Boards",
+      "item": [
+        {
+          "name": "Get All Deal Boards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/boards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "boards"
+              ],
+              "query": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Response data is array of boards', function () {",
+                  "        pm.expect(Array.isArray(jsonData.data)).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal Board by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/boards/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "boards",
+                "{{boardId}}"
+              ],
+              "query": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Board contains summaryCards', function () {",
+                  "        if (jsonData.data) {",
+                  "            pm.expect(jsonData.data).to.have.property('summaryCards');",
+                  "            pm.expect(Array.isArray(jsonData.data.summaryCards)).to.be.true;",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deals for Board",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/boards/{{boardId}}/deals?page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "boards",
+                "{{boardId}}",
+                "deals?page=1&pageSize=25"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Data is paginated array', function () {",
+                  "        pm.expect(Array.isArray(jsonData.data)).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Deals Core",
+      "item": [
+        {
+          "name": "Get All Deals (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/all?page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "all?page=1&pageSize=25"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal Pipeline Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/pipeline-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "pipeline-summary"
+              ],
+              "query": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Pipeline Summary array', function () {",
+                  "        pm.expect(Array.isArray(jsonData.data)).to.be.true;",
+                  "        if (jsonData.data.length > 0) {",
+                  "            pm.expect(jsonData.data[0]).to.have.property('label');",
+                  "            pm.expect(jsonData.data[0]).to.have.property('amount');",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Stage Options",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/stage-options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "stage-options"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Forecast Category Options",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/forecast-category-options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "forecast-category-options"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Update Deal",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150000,\n  \"stage\": \"Negotiation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "3. Deal Sub-resources",
+      "item": [
+        {
+          "name": "Get Deal Brief",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/brief",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "brief"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal CRM Fields",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/crm-fields",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "crm-fields"
+              ],
+              "query": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('CRM Fields validate', function () {",
+                  "        if(jsonData.data) {",
+                  "            pm.expect(jsonData.data).to.have.property('stage');",
+                  "            pm.expect(jsonData.data).to.have.property('amount');",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal Warnings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/warnings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "warnings"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Resolve Warning",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/warnings/{{warningId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "warnings",
+                "{{warningId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"resolved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Trigger Warning Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/warnings/{{warningId}}/action",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "warnings",
+                "{{warningId}}",
+                "action"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal Playbook",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/playbook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "playbook"
+              ],
+              "query": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Playbook contains criteria', function () {",
+                  "        if(jsonData.data) {",
+                  "            pm.expect(jsonData.data).to.have.property('criteria');",
+                  "            pm.expect(jsonData.data).to.have.property('scorePercentage');",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Playbook Criterion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/playbook/criteria/{{criterionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "playbook",
+                "criteria",
+                "{{criterionId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Completed\",\n  \"notes\": \"Done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "activity"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal Activity Item",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/activity/{{activityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "activity",
+                "{{activityId}}"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "tasks"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Deal Comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "comments"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Escalation Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/escalation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "escalation"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Escalate Deal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/escalation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "escalation"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Remove Escalation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/escalation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "escalation"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "4. Cross-Deal Resources",
+      "item": [
+        {
+          "name": "Create Deal Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "tasks"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealId\": \"{{dealId}}\",\n  \"title\": \"Follow up\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Post Deal Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/{{dealId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "{{dealId}}",
+                "comments"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Looks good\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/notifications?repName=John",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "notifications?repName=John"
+              ],
+              "query": [
+                {
+                  "key": "repName",
+                  "value": "John"
+                }
+              ]
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Create Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "notifications"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repName\": \"John\",\n  \"message\": \"Test\",\n  \"type\": \"info\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Mark Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deal-management/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "deal-management",
+                "notifications",
+                "read-all"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "5. Manager API",
+      "item": [
+        {
+          "name": "Manager Get Pipeline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manager/pipeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manager",
+                "pipeline"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Manager Get Rep Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manager/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manager",
+                "alerts"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Manager Add Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manager/deals/{{dealId}}/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manager",
+                "deals",
+                "{{dealId}}",
+                "notes"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Good progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Manager Approve Next Step",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manager/deals/{{dealId}}/steps/{{stepId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manager",
+                "deals",
+                "{{dealId}}",
+                "steps",
+                "{{stepId}}",
+                "approve"
+              ],
+              "query": []
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Manager Update Forecast",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "x-user-role",
+                "value": "MANAGER",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manager/deals/{{dealId}}/forecast",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manager",
+                "deals",
+                "{{dealId}}",
+                "forecast"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Commit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": []
+        }
+      ]
+    }
+  ]
+}

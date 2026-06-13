@@ -56,7 +56,10 @@ import { SessionUserMiddleware } from './middleware/session-user.middleware';
 
 // Deal Drivers API integration
 import { PrismaModule } from './database/prisma.module';
-import { DealsController, DealBoardsRepController, NotificationsApiController } from './controllers/deals.controller';
+import { DealsController } from './controllers/deals.controller';
+import { DealBoardsController } from './controllers/deal-boards.controller';
+import { ManagerController } from './controllers/manager.controller';
+import { NotificationsController } from './controllers/notifications.controller';
 import { DealDriversApiController } from './controllers/deal-drivers-api.controller';
 import { DealDriversManagerController } from './controllers/deal-drivers-manager.controller';
 import { DealDriversDealController } from './controllers/deal-drivers-deal.controller';
@@ -97,9 +100,10 @@ import { DealDriversAnalyticsService } from './services/deal-drivers-analytics.s
     AnalyticsController,
     SettingsController,
     M04TestController,
+    DealBoardsController,
     DealsController,
-    DealBoardsRepController,
-    NotificationsApiController,
+    ManagerController,
+    NotificationsController,
     DealDriversApiController,
     DealDriversManagerController,
     DealDriversDealController,

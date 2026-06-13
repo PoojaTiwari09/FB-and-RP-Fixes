@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository, Between } from '@/database/m04-entity.repository';
-import { DealActivity, ActivityType } from '@/entities/deal-activity.entity';
-import { Deal } from '@/entities/deal.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository, Between } from '@m04/database/m04-prisma.repository';
+import { DealActivity, ActivityType } from '@m04/entities/deal-activity.entity';
+import { Deal } from '@m04/entities/deal.entity';
 import {
   CreateActivityDto,
   UpdateActivityDto,
   ActivityResponseDto,
   ActivityQueryDto,
   ActivityTimelineDto,
-} from '@/schemas/activity.dto';
+} from '@m04/schemas/activity.dto';
 
 @Injectable()
 export class DealActivityService {

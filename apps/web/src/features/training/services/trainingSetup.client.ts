@@ -17,7 +17,8 @@ export async function createTrainingSession(
     body: JSON.stringify({ selectedVoiceId, trainingId }),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const data = (await res.json()) as Record<string, unknown>;
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const data = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
   return {
     sessionId: String(data['sessionId'] ?? data['session_id'] ?? ''),
     status: String(data['status'] ?? 'active'),

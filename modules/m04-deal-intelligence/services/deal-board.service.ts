@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { DealBoardRepository } from '@/repositories/deal-board.repository';
+import { DealBoardRepository } from '@m04/repositories/deal-board.repository';
 import { AuditLogService } from './audit-log.service';
 import {
   CreateBoardDto,
@@ -17,8 +17,8 @@ import {
   BoardTabResponseDto,
   BoardColumnResponseDto,
   BoardPermissionResponseDto,
-} from '@/schemas';
-import { DealBoard, BoardStatus, AuditAction, AuditEntityType } from '@/entities';
+} from '@m04/schemas';
+import { DealBoard, BoardStatus, AuditAction, AuditEntityType } from '@m04/entities';
 
 @Injectable()
 export class DealBoardService {

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { UserPreference, PreferenceScope } from '@/entities/user-preference.entity';
-import { User } from '@/entities/user.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { UserPreference, PreferenceScope } from '@m04/entities/user-preference.entity';
+import { User } from '@m04/entities/user.entity';
 import {
   SaveFiltersRequestDto,
   GetFiltersResponseDto,
@@ -20,8 +20,8 @@ import {
   NotificationSettingsDto,
   CoachingSettingsDto,
   GlobalSettingsDto,
-} from '@/schemas/settings.dto';
-import { UserRole } from '@/interfaces/user-role.enum';
+} from '@m04/schemas/settings.dto';
+import { UserRole } from '@m04/interfaces/user-role.enum';
 
 @Injectable()
 export class SettingsService {

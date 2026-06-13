@@ -29,16 +29,14 @@ import type {
   ShareRecommendationResponse,
 } from '@ai-deep-researcher/types';
 
+import { getBridgeHeaders } from '@shared/lib/backend-headers';
+
 const BASE_URL = ENV.API_BASE_URL;
 
 // ─── Internal helpers ────────────────────────────────────────
 
 function authHeaders(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+  return getBridgeHeaders();
 }
 
 function log(label: string, detail: unknown): void {
@@ -63,9 +61,9 @@ export function resetMockProgress(): void {
 export async function getFiltersDefaults(): Promise<FiltersDefaults> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.FILTERS_DEFAULTS}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: FiltersDefaults = await res.json();
-  log('getFiltersDefaults', data);
-  return data;
+  const envelope = await res.json();
+  log('getFiltersDefaults', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -74,9 +72,9 @@ export async function getFiltersDefaults(): Promise<FiltersDefaults> {
 export async function getExampleQuestions(): Promise<ExampleQuestionsResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.EXAMPLE_QUESTIONS}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: ExampleQuestionsResponse = await res.json();
-  log('getExampleQuestions', data);
-  return data;
+  const envelope = await res.json();
+  log('getExampleQuestions', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -89,9 +87,9 @@ export async function runAnalysis(params: RunAnalysisParams): Promise<RunAnalysi
     body: JSON.stringify(params),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: RunAnalysisResponse = await res.json();
-  log('runAnalysis', data);
-  return data;
+  const envelope = await res.json();
+  log('runAnalysis', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -100,9 +98,9 @@ export async function runAnalysis(params: RunAnalysisParams): Promise<RunAnalysi
 export async function getProgress(jobId: string): Promise<ProgressResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.PROGRESS(jobId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: ProgressResponse = await res.json();
-  log('getProgress', data);
-  return data;
+  const envelope = await res.json();
+  log('getProgress', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -111,9 +109,9 @@ export async function getProgress(jobId: string): Promise<ProgressResponse> {
 export async function getReport(jobId: string): Promise<ReportResponse> {
   const res = await fetch(`${BASE_URL}/api/ai-deep-researcher/report/${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: ReportResponse = await res.json();
-  log('getReport', data);
-  return data;
+  const envelope = await res.json();
+  log('getReport', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -123,57 +121,57 @@ export async function getReport(jobId: string): Promise<ReportResponse> {
 export async function getDashboard(jobId: string): Promise<DashboardResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.DASHBOARD}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: DashboardResponse = await res.json();
-  log('getDashboard', data);
-  return data;
+  const envelope = await res.json();
+  log('getDashboard', envelope);
+  return envelope.data;
 }
 
 export async function getExecutiveSummary(jobId: string): Promise<ExecutiveSummaryResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.EXECUTIVE_SUMMARY}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: ExecutiveSummaryResponse = await res.json();
-  log('getExecutiveSummary', data);
-  return data;
+  const envelope = await res.json();
+  log('getExecutiveSummary', envelope);
+  return envelope.data;
 }
 
 export async function getKeyFindings(jobId: string): Promise<KeyFindingsResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.KEY_FINDINGS}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: KeyFindingsResponse = await res.json();
-  log('getKeyFindings', data);
-  return data;
+  const envelope = await res.json();
+  log('getKeyFindings', envelope);
+  return envelope.data;
 }
 
 export async function getObjections(jobId: string): Promise<ObjectionsResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.OBJECTIONS}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: ObjectionsResponse = await res.json();
-  log('getObjections', data);
-  return data;
+  const envelope = await res.json();
+  log('getObjections', envelope);
+  return envelope.data;
 }
 
 export async function getTrends(jobId: string): Promise<TrendsResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.TRENDS}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: TrendsResponse = await res.json();
-  log('getTrends', data);
-  return data;
+  const envelope = await res.json();
+  log('getTrends', envelope);
+  return envelope.data;
 }
 
 export async function getRisksOpportunities(jobId: string): Promise<RisksOpportunitiesResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.RISKS_OPPORTUNITIES}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: RisksOpportunitiesResponse = await res.json();
-  log('getRisksOpportunities', data);
-  return data;
+  const envelope = await res.json();
+  log('getRisksOpportunities', envelope);
+  return envelope.data;
 }
 
 export async function getRecommendations(jobId: string): Promise<RecommendationsResponse> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.RECOMMENDATIONS}?jobId=${jobId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: RecommendationsResponse = await res.json();
-  log('getRecommendations', data);
-  return data;
+  const envelope = await res.json();
+  log('getRecommendations', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -182,13 +180,13 @@ export async function getRecommendations(jobId: string): Promise<Recommendations
 export async function getEvidence(
   jobId: string,
   { finding = 'all', page = 1, size = 10 }: GetEvidenceParams = {},
-): Promise<EvidenceResponse> {
+ ): Promise<EvidenceResponse> {
   const params = new URLSearchParams({ finding, page: String(page), size: String(size), jobId });
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.EVIDENCE}?${params}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: EvidenceResponse = await res.json();
-  log('getEvidence', data);
-  return data;
+  const envelope = await res.json();
+  log('getEvidence', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -201,9 +199,9 @@ export async function submitEscalation(jobId: string, question: string): Promise
     body: JSON.stringify({ jobId, question }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: EscalationAnswer = await res.json();
-  log('submitEscalation', data);
-  return data;
+  const envelope = await res.json();
+  log('submitEscalation', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -220,9 +218,9 @@ export async function shareRecommendation(
     body: JSON.stringify({ jobId, recommendationId, channel }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: ShareRecommendationResponse = await res.json();
-  log('shareRecommendation', data);
-  return data;
+  const envelope = await res.json();
+  log('shareRecommendation', envelope);
+  return envelope.data;
 }
 
 // ============================================================
@@ -232,55 +230,55 @@ export async function shareRecommendation(
 export async function getRepCalls(repId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.REP_CALLS(repId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getRepCalls', { repId, data });
-  return data;
+  const envelope = await res.json();
+  log('getRepCalls', { repId, envelope });
+  return envelope.data;
 }
 
 export async function getAllReps(): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.REPS}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getAllReps', data);
-  return data;
+  const envelope = await res.json();
+  log('getAllReps', envelope);
+  return envelope.data;
 }
 
 export async function getObjectionRepBreakdown(objectionId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.OBJECTION_REP_BREAKDOWN(objectionId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getObjectionRepBreakdown', { objectionId, data });
-  return data;
+  const envelope = await res.json();
+  log('getObjectionRepBreakdown', { objectionId, envelope });
+  return envelope.data;
 }
 
 export async function getObjectionEvidence(objectionId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.OBJECTION_EVIDENCE(objectionId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getObjectionEvidence', { objectionId, data });
-  return data;
+  const envelope = await res.json();
+  log('getObjectionEvidence', { objectionId, envelope });
+  return envelope.data;
 }
 
 export async function getCallDetails(callId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.CALL_DETAILS(callId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getCallDetails', { callId, data });
-  return data;
+  const envelope = await res.json();
+  log('getCallDetails', { callId, envelope });
+  return envelope.data;
 }
 
 export async function getAccountDetails(accountId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.ACCOUNT_DETAILS(accountId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getAccountDetails', { accountId, data });
-  return data;
+  const envelope = await res.json();
+  log('getAccountDetails', { accountId, envelope });
+  return envelope.data;
 }
 
 export async function getRecommendationDetails(recId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.RECOMMENDATION_DETAILS(recId)}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  log('getRecommendationDetails', { recId, data });
-  return data;
+  const envelope = await res.json();
+  log('getRecommendationDetails', { recId, envelope });
+  return envelope.data;
 }

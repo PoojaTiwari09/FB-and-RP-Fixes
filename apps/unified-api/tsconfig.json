@@ -14,7 +14,7 @@
     "resolveJsonModule": true,
     "types": ["node"],
     "paths": {
-      "@/*": ["../../modules/m04-deal-intelligence/*"]
+      "@m04/*": ["../../modules/m04-deal-intelligence/*"]
     }
   },
   "include": [

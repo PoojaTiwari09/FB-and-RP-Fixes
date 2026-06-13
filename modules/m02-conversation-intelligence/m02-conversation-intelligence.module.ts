@@ -20,7 +20,7 @@ import {
   M02FrontendScorecardsController,
   M02FrontendUsersController,
 } from './controllers/m02-frontend-call-reviews.controller';
-import { M02FrontendTrackersController } from './controllers/m02-frontend-trackers.controller';
+
 import { M02FrontendTrackersService } from './services/m02-frontend-trackers.service';
 import { M02FrontendCallReviewsService } from './services/m02-frontend-call-reviews.service';
 import { M02FrontendSearchService } from './services/m02-frontend-search.service';
@@ -38,6 +38,8 @@ import { M02ConversationIntelligenceRepository } from './repositories/m02.reposi
 import { TopicRepository } from './repositories/topic.repository';
 import { PrismaModule } from './database/prisma.module';
 import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
+import { ThemeAnalysesController } from './controllers/theme-analyses.controller';
+import { ThemeAnalysesService } from './services/theme-analyses.service';
 
 @Module({
   imports: [PrismaModule, EventPublisherModule],
@@ -59,7 +61,7 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     M02FrontendUsersController,
     M02FrontendMetaController,
     M02FrontendAnalyticsController,
-    M02FrontendTrackersController,
+    ThemeAnalysesController,
   ],
   providers: [
     M02FrontendSearchService,
@@ -79,6 +81,7 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     // Repositories
     M02ConversationIntelligenceRepository,
     TopicRepository,
+    ThemeAnalysesService,
   ],
   exports: [
     M02ConversationIntelligenceService,

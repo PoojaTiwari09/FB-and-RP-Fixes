@@ -151,20 +151,64 @@ export function useEngage(initialAssigneeId?: string) {
     title: string;
     linkedToId: string;
     linkedToType: string;
+    contactName?: string;
+    companyName?: string;
     dueDate: string;
     dueTime: string;
     description?: string;
     assigneeId?: string;
+    priority?: string;
   }) => {
     try {
       await engageService.createTask(body);
       showToast('success', 'Task created successfully');
       setIsCreateModalOpen(false);
-      loadData();
+      // Always switch to 'today' tab so the new task is visible, then load with
+      // that tab directly (avoids stale activeStatusTab closure in loadData)
+      setActiveStatusTab('today');
+      // Fetch fresh data using 'today' tab directly — don't rely on stale closure
+      setIsLoading(true);
+      try {
+        const [tasksData, summaryData] = await Promise.all([
+          engageService.fetchTasks({
+            assigneeId: selectedUserId,
+            date: todayStr,
+            tab: 'today',
+            channel: activeChannel,
+            search: searchQuery,
+            groupBy,
+            sortBy,
+            filters: appliedFilters,
+          }),
+          engageService.fetchSummary(selectedUserId, todayStr),
+        ]);
+        startTransition(() => {
+          setGroups(tasksData.groups);
+          const tCounts = tasksData.tabCounts || {};
+          setTabCounts({
+            today: tCounts.today || 0,
+            inProgress: tCounts.inProgress || 0,
+            upcoming: tCounts.upcoming || 0,
+            completed: tCounts.completed || 0,
+            snoozed: (tCounts as any).snooze || (tCounts as any).snoozed || 0,
+          });
+          setStatusPills(tasksData.statusPills || { atRisk: 0, dueToday: 0 });
+          setSummary(summaryData || {
+            totalToday: 0, completedToday: 0, atRisk: 0, dueToday: 0,
+            highPriorityRemaining: 0, completionPercentage: 0, headerAlert: '',
+          });
+          const flatTasks: Task[] = [];
+          tasksData.groups.forEach((g: any) => flatTasks.push(...g.tasks));
+          setTasks(flatTasks);
+          setIsLoading(false);
+        });
+      } catch {
+        setIsLoading(false);
+      }
     } catch (e) {
       showToast('error', 'Failed to save task');
     }
-  }, [loadData, showToast]);
+  }, [showToast, selectedUserId, todayStr, activeChannel, searchQuery, groupBy, sortBy, appliedFilters]);
 
   const handleReassignTask = useCallback(async (
     taskId: string,

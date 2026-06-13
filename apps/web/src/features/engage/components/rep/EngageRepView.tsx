@@ -13,7 +13,7 @@ import EmailTaskScreen from './EmailTaskScreen';
 import LinkedInTaskScreen from './LinkedInTaskScreen';
 import BulkActionBar from './BulkActionBar';
 import QueueMode from './QueueMode';
-import FilterPanel from './FilterPanel';
+import FilterPanel, { FilterState } from './FilterPanel';
 import CreateTaskModal from './CreateTaskModal';
 import SnoozeModal from './SnoozeModal';
 
@@ -336,6 +336,7 @@ export default function EngageRepView() {
   const [snoozeModalOpen, setSnoozeModalOpen] = useState(false);
   const [showToast,      setShowToast]      = useState(false);
   const [toastMessage,   setToastMessage]   = useState('Tasks snoozed successfully');
+  const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [summary, setSummary] = useState<TaskSummary | null>(null);
@@ -364,36 +365,103 @@ export default function EngageRepView() {
     loadData();
   }, [loadData]);
 
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      const dateA = new Date(a.dueDateTime || a.dueDate || '9999-12-31T23:59:59').getTime();
+      const dateB = new Date(b.dueDateTime || b.dueDate || '9999-12-31T23:59:59').getTime();
+      return dateA - dateB;
+    });
+  }, [tasks]);
+
   const filteredTasks = useMemo(() => {
     const now = new Date();
-    return tasks.filter(task => {
+    return sortedTasks.filter(task => {
       const isSnoozed = task.snoozedUntil && new Date(task.snoozedUntil) > now;
       const statusUpper = task.status.toUpperCase();
 
-      if (activeTab === 'COMPLETED') return statusUpper === 'COMPLETED';
-      if (statusUpper === 'COMPLETED') return false;
+      if (activeTab === 'COMPLETED') {
+        if (statusUpper !== 'COMPLETED') return false;
+      } else {
+        if (statusUpper === 'COMPLETED') return false;
+      }
 
-      if (activeTab === 'SNOOZED') return isSnoozed;
-      if (isSnoozed) return false;
+      if (activeTab === 'SNOOZED') {
+        if (!isSnoozed) return false;
+      } else {
+        if (isSnoozed) return false;
+      }
 
-      if (activeTab === 'IN_PROGRESS') return statusUpper === 'IN_PROGRESS';
+      if (activeTab === 'IN_PROGRESS') {
+        if (statusUpper !== 'IN_PROGRESS') return false;
+      }
       if (activeTab === 'UPCOMING') {
         const isUpcoming = !task.isOverdue && new Date(task.dueDateTime) > now;
-        return isUpcoming && statusUpper === 'PENDING';
+        if (!isUpcoming || statusUpper !== 'PENDING') return false;
       }
       
       // TODAY tab
       if (channelFilter !== 'ALL' && task.channelType !== channelFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        return task.contactName.toLowerCase().includes(q) || task.company.toLowerCase().includes(q);
+        const matchesSearch = task.contactName.toLowerCase().includes(q) || task.company.toLowerCase().includes(q);
+        if (!matchesSearch) return false;
       }
+
+      // Apply appliedFilters if present
+      if (appliedFilters) {
+        // 1. Due Date
+        if (appliedFilters.dueDate) {
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
+          
+          const tDate = task.dueDate || (task.dueDateTime ? task.dueDateTime.split('T')[0] : '');
+          
+          if (appliedFilters.dueDate === 'today') {
+            if (tDate !== todayStr) return false;
+          } else if (appliedFilters.dueDate === 'tomorrow') {
+            if (tDate !== tomorrowStr) return false;
+          } else if (appliedFilters.dueDate === 'this-week') {
+            const endOfWeek = new Date(today);
+            endOfWeek.setDate(today.getDate() + 7);
+            const endOfWeekStr = endOfWeek.toISOString().split('T')[0];
+            if (!tDate || tDate < todayStr || tDate > endOfWeekStr) return false;
+          } else if (appliedFilters.dueDate === 'overdue') {
+            const isOverdue = task.isOverdue || (tDate && tDate < todayStr);
+            if (!isOverdue) return false;
+          }
+        }
+        
+        // 2. Linked Entity Type
+        if (appliedFilters.entityTypes && appliedFilters.entityTypes.size > 0) {
+          const type = (task.entityType || 'lead').toLowerCase();
+          if (!appliedFilters.entityTypes.has(type as any)) return false;
+        }
+        
+        // 3. Prospect Local Time
+        if (appliedFilters.localTime) {
+          const timeVal = task.localTime || '12:00';
+          const hour = parseInt(timeVal.split(':')[0], 10);
+          if (appliedFilters.localTime === 'morning') {
+            if (hour < 6 || hour >= 12) return false;
+          } else if (appliedFilters.localTime === 'business_hours') {
+            if (hour < 9 || hour >= 18) return false;
+          }
+        }
+      }
+
       return true;
     });
-  }, [tasks, activeTab, channelFilter, searchQuery]);
+  }, [sortedTasks, activeTab, channelFilter, searchQuery, appliedFilters]);
 
-  const highPriority = filteredTasks.filter(t => t.priority.toUpperCase() === 'HIGH');
-  const normal       = filteredTasks.filter(t => t.priority.toUpperCase() !== 'HIGH');
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const highPriority = filteredTasks.filter(t => {
+    return t.priority.toUpperCase() === 'HIGH';
+  });
+  const highPriorityIds = new Set(highPriority.map(t => t.taskId));
+  const normal       = filteredTasks.filter(t => !highPriorityIds.has(t.taskId));
 
   const taskGroups = useMemo(() => {
     if (groupBy === 'None') return null;
@@ -474,7 +542,7 @@ export default function EngageRepView() {
   const queueTasks  = selectedIds.length > 0 ? tasks.filter(t => selectedIds.includes(t.taskId)) : filteredTasks;
   const emailIdx    = emailTask    ? filteredTasks.findIndex(t => t.taskId === emailTask.taskId)    : -1;
   const linkedInIdx = linkedInTask ? filteredTasks.findIndex(t => t.taskId === linkedInTask.taskId) : -1;
-  const total       = summary?.totalTasksToday ?? 0;
+  const total       = summary?.totalTodayCount ?? summary?.totalTasksToday ?? 0;
   const progressPct = summary?.progressPercent ?? 0;
   const hpTotal     = summary?.highPriorityCount ?? 0;
   const atRisk      = summary?.atRiskCount ?? 0;
@@ -639,7 +707,7 @@ export default function EngageRepView() {
                   Today&apos;s Progress
                 </p>
                 <p className="text-sm font-semibold" style={{ color: C.darkText }}>
-                  {summary?.completedCount ?? 0}/{total}
+                  {summary?.completedTodayCount ?? summary?.completedCount ?? 0}/{total}
                 </p>
               </div>
               <div className="h-2 rounded-full overflow-hidden mb-2" style={{ backgroundColor: C.subtleBg }}>
@@ -753,19 +821,29 @@ export default function EngageRepView() {
           onMarkComplete={handleMarkComplete}
         />
       )}
-      {filterOpen     && <FilterPanel    onClose={() => setFilterOpen(false)}     onApply={() => {}} />}
+      {filterOpen     && (
+        <FilterPanel
+          onClose={() => setFilterOpen(false)}
+          onApply={setAppliedFilters}
+          initialFilters={appliedFilters}
+        />
+      )}
       {createTaskOpen && (
         <CreateTaskModal
           onClose={() => setCreateTaskOpen(false)}
           onSave={async (taskData) => {
             try {
               await createTask(taskData);
+              setCreateTaskOpen(false);
               await loadData();
               setToastMessage('Task created successfully');
               setShowToast(true);
               setTimeout(() => setShowToast(false), 3000);
             } catch (err) {
               console.error('Failed to create task:', err);
+              setToastMessage('Failed to create task');
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 3000);
             }
           }}
         />

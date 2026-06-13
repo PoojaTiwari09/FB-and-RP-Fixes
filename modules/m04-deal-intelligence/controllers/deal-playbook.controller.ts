@@ -18,7 +18,7 @@ import {
   ApiQuery,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { DealPlaybookService } from '@/services/deal-playbook.service';
+import { DealPlaybookService } from '@m04/services/deal-playbook.service';
 import {
   CreatePlaybookItemDto,
   UpdatePlaybookItemDto,
@@ -26,13 +26,14 @@ import {
   PlaybookSummaryDto,
   PlaybookType,
   GeneratePlaybookSuggestionsDto,
-} from '@/schemas/playbook.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/playbook.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Deal Playbooks')
 @Controller('deals/:dealId/playbook')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @ApiCookieAuth()
 export class DealPlaybookController {
   constructor(private readonly playbookService: DealPlaybookService) {}

@@ -14,20 +14,21 @@ import {
   ApiParam,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { CoachingService } from '@/services/coaching.service';
+import { CoachingService } from '@m04/services/coaching.service';
 import {
   GenerateCoachingPromptsDto,
   CoachingPromptsResponseDto,
-} from '@/schemas/coaching.dto';
-import { AuthGuard } from '@/guards/auth.guard';
-import { RolesGuard } from '@/guards/roles.guard';
-import { Roles } from '@/decorators/roles.decorator';
-import { UserRole } from '@/interfaces/user-role.enum';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+} from '@m04/schemas/coaching.dto';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { RolesGuard } from '../../platform-core/guards/roles.guard';
+import { Roles } from '../../platform-core/decorators/roles.decorator';
+import { UserRole } from '@rri/database';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 
 @ApiTags('Coaching')
 @Controller('coaching')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 @ApiCookieAuth()
 export class CoachingController {
   constructor(private readonly coachingService: CoachingService) {}

@@ -59,7 +59,11 @@ function adaptTrainingSetup(raw: Record<string, unknown>, trainingId: string): T
  * Fetch training setup data.
  * Voices are ALWAYS fetched from ElevenLabs (not from backend or mock static data).
  */
-export async function fetchTrainingSetup(trainingId: string, createdTrainingsStr?: string): Promise<TrainingSetupPage> {
+export async function fetchTrainingSetup(
+  trainingId: string,
+  createdTrainingsStr?: string,
+  headers?: Record<string, string>
+): Promise<TrainingSetupPage> {
   let raw: Record<string, unknown> | null = null;
   let liveVoices: any[] = [];
 
@@ -70,9 +74,13 @@ export async function fetchTrainingSetup(trainingId: string, createdTrainingsStr
   }
 
   try {
-    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, { next: { revalidate: 60 } });
+    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/setup`, {
+      headers,
+      cache: 'no-store'
+    });
     if (res.ok) {
-      raw = await res.json();
+      const responseData = await res.json();
+      raw = responseData.data && responseData.success ? responseData.data : responseData;
     } else {
       console.warn(`Backend returned non-OK status: ${res.status}`);
     }
@@ -170,26 +178,3 @@ export async function fetchTrainingSetup(trainingId: string, createdTrainingsStr
   };
 }
 
-export interface CreateSessionResponse {
-  sessionId: string;
-  status: string;
-  startedAt: string;
-}
-
-export async function createTrainingSession(
-  trainingId: string,
-  selectedVoiceId?: string
-): Promise<CreateSessionResponse> {
-  const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ selectedVoiceId, trainingId }),
-  });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const data = (await res.json()) as Record<string, unknown>;
-  return {
-    sessionId: String(data['sessionId'] ?? data['session_id'] ?? ''),
-    status: String(data['status'] ?? 'active'),
-    startedAt: String(data['startedAt'] ?? data['started_at'] ?? ''),
-  };
-}

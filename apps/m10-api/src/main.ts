@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import * as express from 'express';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
@@ -22,6 +23,9 @@ async function bootstrap() {
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
+  // Serve test UI static files at http://localhost:{port}/
+  app.use(express.static(path.join(__dirname, '../public')));
+
   app.enableCors({
     origin: M10AppModule.corsOrigins,
     credentials: true,
@@ -42,16 +46,13 @@ async function bootstrap() {
   const webUrl = process.env.M10_WEB_URL || 'http://localhost:5178';
   const apiBase = `http://localhost:${port}/api/v1/m10-data-compliance`;
 
-  app.getHttpAdapter().get('/', (_req, res) => {
+  app.getHttpAdapter().get('/status', (_req, res) => {
     res.json({
       service: 'm10-api',
       status: 'ok',
-      webUrl,
+      testUi: `http://localhost:${port}/`,
       apiBase,
       health: `${apiBase}/test/health`,
-      accounts: `${apiBase}/accounts`,
-      deals: `${apiBase}/deals`,
-      crmSync: `${apiBase}/crm-sync-status`,
       standaloneAuth: process.env.M10_STANDALONE_AUTH === 'true',
       demoHeaders: {
         'x-tenant-id': '00000000-0000-0000-0000-000000000001',
@@ -63,9 +64,9 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`M10 API listening on http://localhost:${port}`);
+  logger.log(`Test UI:  http://localhost:${port}/`);
   logger.log(`API base: ${apiBase}`);
-  logger.log(`M10 UI: ${webUrl}`);
-  logger.log(`Health: http://localhost:${port}/api/v1/m10-data-compliance/test/health`);
+  logger.log(`Health:   http://localhost:${port}/api/v1/m10-data-compliance/test/health`);
 }
 
 bootstrap().catch((err) => {

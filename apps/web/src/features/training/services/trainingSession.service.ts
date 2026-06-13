@@ -12,6 +12,7 @@ import type { QuestionTag } from '@shared/types/shared.types';
 import { sendChatMessage } from '@training/services/ai/groq.service';
 import type { ManagerActiveTraining } from '@training/types/trainingCreate.types';
 import { SESSION_CONTEXT_MOCK, MOCK_AI_REPLIES } from '@training/mocks/trainingSession.mock';
+import { backendFetch } from '@shared/lib/backend-api';
 
 /**
  * Adapts raw API response to our typed SessionContext shape.
@@ -115,31 +116,24 @@ function getMockSessionWithCookies(trainingId: string, sessionId: string): Sessi
  * Supports cookie-based custom trainings for reassignment scenarios.
  */
 export async function fetchSessionData(trainingId: string, sessionId: string): Promise<SessionData> {
-  // Try backend first
-  try {
-    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}`);
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const raw = (await res.json()) as Record<string, unknown>;
+  const res = await backendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const raw = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
 
-    // The backend wraps contactPersona/meetingContext inside a "context" object.
-    // adaptSessionContext expects a flat shape, so we unwrap it first.
-    const contextPayload = (raw['context'] ?? raw) as Record<string, unknown>;
-    const context = adaptSessionContext(contextPayload, trainingId);
-    const rawMessages = (raw['messages'] ?? []) as Record<string, unknown>[];
+  const contextPayload = (raw['context'] ?? raw) as Record<string, unknown>;
+  const context = adaptSessionContext(contextPayload, trainingId);
+  const rawMessages = (raw['messages'] ?? []) as Record<string, unknown>[];
 
-    return {
-      context,
-      sessionId: String(raw['sessionId'] ?? raw['session_id'] ?? sessionId),
-      status: (raw['status'] as SessionData['status']) ?? 'active',
-      elapsedSeconds: Number(raw['elapsedSeconds'] ?? raw['elapsed_seconds'] ?? 0),
-      messageCount: Number(raw['messageCount'] ?? raw['message_count'] ?? 0),
-      selectedVoiceId: String(raw['selectedVoiceId'] ?? raw['selected_voice_id'] ?? ''),
-      messages: adaptMessages(rawMessages),
-    };
-  } catch (error) {
-    console.warn('[TrainingSessionService] Backend API failed, falling back to mock:', error);
-    return getMockSessionWithCookies(trainingId, sessionId);
-  }
+  return {
+    context,
+    sessionId: String(raw['sessionId'] ?? raw['session_id'] ?? sessionId),
+    status: (raw['status'] as SessionData['status']) ?? 'active',
+    elapsedSeconds: Number(raw['elapsedSeconds'] ?? raw['elapsed_seconds'] ?? 0),
+    messageCount: Number(raw['messageCount'] ?? raw['message_count'] ?? 0),
+    selectedVoiceId: String(raw['selectedVoiceId'] ?? raw['selected_voice_id'] ?? ''),
+    messages: adaptMessages(rawMessages),
+  };
 }
 
 /** @deprecated Use fetchSessionData instead. */
@@ -164,71 +158,30 @@ export async function sendSessionMessage(
   transcript: TranscriptMessage[] = [],
   ctx: SessionContext | null = null
 ): Promise<SendMessageResponse> {
-  // Try backend API first
-  try {
-    const res = await fetch(
-      `${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/messages`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: messageText, inputType }),
-      }
-    );
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => res.statusText);
-      throw new Error(`API error: ${res.status} ${errText}`);
+  const res = await backendFetch(
+    `${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/messages`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ text: messageText, inputType }),
     }
+  );
 
-    const data = (await res.json()) as Record<string, unknown>;
-    const aiResponse = (data['aiResponse'] ?? {}) as Record<string, unknown>;
-
-    return {
-      aiReplyText: String(aiResponse['text'] ?? ''),
-      aiReplyId: String(aiResponse['id'] ?? `ai-${Date.now()}`),
-      aiReplyTimestamp: Number(aiResponse['timestampSeconds'] ?? 0),
-      audioUrl: String(aiResponse['audioUrl'] ?? ''),
-      scorecardUpdate: (data['scorecardUpdate'] as Record<string, ScorecardSectionStatus> | null) ?? null,
-    };
-  } catch (backendError) {
-    console.warn('[TrainingSessionService] Backend API failed, falling back to Groq:', backendError);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => res.statusText);
+    throw new Error(`API error: ${res.status} ${errText}`);
   }
 
-  // Fallback: Use client-side Groq if backend is unavailable
-  try {
-    if (!ctx) throw new Error('Session context required for Groq fallback');
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const data = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
+  const aiResponse = (data['aiResponse'] ?? {}) as Record<string, unknown>;
 
-    // Include the user's latest message in history before sending to Groq
-    const fullHistory: TranscriptMessage[] = [
-      ...transcript,
-      {
-        id: `user-${Date.now()}`,
-        sender: 'user',
-        text: messageText,
-        timestampSeconds: 0,
-      },
-    ];
-
-    const aiReplyText = await sendChatMessage(fullHistory, ctx);
-
-    return {
-      aiReplyText,
-      aiReplyId: `ai-${Date.now()}`,
-      aiReplyTimestamp: 0,
-      audioUrl: '', // TTS is handled separately in the hook via elevenLabs.service
-      scorecardUpdate: null,
-    };
-  } catch (groqError) {
-    console.warn('[TrainingSessionService] Groq fallback also failed, using mock reply:', groqError);
-    // Last resort: use mock reply
-    return {
-      aiReplyText: MOCK_AI_REPLIES[messageIndex % MOCK_AI_REPLIES.length],
-      aiReplyId: `mock-ai-${Date.now()}`,
-      aiReplyTimestamp: 0,
-      audioUrl: '',
-      scorecardUpdate: null,
-    };
-  }
+  return {
+    aiReplyText: String(aiResponse['text'] ?? ''),
+    aiReplyId: String(aiResponse['id'] ?? `ai-${Date.now()}`),
+    aiReplyTimestamp: Number(aiResponse['timestampSeconds'] ?? 0),
+    audioUrl: String(aiResponse['audioUrl'] ?? ''),
+    scorecardUpdate: (data['scorecardUpdate'] as Record<string, ScorecardSectionStatus> | null) ?? null,
+  };
 }
 
 /** Pause session */
@@ -236,28 +189,18 @@ export async function pauseSession(
   trainingId: string,
   sessionId: string
 ): Promise<{ message: string; status: string; elapsedSeconds: number; messageCount: number }> {
-  try {
-    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/pause`, {
-      method: 'PATCH',
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = (await res.json()) as Record<string, unknown>;
-    return {
-      message: String(data['message'] ?? ''),
-      status: String(data['status'] ?? 'paused'),
-      elapsedSeconds: Number(data['elapsedSeconds'] ?? data['elapsed_seconds'] ?? 0),
-      messageCount: Number(data['messageCount'] ?? data['message_count'] ?? 0),
-    };
-  } catch (error) {
-    console.warn('[TrainingSessionService] pauseSession failed:', error);
-    // Return fallback response
-    return {
-      message: 'Session paused',
-      status: 'paused',
-      elapsedSeconds: 0,
-      messageCount: 0,
-    };
-  }
+  const res = await backendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/pause`, {
+    method: 'PATCH',
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const data = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
+  return {
+    message: String(data['message'] ?? ''),
+    status: String(data['status'] ?? 'paused'),
+    elapsedSeconds: Number(data['elapsedSeconds'] ?? data['elapsed_seconds'] ?? 0),
+    messageCount: Number(data['messageCount'] ?? data['message_count'] ?? 0),
+  };
 }
 
 /** Resume session */
@@ -265,24 +208,16 @@ export async function resumeSession(
   trainingId: string,
   sessionId: string
 ): Promise<{ message: string; status: string }> {
-  try {
-    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/resume`, {
-      method: 'PATCH',
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = (await res.json()) as Record<string, unknown>;
-    return {
-      message: String(data['message'] ?? ''),
-      status: String(data['status'] ?? 'active'),
-    };
-  } catch (error) {
-    console.warn('[TrainingSessionService] resumeSession failed:', error);
-    // Return fallback response
-    return {
-      message: 'Session resumed',
-      status: 'active',
-    };
-  }
+  const res = await backendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/resume`, {
+    method: 'PATCH',
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const data = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
+  return {
+    message: String(data['message'] ?? ''),
+    status: String(data['status'] ?? 'active'),
+  };
 }
 
 /** End session */
@@ -290,26 +225,17 @@ export async function endSession(
   trainingId: string,
   sessionId: string
 ): Promise<{ message: string; status: string; resultsReady: boolean }> {
-  try {
-    const res = await fetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/end`, {
-      method: 'POST',
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const data = (await res.json()) as Record<string, unknown>;
-    return {
-      message: String(data['message'] ?? ''),
-      status: String(data['status'] ?? 'completed'),
-      resultsReady: Boolean(data['resultsReady'] ?? data['results_ready'] ?? false),
-    };
-  } catch (error) {
-    console.warn('[TrainingSessionService] endSession failed:', error);
-    // Return fallback response
-    return {
-      message: 'Session ended',
-      status: 'completed',
-      resultsReady: false,
-    };
-  }
+  const res = await backendFetch(`${ENV.M09_API_BASE_URL}/api/trainings/${trainingId}/sessions/${sessionId}/end`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const data = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
+  return {
+    message: String(data['message'] ?? ''),
+    status: String(data['status'] ?? 'completed'),
+    resultsReady: Boolean(data['resultsReady'] ?? data['results_ready'] ?? false),
+  };
 }
 
 /** WebSocket stub — TODO when backend is ready */

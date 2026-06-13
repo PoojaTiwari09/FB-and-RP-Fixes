@@ -1,8 +1,16 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
-import { TenantGuard } from '../../platform-core/guards/tenant.guard';
-import { M10DataComplianceService } from '../services/m10.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from "@nestjs/common";
+import { TenantGuard } from "../../platform-core/guards/tenant.guard";
+import { M10DataComplianceService } from "../services/m10.service";
 
-@Controller('api/v1/data-compliance')
+@Controller("api/v1/data-compliance")
 @UseGuards(TenantGuard)
 export class M10DataComplianceController {
   constructor(private readonly service: M10DataComplianceService) {}

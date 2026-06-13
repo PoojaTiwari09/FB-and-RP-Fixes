@@ -7,6 +7,17 @@ $BackendRoot = $Root
 $UnifiedUi = Join-Path $Root "apps\web"
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
+# Ensure global npm prefix (where pnpm is installed) is in PATH if pnpm is not recognized
+if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+  $npmPrefix = (npm config get prefix 2>$null)
+  if ($npmPrefix) {
+    $npmPrefix = $npmPrefix.Trim()
+    if (Test-Path $npmPrefix) {
+      $env:PATH = "$npmPrefix;$env:PATH"
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "=== FIRST-TIME SETUP ===" -ForegroundColor Cyan
 Write-Host ""

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository, Between } from '@/database/m04-entity.repository';
-import { Deal, ForecastCategory } from '@/entities/deal.entity';
-import { DealPlaybook } from '@/entities/deal-playbook.entity';
-import { DealActivity } from '@/entities/deal-activity.entity';
-import { DealTask } from '@/entities/deal-task.entity';
-import { DealWarning } from '@/entities/deal-warning.entity';
-import { User } from '@/entities/user.entity';
-import { AnalyticsSnapshot, AnalyticsType } from '@/entities/analytics-snapshot.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository, Between } from '@m04/database/m04-prisma.repository';
+import { Deal, ForecastCategory } from '@m04/entities/deal.entity';
+import { DealPlaybook } from '@m04/entities/deal-playbook.entity';
+import { DealActivity } from '@m04/entities/deal-activity.entity';
+import { DealTask } from '@m04/entities/deal-task.entity';
+import { DealWarning } from '@m04/entities/deal-warning.entity';
+import { User } from '@m04/entities/user.entity';
+import { AnalyticsSnapshot, AnalyticsType } from '@m04/entities/analytics-snapshot.entity';
 import {
   GetAnalyticsRequestDto,
   AEAnalyticsResponseDto,
@@ -20,8 +20,8 @@ import {
   HistoricalMetricsResponseDto,
   MetricPeriod,
   AnalyticsScope,
-} from '@/schemas/analytics.dto';
-import { UserRole } from '@/interfaces/user-role.enum';
+} from '@m04/schemas/analytics.dto';
+import { UserRole } from '@m04/interfaces/user-role.enum';
 import { startOfDay, endOfDay, subDays, startOfWeek, startOfMonth, startOfQuarter } from 'date-fns';
 
 @Injectable()

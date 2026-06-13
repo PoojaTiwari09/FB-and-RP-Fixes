@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Loader2 } from 'lucide-react';
-import { createTrainingSession } from '@training/services/trainingSetup.service';
+import { createTrainingSession } from '@training/services/trainingSetup.client';
 
 interface TrainingSetupFooterProps {
   trainingId: string;

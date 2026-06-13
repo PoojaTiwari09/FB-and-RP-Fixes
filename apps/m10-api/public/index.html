@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M10 Data & Compliance — Test UI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --radius: 8px;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 12px; }
+    header .logo { font-size: 18px; font-weight: 700; color: var(--accent2); }
+    header .badge { background: var(--accent); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    header .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-left: auto; }
+    header .status-text { font-size: 12px; color: var(--muted); }
+    header .base-url-badge { font-size: 11px; background: var(--surface2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 4px; color: var(--muted); font-family: monospace; }
+
+    .layout { display: grid; grid-template-columns: 200px 1fr; height: calc(100vh - 53px); }
+
+    nav { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 12px 0; }
+    nav .section-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--muted); padding: 12px 16px 4px; text-transform: uppercase; }
+    nav button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 16px; background: none; border: none; color: var(--muted); cursor: pointer; text-align: left; font-size: 13px; border-radius: 0; transition: all 0.15s; }
+    nav button:hover { background: var(--surface2); color: var(--text); }
+    nav button.active { background: rgba(99,102,241,0.15); color: var(--accent2); border-right: 2px solid var(--accent); }
+    nav .icon { font-size: 14px; width: 18px; text-align: center; }
+
+    main { overflow-y: auto; }
+
+    .panel { display: none; padding: 24px; max-width: 900px; }
+    .panel.active { display: block; }
+
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .panel-desc { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
+    .card-header { padding: 12px 16px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+    .card-header:hover { background: var(--surface2); }
+    .card-title { font-weight: 600; font-size: 13px; flex: 1; }
+    .method-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: monospace; min-width: 44px; text-align: center; }
+    .GET { background: rgba(34,197,94,0.15); color: var(--green); }
+    .POST { background: rgba(99,102,241,0.15); color: var(--accent2); }
+    .PATCH { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .DELETE { background: rgba(239,68,68,0.15); color: var(--red); }
+    .path-text { font-family: monospace; font-size: 11px; color: var(--muted); }
+    .chevron { font-size: 11px; color: var(--muted); transition: transform 0.15s; }
+    .card-header.open .chevron { transform: rotate(90deg); }
+
+    .card-body { padding: 16px; border-top: 1px solid var(--border); }
+
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; margin-top: 10px; }
+    label:first-child { margin-top: 0; }
+
+    input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 100px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent2); }
+
+    .actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+
+    .response-box { margin-top: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .response-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 12px; }
+    .status-ok { color: var(--green); font-weight: 700; }
+    .status-err { color: var(--red); font-weight: 700; }
+    .status-pending { color: var(--yellow); }
+    .response-body { padding: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11.5px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #a5f3fc; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; font-weight: 700; }
+
+    .info-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25); border-radius: 6px; padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .info-box strong { color: var(--accent2); }
+
+    .tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; margin-left: 4px; }
+    .tag-req { background: rgba(239,68,68,0.15); color: var(--red); }
+    .tag-opt { background: rgba(148,163,184,0.15); color: var(--muted); }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">M10</div>
+  <div class="badge">Data &amp; Compliance</div>
+  <span class="base-url-badge" id="headerBaseUrl">http://localhost:4011/api/v1/m10-data-compliance</span>
+  <span style="margin-left:auto; display:flex; align-items:center; gap:8px">
+    <span class="status-dot" id="healthDot" title="Health status"></span>
+    <span class="status-text" id="healthText">Checking...</span>
+  </span>
+</header>
+
+<div class="layout">
+  <nav>
+    <div class="section-label">Config</div>
+    <button class="active" onclick="show('config')"><span class="icon">⚙️</span>Settings</button>
+
+    <div class="section-label">Health</div>
+    <button onclick="show('health')"><span class="icon">🏥</span>Health &amp; Test</button>
+
+    <div class="section-label">Revenue Graph</div>
+    <button onclick="show('accounts')"><span class="icon">🏢</span>Accounts</button>
+    <button onclick="show('deals')"><span class="icon">💼</span>Deals</button>
+    <button onclick="show('contacts')"><span class="icon">👤</span>Contacts</button>
+    <button onclick="show('crmsync')"><span class="icon">🔄</span>CRM Sync</button>
+
+    <div class="section-label">Compliance</div>
+    <button onclick="show('policies')"><span class="icon">📋</span>Policies</button>
+    <button onclick="show('evaluate')"><span class="icon">🛡️</span>Evaluate Gate</button>
+    <button onclick="show('optouts')"><span class="icon">🚫</span>Opt-outs</button>
+    <button onclick="show('consent')"><span class="icon">✅</span>Consent Logs</button>
+    <button onclick="show('auditlog')"><span class="icon">📜</span>Audit Log</button>
+
+    <div class="section-label">Data Cloud</div>
+    <button onclick="show('connections')"><span class="icon">🔌</span>Connections</button>
+    <button onclick="show('runs')"><span class="icon">📦</span>Export Runs</button>
+
+    <div class="section-label">GDPR</div>
+    <button onclick="show('dsar')"><span class="icon">📝</span>DSAR</button>
+    <button onclick="show('ropa')"><span class="icon">🗂️</span>ROPA</button>
+    <button onclick="show('breach')"><span class="icon">⚠️</span>Data Breach</button>
+
+    <div class="section-label">ePrivacy</div>
+    <button onclick="show('eprivacy')"><span class="icon">🍪</span>ePrivacy</button>
+    <button onclick="show('suppression')"><span class="icon">🔇</span>Suppression</button>
+  </nav>
+
+  <main>
+
+    <!-- ── CONFIG ─────────────────────────────────────── -->
+    <div class="panel active" id="panel-config">
+      <h2>Settings</h2>
+      <p class="panel-desc">Configure the API connection. These values are used by every request on this page.</p>
+
+      <div class="card">
+        <div class="card-body" style="display:block">
+          <label>API Base URL</label>
+          <input id="cfg-base" value="http://localhost:4011/api/v1/m10-data-compliance" />
+          <label>Tenant ID <span class="tag tag-req">required</span></label>
+          <input id="cfg-tenant" value="00000000-0000-0000-0000-000000000001" />
+          <label>User ID</label>
+          <input id="cfg-user" value="00000000-0000-0000-0000-000000000002" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="saveConfig()">Save &amp; Ping Health</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>Dev Auth</strong> — The API runs with <code>M10_STANDALONE_AUTH=true</code> by default.<br>
+        Auth is satisfied by sending <code>x-tenant-id</code> header. No JWT required in dev mode.<br><br>
+        <strong>Port:</strong> 4011 &nbsp;|&nbsp; <strong>Start:</strong> <code>pnpm dev:m10-api</code> from monorepo root<br>
+        <strong>Postman Collection:</strong> <code>r-revenue-intelligence-monorepo/m10-postman-collection.json</code>
+      </div>
+    </div>
+
+    <!-- ── HEALTH ─────────────────────────────────────── -->
+    <div class="panel" id="panel-health">
+      <h2>Health &amp; Test</h2>
+      <p class="panel-desc">Verify the API is running, database is connected, and seed demo data.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">API Status</div><div class="stat-value" id="stat-api" style="font-size:16px;color:var(--muted)">—</div></div>
+        <div class="stat-card"><div class="stat-label">DB Status</div><div class="stat-value" id="stat-db" style="font-size:16px;color:var(--muted)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Port</div><div class="stat-value" id="stat-port" style="font-size:16px">4011</div></div>
+      </div>
+
+      <div id="health-cards">
+        <!-- GET /test/health -->
+        <div class="card">
+          <div class="card-header" onclick="toggleCard(this)">
+            <span class="method-badge GET">GET</span>
+            <span class="card-title">Health Check</span>
+            <span class="path-text">/test/health</span>
+            <span class="chevron">▶</span>
+          </div>
+          <div class="card-body" style="display:none">
+            <div class="actions">
+              <button class="btn btn-primary" onclick="runReq('GET','/test/health',null,'health-resp')">Send</button>
+            </div>
+            <div class="response-box" id="health-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+          </div>
+        </div>
+        <!-- POST /test/smoke -->
+        <div class="card">
+          <div class="card-header" onclick="toggleCard(this)">
+            <span class="method-badge POST">POST</span>
+            <span class="card-title">Smoke Test (DB)</span>
+            <span class="path-text">/test/smoke</span>
+            <span class="chevron">▶</span>
+          </div>
+          <div class="card-body" style="display:none">
+            <div class="actions">
+              <button class="btn btn-primary" onclick="runReq('POST','/test/smoke',null,'smoke-resp')">Send</button>
+            </div>
+            <div class="response-box" id="smoke-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+          </div>
+        </div>
+        <!-- POST /test/seed -->
+        <div class="card">
+          <div class="card-header" onclick="toggleCard(this)">
+            <span class="method-badge POST">POST</span>
+            <span class="card-title">Seed Demo Data</span>
+            <span class="path-text">/test/seed</span>
+            <span class="chevron">▶</span>
+          </div>
+          <div class="card-body" style="display:none">
+            <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Seeds accounts, deals, contacts into the database for testing.</p>
+            <div class="actions">
+              <button class="btn btn-primary" onclick="runReq('POST','/test/seed',null,'seed-resp')">Seed</button>
+            </div>
+            <div class="response-box" id="seed-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACCOUNTS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-accounts">
+      <h2>Accounts</h2>
+      <p class="panel-desc">CRM-synced account records. Revenue Graph module.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">List Accounts</span>
+          <span class="path-text">/accounts</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Page</label><input id="acc-page" value="1" /></div>
+            <div><label>Limit</label><input id="acc-limit" value="20" /></div>
+          </div>
+          <label>Search (optional)</label><input id="acc-search" placeholder="company name..." />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="listAccounts()">Send</button>
+          </div>
+          <div class="response-box" id="acc-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Get Account by ID</span>
+          <span class="path-text">/accounts/:id</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Account ID <span class="tag tag-req">required</span></label>
+          <input id="acc-id" placeholder="UUID" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('GET','/accounts/'+v('acc-id'),null,'acc-get-resp')">Send</button>
+          </div>
+          <div class="response-box" id="acc-get-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEALS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-deals">
+      <h2>Deals</h2>
+      <p class="panel-desc">Deal records with entity relationships. Revenue Graph module.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">List Deals</span>
+          <span class="path-text">/deals</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row3">
+            <div><label>Page</label><input id="deal-page" value="1" /></div>
+            <div><label>Limit</label><input id="deal-limit" value="20" /></div>
+            <div><label>Stage</label><input id="deal-stage" placeholder="Negotiation..." /></div>
+          </div>
+          <div class="row">
+            <div><label>Account ID</label><input id="deal-accid" placeholder="optional UUID" /></div>
+            <div><label>Is Active</label><select id="deal-active"><option value="">All</option><option value="true">Active</option><option value="false">Inactive</option></select></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="listDeals()">Send</button>
+          </div>
+          <div class="response-box" id="deal-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Get Deal Relationships</span>
+          <span class="path-text">/deals/:id/relationship</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Deal ID <span class="tag tag-req">required</span></label>
+          <input id="deal-relid" placeholder="UUID" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('GET','/deals/'+v('deal-relid')+'/relationship',null,'deal-rel-resp')">Send</button>
+          </div>
+          <div class="response-box" id="deal-rel-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTACTS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-contacts">
+      <h2>Contacts</h2>
+      <p class="panel-desc">Contact records linked to accounts. Revenue Graph module.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Get Contact by ID</span>
+          <span class="path-text">/contacts/:id</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <label>Contact ID <span class="tag tag-req">required</span></label>
+          <input id="contact-id" placeholder="UUID" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('GET','/contacts/'+v('contact-id'),null,'contact-resp')">Send</button>
+          </div>
+          <div class="response-box" id="contact-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CRM SYNC ─────────────────────────────────────── -->
+    <div class="panel" id="panel-crmsync">
+      <h2>CRM Sync</h2>
+      <p class="panel-desc">Trigger CRM data synchronization and check sync status.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">CRM Sync Status</span>
+          <span class="path-text">/crm-sync-status</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('GET','/crm-sync-status',null,'crm-status-resp')">Send</button>
+          </div>
+          <div class="response-box" id="crm-status-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Trigger CRM Sync</span>
+          <span class="path-text">/crm-sync</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Body (JSON)</label>
+          <textarea id="crm-sync-body">{"crmSource":"salesforce","entityTypes":["accounts","contacts","deals"]}</textarea>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('POST','/crm-sync',JSON.parse(v('crm-sync-body')),'crm-trigger-resp')">Send</button>
+          </div>
+          <div class="response-box" id="crm-trigger-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POLICIES ─────────────────────────────────────── -->
+    <div class="panel" id="panel-policies">
+      <h2>Compliance Policies</h2>
+      <p class="panel-desc">Create and manage compliance policies for outreach channels. TDD §7.1–7.2.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Create Policy</span>
+          <span class="path-text">/policies</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Name <span class="tag tag-req">required</span></label><input id="pol-name" value="GDPR Email Policy" /></div>
+            <div>
+              <label>Channel <span class="tag tag-req">required</span></label>
+              <select id="pol-channel"><option>email</option><option>call</option><option>sms</option><option>data_export</option></select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Region Family</label>
+              <select id="pol-region"><option>GLOBAL</option><option>GDPR</option><option>CCPA</option></select>
+            </div>
+            <div><label>Description</label><input id="pol-desc" placeholder="optional..." /></div>
+          </div>
+          <label>Rule Definition (JSON)</label>
+          <textarea id="pol-rule" style="min-height:70px">{"requireExplicitConsent":true,"fallbackAction":"block"}</textarea>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="createPolicy()">Create</button>
+          </div>
+          <div class="response-box" id="pol-create-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">List Policies</span>
+          <span class="path-text">/policies</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Active Only</label>
+          <select id="pol-active"><option value="">All</option><option value="true">Active only</option></select>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="listPolicies()">Send</button>
+          </div>
+          <div class="response-box" id="pol-list-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge PATCH">PATCH</span><span class="card-title">Update Policy</span>
+          <span class="path-text">/policies/:id</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Policy ID <span class="tag tag-req">required</span></label>
+          <input id="pol-upd-id" placeholder="UUID from create response" />
+          <label>Body (JSON)</label>
+          <textarea id="pol-upd-body">{"description":"Updated","isActive":true}</textarea>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('PATCH','/policies/'+v('pol-upd-id'),JSON.parse(v('pol-upd-body')),'pol-upd-resp')">Send</button>
+          </div>
+          <div class="response-box" id="pol-upd-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge DELETE">DELETE</span><span class="card-title">Deactivate Policy</span>
+          <span class="path-text">/policies/:id</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Policy ID <span class="tag tag-req">required</span></label>
+          <input id="pol-del-id" placeholder="UUID" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('DELETE','/policies/'+v('pol-del-id'),null,'pol-del-resp')">Deactivate</button>
+          </div>
+          <div class="response-box" id="pol-del-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EVALUATE ─────────────────────────────────────── -->
+    <div class="panel" id="panel-evaluate">
+      <h2>Compliance Evaluate Gate</h2>
+      <p class="panel-desc">POST /evaluate — runtime outreach gate called before any email/call/SMS. TDD §7.3.</p>
+      <div class="info-box">
+        <strong>Reason Codes:</strong> POLICY_PASSED · CRM_OPTED_OUT · SUPPRESSED · GDPR_CONSENT_REQUIRED · CCPA_RESTRICTED · GDPR_ERASURE_IN_PROGRESS · EPRIVACY_CONSENT_REQUIRED · FAIL_CLOSED_MISSING_DATA · NO_ACTIVE_POLICY
+      </div>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Evaluate Outreach</span>
+          <span class="path-text">/evaluate</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Correlation ID <span class="tag tag-req">required (UUID)</span></label><input id="eval-corrid" value="00000000-0000-0000-0000-000000000010" /></div>
+            <div><label>Recipient Email <span class="tag tag-req">required</span></label><input id="eval-email" value="prospect@acme.com" /></div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Channel <span class="tag tag-req">required</span></label>
+              <select id="eval-channel"><option>email</option><option>call</option><option>sms</option></select>
+            </div>
+            <div><label>Jurisdiction</label><input id="eval-jur" value="US" placeholder="US | DE | EU | US-CA..." /></div>
+          </div>
+          <div class="row">
+            <div><label>Outbound Type</label><input id="eval-type" value="marketing" placeholder="marketing | transactional" /></div>
+            <div><label>Sender ID</label><input id="eval-sender" value="rep-001" /></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="evaluateOutreach()">Evaluate</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('eval-corrid').value=crypto.randomUUID()">New UUID</button>
+          </div>
+          <div class="response-box" id="eval-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPT-OUTS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-optouts">
+      <h2>CRM Opt-Outs</h2>
+      <p class="panel-desc">Manage contact-level opt-out records per channel.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Upsert Opt-Out</span>
+          <span class="path-text">/compliance/optouts</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Contact Email <span class="tag tag-req">required</span></label><input id="opt-email" value="user@example.com" /></div>
+            <div>
+              <label>Channel <span class="tag tag-req">required</span></label>
+              <select id="opt-channel"><option>email</option><option>call</option><option>sms</option></select>
+            </div>
+          </div>
+          <label>Opted Out</label>
+          <select id="opt-out"><option value="true">true</option><option value="false">false</option></select>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="upsertOptOut()">Send</button>
+          </div>
+          <div class="response-box" id="opt-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Get Opt-Outs</span>
+          <span class="path-text">/compliance/optouts</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Filter by Email</label><input id="opt-get-email" placeholder="user@example.com (optional)" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="getOptOuts()">Send</button>
+          </div>
+          <div class="response-box" id="opt-get-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONSENT ─────────────────────────────────────── -->
+    <div class="panel" id="panel-consent">
+      <h2>Consent Logs</h2>
+      <p class="panel-desc">GDPR lawful basis consent ledger — grants and revocations.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Create Consent Log</span>
+          <span class="path-text">/compliance/consent-logs</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Contact Email <span class="tag tag-req">required</span></label><input id="con-email" value="user@example.com" /></div>
+            <div><label>Consent Type <span class="tag tag-req">required</span></label><input id="con-type" value="email_marketing" /></div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Status <span class="tag tag-req">required</span></label>
+              <select id="con-status"><option>granted</option><option>revoked</option></select>
+            </div>
+            <div>
+              <label>Source <span class="tag tag-req">required</span></label>
+              <select id="con-source"><option>web_form</option><option>manual_crm</option><option>opt_in_email</option><option>api</option></select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="createConsentLog()">Create</button>
+          </div>
+          <div class="response-box" id="con-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Get Consent Logs</span>
+          <span class="path-text">/compliance/consent-logs</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Filter by Email</label><input id="con-get-email" placeholder="user@example.com (optional)" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="getConsentLogs()">Send</button>
+          </div>
+          <div class="response-box" id="con-get-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AUDIT LOG ─────────────────────────────────────── -->
+    <div class="panel" id="panel-auditlog">
+      <h2>Compliance Audit Log</h2>
+      <p class="panel-desc">Immutable ledger of every allow/block evaluation decision. TDD FR-6.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Query Audit Log</span>
+          <span class="path-text">/compliance/audit-log</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Email filter</label><input id="aud-email" placeholder="user@example.com (optional)" /></div>
+            <div>
+              <label>Decision filter</label>
+              <select id="aud-decision"><option value="">All</option><option value="allow">allow</option><option value="block">block</option></select>
+            </div>
+          </div>
+          <div class="row">
+            <div><label>Limit</label><input id="aud-limit" value="50" /></div>
+            <div><label>Offset</label><input id="aud-offset" value="0" /></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="getAuditLog()">Send</button>
+          </div>
+          <div class="response-box" id="aud-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONNECTIONS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-connections">
+      <h2>Data Cloud — Connections</h2>
+      <p class="panel-desc">Register and manage warehouse export destinations. TDD §7.1.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Register Connection</span>
+          <span class="path-text">/exports/connections</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div>
+              <label>Destination <span class="tag tag-req">required</span></label>
+              <select id="conn-dest"><option>postgres</option><option>snowflake</option><option>bigquery</option><option>s3</option><option>databricks</option><option>redshift</option></select>
+            </div>
+            <div><label>Destination Name</label><input id="conn-name" value="Analytics Warehouse" /></div>
+          </div>
+          <label>Config (JSON)</label>
+          <textarea id="conn-config">{"host":"db.example.com","port":5432,"database":"analytics","schema":"public","username":"reader"}</textarea>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="registerConnection()">Register</button>
+          </div>
+          <div class="response-box" id="conn-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">List Connections</span>
+          <span class="path-text">/exports/connections</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('GET','/exports/connections',null,'conn-list-resp')">Send</button>
+          </div>
+          <div class="response-box" id="conn-list-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Test Connection</span>
+          <span class="path-text">/exports/connections/:id/test</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Connection ID <span class="tag tag-req">required</span></label>
+          <input id="conn-test-id" placeholder="UUID from register response" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('POST','/exports/connections/'+v('conn-test-id')+'/test',null,'conn-test-resp')">Test</button>
+          </div>
+          <div class="response-box" id="conn-test-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RUNS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-runs">
+      <h2>Data Cloud — Export Runs</h2>
+      <p class="panel-desc">Trigger manual replays and view export run history. TDD §7.2–7.3.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Trigger Replay Export</span>
+          <span class="path-text">/exports/replay</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <label>Connection ID <span class="tag tag-req">required</span></label>
+          <input id="run-connid" placeholder="UUID from connections" />
+          <div class="row">
+            <div>
+              <label>Dataset <span class="tag tag-req">required</span></label>
+              <select id="run-dataset"><option>accounts</option><option>contacts</option><option>deals</option><option>activities</option></select>
+            </div>
+            <div><label>Window Start</label><input id="run-start" value="2024-01-01T00:00:00Z" /></div>
+          </div>
+          <label>Window End</label><input id="run-end" value="2024-01-02T00:00:00Z" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="triggerReplay()">Trigger Replay</button>
+          </div>
+          <div class="response-box" id="run-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Get Export Runs</span>
+          <span class="path-text">/exports/runs</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Connection ID filter</label><input id="run-filter-id" placeholder="optional UUID" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="getExportRuns()">Send</button>
+          </div>
+          <div class="response-box" id="run-list-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Download Export Run</span>
+          <span class="path-text">/exports/runs/:runId/download</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <div class="row">
+            <div><label>Run ID <span class="tag tag-req">required</span></label><input id="dl-runid" placeholder="UUID" /></div>
+            <div><label>Dataset</label><input id="dl-dataset" value="accounts" /></div>
+          </div>
+          <label>Format</label>
+          <select id="dl-format"><option>csv</option><option>parquet</option></select>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="openDownload()">Open Download URL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DSAR ─────────────────────────────────────── -->
+    <div class="panel" id="panel-dsar">
+      <h2>GDPR — Data Subject Requests</h2>
+      <p class="panel-desc">Create and manage DSARs: erasure, portability, access, rectification.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Create DSAR</span>
+          <span class="path-text">/gdpr/dsar</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Contact Email <span class="tag tag-req">required</span></label><input id="dsar-email" value="user@example.com" /></div>
+            <div>
+              <label>Request Type <span class="tag tag-req">required</span></label>
+              <select id="dsar-type"><option>erasure</option><option>portability</option><option>access</option><option>rectification</option></select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="createDsar()">Create DSAR</button>
+          </div>
+          <div class="response-box" id="dsar-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge PATCH">PATCH</span><span class="card-title">Update DSAR Status</span>
+          <span class="path-text">/gdpr/dsar/:id/status</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>DSAR ID <span class="tag tag-req">required</span></label><input id="dsar-upd-id" placeholder="UUID from create response" />
+          <label>Status</label>
+          <select id="dsar-upd-status"><option>in_progress</option><option>completed</option><option>rejected</option><option>pending</option></select>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('PATCH','/gdpr/dsar/'+v('dsar-upd-id')+'/status',{status:v('dsar-upd-status')},'dsar-upd-resp')">Update</button>
+          </div>
+          <div class="response-box" id="dsar-upd-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Execute Erasure</span>
+          <span class="path-text">/gdpr/dsar/:id/execute-erasure</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <div class="row">
+            <div><label>DSAR ID <span class="tag tag-req">required</span></label><input id="dsar-era-id" placeholder="UUID" /></div>
+            <div><label>Contact Email <span class="tag tag-req">required</span></label><input id="dsar-era-email" value="user@example.com" /></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('POST','/gdpr/dsar/'+v('dsar-era-id')+'/execute-erasure',{contactEmail:v('dsar-era-email')},'dsar-era-resp')">Execute</button>
+          </div>
+          <div class="response-box" id="dsar-era-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ROPA ─────────────────────────────────────── -->
+    <div class="panel" id="panel-ropa">
+      <h2>GDPR — Records of Processing Activity</h2>
+      <p class="panel-desc">Article 30 GDPR — document all processing activities.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Create ROPA Entry</span>
+          <span class="path-text">/gdpr/ropa</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <label>Purpose <span class="tag tag-req">required</span></label><input id="ropa-purpose" value="Email marketing campaigns" />
+          <div class="row">
+            <div><label>Lawful Basis <span class="tag tag-req">required</span></label><input id="ropa-basis" value="consent" /></div>
+            <div><label>Retention Period <span class="tag tag-req">required</span></label><input id="ropa-retention" value="2 years" /></div>
+          </div>
+          <label>Data Categories (comma-separated) <span class="tag tag-req">required</span></label>
+          <input id="ropa-cats" value="contact_info,behavioral_data" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="createRopa()">Create</button>
+          </div>
+          <div class="response-box" id="ropa-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BREACH ─────────────────────────────────────── -->
+    <div class="panel" id="panel-breach">
+      <h2>GDPR — Data Breach</h2>
+      <p class="panel-desc">Log data breach incidents as required under GDPR Article 33.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Log Data Breach</span>
+          <span class="path-text">/gdpr/data-breach</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Incident Date <span class="tag tag-req">required</span></label><input id="breach-incident" value="2024-01-15T10:00:00Z" /></div>
+            <div><label>Detection Date <span class="tag tag-req">required</span></label><input id="breach-detect" value="2024-01-15T14:00:00Z" /></div>
+          </div>
+          <label>Description <span class="tag tag-req">required</span></label>
+          <input id="breach-desc" value="Unauthorized access to contact database" />
+          <label>Affected Data (comma-separated) <span class="tag tag-req">required</span></label>
+          <input id="breach-data" value="email,phone,name" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="createBreach()">Log Breach</button>
+          </div>
+          <div class="response-box" id="breach-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ePRIVACY ─────────────────────────────────────── -->
+    <div class="panel" id="panel-eprivacy">
+      <h2>ePrivacy — Consent</h2>
+      <p class="panel-desc">Track ePrivacy consent per channel and purpose (EU cookie law compliance).</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Upsert Consent</span>
+          <span class="path-text">/eprivacy/consent</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <label>Contact Email <span class="tag tag-req">required</span></label><input id="ep-email" value="user@example.com" />
+          <div class="row3">
+            <div>
+              <label>Channel <span class="tag tag-req">required</span></label>
+              <select id="ep-channel"><option>email</option><option>call</option><option>sms</option></select>
+            </div>
+            <div>
+              <label>Purpose <span class="tag tag-req">required</span></label>
+              <select id="ep-purpose"><option>marketing</option><option>tracking</option><option>essential</option></select>
+            </div>
+            <div>
+              <label>Status <span class="tag tag-req">required</span></label>
+              <select id="ep-status"><option>granted</option><option>revoked</option></select>
+            </div>
+          </div>
+          <label>Source <span class="tag tag-req">required</span></label>
+          <select id="ep-source"><option>cookie_banner</option><option>preference_center</option></select>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="upsertEPrivacyConsent()">Save Consent</button>
+          </div>
+          <div class="response-box" id="ep-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Check Consent Status</span>
+          <span class="path-text">/eprivacy/consent</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <div class="row3">
+            <div><label>Email</label><input id="ep-get-email" value="user@example.com" /></div>
+            <div><label>Channel</label><select id="ep-get-channel"><option>email</option><option>call</option><option>sms</option></select></div>
+            <div><label>Purpose</label><select id="ep-get-purpose"><option>marketing</option><option>tracking</option><option>essential</option></select></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="getEPrivacyConsent()">Send</button>
+          </div>
+          <div class="response-box" id="ep-get-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUPPRESSION ─────────────────────────────────────── -->
+    <div class="panel" id="panel-suppression">
+      <h2>ePrivacy — Suppression List</h2>
+      <p class="panel-desc">Global Do-Not-Contact list. Blocks outreach for suppressed contacts.</p>
+      <div class="card">
+        <div class="card-header open" onclick="toggleCard(this)">
+          <span class="method-badge POST">POST</span><span class="card-title">Add to Suppression List</span>
+          <span class="path-text">/eprivacy/suppression</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div><label>Contact Email <span class="tag tag-req">required</span></label><input id="sup-email" value="user@example.com" /></div>
+            <div>
+              <label>Reason <span class="tag tag-req">required</span></label>
+              <select id="sup-reason"><option>spam_complaint</option><option>global_dnc</option><option>eprivacy_revoke</option></select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="addSuppression()">Add</button>
+          </div>
+          <div class="response-box" id="sup-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <span class="method-badge GET">GET</span><span class="card-title">Check Suppression</span>
+          <span class="path-text">/eprivacy/suppression</span><span class="chevron">▶</span>
+        </div>
+        <div class="card-body" style="display:none">
+          <label>Email</label><input id="sup-check-email" value="user@example.com" />
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runReq('GET','/eprivacy/suppression?email='+encodeURIComponent(v('sup-check-email')),null,'sup-check-resp')">Check</button>
+          </div>
+          <div class="response-box" id="sup-check-resp"><div class="response-header"><span class="status-pending">No response yet</span></div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ── Helpers ────────────────────────────────────────────────
+  const v = id => document.getElementById(id)?.value?.trim() ?? '';
+  const base = () => v('cfg-base') || 'http://localhost:4011/api/v1/m10-data-compliance';
+  const tenant = () => v('cfg-tenant') || '00000000-0000-0000-0000-000000000001';
+  const user = () => v('cfg-user') || '00000000-0000-0000-0000-000000000002';
+
+  function show(id) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + id)?.classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function toggleCard(header) {
+    const body = header.nextElementSibling;
+    const isOpen = header.classList.contains('open');
+    header.classList.toggle('open', !isOpen);
+    body.style.display = isOpen ? 'none' : 'block';
+  }
+
+  function showResponse(boxId, status, data) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    const ok = status >= 200 && status < 300;
+    box.innerHTML = `
+      <div class="response-header">
+        <span class="${ok ? 'status-ok' : 'status-err'}">${status} ${ok ? 'OK' : 'ERROR'}</span>
+        <span style="color:var(--muted);font-size:11px;margin-left:auto">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="response-body">${JSON.stringify(data, null, 2)}</div>
+    `;
+  }
+
+  function showError(boxId, msg) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    box.innerHTML = `
+      <div class="response-header"><span class="status-err">NETWORK ERROR</span></div>
+      <div class="response-body" style="color:var(--red)">${msg}</div>
+    `;
+  }
+
+  async function runReq(method, path, body, boxId) {
+    const btn = event?.currentTarget;
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+    try {
+      const opts = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenant(),
+          'x-user-id': user(),
+        },
+      };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(base() + path, opts);
+      let data;
+      try { data = await res.json(); } catch { data = { raw: await res.text() }; }
+      showResponse(boxId, res.status, data);
+    } catch (e) {
+      showError(boxId, e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = btn.getAttribute('data-label') || 'Send'; }
+    }
+  }
+
+  // ── Config ─────────────────────────────────────────────────
+  function saveConfig() {
+    document.getElementById('headerBaseUrl').textContent = base();
+    pingHealth();
+  }
+
+  // ── Health ────────────────────────────────────────────────
+  async function pingHealth() {
+    const dot = document.getElementById('healthDot');
+    const txt = document.getElementById('healthText');
+    const statApi = document.getElementById('stat-api');
+    const statDb = document.getElementById('stat-db');
+    dot.style.background = 'var(--yellow)';
+    txt.textContent = 'Pinging...';
+    try {
+      const r = await fetch(base() + '/test/health', {
+        headers: { 'x-tenant-id': tenant(), 'x-user-id': user() }
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        dot.style.background = 'var(--green)';
+        txt.textContent = 'API Online';
+        if (statApi) { statApi.textContent = '✓ Online'; statApi.style.color = 'var(--green)'; }
+        if (statDb) { statDb.textContent = d.db || '✓ Connected'; statDb.style.color = 'var(--green)'; }
+      } else {
+        dot.style.background = 'var(--red)'; txt.textContent = 'Error ' + r.status;
+        if (statApi) { statApi.textContent = '✗ ' + r.status; statApi.style.color = 'var(--red)'; }
+      }
+    } catch (e) {
+      dot.style.background = 'var(--red)'; txt.textContent = 'Offline';
+      if (statApi) { statApi.textContent = '✗ Offline'; statApi.style.color = 'var(--red)'; }
+      if (statDb) { statDb.textContent = '—'; }
+    }
+  }
+
+  // ── Accounts ───────────────────────────────────────────────
+  function listAccounts() {
+    let qs = `?page=${v('acc-page')}&limit=${v('acc-limit')}`;
+    const s = v('acc-search'); if (s) qs += `&search=${encodeURIComponent(s)}`;
+    runReq('GET', '/accounts' + qs, null, 'acc-resp');
+  }
+
+  // ── Deals ────────────────────────────────────────────────
+  function listDeals() {
+    const qs = new URLSearchParams({ page: v('deal-page'), limit: v('deal-limit') });
+    if (v('deal-accid')) qs.set('accountId', v('deal-accid'));
+    if (v('deal-active')) qs.set('isActive', v('deal-active'));
+    if (v('deal-stage')) qs.set('stage', v('deal-stage'));
+    runReq('GET', '/deals?' + qs.toString(), null, 'deal-resp');
+  }
+
+  // ── Policies ─────────────────────────────────────────────
+  function createPolicy() {
+    let rule = {};
+    try { rule = JSON.parse(v('pol-rule')); } catch {}
+    runReq('POST', '/policies', {
+      name: v('pol-name'),
+      description: v('pol-desc') || undefined,
+      channel: v('pol-channel'),
+      regionFamily: v('pol-region'),
+      ruleDefinition: rule,
+    }, 'pol-create-resp');
+  }
+
+  function listPolicies() {
+    const q = v('pol-active') ? `?activeOnly=${v('pol-active')}` : '';
+    runReq('GET', '/policies' + q, null, 'pol-list-resp');
+  }
+
+  // ── Evaluate ─────────────────────────────────────────────
+  function evaluateOutreach() {
+    runReq('POST', '/evaluate', {
+      correlationId: v('eval-corrid'),
+      recipientEmail: v('eval-email'),
+      channel: v('eval-channel'),
+      context: {
+        jurisdiction: v('eval-jur') || 'GLOBAL',
+        outboundType: v('eval-type') || undefined,
+        senderId: v('eval-sender') || undefined,
+      },
+    }, 'eval-resp');
+  }
+
+  // ── Opt-outs ─────────────────────────────────────────────
+  function upsertOptOut() {
+    runReq('POST', '/compliance/optouts', {
+      contactEmail: v('opt-email'),
+      channel: v('opt-channel'),
+      isOptedOut: v('opt-out') === 'true',
+    }, 'opt-resp');
+  }
+
+  function getOptOuts() {
+    const q = v('opt-get-email') ? `?email=${encodeURIComponent(v('opt-get-email'))}` : '';
+    runReq('GET', '/compliance/optouts' + q, null, 'opt-get-resp');
+  }
+
+  // ── Consent ──────────────────────────────────────────────
+  function createConsentLog() {
+    runReq('POST', '/compliance/consent-logs', {
+      contactEmail: v('con-email'),
+      consentType: v('con-type'),
+      status: v('con-status'),
+      source: v('con-source'),
+    }, 'con-resp');
+  }
+
+  function getConsentLogs() {
+    const q = v('con-get-email') ? `?email=${encodeURIComponent(v('con-get-email'))}` : '';
+    runReq('GET', '/compliance/consent-logs' + q, null, 'con-get-resp');
+  }
+
+  // ── Audit Log ─────────────────────────────────────────────
+  function getAuditLog() {
+    const qs = new URLSearchParams({ limit: v('aud-limit'), offset: v('aud-offset') });
+    if (v('aud-email')) qs.set('email', v('aud-email'));
+    if (v('aud-decision')) qs.set('decision', v('aud-decision'));
+    runReq('GET', '/compliance/audit-log?' + qs.toString(), null, 'aud-resp');
+  }
+
+  // ── Connections ───────────────────────────────────────────
+  function registerConnection() {
+    let cfg = {};
+    try { cfg = JSON.parse(v('conn-config')); } catch {}
+    runReq('POST', '/exports/connections', {
+      destination: v('conn-dest'),
+      destinationName: v('conn-name'),
+      config: cfg,
+    }, 'conn-resp');
+  }
+
+  // ── Export Runs ───────────────────────────────────────────
+  function triggerReplay() {
+    runReq('POST', '/exports/replay', {
+      connectionId: v('run-connid'),
+      datasetName: v('run-dataset'),
+      windowStart: v('run-start'),
+      windowEnd: v('run-end'),
+    }, 'run-resp');
+  }
+
+  function getExportRuns() {
+    const q = v('run-filter-id') ? `?connectionId=${v('run-filter-id')}` : '';
+    runReq('GET', '/exports/runs' + q, null, 'run-list-resp');
+  }
+
+  function openDownload() {
+    const url = `${base()}/exports/runs/${v('dl-runid')}/download?dataset=${v('dl-dataset')}&format=${v('dl-format')}`;
+    window.open(url, '_blank');
+  }
+
+  // ── GDPR ─────────────────────────────────────────────────
+  function createDsar() {
+    runReq('POST', '/gdpr/dsar', {
+      contactEmail: v('dsar-email'),
+      requestType: v('dsar-type'),
+    }, 'dsar-resp');
+  }
+
+  function createRopa() {
+    const cats = v('ropa-cats').split(',').map(s => s.trim()).filter(Boolean);
+    runReq('POST', '/gdpr/ropa', {
+      purpose: v('ropa-purpose'),
+      dataCategories: cats,
+      lawfulBasis: v('ropa-basis'),
+      retentionPeriod: v('ropa-retention'),
+    }, 'ropa-resp');
+  }
+
+  function createBreach() {
+    const affected = v('breach-data').split(',').map(s => s.trim()).filter(Boolean);
+    runReq('POST', '/gdpr/data-breach', {
+      incidentDate: v('breach-incident'),
+      detectionDate: v('breach-detect'),
+      description: v('breach-desc'),
+      affectedData: affected,
+    }, 'breach-resp');
+  }
+
+  // ── ePrivacy ─────────────────────────────────────────────
+  function upsertEPrivacyConsent() {
+    runReq('POST', '/eprivacy/consent', {
+      contactEmail: v('ep-email'),
+      channel: v('ep-channel'),
+      purpose: v('ep-purpose'),
+      status: v('ep-status'),
+      source: v('ep-source'),
+    }, 'ep-resp');
+  }
+
+  function getEPrivacyConsent() {
+    const qs = new URLSearchParams({
+      email: v('ep-get-email'),
+      channel: v('ep-get-channel'),
+      purpose: v('ep-get-purpose'),
+    });
+    runReq('GET', '/eprivacy/consent?' + qs.toString(), null, 'ep-get-resp');
+  }
+
+  function addSuppression() {
+    runReq('POST', '/eprivacy/suppression', {
+      contactEmail: v('sup-email'),
+      reason: v('sup-reason'),
+    }, 'sup-resp');
+  }
+
+  // ── Init ─────────────────────────────────────────────────
+  pingHealth();
+  setInterval(pingHealth, 30000); // auto-refresh health every 30s
+</script>
+</body>
+</html>
