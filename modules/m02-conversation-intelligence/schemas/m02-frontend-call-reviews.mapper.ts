@@ -165,7 +165,7 @@ export function mapReviewListItem(review: any) {
     reviewId: review.reviewId,
     callTitle: review.callTitle,
     scorecardName: review.scorecardName,
-    account: review.account,
+    account: review.customer,
     callDate: review.callDate,
     callType: review.callType,
     duration: review.duration,
@@ -190,7 +190,7 @@ export function mapReviewDetail(review: any, call: any) {
     dateTime: review.callDate,
     duration: review.duration,
     callType: review.callType,
-    dealLinked: review.dealLinked || '—',
+    dealLinked: review.dealLinked || (call?.title ? `${call.title} Deal` : '—'),
     callSource: call?.callSource || 'Zoom',
     participants: (call?.participants ?? []).map((name: string) => ({
       name: name.replace(/\s*\(.*\)/, ''),

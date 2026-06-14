@@ -464,10 +464,11 @@ export class M02FrontendCallReviewsService {
     const feedback = review.feedback as any;
     const templateSections = scorecardSectionsTemplate();
     const totalRequired = templateSections.reduce((sum, sec) => sum + sec.questions.filter(q => q.required).length, 0);
+    const overallTotal = sections.reduce((sum, sec) => sum + sec.total, 0) || 100;
     return {
       isReadyForSubmission: answered >= totalRequired,
       overallScore: review.overallScore || score,
-      overallTotal: 100,
+      overallTotal,
       overallPercent: review.overallScore || score,
       passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
       passThreshold: 75,
@@ -542,7 +543,7 @@ export class M02FrontendCallReviewsService {
       salesRep: review.salesRep,
       submittedBy: review.reviewer,
       finalScore: review.overallScore || score,
-      finalTotal: 100,
+      finalTotal: (calculateCallReviewScore(review.questions).sections.reduce((sum, sec) => sum + sec.total, 0) || 100),
       finalPercent: review.overallScore || score,
       passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
       submittedAt: review.updatedAt.toISOString(),
@@ -639,6 +640,26 @@ export class M02FrontendCallReviewsService {
     const totalReviews = reviews.length;
     const completedReviews = reviews.filter(r => r.status === 'Completed');
     
+    const allCompleted = await this.prisma.callReview.findMany({
+      where: { tenantid: tenantId, status: 'Completed' },
+      select: { overallScore: true }
+    });
+    const teamAverageScore = allCompleted.length > 0
+      ? Math.round(allCompleted.reduce((sum, r) => sum + (r.overallScore || 0), 0) / allCompleted.length)
+      : 75;
+
+    const repReviews = completedReviews.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    let repAverageTrend = '+0%';
+    if (repReviews.length >= 2) {
+      const mid = Math.ceil(repReviews.length / 2);
+      const recent = repReviews.slice(0, mid);
+      const older = repReviews.slice(mid);
+      const recentAvg = recent.reduce((sum, r) => sum + (r.overallScore || 0), 0) / recent.length;
+      const olderAvg = older.reduce((sum, r) => sum + (r.overallScore || 0), 0) / older.length;
+      const diff = Math.round(recentAvg - olderAvg);
+      repAverageTrend = diff >= 0 ? `+${diff}%` : `${diff}%`;
+    }
+
     let avgScore = 0;
     if (completedReviews.length > 0) {
       avgScore = Math.round(completedReviews.reduce((sum, r) => sum + (r.overallScore || 0), 0) / completedReviews.length);
@@ -646,9 +667,9 @@ export class M02FrontendCallReviewsService {
 
     return {
       repAverageScore: avgScore,
-      repAverageTrend: '+2%', // Mock trend for now
-      teamAverageScore: 78,
-      teamComparison: 'above_average',
+      repAverageTrend,
+      teamAverageScore,
+      teamComparison: avgScore > teamAverageScore ? 'above_average' : (avgScore < teamAverageScore ? 'below_average' : 'equal'),
       completionRate: totalReviews > 0 ? Math.round((completedReviews.length / totalReviews) * 100) : 0,
       totalReviews: totalReviews,
     };
@@ -724,7 +745,7 @@ export class M02FrontendCallReviewsService {
   async getReviewHistory(tenantId: string, raw: Record<string, string>, userId?: string, userRole?: string) {
     const q = AnalyticsHistoryQuerySchema.parse(raw);
     
-    const where: any = { tenantid: tenantId, status: 'Submitted' };
+    const where: any = { tenantid: tenantId, status: 'Completed' };
     
     // Search
     if (q.search) {
