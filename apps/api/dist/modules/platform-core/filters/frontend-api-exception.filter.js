@@ -27,6 +27,11 @@ let FrontendApiExceptionFilter = FrontendApiExceptionFilter_1 = class FrontendAp
         if (status >= 500) {
             this.logger.error(`${req.method} ${req.url} — ${text}`);
         }
+        const requestId = req.headers['x-request-id'] ||
+            req.headers['x-trace-id'] ||
+            req.headers['trace-id'] ||
+            `req_err_${Date.now()}`;
+        const timestamp = new Date().toISOString();
         res.status(status).json({
             success: false,
             error: {
@@ -34,6 +39,8 @@ let FrontendApiExceptionFilter = FrontendApiExceptionFilter_1 = class FrontendAp
                 message: text,
                 details: typeof payload === 'object' ? payload : null,
             },
+            requestId,
+            timestamp,
         });
     }
     statusToCode(status, message) {

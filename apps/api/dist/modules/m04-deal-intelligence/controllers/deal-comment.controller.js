@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealCommentController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_comment_service_1 = require("@/services/deal-comment.service");
-const comment_dto_1 = require("@/schemas/comment.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const deal_comment_service_1 = require("@m04/services/deal-comment.service");
+const comment_dto_1 = require("@m04/schemas/comment.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let DealCommentController = class DealCommentController {
     commentService;
     constructor(commentService) {
@@ -156,7 +159,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, comment_dto_1.CreateCommentDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof comment_dto_1.CreateCommentDto !== "undefined" && comment_dto_1.CreateCommentDto) === "function" ? _b : Object, typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], DealCommentController.prototype, "createComment", null);
 __decorate([
@@ -193,7 +196,7 @@ __decorate([
     __param(2, (0, common_1.Body)()),
     __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, comment_dto_1.UpdateCommentDto, Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_d = typeof comment_dto_1.UpdateCommentDto !== "undefined" && comment_dto_1.UpdateCommentDto) === "function" ? _d : Object, typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], DealCommentController.prototype, "updateComment", null);
 __decorate([
@@ -228,14 +231,14 @@ __decorate([
     __param(1, (0, common_1.Param)('commentId')),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_f = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], DealCommentController.prototype, "deleteComment", null);
 exports.DealCommentController = DealCommentController = __decorate([
     (0, swagger_1.ApiTags)('Deal Comments'),
     (0, common_1.Controller)('deals/:dealId/comments'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [deal_comment_service_1.DealCommentService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_comment_service_1.DealCommentService !== "undefined" && deal_comment_service_1.DealCommentService) === "function" ? _a : Object])
 ], DealCommentController);
 //# sourceMappingURL=deal-comment.controller.js.map

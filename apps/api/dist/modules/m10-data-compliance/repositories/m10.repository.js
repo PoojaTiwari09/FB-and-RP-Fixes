@@ -18,7 +18,7 @@ let M10DataComplianceRepository = class M10DataComplianceRepository {
         this.prisma = prisma;
     }
     async findAll(tenantId) {
-        return [{ "message": "Mock list for tenant " + tenantId }];
+        return [{ message: "Mock list for tenant " + tenantId }];
     }
     async create(data) {
         return { id: "mock-id-123", ...data };

@@ -4,11 +4,11 @@ exports.UpdateDataBreachStatusSchema = exports.CreateDataBreachSchema = exports.
 const zod_1 = require("zod");
 exports.CreateDsarSchema = zod_1.z.object({
     contactEmail: zod_1.z.string().email(),
-    requestType: zod_1.z.enum(['erasure', 'portability', 'access', 'rectification']),
+    requestType: zod_1.z.enum(["erasure", "portability", "access", "rectification"]),
     details: zod_1.z.record(zod_1.z.unknown()).optional(),
 });
 exports.UpdateDsarStatusSchema = zod_1.z.object({
-    status: zod_1.z.enum(['pending', 'in_progress', 'completed', 'rejected']),
+    status: zod_1.z.enum(["pending", "in_progress", "completed", "rejected"]),
 });
 exports.CreateRopaSchema = zod_1.z.object({
     purpose: zod_1.z.string().min(1),
@@ -23,6 +23,6 @@ exports.CreateDataBreachSchema = zod_1.z.object({
     affectedData: zod_1.z.array(zod_1.z.string()).min(1),
 });
 exports.UpdateDataBreachStatusSchema = zod_1.z.object({
-    status: zod_1.z.enum(['investigating', 'mitigated', 'reported']),
+    status: zod_1.z.enum(["investigating", "mitigated", "reported"]),
 });
 //# sourceMappingURL=gdpr.schema.js.map

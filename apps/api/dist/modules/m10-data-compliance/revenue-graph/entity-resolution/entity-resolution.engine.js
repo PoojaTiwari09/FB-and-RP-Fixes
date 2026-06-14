@@ -16,7 +16,12 @@ exports.detectAmbiguity = detectAmbiguity;
 exports.pickBestCandidate = pickBestCandidate;
 exports.inferAccountFromContacts = inferAccountFromContacts;
 const FREE_DOMAINS = new Set([
-    'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'aol.com',
+    "gmail.com",
+    "yahoo.com",
+    "outlook.com",
+    "hotmail.com",
+    "icloud.com",
+    "aol.com",
 ]);
 exports.FREE_DOMAINS = FREE_DOMAINS;
 function normalizeEmail(email) {
@@ -24,7 +29,7 @@ function normalizeEmail(email) {
 }
 function extractDomain(email) {
     const n = normalizeEmail(email);
-    const at = n.indexOf('@');
+    const at = n.indexOf("@");
     if (at < 0)
         return null;
     return n.slice(at + 1) || null;
@@ -35,9 +40,9 @@ function isFreeMailDomain(domain) {
 function normalizeName(name) {
     return name
         .toLowerCase()
-        .replace(/[^\w\s]/g, ' ')
-        .replace(/\b(inc|llc|ltd|corp|corporation|company|co)\b/g, '')
-        .replace(/\s+/g, ' ')
+        .replace(/[^\w\s]/g, " ")
+        .replace(/\b(inc|llc|ltd|corp|corporation|company|co)\b/g, "")
+        .replace(/\s+/g, " ")
         .trim();
 }
 function levenshtein(a, b) {
@@ -74,8 +79,8 @@ function stringSimilarity(a, b) {
     return maxLen === 0 ? 0 : 1 - dist / maxLen;
 }
 function tokenOverlapScore(a, b) {
-    const ta = new Set(normalizeName(a).split(' ').filter(Boolean));
-    const tb = new Set(normalizeName(b).split(' ').filter(Boolean));
+    const ta = new Set(normalizeName(a).split(" ").filter(Boolean));
+    const tb = new Set(normalizeName(b).split(" ").filter(Boolean));
     if (ta.size === 0 || tb.size === 0)
         return 0;
     let overlap = 0;
@@ -91,32 +96,34 @@ function combinedSimilarity(a, b) {
 }
 function scoreToConfidence(score, high = 0.88, medium = 0.72) {
     if (score >= high)
-        return 'high';
+        return "high";
     if (score >= medium)
-        return 'medium';
-    return 'low';
+        return "medium";
+    return "low";
 }
 function rankAccountCandidates(queryName, queryDomain, accounts, opts = {}) {
     const minScore = opts.minScore ?? 0.72;
-    const ignored = new Set((opts.ignoredDomains ?? []).map(d => d.toLowerCase()));
+    const ignored = new Set((opts.ignoredDomains ?? []).map((d) => d.toLowerCase()));
     const candidates = [];
     for (const acc of accounts) {
         const signals = [];
         let score = 0;
-        if (queryDomain && acc.domain && acc.domain.toLowerCase() === queryDomain.toLowerCase()) {
+        if (queryDomain &&
+            acc.domain &&
+            acc.domain.toLowerCase() === queryDomain.toLowerCase()) {
             score = 1;
-            signals.push('email_domain_exact_match');
+            signals.push("email_domain_exact_match");
         }
         else if (queryName) {
             const sim = combinedSimilarity(queryName, acc.name);
             if (sim >= minScore) {
                 score = sim;
-                signals.push('fuzzy_company_name');
+                signals.push("fuzzy_company_name");
                 if (levenshtein(normalizeName(queryName), normalizeName(acc.name)) <= 2) {
-                    signals.push('levenshtein_close');
+                    signals.push("levenshtein_close");
                 }
                 if (tokenOverlapScore(queryName, acc.name) >= 0.5) {
-                    signals.push('token_overlap');
+                    signals.push("token_overlap");
                 }
             }
         }
@@ -126,7 +133,12 @@ function rankAccountCandidates(queryName, queryDomain, accounts, opts = {}) {
                 score,
                 confidence: scoreToConfidence(score),
                 signals,
-                explanation: { queryName, queryDomain, matchedName: acc.name, matchedDomain: acc.domain },
+                explanation: {
+                    queryName,
+                    queryDomain,
+                    matchedName: acc.name,
+                    matchedDomain: acc.domain,
+                },
             });
         }
     }
@@ -141,13 +153,13 @@ function rankContactCandidates(queryEmail, queryName, contacts, opts = {}) {
         let score = 0;
         if (qEmail && normalizeEmail(c.email) === qEmail) {
             score = 1;
-            signals.push('email_exact_match');
+            signals.push("email_exact_match");
         }
         else if (queryName && c.name) {
             const sim = combinedSimilarity(queryName, c.name);
             if (sim >= minScore) {
                 score = sim;
-                signals.push('fuzzy_contact_name');
+                signals.push("fuzzy_contact_name");
             }
         }
         if (score >= minScore) {
@@ -175,7 +187,11 @@ function pickBestCandidate(candidates) {
     if (ambiguous) {
         return { best: null, ambiguous: true, rejected: candidates };
     }
-    return { best: candidates[0], ambiguous: false, rejected: candidates.slice(1) };
+    return {
+        best: candidates[0],
+        ambiguous: false,
+        rejected: candidates.slice(1),
+    };
 }
 function inferAccountFromContacts(contacts) {
     const counts = new Map();

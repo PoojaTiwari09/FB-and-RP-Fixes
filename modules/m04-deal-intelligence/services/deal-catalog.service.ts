@@ -426,13 +426,7 @@ export class DealCatalogService {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Deal catalog HubSpot fallback: ${message}`);
-      const mockDeals = this.dealsService.getAllMockDeals();
-      const enrichedDeals = await Promise.all(mockDeals.map(d => this.enrichDealWithTranscriptMeddpicc(d)));
-      return {
-        deals: enrichedDeals,
-        boards: this.dealsService.getMockDealBoards(),
-        isMock: true,
-      };
+      return { deals: [], boards: [], isMock: false };
     }
   }
 
@@ -443,10 +437,7 @@ export class DealCatalogService {
       const enriched = await this.enrichDealWithTranscriptMeddpicc(deal);
       return enriched as unknown as DealRow;
     } catch {
-      const mock = this.dealsService.getMockDealById(dealId);
-      if (!mock) throw new NotFoundException(`Deal ${dealId} not found in Deal Boards`);
-      const enriched = await this.enrichDealWithTranscriptMeddpicc(mock);
-      return enriched;
+      throw new NotFoundException(`Deal ${dealId} not found`);
     }
   }
 
@@ -457,11 +448,7 @@ export class DealCatalogService {
       const board = boards.find((b) => b.pipeline === deal.pipeline);
       if (board) return { boardId: board.boardId, boardName: board.name };
     }
-    for (const b of this.dealsService.getMockDealBoards()) {
-      if (this.dealsService.getMockDeals(b.boardId).some((d) => d.dealId === dealId)) {
-        return { boardId: b.boardId, boardName: b.name };
-      }
-    }
+    return null;
     return null;
   }
 

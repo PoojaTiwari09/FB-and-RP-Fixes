@@ -35,7 +35,12 @@ let M09FrontendTrainingsService = class M09FrontendTrainingsService {
     async listTrainings(userId, orgId, status) {
         const scenarios = await this.scenarios.findAll(orgId);
         const assignments = await this.repo.findAssignmentsByRep(userId, orgId);
-        let items = scenarios.map((s) => {
+        const visibleScenarios = scenarios.filter((s) => {
+            const isCustom = s.context_text?.trim().startsWith('{');
+            const isAssigned = assignments.some((a) => a.scenario_id === s.id);
+            return !isCustom || isAssigned;
+        });
+        let items = visibleScenarios.map((s) => {
             const a = assignments.find((x) => x.scenario_id === s.id);
             return (0, m09_frontend_trainings_mapper_1.mapTrainingListItem)(s, a);
         });
@@ -181,6 +186,15 @@ let M09FrontendTrainingsService = class M09FrontendTrainingsService {
             context_text: JSON.stringify(dto),
             scenario_name: dto.trainingTitle || 'Custom Training',
         }, orgId, 'manager');
+        if (dto.repId) {
+            await this.repo.bulkCreateAssignments([{
+                    rep_id: dto.repId,
+                    scenario_id: created.id,
+                    manager_id: 'manager',
+                    status: 'Pending',
+                    deadline: new Date(dto.dueDateIso || Date.now() + 7 * 86400000),
+                }]);
+        }
         return { success: true, trainingId: created.id };
     }
     async reassignTraining(trainingId, body, orgId) {

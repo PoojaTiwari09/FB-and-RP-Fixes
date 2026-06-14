@@ -12,12 +12,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var DealSummaryService_1;
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealSummaryService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const entities_1 = require("@/entities");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const entities_1 = require("@m04/entities");
 const ai_client_service_1 = require("./ai-client.service");
 const deal_service_1 = require("./deal.service");
 const audit_log_service_1 = require("./audit-log.service");
@@ -39,7 +40,8 @@ let DealSummaryService = DealSummaryService_1 = class DealSummaryService {
         if (!deal) {
             throw new common_1.NotFoundException(`Deal with ID ${dealId} not found`);
         }
-        await this.summaryRepository.update({ dealId, isCurrent: true }, { isCurrent: false });
+        const existingSummaries = await this.summaryRepository.find({ where: { dealId } });
+        const existingSummary = existingSummaries && existingSummaries.length > 0 ? existingSummaries[0] : null;
         let generatedData = null;
         const geminiKey = process.env.GEMINI_API_KEY;
         if (geminiKey) {
@@ -128,16 +130,16 @@ Do not wrap it in markdown code blocks or add any comments or text. Return stric
             this.logger.log('Gemini API key is not configured or failed. Generating simulated structured brief.');
             generatedData = this.generateSimulatedBrief(deal);
         }
-        const summary = this.summaryRepository.create({
+        const summary = existingSummary || this.summaryRepository.create({
             dealId: deal.id,
-            summary: JSON.stringify(generatedData),
-            keyPoints: generatedData.keyDiscussionPoints,
-            nextSteps: generatedData.commitments.map((c) => c.description),
-            competitorMentions: [],
-            confidenceScore: deal.aiScore ? Number(deal.aiScore) : 85,
-            flaggedForReview: false,
-            isCurrent: true,
         });
+        summary.summary = JSON.stringify(generatedData);
+        summary.keyPoints = generatedData.keyDiscussionPoints;
+        summary.nextSteps = generatedData.commitments.map((c) => c.description);
+        summary.competitorMentions = [];
+        summary.confidenceScore = deal.aiScore ? Number(deal.aiScore) : 85;
+        summary.flaggedForReview = false;
+        summary.isCurrent = true;
         const savedSummary = await this.summaryRepository.save(summary);
         await this.auditLogService.log({
             userId,
@@ -154,24 +156,44 @@ Do not wrap it in markdown code blocks or add any comments or text. Return stric
     generateSimulatedBrief(deal) {
         const isHighRisk = deal.isHighRisk;
         const overview = `${deal.name} is currently in the ${String(deal.stage || '').toLowerCase()} stage with a close probability of ${deal.probability || 0}%. The opportunity amount is $${Number(deal.amount || 0).toLocaleString()}. ${deal.nextStep ? `The next scheduled step is: "${deal.nextStep}".` : 'No next steps are currently scheduled in the system.'} ${isHighRisk ? 'This opportunity shows some high-risk signals that require immediate review.' : 'The deal is showing healthy activity strength.'}`;
-        const keyDiscussionPoints = [
-            `Initial alignment on product capabilities and integration requirements for ${deal.accountName || 'the client'}.`,
-            `Discussion around platform licensing tiers, implementation timelines, and resource requirements.`,
-            `Verification of technical feasibility and deployment considerations with their engineering lead.`,
-        ];
+        let keyDiscussionPoints = [];
+        if (deal.comments && deal.comments.length > 0) {
+            keyDiscussionPoints = deal.comments.slice(0, 3).map(c => c.content);
+        }
+        else {
+            keyDiscussionPoints = [
+                `Initial alignment on product capabilities and integration requirements for ${deal.accountName || 'the client'}.`,
+                `Discussion around platform licensing tiers, implementation timelines, and resource requirements.`,
+                `Verification of technical feasibility and deployment considerations with their engineering lead.`,
+            ];
+        }
         if (deal.nextStep) {
             keyDiscussionPoints.push(`Agreed next action: ${deal.nextStep}.`);
         }
-        const customerNeeds = [
-            {
-                title: 'Scalable Platform Integration',
-                description: 'Requires a platform that integrates directly with their existing business tools and handles high volumes.',
-            },
-            {
-                title: 'Efficiency and Visibility',
-                description: 'Needs to streamline reporting processes and eliminate manual updates to improve executive visibility.',
-            },
-        ];
+        let customerNeeds = [];
+        if (deal.playbooks && deal.playbooks.some(p => p.criterion === 'IDENTIFY PAIN' && p.notes)) {
+            const painPoint = deal.playbooks.find(p => p.criterion === 'IDENTIFY PAIN');
+            customerNeeds.push({
+                title: 'Primary Pain Point',
+                description: painPoint?.notes || '',
+            });
+            customerNeeds.push({
+                title: 'Business Metric Impact',
+                description: deal.playbooks.find(p => p.criterion === 'METRICS')?.notes || 'Needs to streamline reporting processes and eliminate manual updates.',
+            });
+        }
+        else {
+            customerNeeds = [
+                {
+                    title: 'Scalable Platform Integration',
+                    description: 'Requires a platform that integrates directly with their existing business tools and handles high volumes.',
+                },
+                {
+                    title: 'Efficiency and Visibility',
+                    description: 'Needs to streamline reporting processes and eliminate manual updates to improve executive visibility.',
+                },
+            ];
+        }
         const risks = [];
         if (isHighRisk) {
             risks.push({
@@ -192,18 +214,28 @@ Do not wrap it in markdown code blocks or add any comments or text. Return stric
             description: 'Potential for target close date to shift if legal review takes longer than expected.',
             severity: 'low',
         });
-        const commitments = [
-            {
-                description: 'Provide updated product pricing sheet and pilot evaluation proposal.',
-                assigneeType: 'rep',
-                dueDate: 'Within 3 days',
-            },
-            {
-                description: 'Share technical integration specification document.',
-                assigneeType: 'customer',
-                dueDate: 'End of week',
-            },
-        ];
+        let commitments = [];
+        if (deal.tasks && deal.tasks.length > 0) {
+            commitments = deal.tasks.slice(0, 3).map(t => ({
+                description: t.title,
+                assigneeType: t.assigneeName ? 'rep' : 'customer',
+                dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'Pending',
+            }));
+        }
+        else {
+            commitments = [
+                {
+                    description: 'Provide updated product pricing sheet and pilot evaluation proposal.',
+                    assigneeType: 'rep',
+                    dueDate: 'Within 3 days',
+                },
+                {
+                    description: 'Share technical integration specification document.',
+                    assigneeType: 'customer',
+                    dueDate: 'End of week',
+                },
+            ];
+        }
         const stakeholders = [
             {
                 name: deal.ownerName || 'Sarah Chen',
@@ -336,8 +368,7 @@ exports.DealSummaryService = DealSummaryService;
 exports.DealSummaryService = DealSummaryService = DealSummaryService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(entities_1.DealSummary)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        ai_client_service_1.AIClientService,
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, ai_client_service_1.AIClientService,
         deal_service_1.DealService,
         audit_log_service_1.AuditLogService])
 ], DealSummaryService);

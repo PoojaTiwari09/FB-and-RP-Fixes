@@ -49,36 +49,37 @@ let M09Repository = class M09Repository {
         };
     }
     async getUserById(userId) {
-        const mem = this.store.users.get(userId);
-        if (mem)
-            return mem;
         const delegate = this.unifiedUserDelegate();
         if (delegate) {
             const u = await delegate.findUnique({ where: { id: userId } });
-            if (!u)
-                throw new common_1.NotFoundException('User not found');
-            return this.mapUnifiedUser(u);
+            if (u)
+                return this.mapUnifiedUser(u);
         }
         if (this.hasLegacyModels()) {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
-            if (!user)
-                throw new common_1.NotFoundException('User not found');
-            return user;
+            if (user)
+                return user;
         }
+        const mem = this.store.users.get(userId);
+        if (mem)
+            return mem;
         throw new common_1.NotFoundException('User not found');
     }
     async findUserByEmail(email) {
-        for (const u of this.store.users.values()) {
-            if (u.email === email)
-                return u;
-        }
         const delegate = this.unifiedUserDelegate();
         if (delegate) {
             const u = await delegate.findFirst({ where: { email } });
-            return u ? this.mapUnifiedUser(u) : null;
+            if (u)
+                return this.mapUnifiedUser(u);
         }
         if (this.hasLegacyModels()) {
-            return this.prisma.user.findUnique({ where: { email } });
+            const user = await this.prisma.user.findUnique({ where: { email } });
+            if (user)
+                return user;
+        }
+        for (const u of this.store.users.values()) {
+            if (u.email === email)
+                return u;
         }
         return null;
     }
@@ -147,44 +148,43 @@ let M09Repository = class M09Repository {
         return [];
     }
     async findAllScenarios(orgId) {
-        const mem = [...this.store.scenarios.values()].filter((s) => s.org_id === orgId);
-        if (mem.length)
-            return mem.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
         const delegate = this.scenarioDelegate();
         if (delegate) {
             const rows = await delegate.findMany({
                 where: { tenantid: orgId },
                 orderBy: { createdat: 'desc' },
             });
-            return rows.map(m09_prisma_mappers_1.scenarioFromUnified);
+            if (rows && rows.length > 0)
+                return rows.map(m09_prisma_mappers_1.scenarioFromUnified);
         }
         if (this.hasLegacyModels()) {
-            return this.prisma.trainingScenario.findMany({
+            const rows = await this.prisma.trainingScenario.findMany({
                 where: { org_id: orgId },
                 orderBy: { created_at: 'desc' },
             });
+            if (rows && rows.length > 0)
+                return rows;
         }
-        return [];
+        const mem = [...this.store.scenarios.values()].filter((s) => s.org_id === orgId);
+        return mem.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
     }
     async findScenarioById(id, orgId) {
-        const mem = this.store.scenarios.get(id);
-        if (mem && mem.org_id === orgId)
-            return mem;
         const delegate = this.scenarioDelegate();
         if (delegate) {
             const row = await delegate.findFirst({ where: { scenarioid: id, tenantid: orgId } });
-            if (!row)
-                throw new common_1.NotFoundException('Scenario not found');
-            return (0, m09_prisma_mappers_1.scenarioFromUnified)(row);
+            if (row)
+                return (0, m09_prisma_mappers_1.scenarioFromUnified)(row);
         }
         if (this.hasLegacyModels()) {
             const scenario = await this.prisma.trainingScenario.findFirst({
                 where: { id, org_id: orgId },
             });
-            if (!scenario)
-                throw new common_1.NotFoundException('Scenario not found');
-            return scenario;
+            if (scenario)
+                return scenario;
         }
+        const mem = this.store.scenarios.get(id);
+        if (mem && mem.org_id === orgId)
+            return mem;
         throw new common_1.NotFoundException('Scenario not found');
     }
     async createScenario(orgId, managerId, data) {
@@ -257,20 +257,18 @@ let M09Repository = class M09Repository {
         return this.store.parseSession(session);
     }
     async findAllSessions(repId, orgId) {
-        const sessions = [...this.store.sessions.values()].filter((s) => s.rep_id === repId && this.store.scenarios.get(s.scenario_id)?.org_id === orgId);
-        if (sessions.length) {
-            return sessions.map((s) => this.parseSession(s)).sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-        }
         const delegate = this.sessionDelegate();
         if (delegate) {
             const rows = await delegate.findMany({
                 where: { userid: repId, tenantid: orgId },
                 orderBy: { createdat: 'desc' },
             });
-            return Promise.all(rows.map(async (r) => {
-                const sc = await this.findScenarioById(r.scenarioid, orgId).catch(() => null);
-                return this.parseSession((0, m09_prisma_mappers_1.sessionFromUnified)(r, sc));
-            }));
+            if (rows && rows.length > 0) {
+                return Promise.all(rows.map(async (r) => {
+                    const sc = await this.findScenarioById(r.scenarioid, orgId).catch(() => null);
+                    return this.parseSession((0, m09_prisma_mappers_1.sessionFromUnified)(r, sc));
+                }));
+            }
         }
         if (this.hasLegacyModels()) {
             const rows = await this.prisma.trainingSession.findMany({
@@ -278,61 +276,82 @@ let M09Repository = class M09Repository {
                 include: { scenario: true },
                 orderBy: { created_at: 'desc' },
             });
-            return rows.map((s) => this.parseSession(s));
+            if (rows && rows.length > 0)
+                return rows.map((s) => this.parseSession(s));
         }
-        return [];
+        const sessions = [...this.store.sessions.values()].filter((s) => s.rep_id === repId && this.store.scenarios.get(s.scenario_id)?.org_id === orgId);
+        return sessions.map((s) => this.parseSession(s)).sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
     }
     async findCompletedSessions(repId, orgId) {
         const all = await this.findAllSessions(repId, orgId);
         return all.filter((s) => s.completed_at && s.feedback_json && !s.is_practice);
     }
     async findSessionById(id, orgId) {
-        const mem = this.store.sessions.get(id);
-        if (mem) {
-            const sc = this.store.scenarios.get(mem.scenario_id);
-            if (sc?.org_id !== orgId)
-                throw new common_1.NotFoundException('Session not found');
-            const parsed = this.parseSession(mem);
-            parsed.scenario = sc;
-            return parsed;
-        }
         const delegate = this.sessionDelegate();
         if (delegate) {
             const row = await delegate.findFirst({ where: { sessionid: id, tenantid: orgId } });
-            if (!row)
-                throw new common_1.NotFoundException('Session not found');
-            const sc = await this.findScenarioById(row.scenarioid, orgId);
-            return this.parseSession((0, m09_prisma_mappers_1.sessionFromUnified)(row, sc));
+            if (row) {
+                const sc = await this.findScenarioById(row.scenarioid, orgId);
+                return this.parseSession((0, m09_prisma_mappers_1.sessionFromUnified)(row, sc));
+            }
         }
         if (this.hasLegacyModels()) {
             const session = await this.prisma.trainingSession.findFirst({
                 where: { id, rep: { org_id: orgId } },
                 include: { scenario: true, rep: true },
             });
-            if (!session)
+            if (session)
+                return this.parseSession(session);
+        }
+        const mem = this.store.sessions.get(id);
+        if (mem) {
+            const sc = await this.findScenarioById(mem.scenario_id, orgId).catch(() => null);
+            if (!sc)
                 throw new common_1.NotFoundException('Session not found');
-            return this.parseSession(session);
+            if (sc.org_id !== orgId)
+                throw new common_1.NotFoundException('Session not found');
+            const parsed = this.parseSession(mem);
+            parsed.scenario = sc;
+            return parsed;
         }
         throw new common_1.NotFoundException('Session not found');
     }
     async findSessionByIdWithoutOrg(id) {
-        const mem = this.store.sessions.get(id);
-        if (mem)
-            return this.parseSession(mem);
+        const delegate = this.sessionDelegate();
+        if (delegate) {
+            const row = await delegate.findFirst({ where: { sessionid: id } });
+            if (row) {
+                const sc = await this.findScenarioById(row.scenarioid, row.tenantid).catch(() => null);
+                return this.parseSession((0, m09_prisma_mappers_1.sessionFromUnified)(row, sc));
+            }
+        }
         if (this.hasLegacyModels()) {
             const session = await this.prisma.trainingSession.findUnique({
                 where: { id },
                 include: { scenario: true },
             });
-            if (!session)
-                throw new common_1.NotFoundException('Session not found');
-            return this.parseSession(session);
+            if (session)
+                return this.parseSession(session);
+        }
+        const mem = this.store.sessions.get(id);
+        if (mem) {
+            let sc = null;
+            for (const org of this.store.scenarios.values()) {
+                if (org.id === mem.scenario_id) {
+                    sc = org;
+                    break;
+                }
+            }
+            const parsed = this.parseSession(mem);
+            if (sc)
+                parsed.scenario = sc;
+            return parsed;
         }
         throw new common_1.NotFoundException('Session not found');
     }
     async createSession(data) {
-        const scenario = this.store.scenarios.get(data.scenario_id);
-        const orgId = scenario?.org_id;
+        const user = await this.getUserById(data.rep_id).catch(() => null);
+        const orgId = user?.org_id;
         const id = (0, crypto_1.randomUUID)();
         const row = {
             id,
@@ -381,7 +400,13 @@ let M09Repository = class M09Repository {
             });
             return this.parseSession(session);
         }
-        return this.parseSession(row);
+        const parsed = this.parseSession(row);
+        if (orgId) {
+            const sc = await this.findScenarioById(data.scenario_id, orgId).catch(() => null);
+            if (sc)
+                parsed.scenario = sc;
+        }
+        return parsed;
     }
     async updateSessionLifecycle(id, patch) {
         const s = this.store.sessions.get(id);
@@ -459,16 +484,16 @@ let M09Repository = class M09Repository {
         return all.map((s) => this.parseSession(s));
     }
     async getVoices() {
-        const voices = [...this.store.voices.values()].filter((v) => v.is_active);
-        if (voices.length)
-            return voices.sort((a, b) => a.name.localeCompare(b.name));
         if (this.hasLegacyModels()) {
-            return this.prisma.aiVoice.findMany({
+            const rows = await this.prisma.aiVoice.findMany({
                 where: { is_active: true },
                 orderBy: { name: 'asc' },
             });
+            if (rows && rows.length > 0)
+                return rows;
         }
-        return voices;
+        const voices = [...this.store.voices.values()].filter((v) => v.is_active);
+        return voices.sort((a, b) => a.name.localeCompare(b.name));
     }
     mapAssignments(assignments) {
         const now = new Date();

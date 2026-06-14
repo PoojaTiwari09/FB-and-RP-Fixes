@@ -28,16 +28,22 @@ exports.RevenueGraphModule = RevenueGraphModule = __decorate([
                 name: revenue_graph_events_1.M10_REVENUE_GRAPH_QUEUES.INTAKE,
                 defaultJobOptions: {
                     attempts: 3,
-                    backoff: { type: 'exponential', delay: 2000 },
+                    backoff: { type: "exponential", delay: 2000 },
                     removeOnComplete: { count: 100 },
                     removeOnFail: { count: 200 },
                 },
             }),
             bullmq_1.BullModule.registerQueue({ name: revenue_graph_events_1.M10_REVENUE_GRAPH_QUEUES.DEAL_STAGE }),
-            bullmq_1.BullModule.registerQueue({ name: 'platform-events' }),
+            bullmq_1.BullModule.registerQueue({ name: "platform-events" }),
         ],
         controllers: [revenue_graph_controller_1.RevenueGraphController],
-        providers: [revenue_graph_service_1.RevenueGraphService, revenue_graph_worker_1.RevenueGraphWorker, revenue_graph_repository_1.RevenueGraphRepository, event_publisher_service_1.EventPublisherService, prisma_service_1.PrismaService],
+        providers: [
+            revenue_graph_service_1.RevenueGraphService,
+            revenue_graph_worker_1.RevenueGraphWorker,
+            revenue_graph_repository_1.RevenueGraphRepository,
+            event_publisher_service_1.EventPublisherService,
+            prisma_service_1.PrismaService,
+        ],
         exports: [revenue_graph_service_1.RevenueGraphService],
     })
 ], RevenueGraphModule);

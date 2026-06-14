@@ -11,14 +11,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const auth_service_1 = require("@/services/auth.service");
-const schemas_1 = require("@/schemas");
-const auth_guard_1 = require("@/guards/auth.guard");
-const jwt_guard_1 = require("../interfaces/jwt.guard");
+const auth_service_1 = require("@m04/services/auth.service");
+const schemas_1 = require("@m04/schemas");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
+const jwt_guard_2 = require("../interfaces/jwt.guard");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -61,7 +64,7 @@ let AuthController = class AuthController {
 };
 exports.AuthController = AuthController;
 __decorate([
-    (0, jwt_guard_1.Public)(),
+    (0, jwt_guard_2.Public)(),
     (0, common_1.Post)('register'),
     (0, swagger_1.ApiOperation)({
         summary: 'Register a new user',
@@ -78,11 +81,11 @@ __decorate([
     }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [schemas_1.RegisterDto]),
+    __metadata("design:paramtypes", [typeof (_b = typeof schemas_1.RegisterDto !== "undefined" && schemas_1.RegisterDto) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
-    (0, jwt_guard_1.Public)(),
+    (0, jwt_guard_2.Public)(),
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({
@@ -101,13 +104,13 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Session)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [schemas_1.LoginDto, Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof schemas_1.LoginDto !== "undefined" && schemas_1.LoginDto) === "function" ? _c : Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.Post)('logout'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
     (0, swagger_1.ApiOperation)({
         summary: 'Logout user',
@@ -124,7 +127,7 @@ __decorate([
 ], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.Get)('me'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
     (0, swagger_1.ApiOperation)({
         summary: 'Get current user',
@@ -141,12 +144,12 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getCurrentUser", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Authentication'),
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [typeof (_a = typeof auth_service_1.AuthService !== "undefined" && auth_service_1.AuthService) === "function" ? _a : Object])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

@@ -11,16 +11,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_service_1 = require("@/services/deal.service");
-const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
-const deal_dto_1 = require("@/schemas/deal.dto");
+const deal_service_1 = require("@m04/services/deal.service");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const roles_guard_1 = require("../../platform-core/guards/roles.guard");
+const roles_decorator_1 = require("../../platform-core/decorators/roles.decorator");
+const database_1 = require("@rri/database");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
+const deal_dto_1 = require("@m04/schemas/deal.dto");
 let DealController = class DealController {
     dealService;
     constructor(dealService) {
@@ -78,7 +81,7 @@ let DealController = class DealController {
 exports.DealController = DealController;
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get all deals with filters' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -88,12 +91,12 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [deal_dto_1.QueryDealDto, Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof deal_dto_1.QueryDealDto !== "undefined" && deal_dto_1.QueryDealDto) === "function" ? _b : Object, typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('stats'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get deal statistics' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -102,12 +105,12 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Get)('high-risk'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get high risk deals' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -116,12 +119,12 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "getHighRiskDeals", null);
 __decorate([
     (0, common_1.Get)('closing-soon'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get deals closing soon (next 30 days)' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -130,12 +133,12 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_f = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "getDealsClosingSoon", null);
 __decorate([
     (0, common_1.Get)('my-deals'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get deals for current user' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -144,12 +147,12 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_g = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "getMyDeals", null);
 __decorate([
     (0, common_1.Get)('notifications/recent'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get recent deal updates' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -157,12 +160,12 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_h = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "getRecentNotifications", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get deal by ID' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -177,12 +180,12 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_j = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _j : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "findById", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Update deal' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -198,14 +201,14 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, deal_dto_1.UpdateDealDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_k = typeof deal_dto_1.UpdateDealDto !== "undefined" && deal_dto_1.UpdateDealDto) === "function" ? _k : Object, typeof (_l = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _l : Object]),
     __metadata("design:returntype", Promise)
 ], DealController.prototype, "update", null);
 exports.DealController = DealController = __decorate([
     (0, swagger_1.ApiTags)('Deals'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('deals'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [deal_service_1.DealService])
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_service_1.DealService !== "undefined" && deal_service_1.DealService) === "function" ? _a : Object])
 ], DealController);
 //# sourceMappingURL=deal.controller.js.map

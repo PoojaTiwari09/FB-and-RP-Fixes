@@ -8,30 +8,32 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.M04TestController = void 0;
 const common_1 = require("@nestjs/common");
-const deal_repository_1 = require("@/repositories/deal.repository");
-const deal_board_repository_1 = require("@/repositories/deal-board.repository");
-const m04_memory_store_1 = require("../database/m04-memory.store");
+const deal_repository_1 = require("@m04/repositories/deal.repository");
+const deal_board_repository_1 = require("@m04/repositories/deal-board.repository");
+const m04_prisma_repository_1 = require("../database/m04-prisma.repository");
+const prisma_service_1 = require("../database/prisma.service");
 const jwt_guard_1 = require("../interfaces/jwt.guard");
 let M04TestController = class M04TestController {
     deals;
     boards;
-    store;
-    constructor(deals, boards, store) {
+    prisma;
+    constructor(deals, boards, prisma) {
         this.deals = deals;
         this.boards = boards;
-        this.store = store;
+        this.prisma = prisma;
     }
-    health() {
+    async health() {
         return {
             success: true,
-            storage: 'memory',
+            storage: 'prisma',
             counts: {
-                deals: this.store.deals.size,
-                boards: this.store.boards.size,
-                users: this.store.users.size,
+                deals: await this.prisma.deal.count(),
+                boards: await this.prisma.m04DealBoard.count(),
+                users: await this.prisma.user.count(),
             },
             timestamp: new Date().toISOString(),
         };
@@ -45,7 +47,7 @@ let M04TestController = class M04TestController {
             dealCount: deals.length,
             boardCount: boards.length,
             sampleDealId: deal?.id,
-            devUserId: m04_memory_store_1.M04_DEV_USER,
+            devUserId: m04_prisma_repository_1.M04_DEV_USER,
         };
     }
 };
@@ -55,7 +57,7 @@ __decorate([
     (0, common_1.Get)('health'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], M04TestController.prototype, "health", null);
 __decorate([
     (0, common_1.Post)('smoke'),
@@ -65,8 +67,6 @@ __decorate([
 ], M04TestController.prototype, "smoke", null);
 exports.M04TestController = M04TestController = __decorate([
     (0, common_1.Controller)('m04-test'),
-    __metadata("design:paramtypes", [deal_repository_1.DealRepository,
-        deal_board_repository_1.DealBoardRepository,
-        m04_memory_store_1.M04MemoryStore])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_repository_1.DealRepository !== "undefined" && deal_repository_1.DealRepository) === "function" ? _a : Object, typeof (_b = typeof deal_board_repository_1.DealBoardRepository !== "undefined" && deal_board_repository_1.DealBoardRepository) === "function" ? _b : Object, prisma_service_1.PrismaService])
 ], M04TestController);
 //# sourceMappingURL=m04-test.controller.js.map

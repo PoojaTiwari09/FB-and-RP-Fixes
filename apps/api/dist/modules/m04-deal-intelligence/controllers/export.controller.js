@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExportController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const export_service_1 = require("@/services/export.service");
-const export_dto_1 = require("@/schemas/export.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const export_service_1 = require("@m04/services/export.service");
+const export_dto_1 = require("@m04/schemas/export.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let ExportController = class ExportController {
     exportService;
     constructor(exportService) {
@@ -51,7 +54,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [export_dto_1.ExportRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof export_dto_1.ExportRequestDto !== "undefined" && export_dto_1.ExportRequestDto) === "function" ? _b : Object, typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], ExportController.prototype, "createExport", null);
 __decorate([
@@ -82,8 +85,8 @@ __decorate([
 exports.ExportController = ExportController = __decorate([
     (0, swagger_1.ApiTags)('Exports'),
     (0, common_1.Controller)('exports'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [export_service_1.ExportService])
+    __metadata("design:paramtypes", [typeof (_a = typeof export_service_1.ExportService !== "undefined" && export_service_1.ExportService) === "function" ? _a : Object])
 ], ExportController);
 //# sourceMappingURL=export.controller.js.map

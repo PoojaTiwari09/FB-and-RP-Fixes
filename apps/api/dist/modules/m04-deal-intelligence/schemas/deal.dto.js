@@ -8,12 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealStatsResponseDto = exports.DealListResponseDto = exports.DealResponseDto = exports.UpdateDealDto = exports.QueryDealDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 class QueryDealDto {
     ownerId;
     stage;
@@ -38,13 +39,13 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.DealStage, description: 'Deal stage filter' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.DealStage),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof entities_1.DealStage !== "undefined" && entities_1.DealStage) === "function" ? _a : Object)
 ], QueryDealDto.prototype, "stage", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.ForecastCategory, description: 'Forecast category filter' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.ForecastCategory),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof entities_1.ForecastCategory !== "undefined" && entities_1.ForecastCategory) === "function" ? _b : Object)
 ], QueryDealDto.prototype, "forecastCategory", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Minimum deal amount' }),
@@ -125,7 +126,7 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.DealStage, description: 'Deal stage' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.DealStage),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_c = typeof entities_1.DealStage !== "undefined" && entities_1.DealStage) === "function" ? _c : Object)
 ], UpdateDealDto.prototype, "stage", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Deal amount' }),
@@ -137,7 +138,7 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.ForecastCategory, description: 'Forecast category' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.ForecastCategory),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_d = typeof entities_1.ForecastCategory !== "undefined" && entities_1.ForecastCategory) === "function" ? _d : Object)
 ], UpdateDealDto.prototype, "forecastCategory", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Close date (ISO 8601)' }),
@@ -206,7 +207,7 @@ __decorate([
 ], DealResponseDto.prototype, "name", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.DealStage, description: 'Deal stage' }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_e = typeof entities_1.DealStage !== "undefined" && entities_1.DealStage) === "function" ? _e : Object)
 ], DealResponseDto.prototype, "stage", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Deal amount' }),
@@ -214,7 +215,7 @@ __decorate([
 ], DealResponseDto.prototype, "amount", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.ForecastCategory, description: 'Forecast category' }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_f = typeof entities_1.ForecastCategory !== "undefined" && entities_1.ForecastCategory) === "function" ? _f : Object)
 ], DealResponseDto.prototype, "forecastCategory", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Owner ID' }),

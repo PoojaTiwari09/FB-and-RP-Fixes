@@ -32,14 +32,23 @@ let EPrivacyRepository = class EPrivacyRepository {
     async getConsentStatus(tenantId, contactEmail, channel, purpose) {
         return this.prisma.m10EPrivacyConsent.findFirst({
             where: { tenantid: tenantId, contactEmail, channel, purpose },
-            orderBy: { loggedAt: 'desc' },
+            orderBy: { loggedAt: "desc" },
         });
     }
     async addSuppression(tenantId, dto) {
         return this.prisma.m10SuppressionEntry.upsert({
-            where: { tenantid_contactEmail: { tenantid: tenantId, contactEmail: dto.contactEmail } },
+            where: {
+                tenantid_contactEmail: {
+                    tenantid: tenantId,
+                    contactEmail: dto.contactEmail,
+                },
+            },
             update: { reason: dto.reason, addedAt: new Date() },
-            create: { tenantid: tenantId, contactEmail: dto.contactEmail, reason: dto.reason },
+            create: {
+                tenantid: tenantId,
+                contactEmail: dto.contactEmail,
+                reason: dto.reason,
+            },
         });
     }
     async checkSuppression(tenantId, contactEmail) {

@@ -81,7 +81,7 @@ let TranscriptRepository = class TranscriptRepository {
             where: { id: utteranceId, transcript: { tenantid: tenantId } },
         });
         if (!utterance)
-            throw new Error(`Utterance ${utteranceId} not found`);
+            throw new common_1.NotFoundException(`Utterance ${utteranceId} not found`);
         return this.prisma.utterance.update({
             where: { id: utteranceId },
             data: { text: text.trim() },

@@ -31,12 +31,20 @@ function mapTrainingSetup(scenario) {
     let metadata = {};
     if (scenario.context_text) {
         const trimmed = scenario.context_text.trim();
-        const firstJsonMatch = trimmed.match(/^(\{.*?\})/s);
-        if (firstJsonMatch) {
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
             try {
-                metadata = JSON.parse(firstJsonMatch[1]);
+                metadata = JSON.parse(trimmed);
             }
             catch { }
+        }
+        else {
+            const firstJsonMatch = trimmed.match(/^(\{.*?\})/s);
+            if (firstJsonMatch) {
+                try {
+                    metadata = JSON.parse(firstJsonMatch[1]);
+                }
+                catch { }
+            }
         }
         const jsonMatch = scenario.context_text.match(/\[SCENARIO_METADATA:\s*({.*?})\]/s);
         if (jsonMatch) {

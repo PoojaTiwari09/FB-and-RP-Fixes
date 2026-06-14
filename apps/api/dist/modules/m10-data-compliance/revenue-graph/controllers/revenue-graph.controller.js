@@ -19,7 +19,7 @@ const revenue_graph_service_1 = require("../services/revenue-graph.service");
 const jwt_guard_1 = require("../../../platform-core/guards/jwt.guard");
 const tenant_guard_1 = require("../../../platform-core/guards/tenant.guard");
 const m10_dev_auth_guard_1 = require("../../guards/m10-dev-auth.guard");
-const M10AuthGuard = process.env.M10_STANDALONE_AUTH === 'true' ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
+const M10AuthGuard = process.env.M10_STANDALONE_AUTH === "true" ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
 const revenue_graph_schema_1 = require("../schemas/revenue-graph.schema");
 let RevenueGraphController = RevenueGraphController_1 = class RevenueGraphController {
     service;
@@ -43,7 +43,7 @@ let RevenueGraphController = RevenueGraphController_1 = class RevenueGraphContro
         this.logger.debug(`GET deals — tenant=${req.tenantId}`);
         return this.service.getDeals(req.tenantId, {
             accountId,
-            isActive: isActive !== undefined ? isActive === 'true' : undefined,
+            isActive: isActive !== undefined ? isActive === "true" : undefined,
             stage,
             page: page ? parseInt(page, 10) : undefined,
             limit: limit ? parseInt(limit, 10) : undefined,
@@ -62,7 +62,11 @@ let RevenueGraphController = RevenueGraphController_1 = class RevenueGraphContro
     async triggerCrmSync(req, body) {
         const parsed = revenue_graph_schema_1.TriggerCrmSyncSchema.safeParse(body);
         if (!parsed.success) {
-            return { statusCode: common_1.HttpStatus.BAD_REQUEST, message: 'Invalid request body', errors: parsed.error.flatten() };
+            return {
+                statusCode: common_1.HttpStatus.BAD_REQUEST,
+                message: "Invalid request body",
+                errors: parsed.error.flatten(),
+            };
         }
         this.logger.log(`POST crm-sync — tenant=${req.tenantId}, source=${parsed.data.crmSource}`);
         return this.service.triggerCrmSync(req.tenantId, parsed.data.crmSource, parsed.data.entityTypes);
@@ -73,61 +77,61 @@ let RevenueGraphController = RevenueGraphController_1 = class RevenueGraphContro
 };
 exports.RevenueGraphController = RevenueGraphController;
 __decorate([
-    (0, common_1.Get)('accounts'),
+    (0, common_1.Get)("accounts"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)('page')),
-    __param(2, (0, common_1.Query)('limit')),
-    __param(3, (0, common_1.Query)('search')),
+    __param(1, (0, common_1.Query)("page")),
+    __param(2, (0, common_1.Query)("limit")),
+    __param(3, (0, common_1.Query)("search")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getAccounts", null);
 __decorate([
-    (0, common_1.Get)('accounts/:id'),
+    (0, common_1.Get)("accounts/:id"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id', new common_1.ParseUUIDPipe())),
+    __param(1, (0, common_1.Param)("id", new common_1.ParseUUIDPipe())),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getAccountById", null);
 __decorate([
-    (0, common_1.Get)('deals'),
+    (0, common_1.Get)("deals"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)('accountId')),
-    __param(2, (0, common_1.Query)('isActive')),
-    __param(3, (0, common_1.Query)('stage')),
-    __param(4, (0, common_1.Query)('page')),
-    __param(5, (0, common_1.Query)('limit')),
+    __param(1, (0, common_1.Query)("accountId")),
+    __param(2, (0, common_1.Query)("isActive")),
+    __param(3, (0, common_1.Query)("stage")),
+    __param(4, (0, common_1.Query)("page")),
+    __param(5, (0, common_1.Query)("limit")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getDeals", null);
 __decorate([
-    (0, common_1.Get)('deals/:id'),
+    (0, common_1.Get)("deals/:id"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id', new common_1.ParseUUIDPipe())),
+    __param(1, (0, common_1.Param)("id", new common_1.ParseUUIDPipe())),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getDealById", null);
 __decorate([
-    (0, common_1.Get)('deals/:id/relationship'),
+    (0, common_1.Get)("deals/:id/relationship"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id', new common_1.ParseUUIDPipe())),
+    __param(1, (0, common_1.Param)("id", new common_1.ParseUUIDPipe())),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getDealRelationship", null);
 __decorate([
-    (0, common_1.Get)('contacts/:id'),
+    (0, common_1.Get)("contacts/:id"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id', new common_1.ParseUUIDPipe())),
+    __param(1, (0, common_1.Param)("id", new common_1.ParseUUIDPipe())),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getContactById", null);
 __decorate([
-    (0, common_1.Post)('crm-sync'),
+    (0, common_1.Post)("crm-sync"),
     (0, common_1.HttpCode)(common_1.HttpStatus.ACCEPTED),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -136,14 +140,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "triggerCrmSync", null);
 __decorate([
-    (0, common_1.Get)('crm-sync-status'),
+    (0, common_1.Get)("crm-sync-status"),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], RevenueGraphController.prototype, "getCrmSyncStatus", null);
 exports.RevenueGraphController = RevenueGraphController = RevenueGraphController_1 = __decorate([
-    (0, common_1.Controller)('api/v1/m10-data-compliance'),
+    (0, common_1.Controller)("api/v1/m10-data-compliance"),
     (0, common_1.UseGuards)(M10AuthGuard, tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [revenue_graph_service_1.RevenueGraphService])
 ], RevenueGraphController);

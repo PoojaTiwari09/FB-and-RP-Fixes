@@ -11,15 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CoachingService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const deal_entity_1 = require("@/entities/deal.entity");
-const deal_playbook_entity_1 = require("@/entities/deal-playbook.entity");
-const deal_warning_entity_1 = require("@/entities/deal-warning.entity");
-const deal_activity_entity_1 = require("@/entities/deal-activity.entity");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const deal_entity_1 = require("@m04/entities/deal.entity");
+const deal_playbook_entity_1 = require("@m04/entities/deal-playbook.entity");
+const deal_warning_entity_1 = require("@m04/entities/deal-warning.entity");
+const deal_activity_entity_1 = require("@m04/entities/deal-activity.entity");
 const ai_client_service_1 = require("./ai-client.service");
 let CoachingService = class CoachingService {
     dealRepository;
@@ -163,10 +164,6 @@ exports.CoachingService = CoachingService = __decorate([
     __param(1, (0, inject_repository_1.InjectRepository)(deal_playbook_entity_1.DealPlaybook)),
     __param(2, (0, inject_repository_1.InjectRepository)(deal_warning_entity_1.DealWarning)),
     __param(3, (0, inject_repository_1.InjectRepository)(deal_activity_entity_1.DealActivity)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        ai_client_service_1.AIClientService])
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, typeof (_b = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _b : Object, typeof (_c = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _c : Object, typeof (_d = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _d : Object, ai_client_service_1.AIClientService])
 ], CoachingService);
 //# sourceMappingURL=coaching.service.js.map

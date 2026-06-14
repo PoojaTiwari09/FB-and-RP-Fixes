@@ -25,10 +25,10 @@ let TopicTagController = class TopicTagController {
         this.topicTaggingService = topicTaggingService;
     }
     async getTagsForConversation(id) {
-        return this.topicTagService.getTagsForConversation(id);
+        return { data: await this.topicTagService.getTagsForConversation(id) };
     }
     async addManualTag(req, conversationId, topicName, explanation) {
-        return this.topicTagService.addManualTag(req.tenantId, conversationId, topicName, explanation);
+        return { data: await this.topicTagService.addManualTag(req.tenantId, conversationId, topicName, explanation) };
     }
     async deleteTag(tagId) {
         return this.topicTagService.deleteTag(tagId);

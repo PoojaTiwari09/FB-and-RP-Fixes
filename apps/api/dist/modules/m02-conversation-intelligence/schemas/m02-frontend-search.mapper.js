@@ -36,9 +36,22 @@ function parseDurationMinutes(duration) {
     return 0;
 }
 function buildChartData(granularity, count) {
-    const labels = granularity === 'days'
-        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        : ['W1', 'W2', 'W3', 'W4'];
+    let labels = [];
+    if (granularity === 'days') {
+        labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    }
+    else if (granularity === 'weeks') {
+        labels = ['W1', 'W2', 'W3', 'W4'];
+    }
+    else if (granularity === 'months') {
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    }
+    else if (granularity === 'quarters') {
+        labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+    }
+    else {
+        labels = ['W1', 'W2', 'W3', 'W4'];
+    }
     return labels.map((label, i) => ({
         label,
         count: Math.max(0, Math.floor(count / labels.length) + (i % 3) * 10),

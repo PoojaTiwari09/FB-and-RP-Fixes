@@ -30,12 +30,12 @@ exports.DataCloudModule = DataCloudModule = __decorate([
                 name: data_cloud_events_1.M10_DATA_CLOUD_QUEUES.EXPORT,
                 defaultJobOptions: {
                     attempts: 3,
-                    backoff: { type: 'exponential', delay: 3000 },
+                    backoff: { type: "exponential", delay: 3000 },
                     removeOnComplete: { count: 100 },
                     removeOnFail: { count: 200 },
                 },
             }),
-            bullmq_1.BullModule.registerQueue({ name: 'platform-events' }),
+            bullmq_1.BullModule.registerQueue({ name: "platform-events" }),
         ],
         controllers: [data_cloud_controller_1.DataCloudController],
         providers: [

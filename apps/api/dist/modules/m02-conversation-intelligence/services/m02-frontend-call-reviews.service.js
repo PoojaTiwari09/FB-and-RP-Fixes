@@ -118,7 +118,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
     }
     async getReview(tenantId, reviewId, userId, userRole) {
         await this.ensureSeeded(tenantId, userId);
-        const where = { tenantId, reviewId };
+        const where = { tenantid: tenantId, reviewId };
         if (userRole === 'sales_rep' && userId) {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (user) {
@@ -149,7 +149,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
     async listReviews(tenantId, raw, userId, userRole) {
         const q = m02_frontend_call_reviews_schema_1.CallReviewsListQuerySchema.parse(raw);
         await this.ensureSeeded(tenantId, userId);
-        const where = { tenantId };
+        const where = { tenantid: tenantId };
         if (userRole === 'sales_rep' && userId) {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (user) {
@@ -252,8 +252,20 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         const questionsJson = review.questions;
         const answeredCount = Array.isArray(questionsJson) ? questionsJson.length : 0;
         const sections = (0, m02_frontend_call_reviews_mapper_1.scorecardSectionsTemplate)();
+        if (Array.isArray(questionsJson)) {
+            sections.forEach(sec => {
+                sec.questions.forEach(q => {
+                    const ans = questionsJson.find(a => a.questionId === q.questionId);
+                    if (ans) {
+                        q.existingAnswer = ans.value !== undefined ? ans.value : ans.answer;
+                        q.existingComment = ans.comment || '';
+                    }
+                });
+            });
+        }
+        const totalQuestions = sections.reduce((sum, sec) => sum + sec.questions.length, 0);
         return {
-            totalQuestions: 11,
+            totalQuestions,
             answeredCount,
             sections,
         };
@@ -269,24 +281,35 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             speaker: u.speaker,
             text: u.text,
         }));
-        if (!entries.length) {
-            return {
-                entries: [
-                    { timestamp: '00:00', speaker: 'Rep', text: 'Thanks for joining today.' },
-                    { timestamp: '00:45', speaker: 'Customer', text: 'Happy to discuss our evaluation.' },
-                ],
-            };
-        }
         return { entries };
     }
-    getAiInsights(userId, userRole) {
-        return {
-            insights: [
-                { type: 'positive', title: 'Strong Discovery', description: 'Rep asked multiple open-ended questions.' },
-                { type: 'warning', title: 'Missing: Next Steps', description: 'No explicit next meeting scheduled.' },
-                { type: 'positive', title: 'Good Rapport', description: 'Positive tone throughout the call.' },
-            ],
-        };
+    async getAiInsights(tenantId, reviewId, userId, userRole) {
+        const review = await this.getReview(tenantId, reviewId, userId, userRole);
+        const call = await this.prisma.callRecord.findFirst({
+            where: { title: review.callTitle, tenantid: tenantId },
+            include: { transcript: true },
+        });
+        const insights = [];
+        const summary = call?.transcript?.summary || review.aiSummary;
+        if (summary) {
+            insights.push({ type: 'info', title: 'Call Summary', description: summary });
+        }
+        const highlights = call?.transcript?.keyHighlights || review.keyHighlights || [];
+        if (Array.isArray(highlights)) {
+            highlights.forEach((h) => {
+                insights.push({ type: 'positive', title: 'Key Highlight', description: h.text || h.description || String(h) });
+            });
+        }
+        const ratio = call?.transcript?.talkRatio || review.talkRatio;
+        if (ratio && typeof ratio === 'object') {
+            const rep = ratio.rep || ratio.salesRep || 0;
+            const cust = ratio.customer || 0;
+            insights.push({ type: 'info', title: 'Talk Ratio', description: `Rep: ${rep}%, Customer: ${cust}%` });
+        }
+        if (insights.length === 0) {
+            insights.push({ type: 'warning', title: 'Processing', description: 'AI insights are currently being generated or no data is available.' });
+        }
+        return { insights };
     }
     async saveAnswer(tenantId, reviewId, body, userId, userRole) {
         const dto = m02_frontend_call_reviews_schema_1.SaveAnswerSchema.parse(body);
@@ -311,7 +334,10 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             where: { reviewId },
             data: updateData,
         });
-        return { success: true, savedAt: new Date().toISOString(), score };
+        const sections = (0, m02_frontend_call_reviews_mapper_1.scorecardSectionsTemplate)();
+        const totalRequired = sections.reduce((sum, sec) => sum + sec.questions.filter(q => q.required).length, 0);
+        const answeredCount = questionsJson.length;
+        return { success: true, savedAt: new Date().toISOString(), score, answeredCount, totalRequired };
     }
     async saveAnswersBatch(tenantId, reviewId, answers, userId, userRole) {
         const review = await this.getReview(tenantId, reviewId, userId, userRole);
@@ -347,7 +373,10 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             where: { reviewId },
             data: updateData,
         });
-        return { success: true, savedAt: new Date().toISOString() };
+        const answeredCount = Array.isArray(updateData.questions) ? updateData.questions.length : (Array.isArray(review.questions) ? review.questions.length : 0);
+        const sections = (0, m02_frontend_call_reviews_mapper_1.scorecardSectionsTemplate)();
+        const totalQuestions = sections.reduce((sum, sec) => sum + sec.questions.length, 0);
+        return { success: true, savedAt: new Date().toISOString(), answeredCount, totalQuestions };
     }
     async getCoaching(tenantId, reviewId, userId, userRole) {
         const review = await this.getReview(tenantId, reviewId, userId, userRole);
@@ -381,10 +410,14 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         const questionsJson = review.questions;
         const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
         const { score, sections } = calculateCallReviewScore(review.questions);
+        const feedback = review.feedback;
+        const templateSections = (0, m02_frontend_call_reviews_mapper_1.scorecardSectionsTemplate)();
+        const totalRequired = templateSections.reduce((sum, sec) => sum + sec.questions.filter(q => q.required).length, 0);
+        const overallTotal = sections.reduce((sum, sec) => sum + sec.total, 0) || 100;
         return {
-            isReadyForSubmission: answered >= 8,
+            isReadyForSubmission: answered >= totalRequired,
             overallScore: review.overallScore || score,
-            overallTotal: 100,
+            overallTotal,
             overallPercent: review.overallScore || score,
             passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
             passThreshold: 75,
@@ -392,7 +425,13 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             scorecardVersion: review.scorecardVersion,
             repName: review.salesRep,
             sectionScores: sections,
-            aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
+            aiAnalysis: review.quickStats?.aiAnalysis || { accepted: 0, modified: 0, rejected: 0 },
+            coachingPreview: {
+                strengths: feedback?.strengths || [],
+                improvements: feedback?.improvements || [],
+                coachingNotes: feedback?.coachingNotes || '',
+                recommendedActions: feedback?.recommendedActions || [],
+            },
         };
     }
     async submitReview(tenantId, reviewId, body, userId, userRole) {
@@ -447,8 +486,9 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         return {
             callTitle: review.callTitle,
             salesRep: review.salesRep,
+            submittedBy: review.reviewer,
             finalScore: review.overallScore || score,
-            finalTotal: 100,
+            finalTotal: (calculateCallReviewScore(review.questions).sections.reduce((sum, sec) => sum + sec.total, 0) || 100),
             finalPercent: review.overallScore || score,
             passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
             submittedAt: review.updatedAt.toISOString(),
@@ -460,29 +500,68 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         const submittedData = await this.getSubmitted(reviewId, userId, userRole);
         const { sections } = calculateCallReviewScore(review.questions);
         return {
-            ...submittedData,
-            reviewerName: review.reviewer,
-            scorecardName: review.scorecardName,
-            scorecardVersion: review.scorecardVersion,
-            aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
+            callDetails: {
+                callTitle: review.callTitle,
+                salesRep: review.salesRep,
+                customer: review.customer,
+                duration: review.duration,
+                dateTime: review.dateTime || review.callDate,
+            },
+            reviewInfo: {
+                reviewerName: review.reviewer,
+                scorecardName: review.scorecardName,
+                scorecardVersion: review.scorecardVersion,
+                submittedAt: review.updatedAt.toISOString(),
+                finalScore: submittedData.finalScore,
+                passingStatus: submittedData.passingStatus,
+            },
+            aiAnalysis: review.quickStats?.aiAnalysis || { accepted: 0, modified: 0, rejected: 0 },
             sections,
             coaching: review.feedback || {},
             auditTrail: [
                 { event: 'Review Created', user: 'System', at: review.createdAt.toISOString() },
-                { event: 'Review Submitted', user: review.reviewer || 'usr_manager_001', at: review.updatedAt.toISOString() },
+                { event: 'Review Submitted', user: review.reviewer || 'System', at: review.updatedAt.toISOString() },
             ],
         };
     }
     exportReview(reviewId) {
         return {
-            downloadUrl: `/api/call-reviews/${reviewId}/export/download`,
+            downloadUrl: `/api/v1/conversation-intelligence/call-reviews/${reviewId}/export/download`,
             fileName: `${reviewId}-review.pdf`,
         };
     }
-    cloneReview(reviewId) {
-        return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}` };
+    async cloneReview(tenantId, reviewId, targetCallId) {
+        const existing = await this.prisma.callReview.findFirst({ where: { reviewId, tenantid: tenantId } });
+        if (!existing)
+            throw new Error('Review not found');
+        const newId = `rv_${Math.random().toString(36).substr(2, 9)}`;
+        await this.prisma.callReview.create({
+            data: {
+                ...existing,
+                id: undefined,
+                reviewId: newId,
+                status: 'Pending',
+                overallScore: null,
+                updatedAt: undefined,
+                createdAt: undefined,
+            }
+        });
+        return { newReviewId: newId, redirectUrl: `/calls/reviews/${newId}`, targetCallId };
     }
-    async getAnalyticsSummary(userId, userRole) {
+    async shareReview(tenantId, reviewId, body, userId, userRole) {
+        await this.getReview(tenantId, reviewId, userId, userRole);
+        return { success: true, sharedWith: body.recipientEmails || [] };
+    }
+    async reopenReview(tenantId, reviewId, userId, userRole) {
+        await this.getReview(tenantId, reviewId, userId, userRole);
+        await this.prisma.callReview.update({
+            where: { reviewId },
+            data: { status: 'In Progress' },
+        });
+        return { success: true, newStatus: 'In Progress', redirectUrl: `/calls/reviews/${reviewId}/edit` };
+    }
+    async getAnalyticsSummary(tenantId, userId, userRole) {
+        const tenantWhere = { tenantid: tenantId };
         const where = {};
         if (userRole === 'sales_rep' && userId) {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -496,66 +575,129 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
                 where.salesRep = userId;
             }
         }
+        where.tenantid = tenantId;
         const reviews = await this.prisma.callReview.findMany({ where });
         const totalReviews = reviews.length;
         const completedReviews = reviews.filter(r => r.status === 'Completed');
+        const allCompleted = await this.prisma.callReview.findMany({
+            where: { tenantid: tenantId, status: 'Completed' },
+            select: { overallScore: true }
+        });
+        const teamAverageScore = allCompleted.length > 0
+            ? Math.round(allCompleted.reduce((sum, r) => sum + (r.overallScore || 0), 0) / allCompleted.length)
+            : 75;
+        const repReviews = completedReviews.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        let repAverageTrend = '+0%';
+        if (repReviews.length >= 2) {
+            const mid = Math.ceil(repReviews.length / 2);
+            const recent = repReviews.slice(0, mid);
+            const older = repReviews.slice(mid);
+            const recentAvg = recent.reduce((sum, r) => sum + (r.overallScore || 0), 0) / recent.length;
+            const olderAvg = older.reduce((sum, r) => sum + (r.overallScore || 0), 0) / older.length;
+            const diff = Math.round(recentAvg - olderAvg);
+            repAverageTrend = diff >= 0 ? `+${diff}%` : `${diff}%`;
+        }
         let avgScore = 0;
         if (completedReviews.length > 0) {
             avgScore = Math.round(completedReviews.reduce((sum, r) => sum + (r.overallScore || 0), 0) / completedReviews.length);
         }
         return {
             repAverageScore: avgScore,
-            repAverageTrend: '+2%',
-            teamAverageScore: 78,
+            repAverageTrend,
+            teamAverageScore,
+            teamComparison: avgScore > teamAverageScore ? 'above_average' : (avgScore < teamAverageScore ? 'below_average' : 'equal'),
             completionRate: totalReviews > 0 ? Math.round((completedReviews.length / totalReviews) * 100) : 0,
             totalReviews: totalReviews,
         };
     }
-    async getScoreTrend(userId, userRole) {
-        return {
-            data: [
-                { week: 'Apr 1', score: 74 },
-                { week: 'Apr 8', score: 78 },
-                { week: 'Apr 15', score: 80 },
-                { week: 'Apr 22', score: 79 },
-                { week: 'Apr 29', score: 82 },
-                { week: 'May 6', score: 85 },
-                { week: 'May 13', score: 88 },
-            ],
-        };
+    async getScoreTrend(tenantId, userId, userRole) {
+        const where = { tenantid: tenantId, status: 'Completed' };
+        if (userRole === 'sales_rep' && userId) {
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            where.OR = user ? [{ salesRep: userId }, { salesRep: user.name }] : [{ salesRep: userId }];
+        }
+        const reviews = await this.prisma.callReview.findMany({ where, orderBy: { updatedAt: 'asc' } });
+        const grouped = {};
+        reviews.forEach(r => {
+            const dateKey = r.updatedAt.toISOString().split('T')[0];
+            if (!grouped[dateKey])
+                grouped[dateKey] = { total: 0, count: 0 };
+            grouped[dateKey].total += (r.overallScore || 0);
+            grouped[dateKey].count += 1;
+        });
+        const data = Object.keys(grouped).slice(-7).map(date => ({
+            week: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            score: Math.round(grouped[date].total / grouped[date].count),
+        }));
+        if (data.length === 0) {
+            data.push({ week: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), score: 0 });
+        }
+        return { data };
     }
-    async focusAreas(userId, userRole) {
-        return {
-            areas: [
-                { sectionName: 'Objection Handling', percent: 68 },
-                { sectionName: 'Discovery — Decision Process', percent: 72 },
-                { sectionName: 'Next Steps Clarity', percent: 75 },
-            ],
-        };
+    async focusAreas(tenantId, userId, userRole) {
+        const where = { tenantid: tenantId, status: 'Completed' };
+        if (userRole === 'sales_rep' && userId) {
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            where.OR = user ? [{ salesRep: userId }, { salesRep: user.name }] : [{ salesRep: userId }];
+        }
+        const reviews = await this.prisma.callReview.findMany({ where });
+        const sectionTotals = {};
+        reviews.forEach(r => {
+            const { sections } = calculateCallReviewScore(r.questions);
+            sections.forEach(sec => {
+                if (!sectionTotals[sec.sectionName])
+                    sectionTotals[sec.sectionName] = { earned: 0, max: 0 };
+                sectionTotals[sec.sectionName].earned += sec.scored;
+                sectionTotals[sec.sectionName].max += sec.total;
+            });
+        });
+        const areas = Object.keys(sectionTotals)
+            .map(name => ({
+            sectionName: name,
+            percent: sectionTotals[name].max > 0 ? Math.round((sectionTotals[name].earned / sectionTotals[name].max) * 100) : 0
+        }))
+            .sort((a, b) => a.percent - b.percent)
+            .slice(0, 3);
+        return { areas };
     }
-    getCommonTags() {
-        return {
-            tags: [
-                { label: 'Needs Coaching', count: 12 },
-                { label: 'Best Practice', count: 8 },
-                { label: 'Good Rapport', count: 6 },
-            ],
-        };
+    async getCommonTags(tenantId) {
+        const reviews = await this.prisma.callReview.findMany({ where: { tenantid: tenantId } });
+        const tagCounts = {};
+        reviews.forEach(r => {
+            if (r.aiFlags && Array.isArray(r.aiFlags)) {
+                r.aiFlags.forEach(tag => {
+                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+            }
+        });
+        const tags = Object.entries(tagCounts)
+            .map(([label, count]) => ({ label, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+        return { tags };
     }
-    getReviewHistory(raw) {
-        m02_frontend_call_reviews_schema_1.AnalyticsHistoryQuerySchema.parse(raw);
+    async getReviewHistory(tenantId, raw, userId, userRole) {
+        const q = m02_frontend_call_reviews_schema_1.AnalyticsHistoryQuerySchema.parse(raw);
+        const where = { tenantid: tenantId, status: 'Completed' };
+        if (q.search) {
+            where.callTitle = { contains: q.search, mode: 'insensitive' };
+        }
+        const reviews = await this.prisma.callReview.findMany({
+            where,
+            orderBy: { updatedAt: 'desc' },
+            take: 10,
+        });
+        const totalCount = await this.prisma.callReview.count({ where });
         return {
-            totalCount: 3,
-            reviews: [
-                {
-                    reviewId: 'rv_001',
-                    callTitle: 'Discovery Call - Acme Corp Q2',
-                    reviewerName: 'Alex Martinez',
-                    reviewedAt: new Date().toISOString(),
-                    tags: ['Best Practice', 'Strong Discovery'],
-                    score: 88,
-                },
-            ],
+            totalCount,
+            reviews: reviews.map((r) => ({
+                reviewId: r.reviewId,
+                callTitle: r.callTitle,
+                reviewerName: r.reviewer || 'System',
+                reviewedAt: r.updatedAt ? r.updatedAt.toISOString() : r.createdAt.toISOString(),
+                tags: r.aiFlags || [],
+                score: r.overallScore || 0,
+            })),
         };
     }
 };
@@ -574,16 +716,8 @@ function calculateCallReviewScore(answers) {
         product_fit: { title: 'Product Fit', earned: 0, max: 0 },
         objection_handling: { title: 'Objection Handling', earned: 0, max: 0 },
     };
-    if (!answers || typeof answers !== 'object') {
-        return {
-            score: 88,
-            sections: [
-                { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
-                { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
-                { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
-                { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
-            ]
-        };
+    if (!answers || typeof answers !== 'object' || (Array.isArray(answers) && answers.length === 0)) {
+        return { score: 0, sections: [] };
     }
     const entries = Array.isArray(answers)
         ? answers.map(q => [q.questionId, q])
@@ -634,15 +768,7 @@ function calculateCallReviewScore(answers) {
         totalEarned += earnedVal;
     }
     if (totalMax === 0) {
-        return {
-            score: 88,
-            sections: [
-                { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
-                { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
-                { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
-                { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
-            ]
-        };
+        return { score: 0, sections: [] };
     }
     const score = Math.round((totalEarned / totalMax) * 100);
     return {

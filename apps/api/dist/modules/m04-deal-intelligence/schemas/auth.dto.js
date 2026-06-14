@@ -8,11 +8,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthResponseDto = exports.UserResponseDto = exports.RegisterDto = exports.LoginDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
+const user_role_enum_1 = require("@m04/interfaces/user-role.enum");
 class LoginDto {
     email;
     password;
@@ -87,7 +88,7 @@ __decorate([
     }),
     (0, class_validator_1.IsEnum)(user_role_enum_1.UserRole),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof user_role_enum_1.UserRole !== "undefined" && user_role_enum_1.UserRole) === "function" ? _a : Object)
 ], RegisterDto.prototype, "role", void 0);
 class UserResponseDto {
     id;
@@ -133,7 +134,7 @@ __decorate([
         enum: user_role_enum_1.UserRole,
         example: user_role_enum_1.UserRole.USER,
     }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof user_role_enum_1.UserRole !== "undefined" && user_role_enum_1.UserRole) === "function" ? _b : Object)
 ], UserResponseDto.prototype, "role", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({

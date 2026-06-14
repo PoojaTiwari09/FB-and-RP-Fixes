@@ -20,7 +20,7 @@ const jwt_guard_1 = require("../../../platform-core/guards/jwt.guard");
 const tenant_guard_1 = require("../../../platform-core/guards/tenant.guard");
 const m10_dev_auth_guard_1 = require("../../guards/m10-dev-auth.guard");
 const compliance_schema_1 = require("../schemas/compliance.schema");
-const M10AuthGuard = process.env.M10_STANDALONE_AUTH === 'true' ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
+const M10AuthGuard = process.env.M10_STANDALONE_AUTH === "true" ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
 let ComplianceEvaluateController = ComplianceEvaluateController_1 = class ComplianceEvaluateController {
     evaluateService;
     logger = new common_1.Logger(ComplianceEvaluateController_1.name);
@@ -32,17 +32,17 @@ let ComplianceEvaluateController = ComplianceEvaluateController_1 = class Compli
         if (!parsed.success) {
             return {
                 statusCode: common_1.HttpStatus.BAD_REQUEST,
-                message: 'Invalid evaluation request body',
+                message: "Invalid evaluation request body",
                 errors: parsed.error.flatten(),
             };
         }
         const dto = parsed.data;
         this.logger.log(`POST /evaluate — correlationId=${dto.correlationId} tenant=${req.tenantId} recipient=${dto.recipientEmail} channel=${dto.channel}`);
         const result = await this.evaluateService.evaluate(req.tenantId, dto);
-        if (result.decision === 'block') {
+        if (result.decision === "block") {
             this.logger.warn(`BLOCKED outreach correlationId=${dto.correlationId} reason=${result.reasonCode} tenant=${req.tenantId}`);
             return {
-                decision: 'block',
+                decision: "block",
                 reasonCode: result.reasonCode,
                 explanation: result.explanation,
                 correlationId: result.correlationId,
@@ -50,7 +50,7 @@ let ComplianceEvaluateController = ComplianceEvaluateController_1 = class Compli
             };
         }
         return {
-            decision: 'allow',
+            decision: "allow",
             reasonCode: result.reasonCode,
             correlationId: result.correlationId,
         };
@@ -58,7 +58,7 @@ let ComplianceEvaluateController = ComplianceEvaluateController_1 = class Compli
 };
 exports.ComplianceEvaluateController = ComplianceEvaluateController;
 __decorate([
-    (0, common_1.Post)('evaluate'),
+    (0, common_1.Post)("evaluate"),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -67,7 +67,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ComplianceEvaluateController.prototype, "evaluate", null);
 exports.ComplianceEvaluateController = ComplianceEvaluateController = ComplianceEvaluateController_1 = __decorate([
-    (0, common_1.Controller)('api/v1/m10-data-compliance'),
+    (0, common_1.Controller)("api/v1/m10-data-compliance"),
     (0, common_1.UseGuards)(M10AuthGuard, tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [compliance_evaluate_service_1.ComplianceEvaluateService])
 ], ComplianceEvaluateController);

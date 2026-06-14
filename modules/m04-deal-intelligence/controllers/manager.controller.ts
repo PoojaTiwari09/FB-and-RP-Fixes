@@ -15,14 +15,31 @@ export class ManagerController {
 
   @Get('pipeline')
   async getManagerPipeline(@Req() req: any) {
-    // Mock implementation for Postman tests
-    return { success: true, data: { pipelineValue: 0, deals: [] }, isMock: true };
+    try {
+      const deals = await this.prisma.deal.findMany({
+        where: { tenantid: req.tenantId }
+      });
+      const pipelineValue = deals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+      return { success: true, data: { pipelineValue, deals }, isMock: false };
+    } catch (error: any) {
+      this.logger.error(`Failed to get manager pipeline: ${error.message}`);
+      return { success: false, error: error.message, isMock: false };
+    }
   }
 
   @Get('alerts')
   async getManagerAlerts(@Req() req: any) {
-    // Mock implementation for Postman tests
-    return { success: true, data: [], isMock: true };
+    try {
+      const deals = await this.prisma.deal.findMany({ where: { tenantid: req.tenantId } });
+      const dealIds = deals.map(d => d.id);
+      const warnings = await this.prisma.dealWarning.findMany({
+        where: { dealId: { in: dealIds }, status: 'active' }
+      });
+      return { success: true, data: warnings, isMock: false };
+    } catch (error: any) {
+      this.logger.error(`Failed to get manager alerts: ${error.message}`);
+      return { success: false, error: error.message, isMock: false };
+    }
   }
 
   @Post('deals/:dealId/notes')
@@ -31,8 +48,16 @@ export class ManagerController {
     @Body() body: any,
     @Req() req: any
   ) {
-    // Mock implementation
-    return { success: true, data: { dealId, note: body.text }, isMock: true };
+    try {
+      const updated = await this.prisma.deal.update({
+        where: { id: dealId },
+        data: { nextStep: body.text }
+      });
+      return { success: true, data: { dealId, note: updated.nextStep }, isMock: false };
+    } catch (error: any) {
+      this.logger.error(`Failed to add manager note: ${error.message}`);
+      return { success: false, error: error.message, isMock: false };
+    }
   }
 
   @Post('deals/:dealId/steps/:stepId/approve')
@@ -41,8 +66,16 @@ export class ManagerController {
     @Param('stepId', ParseUUIDPipe) stepId: string,
     @Req() req: any
   ) {
-    // Mock implementation
-    return { success: true, data: { dealId, stepId, status: 'Approved' }, isMock: true };
+    try {
+      const updated = await this.prisma.dealPlaybook.update({
+        where: { id: stepId },
+        data: { status: 'Approved' }
+      });
+      return { success: true, data: { dealId, stepId, status: updated.status }, isMock: false };
+    } catch (error: any) {
+      this.logger.error(`Failed to approve step: ${error.message}`);
+      return { success: false, error: error.message, isMock: false };
+    }
   }
 
   @Patch('deals/:dealId/forecast')
@@ -51,8 +84,16 @@ export class ManagerController {
     @Body() body: any,
     @Req() req: any
   ) {
-    // Mock implementation
-    return { success: true, data: { dealId, forecastCategory: body.forecastCategory }, isMock: true };
+    try {
+      const updated = await this.prisma.deal.update({
+        where: { id: dealId },
+        data: { forecastCategory: body.forecastCategory || body.category }
+      });
+      return { success: true, data: { dealId, forecastCategory: updated.forecastCategory }, isMock: false };
+    } catch (error: any) {
+      this.logger.error(`Failed to update forecast: ${error.message}`);
+      return { success: false, error: error.message, isMock: false };
+    }
   }
 
   private readonly logger = new Logger(ManagerController.name);

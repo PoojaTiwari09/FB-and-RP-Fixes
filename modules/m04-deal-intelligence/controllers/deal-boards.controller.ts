@@ -84,7 +84,7 @@ export class DealBoardsController {
 
   @Get(':boardId')
   async getBoardDetail(
-    @Param('boardId', ParseUUIDPipe) boardId: string,
+    @Param('boardId') boardId: string,
     @Req() req: any,
     @Query('owner') owner?: string,
   ): Promise<ApiResponse<any>> {
@@ -150,7 +150,7 @@ export class DealBoardsController {
 
   @Get(':boardId/deals')
   async getDealsByBoard(
-    @Param('boardId', ParseUUIDPipe) boardId: string,
+    @Param('boardId') boardId: string,
     @Req() req: any,
     @Query('owner') owner?: string,
   ): Promise<ApiResponse<any[]>> {

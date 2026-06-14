@@ -833,7 +833,7 @@ export default function EngageRepView() {
           onClose={() => setCreateTaskOpen(false)}
           onSave={async (taskData) => {
             try {
-              await createTask(taskData);
+              await createTask(taskData as any);
               setCreateTaskOpen(false);
               await loadData();
               setToastMessage('Task created successfully');

@@ -8,11 +8,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GeneratePlaybookSuggestionsDto = exports.PlaybookSummaryDto = exports.PlaybookItemResponseDto = exports.UpdatePlaybookItemDto = exports.CreatePlaybookItemDto = exports.PlaybookItemStatus = exports.PlaybookType = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-const deal_playbook_entity_1 = require("@/entities/deal-playbook.entity");
+const deal_playbook_entity_1 = require("@m04/entities/deal-playbook.entity");
 Object.defineProperty(exports, "PlaybookType", { enumerable: true, get: function () { return deal_playbook_entity_1.PlaybookType; } });
 Object.defineProperty(exports, "PlaybookItemStatus", { enumerable: true, get: function () { return deal_playbook_entity_1.PlaybookItemStatus; } });
 class CreatePlaybookItemDto {
@@ -29,7 +30,7 @@ __decorate([
         example: deal_playbook_entity_1.PlaybookType.MEDDICC,
     }),
     (0, class_validator_1.IsEnum)(deal_playbook_entity_1.PlaybookType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof deal_playbook_entity_1.PlaybookType !== "undefined" && deal_playbook_entity_1.PlaybookType) === "function" ? _a : Object)
 ], CreatePlaybookItemDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
@@ -72,7 +73,7 @@ __decorate([
     }),
     (0, class_validator_1.IsEnum)(deal_playbook_entity_1.PlaybookItemStatus),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof deal_playbook_entity_1.PlaybookItemStatus !== "undefined" && deal_playbook_entity_1.PlaybookItemStatus) === "function" ? _b : Object)
 ], UpdatePlaybookItemDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
@@ -97,6 +98,7 @@ class PlaybookItemResponseDto {
     dealId;
     type;
     criterion;
+    question;
     status;
     notes;
     aiSuggestion;
@@ -127,7 +129,7 @@ __decorate([
         enum: deal_playbook_entity_1.PlaybookType,
         example: deal_playbook_entity_1.PlaybookType.MEDDICC,
     }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_c = typeof deal_playbook_entity_1.PlaybookType !== "undefined" && deal_playbook_entity_1.PlaybookType) === "function" ? _c : Object)
 ], PlaybookItemResponseDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
@@ -137,12 +139,21 @@ __decorate([
     __metadata("design:type", String)
 ], PlaybookItemResponseDto.prototype, "criterion", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Playbook item question',
+        example: 'What are the key metrics?',
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], PlaybookItemResponseDto.prototype, "question", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Playbook status',
         enum: deal_playbook_entity_1.PlaybookItemStatus,
         example: deal_playbook_entity_1.PlaybookItemStatus.IN_PROGRESS,
     }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_d = typeof deal_playbook_entity_1.PlaybookItemStatus !== "undefined" && deal_playbook_entity_1.PlaybookItemStatus) === "function" ? _d : Object)
 ], PlaybookItemResponseDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
@@ -209,7 +220,7 @@ __decorate([
         enum: deal_playbook_entity_1.PlaybookType,
         example: deal_playbook_entity_1.PlaybookType.MEDDICC,
     }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_e = typeof deal_playbook_entity_1.PlaybookType !== "undefined" && deal_playbook_entity_1.PlaybookType) === "function" ? _e : Object)
 ], PlaybookSummaryDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
@@ -264,6 +275,6 @@ __decorate([
         example: deal_playbook_entity_1.PlaybookType.MEDDICC,
     }),
     (0, class_validator_1.IsEnum)(deal_playbook_entity_1.PlaybookType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_f = typeof deal_playbook_entity_1.PlaybookType !== "undefined" && deal_playbook_entity_1.PlaybookType) === "function" ? _f : Object)
 ], GeneratePlaybookSuggestionsDto.prototype, "type", void 0);
 //# sourceMappingURL=playbook.dto.js.map

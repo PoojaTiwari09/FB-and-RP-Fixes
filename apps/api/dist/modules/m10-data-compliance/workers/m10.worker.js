@@ -15,6 +15,6 @@ let M10DataComplianceWorker = class M10DataComplianceWorker extends bullmq_1.Wor
 };
 exports.M10DataComplianceWorker = M10DataComplianceWorker;
 exports.M10DataComplianceWorker = M10DataComplianceWorker = __decorate([
-    (0, bullmq_1.Processor)('m10-queue')
+    (0, bullmq_1.Processor)("m10-queue")
 ], M10DataComplianceWorker);
 //# sourceMappingURL=m10.worker.js.map

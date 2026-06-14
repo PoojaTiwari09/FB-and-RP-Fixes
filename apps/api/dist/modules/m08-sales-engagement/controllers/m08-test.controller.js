@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.M08TestController = void 0;
 const common_1 = require("@nestjs/common");
+const public_decorator_1 = require("../../platform-core/decorators/public.decorator");
 let M08TestController = class M08TestController {
     health() {
         return { success: true, module: 'm08-sales-engagement', status: 'ok' };
@@ -37,6 +38,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], M08TestController.prototype, "smoke", null);
 exports.M08TestController = M08TestController = __decorate([
-    (0, common_1.Controller)('api/v1/sales-engagement/test')
+    (0, common_1.Controller)('api/v1/sales-engagement/test'),
+    (0, public_decorator_1.Public)()
 ], M08TestController);
 //# sourceMappingURL=m08-test.controller.js.map

@@ -339,7 +339,7 @@ let HubSpotService = HubSpotService_1 = class HubSpotService {
             aiSuggestedNextStep: 'Schedule follow-up call',
             lastActivity: props.hs_lastmodifieddate || deal.updatedAt,
             nextStep: props.hs_nextstep || '',
-            activityData: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            activityData: Array(10).fill(0),
         };
     }
     calculateAIScore(props) {

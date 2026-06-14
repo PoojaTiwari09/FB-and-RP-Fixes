@@ -3,21 +3,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TriggerCrmSyncSchema = exports.AiResolutionResponseSchema = exports.AiResolutionRequestSchema = exports.EntityLinkedEventSchema = exports.EntityLinkResultSchema = exports.TranscriptionCompletedEventSchema = exports.NormalizedIntakeSchema = exports.ArtifactsSchema = exports.CrmHintsSchema = exports.ParticipantSchema = exports.EntityTypeSchema = exports.ConfidenceLevelSchema = exports.LinkingStatusSchema = void 0;
 const zod_1 = require("zod");
 exports.LinkingStatusSchema = zod_1.z.enum([
-    'received',
-    'normalized',
-    'mapping_in_progress',
-    'linked',
-    'linked_low_confidence',
-    'unresolved',
-    'replay_pending',
-    'failed',
-    'dead_lettered',
+    "received",
+    "normalized",
+    "mapping_in_progress",
+    "linked",
+    "linked_low_confidence",
+    "unresolved",
+    "replay_pending",
+    "failed",
+    "dead_lettered",
 ]);
-exports.ConfidenceLevelSchema = zod_1.z.enum(['high', 'medium', 'low']);
-exports.EntityTypeSchema = zod_1.z.enum(['account', 'contact', 'deal']);
+exports.ConfidenceLevelSchema = zod_1.z.enum(["high", "medium", "low"]);
+exports.EntityTypeSchema = zod_1.z.enum(["account", "contact", "deal"]);
 exports.ParticipantSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
-    role: zod_1.z.enum(['internal', 'external']).default('external'),
+    role: zod_1.z.enum(["internal", "external"]).default("external"),
     name: zod_1.z.string().optional(),
 });
 exports.CrmHintsSchema = zod_1.z.object({
@@ -34,9 +34,9 @@ exports.ArtifactsSchema = zod_1.z.object({
 exports.NormalizedIntakeSchema = zod_1.z.object({
     eventId: zod_1.z.string().uuid(),
     tenantId: zod_1.z.string().uuid(),
-    sourceType: zod_1.z.enum(['call', 'email', 'meeting', 'crm_task', 'crm_note']),
+    sourceType: zod_1.z.enum(["call", "email", "meeting", "crm_task", "crm_note"]),
     sourcePlatform: zod_1.z
-        .enum(['zoom', 'google_meet', 'teams', 'email', 'salesforce', 'hubspot'])
+        .enum(["zoom", "google_meet", "teams", "email", "salesforce", "hubspot"])
         .optional(),
     sourceRecordId: zod_1.z.string(),
     occurredAt: zod_1.z.string().datetime(),
@@ -46,12 +46,12 @@ exports.NormalizedIntakeSchema = zod_1.z.object({
 });
 exports.TranscriptionCompletedEventSchema = zod_1.z.object({
     eventId: zod_1.z.string().uuid(),
-    version: zod_1.z.string().default('1.0'),
+    version: zod_1.z.string().default("1.0"),
     tenantId: zod_1.z.string().uuid(),
     occurredAt: zod_1.z.string().datetime(),
     correlationId: zod_1.z.string().optional(),
     sourceRecordId: zod_1.z.string(),
-    sourceType: zod_1.z.enum(['call', 'email', 'meeting', 'crm_task', 'crm_note']),
+    sourceType: zod_1.z.enum(["call", "email", "meeting", "crm_task", "crm_note"]),
     sourcePlatform: zod_1.z.string().optional(),
     participants: zod_1.z.array(exports.ParticipantSchema),
     crmHints: exports.CrmHintsSchema.optional(),
@@ -66,7 +66,7 @@ exports.EntityLinkResultSchema = zod_1.z.object({
 });
 exports.EntityLinkedEventSchema = zod_1.z.object({
     eventId: zod_1.z.string().uuid(),
-    version: zod_1.z.string().default('1.0'),
+    version: zod_1.z.string().default("1.0"),
     tenantId: zod_1.z.string().uuid(),
     occurredAt: zod_1.z.string().datetime(),
     correlationId: zod_1.z.string().optional(),
@@ -88,9 +88,21 @@ exports.AiResolutionRequestSchema = zod_1.z.object({
     activityId: zod_1.z.string().uuid(),
     transcriptId: zod_1.z.string().optional(),
     participants: zod_1.z.array(exports.ParticipantSchema),
-    candidateAccounts: zod_1.z.array(zod_1.z.object({ id: zod_1.z.string(), name: zod_1.z.string(), domain: zod_1.z.string().optional() })),
-    candidateDeals: zod_1.z.array(zod_1.z.object({ id: zod_1.z.string(), name: zod_1.z.string(), stage: zod_1.z.string().optional() })),
-    candidateContacts: zod_1.z.array(zod_1.z.object({ id: zod_1.z.string(), email: zod_1.z.string(), name: zod_1.z.string().optional() })),
+    candidateAccounts: zod_1.z.array(zod_1.z.object({
+        id: zod_1.z.string(),
+        name: zod_1.z.string(),
+        domain: zod_1.z.string().optional(),
+    })),
+    candidateDeals: zod_1.z.array(zod_1.z.object({
+        id: zod_1.z.string(),
+        name: zod_1.z.string(),
+        stage: zod_1.z.string().optional(),
+    })),
+    candidateContacts: zod_1.z.array(zod_1.z.object({
+        id: zod_1.z.string(),
+        email: zod_1.z.string(),
+        name: zod_1.z.string().optional(),
+    })),
 });
 exports.AiResolutionResponseSchema = zod_1.z.object({
     accountId: zod_1.z.string().uuid().nullable(),
@@ -100,10 +112,10 @@ exports.AiResolutionResponseSchema = zod_1.z.object({
     signals: zod_1.z.array(zod_1.z.string()),
 });
 exports.TriggerCrmSyncSchema = zod_1.z.object({
-    crmSource: zod_1.z.enum(['salesforce', 'hubspot', 'dynamics365']),
+    crmSource: zod_1.z.enum(["salesforce", "hubspot", "dynamics365"]),
     entityTypes: zod_1.z
-        .array(zod_1.z.enum(['accounts', 'contacts', 'deals']))
-        .default(['accounts', 'contacts', 'deals']),
+        .array(zod_1.z.enum(["accounts", "contacts", "deals"]))
+        .default(["accounts", "contacts", "deals"]),
     fullSync: zod_1.z.boolean().default(false),
 });
 //# sourceMappingURL=revenue-graph.schema.js.map

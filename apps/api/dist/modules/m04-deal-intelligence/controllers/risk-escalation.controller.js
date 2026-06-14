@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RiskEscalationController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_service_1 = require("@/services/deal.service");
-const risk_escalation_dto_1 = require("@/schemas/risk-escalation.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const deal_service_1 = require("@m04/services/deal.service");
+const risk_escalation_dto_1 = require("@m04/schemas/risk-escalation.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let RiskEscalationController = class RiskEscalationController {
     dealService;
     constructor(dealService) {
@@ -68,7 +71,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, risk_escalation_dto_1.EscalateRiskDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof risk_escalation_dto_1.EscalateRiskDto !== "undefined" && risk_escalation_dto_1.EscalateRiskDto) === "function" ? _b : Object, typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], RiskEscalationController.prototype, "escalateRisk", null);
 __decorate([
@@ -94,14 +97,14 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, risk_escalation_dto_1.DeescalateRiskDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_d = typeof risk_escalation_dto_1.DeescalateRiskDto !== "undefined" && risk_escalation_dto_1.DeescalateRiskDto) === "function" ? _d : Object, typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], RiskEscalationController.prototype, "deescalateRisk", null);
 exports.RiskEscalationController = RiskEscalationController = __decorate([
     (0, swagger_1.ApiTags)('Risk Escalation'),
     (0, common_1.Controller)('deals/:dealId/risk'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [deal_service_1.DealService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_service_1.DealService !== "undefined" && deal_service_1.DealService) === "function" ? _a : Object])
 ], RiskEscalationController);
 //# sourceMappingURL=risk-escalation.controller.js.map

@@ -16,7 +16,7 @@ let GdprPortabilityService = GdprPortabilityService_1 = class GdprPortabilitySer
         return {
             success: true,
             data: {
-                contact: { email: contactEmail, name: 'Redacted' },
+                contact: { email: contactEmail, name: "Redacted" },
                 activities: [],
             },
         };

@@ -14,9 +14,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealBoardRepository = void 0;
 const common_1 = require("@nestjs/common");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 const inject_repository_1 = require("../database/inject-repository");
-const m04_entity_repository_1 = require("../database/m04-entity.repository");
+const m04_prisma_repository_1 = require("../database/m04-prisma.repository");
 let DealBoardRepository = class DealBoardRepository {
     boardRepository;
     filterRepository;
@@ -185,10 +185,10 @@ exports.DealBoardRepository = DealBoardRepository = __decorate([
     __param(2, (0, inject_repository_1.InjectRepository)(entities_1.BoardTab)),
     __param(3, (0, inject_repository_1.InjectRepository)(entities_1.BoardColumn)),
     __param(4, (0, inject_repository_1.InjectRepository)(entities_1.BoardPermission)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository])
+    __metadata("design:paramtypes", [m04_prisma_repository_1.M04EntityRepository,
+        m04_prisma_repository_1.M04EntityRepository,
+        m04_prisma_repository_1.M04EntityRepository,
+        m04_prisma_repository_1.M04EntityRepository,
+        m04_prisma_repository_1.M04EntityRepository])
 ], DealBoardRepository);
 //# sourceMappingURL=deal-board.repository.js.map

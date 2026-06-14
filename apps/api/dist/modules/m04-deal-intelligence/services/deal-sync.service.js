@@ -12,15 +12,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var DealSyncService_1;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealSyncService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
 const schedule_1 = require("@nestjs/schedule");
 const hubspot_client_service_1 = require("./hubspot-client.service");
-const entities_1 = require("@/entities");
-const hubspot_types_interface_1 = require("@/interfaces/hubspot-types.interface");
+const entities_1 = require("@m04/entities");
+const hubspot_types_interface_1 = require("@m04/interfaces/hubspot-types.interface");
 let DealSyncService = DealSyncService_1 = class DealSyncService {
     dealRepository;
     syncLogRepository;
@@ -249,8 +250,6 @@ exports.DealSyncService = DealSyncService = DealSyncService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(entities_1.Deal)),
     __param(1, (0, inject_repository_1.InjectRepository)(entities_1.SyncLog)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository,
-        hubspot_client_service_1.HubSpotClientService])
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, typeof (_b = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _b : Object, hubspot_client_service_1.HubSpotClientService])
 ], DealSyncService);
 //# sourceMappingURL=deal-sync.service.js.map

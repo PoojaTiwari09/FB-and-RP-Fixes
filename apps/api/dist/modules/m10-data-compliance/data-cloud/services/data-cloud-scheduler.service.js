@@ -20,8 +20,8 @@ const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 const data_cloud_repository_1 = require("../repositories/data-cloud.repository");
 const data_cloud_events_1 = require("../events/data-cloud.events");
-const SCHEDULED_EXPORT_ENABLED = process.env.M10_DATA_EXPORT_SCHEDULED_EXPORT_ENABLED !== 'false';
-const CRON_EXPRESSION = process.env.M10_DATA_EXPORT_SYNC_CRON ?? '0 2 * * *';
+const SCHEDULED_EXPORT_ENABLED = process.env.M10_DATA_EXPORT_SCHEDULED_EXPORT_ENABLED !== "false";
+const CRON_EXPRESSION = process.env.M10_DATA_EXPORT_SYNC_CRON ?? "0 2 * * *";
 let DataCloudSchedulerService = DataCloudSchedulerService_1 = class DataCloudSchedulerService {
     repo;
     exportQueue;
@@ -32,25 +32,25 @@ let DataCloudSchedulerService = DataCloudSchedulerService_1 = class DataCloudSch
     }
     async triggerDailyExport() {
         if (!SCHEDULED_EXPORT_ENABLED) {
-            this.logger.warn('[DataCloud Scheduler] Skipped — M10_DATA_EXPORT_SCHEDULED_EXPORT_ENABLED=false');
+            this.logger.warn("[DataCloud Scheduler] Skipped — M10_DATA_EXPORT_SCHEDULED_EXPORT_ENABLED=false");
             return;
         }
-        this.logger.log('[DataCloud Scheduler] 02:00 UTC trigger fired — queuing export jobs for all active connections');
+        this.logger.log("[DataCloud Scheduler] 02:00 UTC trigger fired — queuing export jobs for all active connections");
         try {
             const activeConnections = await this.repo.findAllActiveConnections();
             this.logger.log(`[DataCloud Scheduler] Found ${activeConnections.length} active connections to export`);
             for (const connection of activeConnections) {
-                const idempotencyKey = `${connection.tenantId}:${connection.id}:scheduled:${new Date().toISOString().split('T')[0]}`;
-                await this.exportQueue.add('data-cloud-export', {
+                const idempotencyKey = `${connection.tenantId}:${connection.id}:scheduled:${new Date().toISOString().split("T")[0]}`;
+                await this.exportQueue.add("data-cloud-export", {
                     tenantId: connection.tenantId,
                     connectionId: connection.id,
-                    datasetName: 'all',
-                    syncMode: 'incremental',
+                    datasetName: "all",
+                    syncMode: "incremental",
                     idempotencyKey,
                 }, {
                     jobId: idempotencyKey,
                     attempts: 3,
-                    backoff: { type: 'exponential', delay: 5000 },
+                    backoff: { type: "exponential", delay: 5000 },
                 });
                 this.logger.log(`[DataCloud Scheduler] Queued export job: tenant=${connection.tenantId} conn=${connection.id}`);
             }
@@ -63,8 +63,8 @@ let DataCloudSchedulerService = DataCloudSchedulerService_1 = class DataCloudSch
 exports.DataCloudSchedulerService = DataCloudSchedulerService;
 __decorate([
     (0, schedule_1.Cron)(CRON_EXPRESSION, {
-        name: 'm10-data-cloud-daily-export',
-        timeZone: 'UTC',
+        name: "m10-data-cloud-daily-export",
+        timeZone: "UTC",
     }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),

@@ -23,7 +23,11 @@ exports.ComplianceSettingsModule = ComplianceSettingsModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, gdpr_module_1.GdprModule, eprivacy_module_1.EPrivacyModule],
         controllers: [compliance_controller_1.ComplianceController, compliance_evaluate_controller_1.ComplianceEvaluateController],
-        providers: [compliance_service_1.ComplianceService, compliance_evaluate_service_1.ComplianceEvaluateService, compliance_repository_1.ComplianceRepository],
+        providers: [
+            compliance_service_1.ComplianceService,
+            compliance_evaluate_service_1.ComplianceEvaluateService,
+            compliance_repository_1.ComplianceRepository,
+        ],
         exports: [compliance_service_1.ComplianceService, compliance_evaluate_service_1.ComplianceEvaluateService],
     })
 ], ComplianceSettingsModule);

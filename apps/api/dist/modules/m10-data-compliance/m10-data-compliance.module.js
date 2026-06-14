@@ -31,8 +31,17 @@ exports.M10DataComplianceModule = M10DataComplianceModule = __decorate([
             data_cloud_module_1.DataCloudModule,
         ],
         controllers: [m10_controller_1.M10DataComplianceController, m10_test_controller_1.M10TestController],
-        providers: [m10_service_1.M10DataComplianceService, m10_repository_1.M10DataComplianceRepository, m10_worker_1.M10DataComplianceWorker],
-        exports: [revenue_graph_module_1.RevenueGraphModule, configure_compliance_module_1.ComplianceSettingsModule, data_cloud_module_1.DataCloudModule, m10_service_1.M10DataComplianceService],
+        providers: [
+            m10_service_1.M10DataComplianceService,
+            m10_repository_1.M10DataComplianceRepository,
+            m10_worker_1.M10DataComplianceWorker,
+        ],
+        exports: [
+            revenue_graph_module_1.RevenueGraphModule,
+            configure_compliance_module_1.ComplianceSettingsModule,
+            data_cloud_module_1.DataCloudModule,
+            m10_service_1.M10DataComplianceService,
+        ],
     })
 ], M10DataComplianceModule);
 //# sourceMappingURL=m10-data-compliance.module.js.map

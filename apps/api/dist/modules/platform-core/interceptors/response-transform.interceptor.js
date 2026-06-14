@@ -14,23 +14,31 @@ let ResponseTransformInterceptor = class ResponseTransformInterceptor {
         const ctx = context.switchToHttp();
         const req = ctx.getRequest();
         return next.handle().pipe((0, operators_1.map)((data) => {
-            if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
-                return data;
-            }
-            const res = ctx.getResponse();
-            if (res.headersSent) {
-                return data;
-            }
             const requestId = req.headers['x-request-id'] ||
                 req.headers['x-trace-id'] ||
                 req.headers['trace-id'] ||
                 `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+            const timestamp = new Date().toISOString();
+            const res = ctx.getResponse();
+            if (res.headersSent) {
+                return data;
+            }
+            if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+                return {
+                    ...data,
+                    meta: {
+                        ...data.meta,
+                        requestId: data.meta?.requestId || requestId,
+                        timestamp: data.meta?.timestamp || timestamp,
+                    }
+                };
+            }
             return {
                 success: true,
                 data: data ?? null,
                 meta: {
                     requestId,
-                    timestamp: new Date().toISOString(),
+                    timestamp,
                 },
             };
         }));

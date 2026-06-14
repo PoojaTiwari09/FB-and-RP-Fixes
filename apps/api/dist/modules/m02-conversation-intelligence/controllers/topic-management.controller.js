@@ -22,19 +22,19 @@ let TopicManagementController = class TopicManagementController {
         this.topicManagementService = topicManagementService;
     }
     async createTopicModel(req, topics, type) {
-        return this.topicManagementService.createTopicModel(req.tenantId, topics, type);
+        return { data: await this.topicManagementService.createTopicModel(req.tenantId, topics, type) };
     }
     async getTopicModels(req) {
-        return this.topicManagementService.getTopicModels(req.tenantId);
+        return { data: await this.topicManagementService.getTopicModels(req.tenantId) };
     }
     async deleteTopicModel(id) {
         return this.topicManagementService.deleteTopicModel(id);
     }
     async addTopicToModel(req, body) {
-        return this.topicManagementService.addTopicToModel(req.tenantId, body);
+        return { data: await this.topicManagementService.addTopicToModel(req.tenantId, body) };
     }
     async removeTopic(req, topicName) {
-        return this.topicManagementService.removeTopicFromModel(req.tenantId, topicName);
+        return { data: await this.topicManagementService.removeTopicFromModel(req.tenantId, topicName) };
     }
     async seedDefaultTopics(req) {
         const defaultTopics = [
@@ -49,9 +49,9 @@ let TopicManagementController = class TopicManagementController {
         ];
         const existingModels = await this.topicManagementService.getTopicModels(req.tenantId);
         if (existingModels.length > 0) {
-            return { message: 'Topic model already exists for this tenant', models: existingModels };
+            return { data: { message: 'Topic model already exists for this tenant', models: existingModels } };
         }
-        return this.topicManagementService.createTopicModel(req.tenantId, defaultTopics, 'global');
+        return { data: await this.topicManagementService.createTopicModel(req.tenantId, defaultTopics, 'global') };
     }
 };
 exports.TopicManagementController = TopicManagementController;

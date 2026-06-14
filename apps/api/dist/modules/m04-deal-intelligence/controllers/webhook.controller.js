@@ -12,12 +12,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var WebhookController_1;
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebhookController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const webhook_service_1 = require("@/services/webhook.service");
-const webhook_dto_1 = require("@/schemas/webhook.dto");
+const webhook_service_1 = require("@m04/services/webhook.service");
+const webhook_dto_1 = require("@m04/schemas/webhook.dto");
 const config_1 = require("@nestjs/config");
 let WebhookController = WebhookController_1 = class WebhookController {
     webhookService;
@@ -119,7 +120,6 @@ __decorate([
 exports.WebhookController = WebhookController = WebhookController_1 = __decorate([
     (0, swagger_1.ApiTags)('Webhooks'),
     (0, common_1.Controller)('webhooks'),
-    __metadata("design:paramtypes", [webhook_service_1.WebhookService,
-        config_1.ConfigService])
+    __metadata("design:paramtypes", [typeof (_a = typeof webhook_service_1.WebhookService !== "undefined" && webhook_service_1.WebhookService) === "function" ? _a : Object, config_1.ConfigService])
 ], WebhookController);
 //# sourceMappingURL=webhook.controller.js.map

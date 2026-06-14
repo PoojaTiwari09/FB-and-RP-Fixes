@@ -54,6 +54,9 @@ const deal_repository_1 = require("./repositories/deal.repository");
 const session_user_middleware_1 = require("./middleware/session-user.middleware");
 const prisma_module_1 = require("./database/prisma.module");
 const deals_controller_1 = require("./controllers/deals.controller");
+const deal_boards_controller_1 = require("./controllers/deal-boards.controller");
+const manager_controller_1 = require("./controllers/manager.controller");
+const notifications_controller_1 = require("./controllers/notifications.controller");
 const deal_drivers_api_controller_1 = require("./controllers/deal-drivers-api.controller");
 const deal_drivers_manager_controller_1 = require("./controllers/deal-drivers-manager.controller");
 const deal_drivers_deal_controller_1 = require("./controllers/deal-drivers-deal.controller");
@@ -100,9 +103,10 @@ exports.M04DealIntelligenceModule = M04DealIntelligenceModule = __decorate([
             analytics_controller_1.AnalyticsController,
             settings_controller_1.SettingsController,
             m04_test_controller_1.M04TestController,
+            deal_boards_controller_1.DealBoardsController,
             deals_controller_1.DealsController,
-            deals_controller_1.DealBoardsRepController,
-            deals_controller_1.NotificationsApiController,
+            manager_controller_1.ManagerController,
+            notifications_controller_1.NotificationsController,
             deal_drivers_api_controller_1.DealDriversApiController,
             deal_drivers_manager_controller_1.DealDriversManagerController,
             deal_drivers_deal_controller_1.DealDriversDealController,

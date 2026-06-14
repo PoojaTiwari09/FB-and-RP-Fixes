@@ -28,8 +28,8 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
             ...(opts.search
                 ? {
                     OR: [
-                        { name: { contains: opts.search, mode: 'insensitive' } },
-                        { domain: { contains: opts.search, mode: 'insensitive' } },
+                        { name: { contains: opts.search, mode: "insensitive" } },
+                        { domain: { contains: opts.search, mode: "insensitive" } },
                     ],
                 }
                 : {}),
@@ -39,7 +39,7 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
                 where,
                 skip,
                 take: limit,
-                orderBy: { updatedAt: 'desc' },
+                orderBy: { updatedAt: "desc" },
             }),
             this.prisma.m10Account.count({ where }),
         ]);
@@ -57,7 +57,7 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
             where: { tenantid: tenantId },
             select: { id: true, name: true, domain: true, crmAccountId: true },
             take: limit,
-            orderBy: { updatedAt: 'desc' },
+            orderBy: { updatedAt: "desc" },
         });
     }
     async listContactsForMatching(tenantId, limit = 500) {
@@ -67,7 +67,7 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
             where: { tenantid: tenantId },
             select: { id: true, email: true, name: true, accountId: true },
             take: limit,
-            orderBy: { updatedAt: 'desc' },
+            orderBy: { updatedAt: "desc" },
         });
     }
     async upsertAccount(tenantId, data) {
@@ -83,7 +83,9 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
                 });
             }
         }
-        return this.prisma.m10Account.create({ data: { tenantid: tenantId, ...data } });
+        return this.prisma.m10Account.create({
+            data: { tenantid: tenantId, ...data },
+        });
     }
     async findContactByEmail(tenantId, email) {
         return this.prisma.m10Contact.findFirst({
@@ -100,7 +102,11 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
         if (existing) {
             return this.prisma.m10Contact.update({
                 where: { id: existing.id },
-                data: { ...data, email: data.email.toLowerCase(), updatedAt: new Date() },
+                data: {
+                    ...data,
+                    email: data.email.toLowerCase(),
+                    updatedAt: new Date(),
+                },
             });
         }
         return this.prisma.m10Contact.create({
@@ -122,7 +128,7 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
                 where,
                 skip,
                 take: limit,
-                orderBy: { updatedAt: 'desc' },
+                orderBy: { updatedAt: "desc" },
                 include: {
                     account: true,
                     dealContacts: { include: { contact: true } },
@@ -138,14 +144,14 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
             include: {
                 account: true,
                 dealContacts: { include: { contact: true } },
-                activities: { orderBy: { occurredAt: 'desc' }, take: 10 },
+                activities: { orderBy: { occurredAt: "desc" }, take: 10 },
             },
         });
     }
     async findOpenDealsByAccount(tenantId, accountId) {
         return this.prisma.m10Deal.findMany({
             where: { tenantid: tenantId, accountId, isActive: true },
-            orderBy: { updatedAt: 'desc' },
+            orderBy: { updatedAt: "desc" },
             take: 10,
         });
     }
@@ -168,7 +174,7 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
                 tenantid: tenantId,
                 ...data,
                 occurredAt: data.occurredAt,
-                status: data.status ?? 'received',
+                status: data.status ?? "received",
             },
         });
     }
@@ -218,21 +224,29 @@ let RevenueGraphRepository = RevenueGraphRepository_1 = class RevenueGraphReposi
         });
     }
     async createLinkDecisionLog(tenantId, data) {
-        return this.prisma.m10LinkDecisionLog.create({ data: { tenantid: tenantId, ...data } });
+        return this.prisma.m10LinkDecisionLog.create({
+            data: { tenantid: tenantId, ...data },
+        });
     }
     async getActiveMappingRules(tenantId) {
         return this.prisma.m10MappingRuleSet.findFirst({
             where: { tenantid: tenantId, isActive: true },
-            orderBy: { updatedAt: 'desc' },
+            orderBy: { updatedAt: "desc" },
         });
     }
     async getCrmSyncStates(tenantId) {
-        return this.prisma.m10CrmSyncState.findMany({ where: { tenantid: tenantId } });
+        return this.prisma.m10CrmSyncState.findMany({
+            where: { tenantid: tenantId },
+        });
     }
     async upsertCrmSyncState(tenantId, crmSource, entityType, data) {
         return this.prisma.m10CrmSyncState.upsert({
             where: {
-                tenantid_crmSource_entityType: { tenantid: tenantId, crmSource, entityType },
+                tenantid_crmSource_entityType: {
+                    tenantid: tenantId,
+                    crmSource,
+                    entityType,
+                },
             },
             update: { ...data, updatedAt: new Date() },
             create: { tenantid: tenantId, crmSource, entityType, ...data },

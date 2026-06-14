@@ -34,7 +34,9 @@ let GdprRepository = GdprRepository_1 = class GdprRepository {
             where: { id },
             data: {
                 status: dto.status,
-                completionDate: dto.status === 'completed' || dto.status === 'rejected' ? new Date() : null,
+                completionDate: dto.status === "completed" || dto.status === "rejected"
+                    ? new Date()
+                    : null,
             },
         });
     }
@@ -44,7 +46,7 @@ let GdprRepository = GdprRepository_1 = class GdprRepository {
                 tenantid: tenantId,
                 ...(contactEmail ? { contactEmail } : {}),
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
         });
     }
     async getActiveErasureRequest(tenantId, contactEmail) {
@@ -52,8 +54,8 @@ let GdprRepository = GdprRepository_1 = class GdprRepository {
             where: {
                 tenantid: tenantId,
                 contactEmail,
-                requestType: 'erasure',
-                status: { in: ['pending', 'in_progress'] },
+                requestType: "erasure",
+                status: { in: ["pending", "in_progress"] },
             },
         });
     }
@@ -82,7 +84,7 @@ let GdprRepository = GdprRepository_1 = class GdprRepository {
     async getRopas(tenantId) {
         return this.prisma.m10GdprProcessingRecord.findMany({
             where: { tenantid: tenantId },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
         });
     }
     async createDataBreach(tenantId, dto) {
@@ -105,7 +107,7 @@ let GdprRepository = GdprRepository_1 = class GdprRepository {
     async getDataBreaches(tenantId) {
         return this.prisma.m10GdprDataBreachRecord.findMany({
             where: { tenantid: tenantId },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
         });
     }
 };

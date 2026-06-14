@@ -8,11 +8,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActivityTimelineDto = exports.ActivityQueryDto = exports.ActivityResponseDto = exports.UpdateActivityDto = exports.CreateActivityDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-const deal_activity_entity_1 = require("@/entities/deal-activity.entity");
+const deal_activity_entity_1 = require("@m04/entities/deal-activity.entity");
 class CreateActivityDto {
     type;
     subject;
@@ -32,7 +33,7 @@ __decorate([
         example: deal_activity_entity_1.ActivityType.EMAIL,
     }),
     (0, class_validator_1.IsEnum)(deal_activity_entity_1.ActivityType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof deal_activity_entity_1.ActivityType !== "undefined" && deal_activity_entity_1.ActivityType) === "function" ? _a : Object)
 ], CreateActivityDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
@@ -178,6 +179,8 @@ class ActivityResponseDto {
     contactName;
     activityDate;
     durationMinutes;
+    duration;
+    direction;
     crmActivityId;
     crmData;
     createdAt;
@@ -203,7 +206,7 @@ __decorate([
         enum: deal_activity_entity_1.ActivityType,
         example: deal_activity_entity_1.ActivityType.EMAIL,
     }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof deal_activity_entity_1.ActivityType !== "undefined" && deal_activity_entity_1.ActivityType) === "function" ? _b : Object)
 ], ActivityResponseDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
@@ -248,6 +251,20 @@ __decorate([
     __metadata("design:type", Number)
 ], ActivityResponseDto.prototype, "durationMinutes", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Duration in minutes (alias)',
+        example: 30,
+    }),
+    __metadata("design:type", Number)
+], ActivityResponseDto.prototype, "duration", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Direction of activity (inbound or outbound)',
+        example: 'inbound',
+    }),
+    __metadata("design:type", String)
+], ActivityResponseDto.prototype, "direction", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({
         description: 'CRM activity ID',
         example: '12345678',
@@ -283,7 +300,7 @@ __decorate([
     }),
     (0, class_validator_1.IsEnum)(deal_activity_entity_1.ActivityType),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_c = typeof deal_activity_entity_1.ActivityType !== "undefined" && deal_activity_entity_1.ActivityType) === "function" ? _c : Object)
 ], ActivityQueryDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({

@@ -11,16 +11,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SyncController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_sync_service_1 = require("@/services/deal-sync.service");
-const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
-const entities_1 = require("@/entities");
+const deal_sync_service_1 = require("@m04/services/deal-sync.service");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const roles_guard_1 = require("../../platform-core/guards/roles.guard");
+const roles_decorator_1 = require("../../platform-core/decorators/roles.decorator");
+const database_1 = require("@rri/database");
+const entities_1 = require("@m04/entities");
 let SyncController = class SyncController {
     syncService;
     constructor(syncService) {
@@ -46,7 +48,7 @@ let SyncController = class SyncController {
 exports.SyncController = SyncController;
 __decorate([
     (0, common_1.Post)('deals/full'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN),
     (0, swagger_1.ApiOperation)({ summary: 'Trigger full deal sync from HubSpot' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.CREATED,
@@ -58,7 +60,7 @@ __decorate([
 ], SyncController.prototype, "triggerFullSync", null);
 __decorate([
     (0, common_1.Post)('deals/incremental'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Trigger incremental deal sync from HubSpot' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.CREATED,
@@ -70,7 +72,7 @@ __decorate([
 ], SyncController.prototype, "triggerIncrementalSync", null);
 __decorate([
     (0, common_1.Get)('logs'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get sync logs' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -83,7 +85,7 @@ __decorate([
 ], SyncController.prototype, "getSyncLogs", null);
 __decorate([
     (0, common_1.Get)('status'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get last sync status' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -97,7 +99,7 @@ exports.SyncController = SyncController = __decorate([
     (0, swagger_1.ApiTags)('Sync'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('sync'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [deal_sync_service_1.DealSyncService])
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_sync_service_1.DealSyncService !== "undefined" && deal_sync_service_1.DealSyncService) === "function" ? _a : Object])
 ], SyncController);
 //# sourceMappingURL=sync.controller.js.map

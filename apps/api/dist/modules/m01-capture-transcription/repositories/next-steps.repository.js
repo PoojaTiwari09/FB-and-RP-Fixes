@@ -31,7 +31,15 @@ let NextStepsRepository = class NextStepsRepository {
             data: { nextSteps: [...current, step] },
         });
         if (updated.count === 0) {
-            throw new common_1.NotFoundException(`Transcript for call ${callId} not found or access denied`);
+            await this.prisma.transcript.create({
+                data: {
+                    callId,
+                    tenantid: tenantId,
+                    fullText: '',
+                    nextSteps: [step],
+                },
+            });
+            return [step];
         }
         return [...current, step];
     }

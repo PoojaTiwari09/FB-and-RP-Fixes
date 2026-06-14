@@ -102,8 +102,13 @@ let EventPublisherService = EventPublisherService_1 = class EventPublisherServic
                 this.logger.log(`Event validation succeeded for "${eventName}"`);
             }
         }
-        this.logger.debug(`[Event Publisher] Queueing async job "${eventName}" id=${envelope.eventId}`);
-        await this.eventQueue.add(eventName, envelope);
+        try {
+            this.logger.debug(`[Event Publisher] Queueing async job "${eventName}" id=${envelope.eventId}`);
+            await this.eventQueue.add(eventName, envelope);
+        }
+        catch (error) {
+            this.logger.warn(`[Event Publisher] Failed to queue job "${eventName}": ${error.message}`);
+        }
     }
 };
 exports.EventPublisherService = EventPublisherService;

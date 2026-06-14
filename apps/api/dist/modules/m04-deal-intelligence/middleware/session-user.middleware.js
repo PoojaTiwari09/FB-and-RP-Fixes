@@ -8,10 +8,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SessionUserMiddleware = void 0;
 const common_1 = require("@nestjs/common");
-const auth_service_1 = require("@/services/auth.service");
+const auth_service_1 = require("@m04/services/auth.service");
 let SessionUserMiddleware = class SessionUserMiddleware {
     authService;
     constructor(authService) {
@@ -60,6 +61,6 @@ let SessionUserMiddleware = class SessionUserMiddleware {
 exports.SessionUserMiddleware = SessionUserMiddleware;
 exports.SessionUserMiddleware = SessionUserMiddleware = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [typeof (_a = typeof auth_service_1.AuthService !== "undefined" && auth_service_1.AuthService) === "function" ? _a : Object])
 ], SessionUserMiddleware);
 //# sourceMappingURL=session-user.middleware.js.map

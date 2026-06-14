@@ -12,12 +12,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var DealWarningService_1;
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealWarningService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const entities_1 = require("@/entities");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const entities_1 = require("@m04/entities");
 const ai_client_service_1 = require("./ai-client.service");
 const deal_service_1 = require("./deal.service");
 const audit_log_service_1 = require("./audit-log.service");
@@ -174,8 +175,7 @@ exports.DealWarningService = DealWarningService;
 exports.DealWarningService = DealWarningService = DealWarningService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(entities_1.DealWarning)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        ai_client_service_1.AIClientService,
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, ai_client_service_1.AIClientService,
         deal_service_1.DealService,
         audit_log_service_1.AuditLogService])
 ], DealWarningService);

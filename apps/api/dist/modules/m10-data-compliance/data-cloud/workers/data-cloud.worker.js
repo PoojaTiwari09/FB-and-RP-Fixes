@@ -34,7 +34,7 @@ let DataCloudWorker = DataCloudWorker_1 = class DataCloudWorker extends bullmq_1
         }
         const { tenantId, connectionId } = parsed.data;
         if (!tenantId) {
-            throw new Error('UNRECOVERABLE: tenantId required for data export job');
+            throw new Error("UNRECOVERABLE: tenantId required for data export job");
         }
         await this.service.runScheduledExport(tenantId, connectionId, job.data.runId);
         this.logger.log(`Export job [id=${job.id}] completed for tenant=${tenantId}`);
@@ -43,8 +43,8 @@ let DataCloudWorker = DataCloudWorker_1 = class DataCloudWorker extends bullmq_1
         this.logger.debug(`Job [id=${job.id}] completed`);
     }
     onFailed(job, error) {
-        const isUnrecoverable = error.message.startsWith('UNRECOVERABLE:');
-        this.logger.error(`Job [id=${job?.id}] failed (attempt ${job?.attemptsMade ?? '?'}): ${error.message}`);
+        const isUnrecoverable = error.message.startsWith("UNRECOVERABLE:");
+        this.logger.error(`Job [id=${job?.id}] failed (attempt ${job?.attemptsMade ?? "?"}): ${error.message}`);
         if (isUnrecoverable) {
             this.logger.error(`Job [id=${job?.id}] is unrecoverable — will NOT be retried`);
         }
@@ -55,19 +55,19 @@ let DataCloudWorker = DataCloudWorker_1 = class DataCloudWorker extends bullmq_1
 };
 exports.DataCloudWorker = DataCloudWorker;
 __decorate([
-    (0, bullmq_1.OnWorkerEvent)('completed'),
+    (0, bullmq_1.OnWorkerEvent)("completed"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [bullmq_2.Job]),
     __metadata("design:returntype", void 0)
 ], DataCloudWorker.prototype, "onCompleted", null);
 __decorate([
-    (0, bullmq_1.OnWorkerEvent)('failed'),
+    (0, bullmq_1.OnWorkerEvent)("failed"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [bullmq_2.Job, Error]),
     __metadata("design:returntype", void 0)
 ], DataCloudWorker.prototype, "onFailed", null);
 __decorate([
-    (0, bullmq_1.OnWorkerEvent)('stalled'),
+    (0, bullmq_1.OnWorkerEvent)("stalled"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
