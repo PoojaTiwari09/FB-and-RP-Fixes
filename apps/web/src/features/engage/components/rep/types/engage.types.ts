@@ -41,6 +41,10 @@ export interface Task {
   isOverdue: boolean;
   isAtRisk: boolean;
   snoozedUntil?: string | null;
+  entityType?: string;
+  dueDate?: string;
+  localTime?: string;
+  title?: string;
 }
 
 export interface TaskSummary {
@@ -53,6 +57,8 @@ export interface TaskSummary {
   highPriorityCount: number;
   progressPercent: number;
   snoozedCount?: number;
+  completedTodayCount?: number;
+  totalTodayCount?: number;
 }
 
 export interface TaskDetailActivity {

@@ -34,8 +34,17 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
+const dotenv = __importStar(require("dotenv"));
 const tsconfig_paths_1 = require("tsconfig-paths");
 const path = __importStar(require("path"));
+const fs = __importStar(require("fs"));
+dotenv.config({
+    path: [
+        path.resolve(__dirname, '../../../.env'),
+        path.resolve(__dirname, '../../../../.env'),
+        path.resolve(process.cwd(), '.env'),
+    ].find((p) => fs.existsSync(p)),
+});
 const tsConfigPath = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
     ? path.join(__dirname, '../tsconfig.json')
     : path.join(__dirname, '../../../../tsconfig.json');
@@ -46,16 +55,14 @@ const baseUrl = fs.existsSync(path.join(__dirname, '../tsconfig.json'))
     baseUrl: fs.existsSync(path.join(__dirname, '../tsconfig.json')) ? path.join(__dirname, '..') : path.join(__dirname, '../..'),
     paths: require(tsConfigPath).compilerOptions.paths,
 });
-const fs = __importStar(require("fs"));
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const app_module_1 = require("./app.module");
 const zod_exception_filter_1 = require("./zod-exception.filter");
 const response_transform_interceptor_1 = require("./response-transform.interceptor");
 const frontend_api_exception_filter_1 = require("../../../modules/platform-core/filters/frontend-api-exception.filter");
-const jwt_guard_1 = require("../../../modules/platform-core/guards/jwt.guard");
-const tenant_throttler_guard_1 = require("./tenant-throttler.guard");
 const trace_tenant_middleware_1 = require("./trace-tenant.middleware");
+const reject_spoof_headers_middleware_1 = require("../../../modules/platform-core/middleware/reject-spoof-headers.middleware");
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'audio');
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -65,8 +72,8 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         bufferLogs: false,
     });
-    const reflector = app.get(core_1.Reflector);
     app.enableCors({ origin: true, credentials: true });
+    app.use(reject_spoof_headers_middleware_1.rejectSpoofHeadersMiddleware);
     app.use(trace_tenant_middleware_1.TraceAndTenantMiddleware);
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
@@ -76,11 +83,15 @@ async function bootstrap() {
     const { TenantContextInterceptor } = require('../../../modules/platform-core/interceptors/tenant-context.interceptor');
     app.useGlobalInterceptors(new response_transform_interceptor_1.ResponseTransformInterceptor(), new TenantContextInterceptor());
     app.useGlobalFilters(new frontend_api_exception_filter_1.FrontendApiExceptionFilter(), new zod_exception_filter_1.ZodExceptionFilter());
-    const { PermissionsGuard } = require('../../../modules/platform-core/guards/permissions.guard');
-    app.useGlobalGuards(new jwt_guard_1.JwtAuthGuard(reflector), new PermissionsGuard(reflector), new tenant_throttler_guard_1.TenantThrottlerGuard(app.get('ThrottlerStorage'), app.get('ThrottlerConfig'), reflector));
     const port = parseInt(process.env.PORT || '3001', 10);
     await app.listen(port);
     logger.log(`API listening on http://localhost:${port}`);
+    logger.log('Auth routes:');
+    logger.log('  POST   /api/v1/auth/register');
+    logger.log('  POST   /api/v1/auth/login');
+    logger.log('  POST   /api/v1/auth/refresh');
+    logger.log('  POST   /api/v1/auth/logout');
+    logger.log('  GET    /api/v1/auth/me');
     logger.log('Mounted routes:');
     logger.log('  POST   /api/v1/capture-transcription/calls/upload (multer audio)');
     logger.log('  *      /api/v1/capture-transcription/calls/:id/next-steps (CRUD)');

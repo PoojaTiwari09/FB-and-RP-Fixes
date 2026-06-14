@@ -43,7 +43,7 @@ let TopicManagementService = TopicManagementService_1 = class TopicManagementSer
         if (topicPayload.linkedTrackerId && topicPayload.keywords && topicPayload.keywords.length > 0) {
             try {
                 const tracker = await this.prisma.m02Tracker.findUnique({
-                    where: { id: topicPayload.linkedTrackerId, tenantId },
+                    where: { id: topicPayload.linkedTrackerId, tenantid: tenantId },
                 });
                 if (tracker) {
                     const newKeywords = Array.from(new Set([...tracker.keywords, ...topicPayload.keywords]));

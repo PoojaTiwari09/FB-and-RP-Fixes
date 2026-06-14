@@ -61,4 +61,7 @@ export interface PendingApprovalEntry {
   note: string | null;
   submissionId: string;
   activity?: ForecastActivityEntry[];
+  requestType?: 'best_case' | 'commit' | 'both';
+  dealName?: string;
+  dealId?: string;
 }

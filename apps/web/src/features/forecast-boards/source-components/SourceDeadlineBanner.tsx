@@ -2,20 +2,22 @@ import { AlertTriangle } from 'lucide-react';
 
 interface SourceDeadlineBannerProps {
   banner?: { message: string; isDue: boolean } | null;
-  period?: { endDate: string } | null;
+  period?: { endDate: string; submissionDeadline?: string } | null;
 }
 
 export default function SourceDeadlineBanner({ banner, period }: SourceDeadlineBannerProps) {
   let displayMessage = '';
   let showBanner = false;
 
-  if (period && period.endDate) {
-    const end = new Date(period.endDate);
+  const targetDateStr = period?.submissionDeadline || period?.endDate;
+
+  if (targetDateStr) {
+    const end = new Date(targetDateStr);
     const now = new Date();
     const diffTime = end.getTime() - now.getTime();
     const dueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (dueDays >= 0) {
-      displayMessage = `Your forecast is due in ${dueDays} day(s)`;
+      displayMessage = `${dueDays} days left to submit your forecast`;
       showBanner = true;
     }
   } else if (banner && banner.isDue) {

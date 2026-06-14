@@ -38,7 +38,7 @@ export default function TrackersRepView() {
 
           {error && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}. Ensure the API is running on port 3002 and you are logged in.
+              {error}. Ensure the API is running on port 3001 and you are logged in.
             </div>
           )}
 

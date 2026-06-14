@@ -6,10 +6,10 @@ $h = @{
 
 $base = "http://localhost:3001"
 $checks = @(
-  @{ Name = "M01 calls"; Url = "$base/api/calls?page=1&size=1" }
-  @{ Name = "M02 search"; Url = "$base/api/search/calls?tab=calls&page=1&size=1" }
+  @{ Name = "M01 calls"; Url = "$base/api/v1/capture-transcription/calls?page=1&size=1" }
+  @{ Name = "M02 search"; Url = "$base/api/v1/conversation-intelligence/search/calls?tab=calls&page=1&size=1" }
   @{ Name = "M09 trainings"; Url = "$base/api/trainings" }
-  @{ Name = "M08 engage tasks"; Url = "$base/api/engage/tasks" }
+  @{ Name = "M08 engage tasks"; Url = "$base/api/v1/sales-engagement/tasks" }
 )
 
 Write-Host ""

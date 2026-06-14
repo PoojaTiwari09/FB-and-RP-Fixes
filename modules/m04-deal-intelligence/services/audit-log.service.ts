@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { AuditLog, AuditAction, AuditEntityType } from '@/entities';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { AuditLog, AuditAction, AuditEntityType } from '@m04/entities';
 
 export interface CreateAuditLogDto {
   entityType: AuditEntityType;

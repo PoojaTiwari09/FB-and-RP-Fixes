@@ -25,7 +25,7 @@ let TranscriptRepository = class TranscriptRepository {
         const { redactedText: redactedFullText } = this.pii.redact(data.fullText);
         const redactedUtterances = this.pii.redactUtterances(data.utterances);
         const utteranceRows = redactedUtterances.map((u) => ({
-            tenantId: data.tenantId,
+            tenantid: data.tenantId,
             speaker: u.speaker,
             text: u.text,
             originalText: u.originalText,
@@ -54,7 +54,7 @@ let TranscriptRepository = class TranscriptRepository {
             }
             return tx.transcript.create({
                 data: {
-                    tenantId: data.tenantId,
+                    tenantid: data.tenantId,
                     callId: data.callId,
                     fullText: redactedFullText,
                     assemblyAiJobId: data.assemblyAiJobId,
@@ -66,19 +66,19 @@ let TranscriptRepository = class TranscriptRepository {
     }
     async patchAiFields(callId, tenantId, fields) {
         return this.prisma.transcript.updateMany({
-            where: { callId, tenantId: tenantId },
+            where: { callId, tenantid: tenantId },
             data: fields,
         });
     }
     async findByCallId(callId, tenantId) {
         return this.prisma.transcript.findFirst({
-            where: { callId, tenantId: tenantId },
+            where: { callId, tenantid: tenantId },
             include: { utterances: { orderBy: { sequenceIndex: 'asc' } } },
         });
     }
     async updateUtterance(utteranceId, tenantId, text) {
         const utterance = await this.prisma.utterance.findFirst({
-            where: { id: utteranceId, transcript: { tenantId: tenantId } },
+            where: { id: utteranceId, transcript: { tenantid: tenantId } },
         });
         if (!utterance)
             throw new Error(`Utterance ${utteranceId} not found`);

@@ -7,9 +7,26 @@ $BackendRoot = $Root
 $UnifiedUi = Join-Path $Root "apps\web"
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
+# Ensure global npm prefix (where pnpm is installed) is in PATH if pnpm is not recognized
+if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+  $npmPrefix = (npm config get prefix 2>$null)
+  if ($npmPrefix) {
+    $npmPrefix = $npmPrefix.Trim()
+    if (Test-Path $npmPrefix) {
+      $env:PATH = "$npmPrefix;$env:PATH"
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "=== FIRST-TIME SETUP ===" -ForegroundColor Cyan
 Write-Host ""
+
+# Auto-create root .env from .env.example if missing (fresh clone)
+if (-not (Test-Path (Join-Path $Root ".env")) -and (Test-Path (Join-Path $Root ".env.example"))) {
+  Copy-Item (Join-Path $Root ".env.example") (Join-Path $Root ".env")
+  Write-Host "      Created .env from .env.example (edit API keys later)." -ForegroundColor Green
+}
 
 Write-Host "[1/5] Docker Postgres + Redis..." -ForegroundColor Yellow
 if ((docker ps -a --filter "name=revenue_intel_db" --format "{{.Names}}" 2>$null) -eq "revenue_intel_db") {

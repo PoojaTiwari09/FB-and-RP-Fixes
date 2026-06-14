@@ -14,7 +14,7 @@ import {
   AINextStepsResponse,
   AICoachingPromptsRequest,
   AICoachingPromptsResponse,
-} from '@/interfaces/ai-service-types.interface';
+} from '@m04/interfaces/ai-service-types.interface';
 
 @Injectable()
 export class AIClientService {

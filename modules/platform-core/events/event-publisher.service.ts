@@ -69,7 +69,11 @@ export class EventPublisherService {
       }
     }
 
-    this.logger.debug(`[Event Publisher] Queueing async job "${eventName}" id=${envelope.eventId}`);
-    await this.eventQueue.add(eventName, envelope);
+    try {
+      this.logger.debug(`[Event Publisher] Queueing async job "${eventName}" id=${envelope.eventId}`);
+      await this.eventQueue.add(eventName, envelope);
+    } catch (error: any) {
+      this.logger.warn(`[Event Publisher] Failed to queue job "${eventName}": ${error.message}`);
+    }
   }
 }

@@ -28,7 +28,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       if (tenantIdHeader) {
         const userId =
           request.headers?.['x-user-id'] || '00000000-0000-0000-0000-000000000002';
-        const role = request.headers?.['x-user-role'] || 'MANAGER';
+        const rawRole = request.headers?.['x-user-role'] || 'MANAGER';
+        let role = rawRole;
+        const normalizedRole = rawRole.toLowerCase().replace(/_/g, '').replace(/\s/g, '');
+        if (normalizedRole === 'salesmanager' || normalizedRole === 'manager') {
+          role = 'MANAGER';
+        } else if (normalizedRole === 'salesrep' || normalizedRole === 'rep' || normalizedRole === 'representative') {
+          role = 'SALES_REP';
+        } else if (normalizedRole === 'admin') {
+          role = 'ADMIN';
+        }
         const email = request.headers?.['x-user-email'] || 'dev@company.com';
         const name = request.headers?.['x-user-name'] || 'Dev User';
 

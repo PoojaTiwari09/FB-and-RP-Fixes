@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { Deal } from '@/entities/deal.entity';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { Deal } from '@m04/entities/deal.entity';
 import { HubSpotClientService } from './hubspot-client.service';
 import { DealSyncService } from './deal-sync.service';
-import { HubSpotWebhookDto, WebhookBatchDto } from '@/schemas/webhook.dto';
+import { HubSpotWebhookDto, WebhookBatchDto } from '@m04/schemas/webhook.dto';
 
 @Injectable()
 export class WebhookService {

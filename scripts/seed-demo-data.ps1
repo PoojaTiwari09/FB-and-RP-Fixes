@@ -5,6 +5,17 @@ $Root = $PSScriptRoot | Split-Path -Parent
 $BackendRoot = $Root
 $dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
 
+# Ensure global npm prefix (where pnpm is installed) is in PATH if pnpm is not recognized
+if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+  $npmPrefix = (npm config get prefix 2>$null)
+  if ($npmPrefix) {
+    $npmPrefix = $npmPrefix.Trim()
+    if (Test-Path $npmPrefix) {
+      $env:PATH = "$npmPrefix;$env:PATH"
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "=== Seeding demo data ===" -ForegroundColor Cyan
 Write-Host ""
@@ -30,7 +41,11 @@ if (Test-Path $fixTenant) {
   Get-Content $fixTenant | docker exec -i revenue_intel_db psql -U revenue_user -d revenue_intelligence 2>$null | Out-Null
 }
 
-Write-Host "[3/5] M01 call records + transcripts..." -ForegroundColor Yellow
+Write-Host "[3/6] Base Users & Tenant (seed:all)..." -ForegroundColor Yellow
+pnpm run seed:all
+$codeAll = $LASTEXITCODE
+
+Write-Host "[4/6] M01 call records + transcripts..." -ForegroundColor Yellow
 pnpm run seed:m01
 $code = $LASTEXITCODE
 
@@ -62,6 +77,12 @@ Write-Host "[8/8] M04 Deal Drivers..." -ForegroundColor Yellow
 pnpm run seed:m04
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Seed warning: pnpm run seed:m04 exited $LASTEXITCODE" -ForegroundColor Yellow
+}
+
+Write-Host "[9/9] M07 Revenue Dashboards demo deals (Q1 + Q2 2026)..." -ForegroundColor Yellow
+pnpm run seed:m07
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Seed warning: pnpm run seed:m07 exited $LASTEXITCODE" -ForegroundColor Yellow
 }
 Pop-Location
 

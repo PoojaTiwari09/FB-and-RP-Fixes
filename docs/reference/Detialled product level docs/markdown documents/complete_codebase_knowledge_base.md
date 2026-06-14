@@ -1,7 +1,7 @@
 # R-Revenue Intelligence — Complete Codebase Knowledge Base
-**Version:** v3.2  
+**Version:** v3.3  
 **Status:** Approved  
-**Last Updated:** 2026-06-10  
+**Last Updated:** 2026-06-11  
 **Owner:** Technical Architecture Team & Relanto Engineering
 
 ---
@@ -175,6 +175,9 @@ These rules are non-negotiable. Breaking any golden rule will result in an immed
 10. **Zero Bypasses for Merge to Main:** All 7 automated CI validation gates must be completely green, and manual Tech Lead sign-off is mandatory.
 
 ### 4.2 Authentication & Role-Based Access Control (RBAC)
+*   **Global JWT Authentication Guard:** The platform registers `JwtAuthGuard` globally in `apps/unified-api/src/main.ts`. All endpoints are blocked by default and require a valid Bearer token.
+*   **Bypassing the Global Guard (`@Public()`):** Endpoints that are accessible by unauthenticated users (e.g. login, register, and health check controllers) must be explicitly decorated with `@Public()` (imported from `platform-core` or local module interfaces matching the metadata key `'isPublic'`).
+*   **Session-less / Stateless Controller Fallbacks:** For controllers that rely on session decorators (e.g. `@Session()` in M04 Deal Intelligence), the code must implement clean fallbacks (e.g. `session || { id: 'mock-session-id' }`) to prevent runtime `TypeError` crashes when the unified API runs without `express-session` middleware.
 *   **Global Permissions Guard:** A global `PermissionsGuard` intercepts requests to validate that the authenticated user possesses the correct permissions to access specific route handlers.
 *   **Decorator Usage:** Developers must use the `@RequirePermissions('permission:name')` decorator on controllers or route handlers to enforce RBAC. The guard cross-references these requirements against the `user.permissions` array provided by the validated JWT payload to ensure compliance.
 
@@ -524,6 +527,10 @@ When building Prisma types across our physical monorepo workspaces on Windows, r
 For freshers, interns, and onboarding teams, a step-by-step feature development blueprint is maintained at [beginner_developer_journey_guide.md](file:///C:/Users/Relanto/.gemini/antigravity/brain/c4cfdae5-d238-463f-beb1-926342b7d116/artifacts/beginner_developer_journey_guide.md). This guide details:
 1. **Spec-Driven Development (SDD)**: Creating Specs under `.specify/specs/`, plan generation via AI under `.specify/plans/`, and sequential tasks execution.
 2. **Modular Git Branching**: Cutting temporary `feature/mX-*` branches from dedicated staging integrations `module/mX-*`, ensuring zero commit pollution on `develop` or `main`.
+
+### 8.5 API Bootstrapping & Seeding Operations
+*   **Early Environment Initialization:** To prevent database connection errors during NestJS startup (before the global `ConfigModule` completes initialization), API entrypoints (such as `apps/unified-api/src/main.ts`) must configure `dotenv` at the very top of the file using `dotenv.config({ path: path.resolve(__dirname, '../../../.env') })` before loading any Nest or Prisma components.
+*   **Database Seeding & UUID Constraints:** The primary data seed is executed using `packages/database/prisma/seed-all.ts` (with `DATABASE_URL` specified in the environment). Since the database uses strict PostgreSQL schema constraints, any seeded mock entities (e.g. `trainerscenarios`) that map to `@db.Uuid` columns must be defined with valid UUID string formats (e.g. `'00000000-0000-0000-0000-000000000101'`) rather than generic string values (such as `'seed-scenario-1'`), to prevent database push/insert failures.
 
 ---
 

@@ -7,7 +7,6 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [vector]
   schemas    = ["dashboards", "public", "ingestion", "revenuegraph"]
 }
 
@@ -901,6 +900,8 @@ model ForecastAuditLog {
   actorName            String?
   actorRole            String
   metadata             Json?
+  status               String?
+  notes                String?
   createdAt            DateTime @default(now())
 
   @@map("forecast_audit_log")
@@ -1029,6 +1030,7 @@ model CrmDeal {
   createdBy               String    @default("system")
   manualForecast          Float?
   manualForecastUpdatedAt DateTime?
+  aiPredictionScore       Float?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -1600,14 +1602,15 @@ model M10CrmSyncState {
 }
 
 model M10DataCloudConnection {
-  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantid    String                  @db.Uuid
-  destination String
-  config      Json                    @default("{}")
-  isActive    Boolean                 @default(true)
-  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime                @updatedAt @db.Timestamptz(6)
-  exportRuns  M10DataCloudExportRun[]
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String                  @db.Uuid
+  destination     String
+  destinationName String                  @default("default")
+  config          Json                    @default("{}")
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime                @updatedAt @db.Timestamptz(6)
+  exportRuns      M10DataCloudExportRun[]
 
   @@index([tenantid])
   @@map("m10_data_cloud_connections")
@@ -1982,8 +1985,7 @@ model DealMeddpicc {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([tenantid])
-  @@index([dealExternalId])
+  @@index([tenantid, dealExternalId])
   @@map("deal_meddpicc")
   @@schema("revenuegraph")
 }
@@ -2006,7 +2008,7 @@ model M04DealDriver {
 
   @@index([dealId])
   @@index([boardId])
-  @@index([tenantid])
+  @@index([tenantid, dealId])
   @@map("m04_deal_drivers")
   @@schema("revenuegraph")
 }
@@ -2018,7 +2020,7 @@ model DealComment {
   comment   String
   createdAt DateTime @default(now())
 
-  @@index([dealId])
+  @@index([tenantid, dealId])
   @@map("m04_deal_comments")
   @@schema("revenuegraph")
 }
@@ -2035,7 +2037,7 @@ model DealTask {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@index([dealId])
+  @@index([tenantid, dealId])
   @@map("m04_deal_tasks")
   @@schema("revenuegraph")
 }
@@ -2051,7 +2053,7 @@ model DealWarning {
   status          String   @default("active")
   createdAt       DateTime @default(now())
 
-  @@index([dealId])
+  @@index([tenantid, dealId])
   @@map("m04_deal_warnings")
   @@schema("revenuegraph")
 }
@@ -2067,7 +2069,7 @@ model DealPlaybook {
   aiSuggestedNote String?
   createdAt       DateTime @default(now())
 
-  @@index([dealId])
+  @@index([tenantid, dealId])
   @@map("m04_deal_playbooks")
   @@schema("revenuegraph")
 }
@@ -2084,7 +2086,7 @@ model DealActivityEvent {
   notes        String?
   createdAt    DateTime @default(now())
 
-  @@index([dealId])
+  @@index([tenantid, dealId])
   @@map("m04_deal_activity_events")
   @@schema("revenuegraph")
 }
@@ -2098,7 +2100,182 @@ model DealNotification {
   timestamp DateTime @default(now())
   read      Boolean  @default(false)
 
+  @@index([tenantid, id])
   @@map("m04_deal_notifications")
+  @@schema("revenuegraph")
+}
+
+model M04DealBoard {
+  id                        String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid                  String               @db.Uuid
+  name                      String
+  description               String?
+  audience                  String[]
+  status                    String               @default("DRAFT")
+  ownerId                   String               @map("owner_id")
+  isLocked                  Boolean              @default(false) @map("is_locked")
+  allowRepColumnReorder     Boolean              @default(false) @map("allow_rep_column_reorder")
+  preventManualDealOverride Boolean              @default(true) @map("prevent_manual_deal_override")
+  metadata                  Json?                @map("metadata")
+  createdAt                 DateTime             @default(now()) @map("created_at")
+  updatedAt                 DateTime             @updatedAt @map("updated_at")
+  filters                   M04BoardFilter[]
+  tabs                      M04BoardTab[]
+  columns                   M04BoardColumn[]
+  permissions               M04BoardPermission[]
+
+  @@unique([tenantid, name])
+  @@index([tenantid, id])
+  @@map("m04_deal_boards")
+  @@schema("revenuegraph")
+}
+
+model M04BoardFilter {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid  String       @db.Uuid
+  boardId   String       @map("board_id") @db.Uuid
+  field     String
+  operator  String
+  value     String
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  board     M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([tenantid, boardId])
+  @@map("m04_board_filters")
+  @@schema("revenuegraph")
+}
+
+model M04BoardTab {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid  String       @db.Uuid
+  boardId   String       @map("board_id") @db.Uuid
+  name      String
+  order     Int
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  board     M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([tenantid, boardId])
+  @@map("m04_board_tabs")
+  @@schema("revenuegraph")
+}
+
+model M04BoardColumn {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid   String       @db.Uuid
+  boardId    String       @map("board_id") @db.Uuid
+  field      String
+  label      String
+  width      Int
+  order      Int
+  isVisible  Boolean      @default(true) @map("is_visible")
+  isSortable Boolean      @default(true) @map("is_sortable")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  board      M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([tenantid, boardId])
+  @@map("m04_board_columns")
+  @@schema("revenuegraph")
+}
+
+model M04BoardPermission {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid  String       @db.Uuid
+  boardId   String       @map("board_id") @db.Uuid
+  userId    String       @map("user_id")
+  role      String
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  board     M04DealBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([userId])
+  @@index([tenantid, boardId])
+  @@index([tenantid, userId])
+  @@map("m04_board_permissions")
+  @@schema("revenuegraph")
+}
+
+model M04UserPreference {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid  String   @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  key       String
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantid, userId, key])
+  @@index([tenantid, userId])
+  @@map("m04_user_preferences")
+  @@schema("revenuegraph")
+}
+
+model M04SyncLog {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid         String    @db.Uuid
+  source           String
+  status           String
+  recordsProcessed Int       @map("records_processed")
+  recordsFailed    Int       @map("records_failed")
+  error            String?
+  startedAt        DateTime  @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantid, source])
+  @@index([tenantid, status])
+  @@index([tenantid, startedAt])
+  @@map("m04_sync_logs")
+  @@schema("revenuegraph")
+}
+
+model M04DealSummary {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid    String   @db.Uuid
+  dealId      String   @map("deal_id") @db.Uuid
+  summary     String
+  generatedAt DateTime @map("generated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantid, dealId])
+  @@index([tenantid, dealId])
+  @@map("m04_deal_summaries")
+  @@schema("revenuegraph")
+}
+
+model M04AnalyticsSnapshot {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid     String   @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  snapshotDate DateTime @map("snapshot_date") @db.Date
+  data         Json
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([tenantid, userId])
+  @@index([tenantid, snapshotDate])
+  @@map("m04_analytics_snapshots")
+  @@schema("revenuegraph")
+}
+
+model M04Session {
+  id        String   @id
+  tenantid  String   @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantid, userId])
+  @@index([tenantid, expiresAt])
+  @@map("m04_sessions")
   @@schema("revenuegraph")
 }
 

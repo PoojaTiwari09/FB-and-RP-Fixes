@@ -2,6 +2,7 @@
 import { ManagerDashboardPage, ReassignResponse } from '@training/types/trainingManager.types';
 import { ENV } from '@shared/config/env';
 import { CreateTrainingRequest, CreateTrainingResponse } from '@training/types/trainingCreate.types';
+import { getServerBackendHeaders } from '@shared/lib/backend-api.server';
 
 /**
  * Adapts raw API response to our typed ManagerDashboardPage shape.
@@ -38,12 +39,14 @@ function adaptManagerDashboard(raw: Record<string, unknown>): ManagerDashboardPa
  * GET /api/manager/trainings
  * Fetch all completed and active trainings across reps for manager review.
  */
-export async function fetchManagerDashboard(): Promise<ManagerDashboardPage> {
+export async function fetchManagerDashboard(headers?: Record<string, string>): Promise<ManagerDashboardPage> {
   const res = await fetch(`${ENV.M09_API_BASE_URL}/api/manager/trainings`, {
-    next: { revalidate: 60 },
+    headers,
+    cache: 'no-store',
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const raw = await res.json();
+  const responseData = await res.json();
+  const raw = responseData.data && responseData.success ? responseData.data : responseData;
   return adaptManagerDashboard(raw as Record<string, unknown>);
 }
 
@@ -52,13 +55,15 @@ export async function fetchManagerDashboard(): Promise<ManagerDashboardPage> {
  * Create a new training and assign it to a rep.
  */
 export async function createTraining(data: CreateTrainingRequest): Promise<CreateTrainingResponse> {
+  const headers = await getServerBackendHeaders();
   const res = await fetch(`${ENV.M09_API_BASE_URL}/api/manager/trainings/create`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const raw = (await res.json()) as Record<string, unknown>;
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const raw = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
   return {
     success: Boolean(raw['success'] ?? true),
     trainingId: String(raw['trainingId'] ?? raw['training_id'] ?? ''),
@@ -73,16 +78,18 @@ export async function reassignTraining(
   trainingId: string,
   repId: string,
 ): Promise<ReassignResponse> {
+  const headers = await getServerBackendHeaders();
   const res = await fetch(
     `${ENV.M09_API_BASE_URL}/api/manager/trainings/${trainingId}/reassign`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({ repId }),
     },
   );
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const raw = (await res.json()) as Record<string, unknown>;
+  const responseData = (await res.json()) as Record<string, unknown>;
+  const raw = (responseData.data && responseData.success ? responseData.data : responseData) as Record<string, unknown>;
   return {
     success: Boolean(raw['success'] ?? true),
     newTrainingId: String(raw['newTrainingId'] ?? raw['new_training_id'] ?? ''),

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { M10DataComplianceRepository } from '../repositories/m10.repository';
-import { EventPublisherService } from '../../platform-core/events/event-publisher.service';
+import { Injectable } from "@nestjs/common";
+import { M10DataComplianceRepository } from "../repositories/m10.repository";
+import { EventPublisherService } from "../../platform-core/events/event-publisher.service";
 
 @Injectable()
 export class M10DataComplianceService {
@@ -15,7 +15,10 @@ export class M10DataComplianceService {
 
   async create(dto: any, tenantId: string) {
     const record = await this.repo.create({ ...dto, tenantId });
-    await this.events.publish('compliance.policy.updated', { tenantId, recordId: record.id });
+    await this.events.publish("compliance.policy.updated", {
+      tenantId,
+      recordId: record.id,
+    });
     return record;
   }
 }

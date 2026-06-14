@@ -16,29 +16,30 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { DealService } from '@/services/deal.service';
-import { AuthGuard } from '@/guards/auth.guard';
-import { RolesGuard } from '@/guards/roles.guard';
-import { Roles } from '@/decorators/roles.decorator';
-import { UserRole } from '@/interfaces/user-role.enum';
-import { AuthenticatedRequest } from '@/interfaces/authenticated-request.interface';
+import { DealService } from '@m04/services/deal.service';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { RolesGuard } from '../../platform-core/guards/roles.guard';
+import { Roles } from '../../platform-core/decorators/roles.decorator';
+import { UserRole } from '@rri/database';
+import { AuthenticatedRequest } from '@m04/interfaces/authenticated-request.interface';
 import {
   QueryDealDto,
   UpdateDealDto,
   DealResponseDto,
   DealListResponseDto,
   DealStatsResponseDto,
-} from '@/schemas/deal.dto';
+} from '@m04/schemas/deal.dto';
 
 @ApiTags('Deals')
 @ApiBearerAuth()
 @Controller('deals')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 export class DealController {
   constructor(private readonly dealService: DealService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get all deals with filters' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -100,7 +101,7 @@ export class DealController {
   }
 
   @Get('closing-soon')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get deals closing soon (next 30 days)' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -113,7 +114,7 @@ export class DealController {
   }
 
   @Get('my-deals')
-  @Roles(UserRole.USER)
+  @Roles(UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get deals for current user' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -126,7 +127,7 @@ export class DealController {
   }
 
   @Get('notifications/recent')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get recent deal updates' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -137,7 +138,7 @@ export class DealController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Get deal by ID' })
   @ApiParam({ name: 'id', description: 'Deal ID' })
   @ApiResponse({
@@ -158,7 +159,7 @@ export class DealController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALES_REP)
   @ApiOperation({ summary: 'Update deal' })
   @ApiParam({ name: 'id', description: 'Deal ID' })
   @ApiResponse({

@@ -20,7 +20,7 @@ function scenarioFromUnified(row) {
 }
 function scenarioToUnified(orgId, managerId, data) {
     return {
-        tenantId: orgId,
+        tenantid: orgId,
         name: data.persona_name,
         personadescription: data.persona_type || '',
         context: data.context_text,
@@ -46,7 +46,7 @@ function sessionFromUnified(row, scenario) {
 function sessionToUnified(orgId, data) {
     return {
         scenarioid: data.scenario_id,
-        tenantId: orgId,
+        tenantid: orgId,
         userid: data.rep_id,
         conversation: data.messages_json,
         status: data.is_practice ? 'practice' : 'started',

@@ -7,10 +7,10 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
-import { Deal, DealStage, ForecastCategory, AuditAction, AuditEntityType } from '@/entities';
-import { DealRepository, DealFilters } from '@/repositories/deal.repository';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
+import { Deal, DealStage, ForecastCategory, AuditAction, AuditEntityType } from '@m04/entities';
+import { DealRepository, DealFilters } from '@m04/repositories/deal.repository';
 import { AuditLogService } from './audit-log.service';
 import { HubSpotClientService } from './hubspot-client.service';
 

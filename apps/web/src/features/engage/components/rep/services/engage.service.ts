@@ -11,9 +11,10 @@ import type {
   LinkedInDraft,
   FilterOptions,
   EmailTemplate,
+  AssignableUser,
 } from '../types/engage.types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3002';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 const ENGAGE_BASE = `${BACKEND_URL}/api/v1/sales-engagement`;
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
@@ -134,34 +135,16 @@ export async function rephraseEmail(
     tone?: string;
   },
 ): Promise<{ rephrasedBody: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/v1/sales-engagement/tasks/${taskId}/ai-rephrase`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ taskId, ...emailData }),
-  });
+  const payload = await apiRequest<{ rephrasedBody?: string; data?: { rephrasedBody?: string } }>(
+    `/tasks/${taskId}/ai-rephrase`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, ...emailData }),
+    },
+  );
 
-  const text = await res.text();
-  if (!res.ok) {
-    let message = `Rephrase failed (${res.status})`;
-    try {
-      const err = JSON.parse(text) as { error?: string };
-      if (err.error) message = err.error;
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-
-  if (!text.trim()) {
-    throw new Error('Rephrase returned an empty response');
-  }
-
-  const payload = JSON.parse(text) as {
-    rephrasedBody?: string;
-    data?: { rephrasedBody?: string };
-  };
-
-  const rephrasedBody = payload.rephrasedBody || payload.data?.rephrasedBody;
+  const rephrasedBody = payload?.rephrasedBody || payload?.data?.rephrasedBody;
   if (!rephrasedBody) {
     throw new Error('Rephrase response missing body text');
   }
@@ -201,4 +184,8 @@ export async function updateTask(taskId: string, fields: Partial<Task>): Promise
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(fields),
   });
+}
+
+export async function getAssignableUsers(): Promise<AssignableUser[]> {
+  return apiRequest<AssignableUser[]>('/users/assignable');
 }

@@ -42,8 +42,7 @@ let M02FrontendTrackersService = class M02FrontendTrackersService {
         const search = (query.search ?? '').trim().toLowerCase();
         const since = dateRangeStart(query.dateRange ?? 'last-30-days');
         const trackers = await this.db.m02Tracker.findMany({
-            where: {
-                tenantId,
+            where: { tenantid: tenantId,
                 isActive: true,
                 ...(search
                     ? {
@@ -59,7 +58,7 @@ let M02FrontendTrackersService = class M02FrontendTrackersService {
             },
         });
         const totalCalls = await this.db.callRecord.count({
-            where: { tenantId, transcriptStatus: 'completed' },
+            where: { tenantid: tenantId, transcriptStatus: 'completed' },
         });
         const denominator = Math.max(totalCalls, 1);
         const rows = trackers.map((t) => {
@@ -77,7 +76,7 @@ let M02FrontendTrackersService = class M02FrontendTrackersService {
     }
     async getTrackerDetail(tenantId, trackerSlug) {
         const tracker = await this.db.m02Tracker.findFirst({
-            where: { tenantId, slug: trackerSlug },
+            where: { tenantid: tenantId, slug: trackerSlug },
             include: { detections: true },
         });
         if (!tracker)
@@ -85,7 +84,7 @@ let M02FrontendTrackersService = class M02FrontendTrackersService {
         const detections = tracker.detections ?? [];
         const entityIds = new Set(detections.map((d) => d.entityId));
         const totalCalls = await this.db.callRecord.count({
-            where: { tenantId, transcriptStatus: 'completed' },
+            where: { tenantid: tenantId, transcriptStatus: 'completed' },
         });
         const denominator = Math.max(totalCalls, 1);
         const percentage = Math.min(100, Math.round((entityIds.size / denominator) * 100) ||

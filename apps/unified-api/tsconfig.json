@@ -18,7 +18,7 @@
       "node"
     ],
     "paths": {
-      "@/*": [
+      "@m04/*": [
         "../../modules/m04-deal-intelligence/*"
       ]
     }

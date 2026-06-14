@@ -43,16 +43,27 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
         this.exportQueue = exportQueue;
         this.redis = new ioredis_1.Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
             maxRetriesPerRequest: null,
+            lazyConnect: true,
+            enableOfflineQueue: false,
+            retryStrategy: (times) => {
+                if (process.env.DISABLE_REDIS === 'true')
+                    return null;
+                return Math.min(times * 300, 10000);
+            },
         });
+        this.redis.on('error', () => { });
     }
     async registerConnection(tenantId, dto) {
         const conn = await this.repo.createConnection(tenantId, {
             destination: dto.destination,
+            destinationName: dto.destinationName ?? `${dto.destination} Connection`,
             config: dto.config ?? {},
         });
         return {
             connectionId: conn.id,
             destination: conn.destination,
+            destinationName: conn.destinationName,
+            config: conn.config,
             isActive: conn.isActive,
             createdAt: conn.createdAt,
         };
@@ -62,6 +73,8 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
         return conns.map(c => ({
             connectionId: c.id,
             destination: c.destination,
+            destinationName: c.destinationName,
+            config: c.config,
             isActive: c.isActive,
             createdAt: c.createdAt,
         }));

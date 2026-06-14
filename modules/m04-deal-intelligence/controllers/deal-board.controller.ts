@@ -19,22 +19,23 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { DealBoardService } from '@/services/deal-board.service';
+import { DealBoardService } from '@m04/services/deal-board.service';
 import {
   CreateBoardDto,
   UpdateBoardDto,
   QueryBoardDto,
   BoardResponseDto,
   PaginatedBoardResponseDto,
-} from '@/schemas';
-import { AuthGuard } from '@/guards/auth.guard';
-import { RolesGuard } from '@/guards/roles.guard';
-import { Roles } from '@/decorators/roles.decorator';
-import { UserRole } from '@/interfaces/user-role.enum';
+} from '@m04/schemas';
+import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
+import { TenantGuard } from '../../platform-core/guards/tenant.guard';
+import { RolesGuard } from '../../platform-core/guards/roles.guard';
+import { Roles } from '../../platform-core/decorators/roles.decorator';
+import { UserRole } from '@rri/database';
 
 @ApiTags('Deal Boards')
 @Controller('boards')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 @ApiBearerAuth()
 export class DealBoardController {
   constructor(private readonly boardService: DealBoardService) {}

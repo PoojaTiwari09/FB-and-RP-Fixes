@@ -1,6 +1,6 @@
 import { IsEnum, IsString, IsOptional, IsUUID, IsInt, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PlaybookType, PlaybookItemStatus } from '@/entities/deal-playbook.entity';
+import { PlaybookType, PlaybookItemStatus } from '@m04/entities/deal-playbook.entity';
 
 // Re-export enums for controller use
 export { PlaybookType, PlaybookItemStatus };

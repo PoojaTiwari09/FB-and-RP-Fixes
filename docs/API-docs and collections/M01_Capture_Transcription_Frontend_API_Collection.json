@@ -1,0 +1,992 @@
+{
+  "info": {
+    "name": "M01 Capture Transcription - Frontend APIs",
+    "description": "Complete API collection for M01 Frontend integration, with automatic variable chaining for seamless testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseurl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "call_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "brief_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "note_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "step_index",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "utterance_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Create Call (Captures call_id)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 201 Created\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has call id\", function () {",
+              "var r = pm.response.json();",
+              "var d = r.data || r;",
+              "if (d.data) d = d.data;",
+              "var dbg = \" Response: \" + JSON.stringify(r);",
+              "  var id = d.id || r.id;",
+              "  pm.expect(id, \"Expected id to be a string.\" + dbg).to.be.a(\"string\");",
+              "  pm.environment.set(\"call_id\", id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Discovery Call - Acme Corp\",\n  \"callDate\": \"2026-06-11T14:10:49.582Z\",\n  \"callType\": \"outbound\",\n  \"callSource\": \"zoom\",\n  \"dealType\": \"Discovery\",\n  \"participants\": [\n    \"John Doe\",\n    \"Jane Smith\"\n  ],\n  \"callOwner\": \"33333333-3333-3333-3333-333333333333\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseurl}}/api/v1/capture-transcription/calls",
+          "host": [
+            "{{baseurl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "capture-transcription",
+            "calls"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Upload from S3",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recordingId\": \"2min_sales\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseurl}}/api/v1/capture-transcription/calls/upload-from-s3",
+          "host": [
+            "{{baseurl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "capture-transcription",
+            "calls",
+            "upload-from-s3"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Trigger AI Extraction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/extract-ai",
+          "host": [
+            "{{baseurl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "capture-transcription",
+            "calls",
+            "{{call_id}}",
+            "extract-ai"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 202 Accepted\", function () { pm.response.to.have.status(202); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Get Calls List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseurl}}/api/v1/capture-transcription/calls?page=1&limit=20&sort=callDate&order=desc",
+          "host": [
+            "{{baseurl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "capture-transcription",
+            "calls"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "callDate"
+            },
+            {
+              "key": "order",
+              "value": "desc"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Returns calls array\", function () {",
+              "var r = pm.response.json();",
+              "var d = r.data || r;",
+              "if (d.data) d = d.data;",
+              "var dbg = \" Response: \" + JSON.stringify(r);",
+              "  pm.expect(d.calls, \"Expected d.calls to be an array.\" + dbg).to.be.an(\"array\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Get Call By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}",
+          "host": [
+            "{{baseurl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "capture-transcription",
+            "calls",
+            "{{call_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Response has call data\", function () {",
+              "var r = pm.response.json();",
+              "var d = r.data || r;",
+              "if (d.data) d = d.data;",
+              "var dbg = \" Response: \" + JSON.stringify(r);",
+              "  pm.expect(d, \"Expected data to exist.\" + dbg).to.exist;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Generate Brief (Captures brief_id)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 201 Created\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has briefId\", function () {",
+              "var r = pm.response.json();",
+              "var d = r.data || r;",
+              "if (d.data) d = d.data;",
+              "var dbg = \" Response: \" + JSON.stringify(r);",
+              "  var briefId = d.briefId || r.briefId;",
+              "  pm.expect(briefId, \"Expected briefId to be a string.\" + dbg).to.be.a(\"string\");",
+              "  pm.environment.set(\"brief_id\", briefId);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"briefTemplate\": \"Standard Call Brief\",\n  \"period\": \"Full Call\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs",
+          "host": [
+            "{{baseurl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "capture-transcription",
+            "calls",
+            "{{call_id}}",
+            "briefs"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Get Brief Sections",
+      "item": [
+        {
+          "name": "Get Discussion Points",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs/{{brief_id}}/discussion-points",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "briefs",
+                "{{brief_id}}",
+                "discussion-points"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has discussionPoints array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.discussionPoints, \"Expected d.discussionPoints to be an array.\" + dbg).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Customer Needs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs/{{brief_id}}/customer-needs",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "briefs",
+                "{{brief_id}}",
+                "customer-needs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has customerNeeds array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.customerNeeds, \"Expected d.customerNeeds to be an array.\" + dbg).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Risks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs/{{brief_id}}/risks",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "briefs",
+                "{{brief_id}}",
+                "risks"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has risks array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.risks, \"Expected d.risks to be an array.\" + dbg).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Commitments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs/{{brief_id}}/commitments",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "briefs",
+                "{{brief_id}}",
+                "commitments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has commitments array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.commitments, \"Expected d.commitments to be an array.\" + dbg).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Stakeholders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs/{{brief_id}}/stakeholders",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "briefs",
+                "{{brief_id}}",
+                "stakeholders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has stakeholders array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.stakeholders, \"Expected d.stakeholders to be an array.\" + dbg).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Activity Context",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/briefs/{{brief_id}}/activity-context",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "briefs",
+                "{{brief_id}}",
+                "activity-context"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has activities array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.activities || d.activityContext, \"Expected d.activities to be an array.\" + dbg).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Transcript & Analysis",
+      "item": [
+        {
+          "name": "Get Transcript (Captures utterance_id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has transcript array\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d.transcript, \"Expected d.transcript to be an array.\" + dbg).to.be.an(\"array\");",
+                  "  if (d.transcript && d.transcript.length > 0) {",
+                  "    var uid = d.transcript[0].entryId || d.transcript[0].id || \"\";",
+                  "    pm.environment.set(\"utterance_id\", uid);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/transcript",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "transcript"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get AI Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/transcript/summary",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "transcript",
+                "summary"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Has summary field\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  pm.expect(d, \"Expected data to have property summary.\" + dbg).to.have.property(\"summary\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Talk Ratio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/transcript/talk-ratio",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "transcript",
+                "talk-ratio"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Topics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/transcript/topics",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "transcript",
+                "topics"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9. Notes",
+      "item": [
+        {
+          "name": "Add Note (Captures note_id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Response has noteId\", function () {",
+                  "var r = pm.response.json();",
+                  "var d = r.data || r;",
+                  "if (d.data) d = d.data;",
+                  "var dbg = \" Response: \" + JSON.stringify(r);",
+                  "  var noteId = d.noteId || d.id || r.noteId || r.id;",
+                  "  pm.expect(noteId, \"Expected noteId to be a string.\" + dbg).to.be.a(\"string\");",
+                  "  pm.environment.set(\"note_id\", noteId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Follow up on pricing next week\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/notes",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "notes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/notes",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "notes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Note",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Follow up on pricing TOMORROW\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/notes/{{note_id}}",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "notes",
+                "{{note_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10. Next Steps",
+      "item": [
+        {
+          "name": "Add Next Step",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"step\": \"Send follow-up email\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/next-steps",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "next-steps"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Next Steps",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/next-steps",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "next-steps"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Next Step (Toggle Complete)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": 0,\n  \"step\": \"Send follow-up email completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseurl}}/api/v1/capture-transcription/calls/{{call_id}}/next-steps",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "capture-transcription",
+                "calls",
+                "{{call_id}}",
+                "next-steps"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -4,12 +4,12 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@/database/inject-repository';
-import { M04EntityRepository as Repository } from '@/database/m04-entity.repository';
+import { InjectRepository } from '@m04/database/inject-repository';
+import { M04EntityRepository as Repository } from '@m04/database/m04-prisma.repository';
 import * as bcrypt from 'bcryptjs';
-import { User, Session } from '@/entities';
-import { LoginDto, RegisterDto, UserResponseDto } from '@/schemas';
-import { UserRole } from '@/interfaces/user-role.enum';
+import { User, Session } from '@m04/entities';
+import { LoginDto, RegisterDto, UserResponseDto } from '@m04/schemas';
+import { UserRole } from '@m04/interfaces/user-role.enum';
 
 @Injectable()
 export class AuthService {

@@ -13,7 +13,9 @@ const prisma_extension_1 = require("../database/prisma.extension");
 let TenantContextInterceptor = class TenantContextInterceptor {
     intercept(context, next) {
         const request = context.switchToHttp().getRequest();
-        const tenantId = request.user?.tenantId || request.headers['x-tenant-id'] || request.headers['tenant-id'];
+        const allowDevHeaders = process.env.ALLOW_DEV_HEADER_AUTH === 'true';
+        const tenantId = request.user?.tenantId ||
+            (allowDevHeaders ? request.headers['x-tenant-id'] || request.headers['tenant-id'] : undefined);
         if (tenantId) {
             return new rxjs_1.Observable((subscriber) => {
                 prisma_extension_1.tenantContext.run(tenantId, () => {

@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.M01FrontendCallsService = void 0;
 const common_1 = require("@nestjs/common");
+const role_helpers_1 = require("../../platform-core/auth/role-helpers");
 const call_service_1 = require("./call.service");
 const call_repository_1 = require("../repositories/call.repository");
 const prisma_service_1 = require("../database/prisma.service");
@@ -25,14 +26,21 @@ let M01FrontendCallsService = class M01FrontendCallsService {
         this.callRepo = callRepo;
         this.prisma = prisma;
     }
-    async listCalls(tenantId, rawQuery, userId, userRole) {
+    repOwnsCall(callOwner, userId, userName) {
+        if (!userId && !userName)
+            return true;
+        return callOwner === userId || (!!userName && callOwner === userName);
+    }
+    async listCalls(tenantId, rawQuery, userId, userRole, userName) {
         const q = m01_frontend_calls_schema_1.FrontendListCallsQuerySchema.parse(rawQuery);
         if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
             const offset = (q.page - 1) * q.size;
             const extra = {};
             const andClauses = [];
-            if (userRole === 'sales_rep' && userId) {
-                andClauses.push({ callOwner: userId });
+            if ((0, role_helpers_1.isSalesRepRole)(userRole)) {
+                const ownerClause = (0, role_helpers_1.repOwnerFilter)('callOwner', userId, userName);
+                if (ownerClause)
+                    andClauses.push(ownerClause);
             }
             if (q.search?.trim()) {
                 const needle = q.search.trim();
@@ -57,31 +65,27 @@ let M01FrontendCallsService = class M01FrontendCallsService {
                 extra.AND = andClauses;
             const { records, total } = await this.callRepo.findAll(tenantId, { sortBy: 'callDate', order: 'desc', limit: q.size, offset }, extra);
             const callReviews = await this.prisma.callReview.findMany({
-                where: { tenantId: tenantId },
+                where: { tenantid: tenantId },
             });
             const reviewMap = new Map(callReviews.map((cr) => [cr.callTitle, cr]));
             const calls = records.map((r) => (0, m01_frontend_mapper_1.mapAiReviewerCallRow)(r, reviewMap.get(r.title)));
             return {
-                data: {
-                    calls,
-                    pagination: {
-                        page: q.page,
-                        size: q.size,
-                        total,
-                        totalPages: Math.max(1, Math.ceil(total / q.size)),
-                    },
-                },
-                totalCount: total,
-                page: q.page,
-                size: q.size,
                 calls,
+                pagination: {
+                    page: q.page,
+                    size: q.size,
+                    total,
+                    totalPages: Math.max(1, Math.ceil(total / q.size)),
+                },
             };
         }
         const offset = (q.page - 1) * q.size;
         const extra = {};
         const andClauses = [];
-        if (userRole === 'sales_rep' && userId) {
-            andClauses.push({ callOwner: userId });
+        if ((0, role_helpers_1.isSalesRepRole)(userRole)) {
+            const ownerClause = (0, role_helpers_1.repOwnerFilter)('callOwner', userId, userName);
+            if (ownerClause)
+                andClauses.push(ownerClause);
         }
         const isCallsList = !rawQuery.view &&
             rawQuery.format !== 'ai-reviewer' &&
@@ -177,14 +181,14 @@ let M01FrontendCallsService = class M01FrontendCallsService {
             calls: records.map(m01_frontend_mapper_1.mapCallListItem),
         };
     }
-    async getCall(callId, tenantId, rawQuery = {}, userId, userRole) {
+    async getCall(callId, tenantId, rawQuery = {}, userId, userRole, userName) {
         const record = await this.calls.getCallDetail(callId, tenantId);
-        if (userRole === 'sales_rep' && userId && record.callOwner !== userId) {
+        if ((0, role_helpers_1.isSalesRepRole)(userRole) && !this.repOwnsCall(record.callOwner, userId, userName)) {
             throw new Error('Access denied');
         }
         if (rawQuery.view === 'ai-reviewer' || rawQuery.format === 'ai-reviewer') {
             const matchingReview = await this.prisma.callReview.findFirst({
-                where: { callTitle: record.title, tenantId: tenantId },
+                where: { callTitle: record.title, tenantid: tenantId },
             });
             const row = (0, m01_frontend_mapper_1.mapAiReviewerCallRow)(record, matchingReview);
             const participants = Array.isArray(record.participants)
@@ -200,14 +204,14 @@ let M01FrontendCallsService = class M01FrontendCallsService {
         }
         return (0, m01_frontend_mapper_1.mapCallDetail)(record);
     }
-    async getCallMetadata(callId, tenantId, userId, userRole) {
+    async getCallMetadata(callId, tenantId, userId, userRole, userName) {
         const record = await this.calls.getCallDetail(callId, tenantId);
-        if (userRole === 'sales_rep' && userId && record.callOwner !== userId) {
+        if ((0, role_helpers_1.isSalesRepRole)(userRole) && !this.repOwnsCall(record.callOwner, userId, userName)) {
             throw new Error('Access denied');
         }
         return (0, m01_frontend_mapper_1.mapCallMetadata)(record);
     }
-    async searchCalls(tenantId, rawQuery, userId, userRole) {
+    async searchCalls(tenantId, rawQuery, userId, userRole, userName) {
         const q = m01_frontend_calls_schema_1.FrontendSearchCallsQuerySchema.parse(rawQuery);
         const offset = (q.page - 1) * q.size;
         const hits = await this.calls.searchTranscripts(tenantId, {
@@ -216,19 +220,21 @@ let M01FrontendCallsService = class M01FrontendCallsService {
             offset,
         });
         let calls = (Array.isArray(hits) ? hits : []).map(m01_frontend_mapper_1.mapCallSearchHit);
-        if (userRole === 'sales_rep' && userId) {
-            calls = calls.filter((c) => c.callOwner === userId);
+        if ((0, role_helpers_1.isSalesRepRole)(userRole)) {
+            calls = calls.filter((c) => this.repOwnsCall(c.callOwner, userId, userName));
         }
         return {
             totalCount: calls.length,
             calls,
         };
     }
-    async listAccounts(tenantId, rawQuery, userId, userRole) {
+    async listAccounts(tenantId, rawQuery, userId, userRole, userName) {
         const { search } = m01_frontend_calls_schema_1.FrontendFilterSearchSchema.parse(rawQuery);
-        const where = { tenantId: tenantId };
-        if (userRole === 'sales_rep' && userId) {
-            where.callOwner = userId;
+        const where = { tenantid: tenantId };
+        if ((0, role_helpers_1.isSalesRepRole)(userRole)) {
+            const ownerClause = (0, role_helpers_1.repOwnerFilter)('callOwner', userId, userName);
+            if (ownerClause)
+                Object.assign(where, ownerClause);
         }
         const rows = await this.prisma.callRecord.findMany({
             where,
@@ -253,13 +259,15 @@ let M01FrontendCallsService = class M01FrontendCallsService {
         }
         return { accounts };
     }
-    async listParticipants(tenantId, rawQuery, userId, userRole) {
+    async listParticipants(tenantId, rawQuery, userId, userRole, userName) {
         const { search, accountId } = m01_frontend_calls_schema_1.FrontendFilterSearchSchema.parse(rawQuery);
-        const where = { tenantId: tenantId };
+        const where = { tenantid: tenantId };
         if (accountId)
             where.accountId = accountId;
-        if (userRole === 'sales_rep' && userId) {
-            where.callOwner = userId;
+        if ((0, role_helpers_1.isSalesRepRole)(userRole)) {
+            const ownerClause = (0, role_helpers_1.repOwnerFilter)('callOwner', userId, userName);
+            if (ownerClause)
+                Object.assign(where, ownerClause);
         }
         const rows = await this.prisma.callRecord.findMany({
             where,

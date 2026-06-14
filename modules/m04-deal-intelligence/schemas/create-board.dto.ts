@@ -20,7 +20,7 @@ import {
   ColumnDataType,
   PermissionRole,
   PermissionSubjectType,
-} from '@/entities';
+} from '@m04/entities';
 
 export class CreateBoardFilterDto {
   @ApiProperty({ description: 'CRM field name to filter on' })

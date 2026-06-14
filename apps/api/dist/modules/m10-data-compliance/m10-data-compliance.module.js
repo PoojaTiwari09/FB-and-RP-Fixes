@@ -8,21 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.M10DataComplianceModule = void 0;
 const common_1 = require("@nestjs/common");
-const bullmq_1 = require("@nestjs/bullmq");
 const revenue_graph_module_1 = require("./revenue-graph/revenue-graph.module");
+const configure_compliance_module_1 = require("./configure-compliance/configure-compliance.module");
+const data_cloud_module_1 = require("./data-cloud/data-cloud.module");
 const prisma_module_1 = require("./database/prisma.module");
 const event_publisher_module_1 = require("../platform-core/events/event-publisher.module");
 const m10_controller_1 = require("./controllers/m10.controller");
 const m10_test_controller_1 = require("./controllers/m10-test.controller");
-const data_cloud_controller_1 = require("./controllers/data-cloud.controller");
 const m10_service_1 = require("./services/m10.service");
-const data_cloud_service_1 = require("./services/data-cloud.service");
-const export_storage_service_1 = require("./services/export-storage.service");
-const warehouse_registry_1 = require("./services/warehouse-registry");
 const m10_repository_1 = require("./repositories/m10.repository");
-const data_cloud_repository_1 = require("./repositories/data-cloud.repository");
-const data_cloud_worker_1 = require("./workers/data-cloud.worker");
-const data_cloud_events_1 = require("./events/data-cloud.events");
+const m10_worker_1 = require("./workers/m10.worker");
 let M10DataComplianceModule = class M10DataComplianceModule {
 };
 exports.M10DataComplianceModule = M10DataComplianceModule;
@@ -32,36 +27,12 @@ exports.M10DataComplianceModule = M10DataComplianceModule = __decorate([
             prisma_module_1.PrismaModule,
             event_publisher_module_1.EventPublisherModule,
             revenue_graph_module_1.RevenueGraphModule,
-            bullmq_1.BullModule.registerQueue({
-                name: data_cloud_events_1.M10_DATA_CLOUD_QUEUES.EXPORT,
-                defaultJobOptions: {
-                    attempts: 3,
-                    backoff: { type: 'exponential', delay: 3000 },
-                    removeOnComplete: { count: 100 },
-                    removeOnFail: { count: 200 },
-                },
-            }),
-            bullmq_1.BullModule.registerQueue({ name: 'platform-events' }),
+            configure_compliance_module_1.ComplianceSettingsModule,
+            data_cloud_module_1.DataCloudModule,
         ],
-        controllers: [
-            m10_controller_1.M10DataComplianceController,
-            m10_test_controller_1.M10TestController,
-            data_cloud_controller_1.DataCloudController,
-        ],
-        providers: [
-            m10_service_1.M10DataComplianceService,
-            data_cloud_service_1.DataCloudService,
-            export_storage_service_1.ExportStorageService,
-            warehouse_registry_1.WarehouseRegistry,
-            m10_repository_1.M10DataComplianceRepository,
-            data_cloud_repository_1.DataCloudRepository,
-            data_cloud_worker_1.DataCloudWorker,
-        ],
-        exports: [
-            revenue_graph_module_1.RevenueGraphModule,
-            m10_service_1.M10DataComplianceService,
-            data_cloud_service_1.DataCloudService,
-        ],
+        controllers: [m10_controller_1.M10DataComplianceController, m10_test_controller_1.M10TestController],
+        providers: [m10_service_1.M10DataComplianceService, m10_repository_1.M10DataComplianceRepository, m10_worker_1.M10DataComplianceWorker],
+        exports: [revenue_graph_module_1.RevenueGraphModule, configure_compliance_module_1.ComplianceSettingsModule, data_cloud_module_1.DataCloudModule, m10_service_1.M10DataComplianceService],
     })
 ], M10DataComplianceModule);
 //# sourceMappingURL=m10-data-compliance.module.js.map

@@ -10,7 +10,7 @@ import {
   HubSpotOwner,
   HubSpotPaginatedResponse,
   HubSpotAssociation,
-} from '@/interfaces/hubspot-types.interface';
+} from '@m04/interfaces/hubspot-types.interface';
 
 @Injectable()
 export class HubSpotClientService {

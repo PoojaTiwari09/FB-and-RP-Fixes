@@ -31,6 +31,25 @@ export function buildAuthHeaders(): Record<string, string> {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  // Always propagate dev header auth context for resilience in dev setups
+  const tenantId =
+    readCookie('tenant_id') ||
+    process.env.NEXT_PUBLIC_BACKEND_ORG_ID ||
+    '00000000-0000-0000-0000-000000000001';
+
+  const userId =
+    readCookie('user_id') ||
+    process.env.NEXT_PUBLIC_BACKEND_REP_USER_ID ||
+    '00000000-0000-0000-0000-000000000003';
+
+  const role =
+    readCookie('user_role') ||
+    'SALES_REP';
+
+  headers['x-tenant-id'] = tenantId;
+  headers['x-user-id'] = userId;
+  headers['x-user-role'] = role === 'sales_manager' || role === 'MANAGER' ? 'MANAGER' : 'SALES_REP';
+
   return headers;
 }
 
@@ -45,8 +64,8 @@ export function buildBackendHeaders(): Record<string, string> {
 }
 
 /** @deprecated */
-export const BACKEND_ORG_ID = '00000000-0000-0000-0000-000000000001';
+export const BACKEND_ORG_ID: string = '00000000-0000-0000-0000-000000000001';
 /** @deprecated */
-export const BACKEND_REP_USER_ID = '33333333-3333-3333-3333-333333333333';
+export const BACKEND_REP_USER_ID: string = '33333333-3333-3333-3333-333333333333';
 /** @deprecated */
-export const BACKEND_MANAGER_USER_ID = '22222222-2222-2222-2222-222222222222';
+export const BACKEND_MANAGER_USER_ID: string = '22222222-2222-2222-2222-222222222222';
