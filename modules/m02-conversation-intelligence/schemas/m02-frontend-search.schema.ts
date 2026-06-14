@@ -27,18 +27,18 @@ export const M02SearchCallsQuerySchema = z.object({
 });
 
 export const M02AiAskBodySchema = z.object({
-  callId: z.string().min(1),
-  question: z.string().min(1),
+  callId: z.string().min(1).optional(),
+  question: z.string().optional().default(''),
 });
 
 export const M02ExportBodySchema = z.object({
-  filters: z.record(z.unknown()),
-  fields: z.record(z.unknown()),
+  filters: z.record(z.unknown()).optional().default({}),
+  fields: z.record(z.unknown()).optional().default({}),
 });
 
 export const M02CreateStreamBodySchema = z.object({
-  name: z.string().min(1),
-  filters: z.record(z.unknown()),
+  name: z.string().optional().default('Unnamed Stream'),
+  filters: z.record(z.unknown()).optional().default({}),
   notifications: z
     .object({
       inApp: z.boolean().optional(),

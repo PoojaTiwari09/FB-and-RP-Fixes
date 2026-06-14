@@ -42,7 +42,7 @@ export class M01FrontendCallDetailController {
     private readonly notesRepo: NotesRepository,
     private readonly nextSteps: NextStepsRepository,
     private readonly callService: CallService,
-  ) {}
+  ) { }
 
   @Get('metadata')
   getMetadata(@Param('callId') callId: string, @Req() req: Record<string, string>) {
@@ -405,7 +405,7 @@ export class M01FrontendCallDetailController {
 @Controller('api/v1/capture-transcription/brief-templates')
 @UseGuards(TenantGuard)
 export class M01FrontendBriefTemplatesController {
-  constructor(private readonly svc: M01FrontendTranscriptService) {}
+  constructor(private readonly svc: M01FrontendTranscriptService) { }
 
   @Get()
   list() {
@@ -416,7 +416,7 @@ export class M01FrontendBriefTemplatesController {
 @Controller('api/v1/capture-transcription/brief-periods')
 @UseGuards(TenantGuard)
 export class M01FrontendBriefPeriodsController {
-  constructor(private readonly svc: M01FrontendTranscriptService) {}
+  constructor(private readonly svc: M01FrontendTranscriptService) { }
 
   @Get()
   list() {
