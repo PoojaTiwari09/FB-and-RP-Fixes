@@ -63,7 +63,13 @@ export class M02FrontendSearchService {
         // Fallback
       }
     }
-    return { teams: [] };
+    return {
+      teams: [
+        { id: 'team_west', name: 'West Region' },
+        { id: 'team_east', name: 'East Region' },
+        { id: 'team_central', name: 'Central Region' },
+      ],
+    };
   }
 
   async searchCalls(tenantId: string, rawQuery: Record<string, string>) {
@@ -103,8 +109,8 @@ export class M02FrontendSearchService {
         agentName: h.agentName || '',
         date: h.date || '',
         duration: h.duration || '0m',
-        sentiment: 'Neutral',
-        sentimentScore: 0,
+        sentiment: h.sentiment || 'Neutral',
+        sentimentScore: typeof (h as any).sentimentScore === 'number' ? (h as any).sentimentScore : 0,
         overallScore: h.overallScore || 0,
         topics: h.topics || [],
         summary: h.snippet || '',
@@ -115,7 +121,19 @@ export class M02FrontendSearchService {
       }),
     );
 
-    const emailsCount = rows.filter((r: any) => r.channel === 'email').length;
+    let emailsCount = 0;
+    try {
+      if ((this.prisma as any).engageActivity) {
+        emailsCount = await (this.prisma as any).engageActivity.count({
+          where: { tenantid: tenantId, channelType: { contains: 'email', mode: 'insensitive' } }
+        });
+      }
+    } catch {
+      // Fallback
+    }
+    if (emailsCount === 0) {
+      emailsCount = rows.filter((r: any) => r.channel === 'email').length;
+    }
     const callsCount = results.length;
     const count = results.length || 10;
     const gran = q.chartGranularity || 'weeks';
@@ -156,7 +174,20 @@ export class M02FrontendSearchService {
 
     const t = record.transcript;
     const highlights = Array.isArray(t?.keyHighlights) ? (t.keyHighlights as any[]) : [];
-    const score = 85;
+    let score = (record as any).overallScore ?? 85;
+    try {
+      if ((this.prisma as any).callReview) {
+        const review = await (this.prisma as any).callReview.findFirst({
+          where: { callTitle: record.title, tenantid: tenantId },
+          select: { overallScore: true },
+        });
+        if (review && review.overallScore !== null) {
+          score = review.overallScore;
+        }
+      }
+    } catch {
+      // Fallback
+    }
 
     const formatTs = (ms: number) => {
       const sec = Math.floor(ms / 1000);
