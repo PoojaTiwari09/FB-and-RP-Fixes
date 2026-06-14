@@ -46,38 +46,37 @@ export class ForecastUpgradeService {
     return result;
   }
 
-  async createOrUpdateSubmission(repId: string, dealId: string, periodId: string, field: 'best_case' | 'commit', value: number) {
+  async createOrUpdateSubmission(repId: string, dealId: string, periodId: string, field: 'best_case' | 'commit', value: number, notes?: string) {
     const latest = await this.prisma.forecastSubmission.findFirst({
       where: { repUserId: repId, dealId, periodId },
       orderBy: { version: 'desc' },
     });
 
-    const isBestCase = field === 'best_case';
+    const bestCaseForecast = field === 'best_case' ? value : latest?.bestCaseForecast ?? null;
+    const commitForecast = field === 'commit' ? value : latest?.commitForecast ?? 0;
 
     let sub;
-    if (latest && latest.status === 'draft' && latest.bestCaseState === 'editable' && latest.commitState === 'editable') {
+    if (latest && latest.status === 'draft') {
       sub = await this.prisma.forecastSubmission.update({
         where: { id: latest.id },
         data: {
-          bestCaseForecast: isBestCase ? value : latest.bestCaseForecast,
-          commitForecast: !isBestCase ? value : latest.commitForecast,
-        }
-      });
-    } else {
-      const version = (latest?.version ?? 0) + 1;
-      const bestCaseForecast = isBestCase ? value : (latest?.bestCaseForecast ?? 0);
-      const commitForecast = !isBestCase ? value : (latest?.commitForecast ?? 0);
-
-      sub = await this.prisma.forecastSubmission.create({
-        data: {
-          tenantid: (latest as any)?.tenantid ?? '00000000-0000-0000-0000-000000000001',
-          periodId,
-          repUserId: repId,
-          dealId,
-          lob: latest?.lob ?? 'Enterprise',
-          version,
           bestCaseForecast,
           commitForecast,
+          notes: notes ?? latest.notes,
+        },
+      });
+    } else {
+      sub = await this.prisma.forecastSubmission.create({
+        data: {
+          tenantid: '00000000-0000-0000-0000-000000000001',
+          period: { connect: { id: periodId } },
+          repUserId: repId,
+          dealId,
+          lob: 'all',
+          version: latest ? latest.version + 1 : 1,
+          bestCaseForecast,
+          commitForecast,
+          notes: notes ?? null,
           bestCaseState: latest?.bestCaseState ?? 'editable',
           commitState: latest?.commitState ?? 'editable',
           approvedBestCase: latest?.approvedBestCase ?? null,
@@ -104,7 +103,7 @@ export class ForecastUpgradeService {
     const sub = await this.prisma.forecastSubmission.create({
       data: {
         tenantid: (latest as any).tenantid,
-        periodId: latest.periodId,
+        period: { connect: { id: latest.periodId } },
         repUserId: latest.repUserId,
         dealId: latest.dealId,
         lob: latest.lob,
@@ -115,11 +114,12 @@ export class ForecastUpgradeService {
         commitState: nextCommitState,
         approvedBestCase: latest.approvedBestCase,
         approvedCommit: latest.approvedCommit,
+        notes: latest.notes,
         status: 'submitted',
       },
     });
 
-    await this.logActivity(sub.id, 'submitted', repId, `Submitted ${field} forecast for deal: ${latest.dealId}`);
+    await this.logActivity(sub.id, 'submitted', repId, `Submitted ${field} forecast for deal: ${latest.dealId}. Value ${field === 'best_case' ? sub.bestCaseForecast : sub.commitForecast}`);
 
     this.eventPublisher?.publish('forecast.submitted', {
       tenantid: (sub as any).tenantid,
@@ -150,7 +150,7 @@ export class ForecastUpgradeService {
     const sub = await this.prisma.forecastSubmission.create({
       data: {
         tenantid: (latest as any).tenantid,
-        periodId: latest.periodId,
+        period: { connect: { id: latest.periodId } },
         repUserId: latest.repUserId,
         dealId: latest.dealId,
         lob: latest.lob,
@@ -161,12 +161,13 @@ export class ForecastUpgradeService {
         commitState: nextCommitState,
         approvedBestCase,
         approvedCommit,
+        notes: latest.notes,
         status: 'approved',
         managerId,
       },
     });
 
-    await this.logActivity(sub.id, 'approved', managerId, `Approved ${field} forecast`);
+    await this.logActivity(sub.id, 'approved', managerId, `Approved ${field} forecast. Value ${field === 'best_case' ? approvedBestCase : approvedCommit}`);
 
     const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
     const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
@@ -202,7 +203,7 @@ export class ForecastUpgradeService {
     const sub = await this.prisma.forecastSubmission.create({
       data: {
         tenantid: (latest as any).tenantid,
-        periodId: latest.periodId,
+        period: { connect: { id: latest.periodId } },
         repUserId: latest.repUserId,
         dealId: latest.dealId,
         lob: latest.lob,
@@ -213,12 +214,13 @@ export class ForecastUpgradeService {
         commitState: 'reopened',
         approvedBestCase: latest.approvedBestCase,
         approvedCommit: latest.approvedCommit,
+        notes: latest.notes,
         status: 'reopened',
         managerId,
       },
     });
 
-    await this.logActivity(sub.id, 'reopened', managerId, 'Reopened submission');
+    await this.logActivity(sub.id, 'reopened', managerId, `Reopened submission. Value ${sub.commitForecast}`);
 
     const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
     const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
@@ -250,7 +252,7 @@ export class ForecastUpgradeService {
     const sub = await this.prisma.forecastSubmission.create({
       data: {
         tenantid: (latest as any).tenantid,
-        periodId: latest.periodId,
+        period: { connect: { id: latest.periodId } },
         repUserId: latest.repUserId,
         dealId: latest.dealId,
         lob: latest.lob,
@@ -261,13 +263,14 @@ export class ForecastUpgradeService {
         commitState: nextCommitState,
         approvedBestCase,
         approvedCommit,
-        status: latest.status,
+        notes: latest.notes,
+        status: 'overridden',
         managerId,
         overriddenBy: managerId,
       },
     });
 
-    await this.logActivity(sub.id, 'overridden', managerId, `Overrode ${field} with value ${overrideValue}`);
+    await this.logActivity(sub.id, 'overridden', managerId, `Manager override ${field} forecast. Value ${overrideValue}`);
 
     const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
     const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
@@ -337,9 +340,10 @@ export class ForecastUpgradeService {
       result.push({
         id: log.id,
         status: log.action,
+        action: log.action,
         performed_by_name: actor?.name ?? log.actorName ?? 'System',
         timestamp: log.createdAt.toISOString(),
-        notes: (log.metadata as any)?.notes ?? null,
+        notes: (log.metadata as { notes?: string } | null)?.notes ?? null,
       });
     }
     return result;
@@ -643,6 +647,8 @@ export class ForecastUpgradeService {
       },
     });
   }
+
+
 
   // ── B10. DRILL-DOWN & BOARD VIEWS ──────────────────────────────────────────
 

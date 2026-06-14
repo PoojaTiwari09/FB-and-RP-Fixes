@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AiDeepResearcherController = void 0;
 const common_1 = require("@nestjs/common");
 const ai_deep_researcher_service_1 = require("../services/ai-deep-researcher.service");
+const auth_guard_1 = require("../guards/auth.guard");
 let AiDeepResearcherController = class AiDeepResearcherController {
     service;
     constructor(service) {
@@ -27,59 +28,134 @@ let AiDeepResearcherController = class AiDeepResearcherController {
         return this.service.getExampleQuestions();
     }
     runAnalysis(params) {
+        if (!params || typeof params !== 'object') {
+            throw new common_1.BadRequestException('Request body is required and must be an object');
+        }
+        if (params.query === undefined || typeof params.query !== 'string' || params.query.trim() === '') {
+            throw new common_1.BadRequestException('query is required and must be a non-empty string');
+        }
         return this.service.runAnalysis(params);
     }
     getProgress(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId parameter is required');
+        }
         return this.service.getProgress(jobId);
     }
     getDashboard(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getDashboard(jobId);
     }
     getExecutiveSummary(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getExecutiveSummary(jobId);
     }
     getKeyFindings(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getKeyFindings(jobId);
     }
     getObjections(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getObjections(jobId);
     }
     getTrends(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getTrends(jobId);
     }
     getRisksOpportunities(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getRisksOpportunities(jobId);
     }
     getRecommendations(jobId) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         return this.service.getRecommendations(jobId);
     }
     getEvidence(jobId, finding, page, size) {
+        if (!jobId || jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId query parameter is required');
+        }
         const p = page ? parseInt(page, 10) : 1;
         const s = size ? parseInt(size, 10) : 10;
+        if (isNaN(p) || p <= 0) {
+            throw new common_1.BadRequestException('page query parameter must be a positive integer');
+        }
+        if (isNaN(s) || s <= 0) {
+            throw new common_1.BadRequestException('size query parameter must be a positive integer');
+        }
         return this.service.getEvidence(jobId, finding || 'all', p, s);
     }
     submitEscalation(body) {
+        if (!body || typeof body !== 'object') {
+            throw new common_1.BadRequestException('Request body is required and must be an object');
+        }
+        if (!body.jobId || typeof body.jobId !== 'string' || body.jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId is required and must be a non-empty string');
+        }
+        if (!body.question || typeof body.question !== 'string' || body.question.trim() === '') {
+            throw new common_1.BadRequestException('question is required and must be a non-empty string');
+        }
         return this.service.submitEscalation(body.jobId, body.question);
     }
     shareRecommendation(body) {
+        if (!body || typeof body !== 'object') {
+            throw new common_1.BadRequestException('Request body is required and must be an object');
+        }
+        if (!body.jobId || typeof body.jobId !== 'string' || body.jobId.trim() === '') {
+            throw new common_1.BadRequestException('jobId is required and must be a non-empty string');
+        }
+        if (!body.recommendationId || typeof body.recommendationId !== 'string' || body.recommendationId.trim() === '') {
+            throw new common_1.BadRequestException('recommendationId is required and must be a non-empty string');
+        }
+        if (!body.channel || typeof body.channel !== 'string' || body.channel.trim() === '') {
+            throw new common_1.BadRequestException('channel is required and must be a non-empty string');
+        }
         return this.service.shareRecommendation(body.jobId, body.recommendationId, body.channel);
     }
     getReps() {
         return this.service.getReps();
     }
     getRepCalls(repId) {
+        if (!repId || repId.trim() === '') {
+            throw new common_1.BadRequestException('repId parameter is required');
+        }
         return this.service.getRepCalls(repId);
     }
     getObjectionRepBreakdown(objectionId) {
+        if (!objectionId || objectionId.trim() === '') {
+            throw new common_1.BadRequestException('objectionId parameter is required');
+        }
         return this.service.getObjectionRepBreakdown(objectionId);
     }
     getObjectionEvidence(objectionId) {
+        if (!objectionId || objectionId.trim() === '') {
+            throw new common_1.BadRequestException('objectionId parameter is required');
+        }
         return this.service.getObjectionEvidence(objectionId);
     }
     getAccountDetails(accountId) {
+        if (!accountId || accountId.trim() === '') {
+            throw new common_1.BadRequestException('accountId parameter is required');
+        }
         return this.service.getAccountDetails(accountId);
     }
     getRecommendationDetails(recId) {
+        if (!recId || recId.trim() === '') {
+            throw new common_1.BadRequestException('recId parameter is required');
+        }
         return this.service.getRecommendationDetails(recId);
     }
 };
@@ -226,6 +302,7 @@ __decorate([
 ], AiDeepResearcherController.prototype, "getRecommendationDetails", null);
 exports.AiDeepResearcherController = AiDeepResearcherController = __decorate([
     (0, common_1.Controller)('api/v1/ai-deep-researcher'),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __metadata("design:paramtypes", [ai_deep_researcher_service_1.AiDeepResearcherService])
 ], AiDeepResearcherController);
 //# sourceMappingURL=ai-deep-researcher.controller.js.map

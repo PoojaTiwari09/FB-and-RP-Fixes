@@ -3,24 +3,23 @@ import { PrismaClient } from '../node_modules/.prisma/client';
 const prisma = new PrismaClient();
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
-const MANAGER_ID = '00000000-0000-0000-0000-000000000002';
-const PRIMARY_REP_ID = '00000000-0000-0000-0000-000000000003';
+const MANAGER_ID = '22222222-2222-2222-2222-222222222222';
+const PRIMARY_REP_ID = '33333333-3333-3333-3333-333333333333';
 
 const TEAM = [
-  { id: '00000000-0000-0000-0000-000000000003', repId: 'rep-01', name: 'Alex Morgan',  email: 'alex.morgan@relanto.ai',  commit: 4500000, bestCase: 5200000, status: 'submitted', aiProjection: 4100000, region: 'Americas', quota: 5000000 },
-  { id: '00000000-0000-0000-0000-000000000004', repId: 'rep-02', name: 'Sarah Chen',  email: 'sarah.chen@company.com',  commit: 5900000, bestCase: 6500000, status: 'approved',  aiProjection: 5800000, region: 'EMEA',     quota: 6000000 },
-  { id: '00000000-0000-0000-0000-000000000005', repId: 'rep-03', name: 'Michael Rodriguez',  email: 'michael.rod@company.com',  commit: 3800000, bestCase: 4500000, status: 'submitted', aiProjection: 2800000, region: 'APAC',     quota: 4000000 },
-  { id: '00000000-0000-0000-0000-000000000006', repId: 'rep-04', name: 'David Park',   email: 'david.park@company.com',  commit: 4400000, bestCase: 4800000, status: 'approved',  aiProjection: 4400000, region: 'Americas', quota: 4500000 },
-  { id: '00000000-0000-0000-0000-000000000007', repId: 'rep-05', name: 'Emily Thompson',  email: 'emily.thompson@company.com',  commit: 5200000, bestCase: 6000000, status: 'draft',     aiProjection: 3800000, region: 'EMEA',     quota: 5500000 },
+  { id: '33333333-3333-3333-3333-333333333333', repId: 'rep-01', name: 'Sarah Chen',  email: 'sarah.chen@relanto.com',  commit: 4500000, bestCase: 5200000, status: 'submitted', aiProjection: 4100000, region: 'Americas', quota: 5000000 },
+  { id: '44444444-4444-4444-4444-444444444444', repId: 'rep-02', name: 'Michael Rodriguez',  email: 'michael.rod@relanto.com',  commit: 5900000, bestCase: 6500000, status: 'approved',  aiProjection: 5800000, region: 'EMEA',     quota: 6000000 },
+  { id: '55555555-5555-5555-5555-555555555555', repId: 'rep-03', name: 'David Park',   email: 'david.park@relanto.com',  commit: 4400000, bestCase: 4800000, status: 'approved',  aiProjection: 4400000, region: 'Americas', quota: 4500000 },
+  { id: '66666666-6666-6666-6666-666666666666', repId: 'rep-04', name: 'Sujeevan',  email: 'sujeevan@relanto.com',  commit: 5200000, bestCase: 6000000, status: 'draft',     aiProjection: 3800000, region: 'EMEA',     quota: 5500000 },
 ];
 
 const ACTIVE_DEALS = [
-  { deal: 'HDFC Renewal', stage: 'Proposal', amount: 8000000, aiConf: 'Med', close: 'Jun 28', closeDate: '2026-06-28T00:00:00Z', stageRate: 0.58, timeDecay: 1.0, region: 'APAC' },
-  { deal: 'Infosys Exp.', stage: 'Negotiation', amount: 12000000, aiConf: 'High', close: 'Jun 22', closeDate: '2026-06-22T00:00:00Z', stageRate: 0.74, timeDecay: 1.0, region: 'APAC' },
-  { deal: 'Wipro Pilot', stage: 'Discovery', amount: 5000000, aiConf: 'Low', close: 'Jun 5', closeDate: '2026-06-05T00:00:00Z', stageRate: 0.20, timeDecay: 1.0, region: 'Americas' },
-  { deal: 'TCS License', stage: 'Proposal', amount: 24000000, aiConf: 'Med', close: 'Jun 30', closeDate: '2026-06-30T00:00:00Z', stageRate: 0.58, timeDecay: 1.0, region: 'EMEA' },
-  { deal: 'Tata Steel CRM', stage: 'Negotiation', amount: 6500000, aiConf: 'High', close: 'Jun 18', closeDate: '2026-06-18T00:00:00Z', stageRate: 0.74, timeDecay: 1.0, region: 'Americas' },
-  { deal: 'Reliance Digital', stage: 'Discovery', amount: 19000000, aiConf: 'Low', close: 'Jun 10', closeDate: '2026-06-10T00:00:00Z', stageRate: 0.20, timeDecay: 1.0, region: 'APAC' },
+  { id: '00000000-0000-0000-0000-0000000000d1', deal: 'HDFC Renewal', stage: 'Proposal', amount: 8000000, aiConf: 'Med', close: 'Jun 28', closeDate: '2026-06-28T00:00:00Z', stageRate: 0.58, timeDecay: 1.0, region: 'APAC' },
+  { id: '00000000-0000-0000-0000-0000000000d2', deal: 'Infosys Exp.', stage: 'Negotiation', amount: 12000000, aiConf: 'High', close: 'Jun 22', closeDate: '2026-06-22T00:00:00Z', stageRate: 0.74, timeDecay: 1.0, region: 'APAC' },
+  { id: '00000000-0000-0000-0000-0000000000d3', deal: 'Wipro Pilot', stage: 'Discovery', amount: 5000000, aiConf: 'Low', close: 'Jun 5', closeDate: '2026-06-05T00:00:00Z', stageRate: 0.20, timeDecay: 1.0, region: 'Americas' },
+  { id: '00000000-0000-0000-0000-0000000000d4', deal: 'TCS License', stage: 'Proposal', amount: 24000000, aiConf: 'Med', close: 'Jun 30', closeDate: '2026-06-30T00:00:00Z', stageRate: 0.58, timeDecay: 1.0, region: 'EMEA' },
+  { id: '00000000-0000-0000-0000-0000000000d5', deal: 'Tata Steel CRM', stage: 'Negotiation', amount: 6500000, aiConf: 'High', close: 'Jun 18', closeDate: '2026-06-18T00:00:00Z', stageRate: 0.74, timeDecay: 1.0, region: 'Americas' },
+  { id: '00000000-0000-0000-0000-0000000000d6', deal: 'Reliance Digital', stage: 'Discovery', amount: 19000000, aiConf: 'Low', close: 'Jun 10', closeDate: '2026-06-10T00:00:00Z', stageRate: 0.20, timeDecay: 1.0, region: 'APAC' },
 ].map((deal) => ({
   ...deal,
   contributionFactor: deal.stageRate * deal.timeDecay,
@@ -80,11 +79,11 @@ async function main() {
   await prisma.forecastBoard.deleteMany({ where: { id: { in: DEMO_BOARD_IDS } } });
   await prisma.forecastPeriod.deleteMany({ where: { id: { in: DEMO_PERIOD_IDS } } });
 
-  // 1. Seed Users (Manager + 5 Reps)
+  // 1. Seed Users (Manager + 4 Reps)
   const manager = await prisma.forecastUser.upsert({
-    where: { email: 'manager@example.com' },
-    update: { tenantid: tenantId, name: 'Sarah Johnson', role: 'manager', region: 'Company', managerId: null },
-    create: { id: MANAGER_ID, tenantid: tenantId, name: 'Sarah Johnson', email: 'manager@example.com', password: 'password123', role: 'manager', region: 'Company' }
+    where: { email: 'alex.morgan@relanto.com' },
+    update: { tenantid: tenantId, name: 'Alex Morgan', role: 'manager', region: 'Company', managerId: null },
+    create: { id: MANAGER_ID, tenantid: tenantId, name: 'Alex Morgan', email: 'alex.morgan@relanto.com', password: 'password123', role: 'manager', region: 'Company' }
   });
   console.log('Manager seeded:', manager.name);
 
@@ -419,8 +418,9 @@ async function main() {
         region: deal.region,
         repUserId: TEAM[1].id,
       })),
-      // Active open deals (rep-01 gets first 4, rep-02 gets last 2)
+      // Active open deals (rep-01 gets first 3, rep-02 gets last 3)
       ...ACTIVE_DEALS.map((deal, index) => ({
+        id: deal.id,
         tenantid: tenantId,
       dealName: deal.deal,
         stage: deal.stage,
@@ -449,6 +449,18 @@ async function main() {
     });
   }
   console.log('Quotas seeded for 5 sales reps.');
+
+  console.log('Quotas seeded for 5 sales reps.');
+
+  // Deal-level submissions for rep-01 (Sarah Chen) so drill-down isn't $0
+  await prisma.forecastSubmission.createMany({
+    data: [
+      { tenantid: tenantId, periodId: q2.id, repUserId: TEAM[0].id, dealId: '00000000-0000-0000-0000-0000000000d1', lob: 'Enterprise Software', commitForecast: 7500000, bestCaseForecast: 8000000, notes: 'Looking good', status: 'submitted', version: 1, bestCaseState: 'submitted', commitState: 'submitted' },
+      { tenantid: tenantId, periodId: q2.id, repUserId: TEAM[0].id, dealId: '00000000-0000-0000-0000-0000000000d2', lob: 'Enterprise Software', commitForecast: 10000000, bestCaseForecast: 12000000, notes: 'Waiting on approval', status: 'submitted', version: 1, bestCaseState: 'submitted', commitState: 'submitted' },
+      { tenantid: tenantId, periodId: q2.id, repUserId: TEAM[0].id, dealId: '00000000-0000-0000-0000-0000000000d3', lob: 'Enterprise Software', commitForecast: 0, bestCaseForecast: 5000000, notes: 'Upside only', status: 'draft', version: 1, bestCaseState: 'editable', commitState: 'editable' },
+    ]
+  });
+  console.log('Deal-level forecast submissions seeded.');
 
   console.log('M06 seed completed successfully.');
 }

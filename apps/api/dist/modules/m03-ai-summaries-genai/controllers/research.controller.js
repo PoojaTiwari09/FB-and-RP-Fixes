@@ -28,6 +28,16 @@ let ResearchController = class ResearchController {
         this.reportService = reportService;
     }
     async createJob(dto, req) {
+        if (!dto || typeof dto !== 'object' || Object.keys(dto).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (!dto.query || typeof dto.query !== 'string') {
+            throw new common_1.BadRequestException('query is required and must be a string');
+        }
+        const raw = JSON.stringify(dto);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
         const user = req.user;
         const activeJobs = await this.researchService.getActiveJobCount(user.orgId, user.userId);
         if (activeJobs >= 3) {
@@ -52,7 +62,20 @@ let ResearchController = class ResearchController {
         }
         return status;
     }
-    async cancelJob(jobId, req) {
+    async cancelJob(jobId, body, req) {
+        if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (body.exampleField === undefined || typeof body.exampleField !== 'string') {
+            throw new common_1.BadRequestException('exampleField is required and must be a string');
+        }
+        if (body.count === undefined || typeof body.count !== 'number') {
+            throw new common_1.BadRequestException('count is required and must be a number');
+        }
+        const raw = JSON.stringify(body);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
         const result = await this.researchService.cancelJob(jobId, req.user.orgId);
         if (!result) {
             throw new common_1.NotFoundException('Research job not found');
@@ -78,7 +101,7 @@ exports.ResearchController = ResearchController;
 __decorate([
     (0, common_1.Post)('jobs'),
     (0, common_1.UseGuards)(rbac_guard_1.RbacGuard, feature_permission_guard_1.FeaturePermissionGuard),
-    (0, common_1.HttpCode)(common_1.HttpStatus.ACCEPTED),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -96,10 +119,12 @@ __decorate([
 __decorate([
     (0, common_1.Post)('jobs/:jobId/cancel'),
     (0, common_1.UseGuards)(rbac_guard_1.RbacGuard),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Param)('jobId')),
-    __param(1, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], ResearchController.prototype, "cancelJob", null);
 __decorate([

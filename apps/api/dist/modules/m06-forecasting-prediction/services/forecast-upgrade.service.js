@@ -90,31 +90,40 @@ let ForecastUpgradeService = class ForecastUpgradeService {
             where: { repUserId: repId, dealId, periodId },
             orderBy: { version: 'desc' },
         });
-        const version = (latest?.version ?? 0) + 1;
         const isBestCase = field === 'best_case';
-        const bestCaseForecast = isBestCase ? value : (latest?.bestCaseForecast ?? 0);
-        const commitForecast = !isBestCase ? value : (latest?.commitForecast ?? 0);
-        const sub = await this.prisma.forecastSubmission.create({
-            data: {
-                tenantid: latest?.tenantid ?? '00000000-0000-0000-0000-000000000001',
-                periodId,
-                repUserId: repId,
-                dealId,
-                lob: latest?.lob ?? 'Enterprise',
-                version,
-                bestCaseForecast,
-                commitForecast,
-                bestCaseState: latest?.bestCaseState ?? 'editable',
-                commitState: latest?.commitState ?? 'editable',
-                approvedBestCase: latest?.approvedBestCase ?? null,
-                approvedCommit: latest?.approvedCommit ?? null,
-                status: latest?.status ?? 'draft',
-            },
-        });
-        const hasLog = await this.prisma.forecastAuditLog.findFirst({
-            where: { forecastSubmissionId: sub.id, action: 'draft_created' },
-        });
-        if (!hasLog) {
+        let sub;
+        if (latest && latest.status === 'draft' && latest.bestCaseState === 'editable' && latest.commitState === 'editable') {
+            sub = await this.prisma.forecastSubmission.update({
+                where: { id: latest.id },
+                data: {
+                    bestCaseForecast: isBestCase ? value : latest.bestCaseForecast,
+                    commitForecast: !isBestCase ? value : latest.commitForecast,
+                }
+            });
+        }
+        else {
+            const version = (latest?.version ?? 0) + 1;
+            const bestCaseForecast = isBestCase ? value : (latest?.bestCaseForecast ?? 0);
+            const commitForecast = !isBestCase ? value : (latest?.commitForecast ?? 0);
+            sub = await this.prisma.forecastSubmission.create({
+                data: {
+                    tenantid: latest?.tenantid ?? '00000000-0000-0000-0000-000000000001',
+                    periodId,
+                    repUserId: repId,
+                    dealId,
+                    lob: latest?.lob ?? 'Enterprise',
+                    version,
+                    bestCaseForecast,
+                    commitForecast,
+                    bestCaseState: latest?.bestCaseState ?? 'editable',
+                    commitState: latest?.commitState ?? 'editable',
+                    approvedBestCase: latest?.approvedBestCase ?? null,
+                    approvedCommit: latest?.approvedCommit ?? null,
+                    status: latest?.status ?? 'draft',
+                },
+            });
+        }
+        if (!latest) {
             await this.logActivity(sub.id, 'draft_created', repId, `Draft created for deal: ${dealId}`);
         }
         return sub;
@@ -255,7 +264,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
         });
         await this.logActivity(sub.id, 'overridden', managerId, `Overrode ${field} with value ${overrideValue}`);
         const deal = await this.prisma.crmDeal.findUnique({ where: { id: latest.dealId || '' } });
-        const rep = await this.prisma.user.findFirst({ where: { id: latest.repUserId } });
+        const rep = await this.prisma.forecastUser.findFirst({ where: { id: latest.repUserId } });
         await this.createNotification(latest.repUserId, rep?.name ?? 'Rep', sub.id, 'overridden', field, deal?.dealName ?? 'Deal', approvedBestCase, approvedCommit);
         if (approvedCommit !== null && latest.dealId) {
             await this.syncManualForecast(latest.repUserId, latest.dealId, latest.periodId, approvedCommit);
@@ -437,7 +446,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
                     tenantid: '00000000-0000-0000-0000-000000000001',
                     periodId,
                     repId,
-                    dealId: '',
+                    dealId: '00000000-0000-0000-0000-000000000000',
                 },
             },
         });
@@ -449,7 +458,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
                         tenantid: '00000000-0000-0000-0000-000000000001',
                         periodId,
                         repId,
-                        dealId: '',
+                        dealId: '00000000-0000-0000-0000-000000000000',
                     },
                 },
             });
@@ -527,39 +536,28 @@ let ForecastUpgradeService = class ForecastUpgradeService {
                     tenantid: '00000000-0000-0000-0000-000000000001',
                     periodId,
                     repId,
-                    dealId: '',
+                    dealId: '00000000-0000-0000-0000-000000000000',
                 },
             },
             create: {
                 tenantid: '00000000-0000-0000-0000-000000000001',
                 periodId,
                 repId,
-                dealId: '',
+                dealId: '00000000-0000-0000-0000-000000000000',
                 pipelineValue: totalVal,
             },
             update: { pipelineValue: totalVal, computedAt: new Date() },
         });
     }
     async getAiPredictionScores(repId) {
-        const snaps = await this.prisma.aiForecastSnapshot.findMany({
-            orderBy: { computedAt: 'desc' },
-            take: 1,
+        const deals = await this.prisma.crmDeal.findMany({
+            where: { repUserId: repId, isClosedWon: false, isClosedLost: false, aiPredictionScore: { not: null } },
+            select: { id: true, aiPredictionScore: true },
         });
-        if (!snaps.length)
-            return [];
-        const explainability = snaps[0].modelInputs;
-        const deals = explainability?.deals ?? [];
-        const result = [];
-        for (const d of deals) {
-            const crmDeal = await this.prisma.crmDeal.findFirst({ where: { dealName: d.deal } });
-            if (crmDeal && crmDeal.repUserId === repId) {
-                result.push({
-                    deal_id: crmDeal.id,
-                    ai_prediction_score: d.aiConf === 'High' ? 95 : d.aiConf === 'Med' ? 70 : 40,
-                });
-            }
-        }
-        return result;
+        return deals.map(d => ({
+            deal_id: d.id,
+            ai_prediction_score: d.aiPredictionScore,
+        }));
     }
     async syncManualForecast(repId, dealId, periodId, finalValue) {
         await this.prisma.crmDeal.update({
@@ -569,6 +567,26 @@ let ForecastUpgradeService = class ForecastUpgradeService {
                 manualForecastUpdatedAt: new Date(),
             },
         });
+    }
+    async getPeriods() {
+        const periods = await this.prisma.forecastPeriod.findMany({
+            where: { tenantid: '00000000-0000-0000-0000-000000000001' },
+            orderBy: { startDate: 'desc' },
+        });
+        return periods.map((period) => ({
+            id: period.id,
+            name: period.name,
+            start_date: period.startDate.toISOString().slice(0, 10),
+            end_date: period.endDate.toISOString().slice(0, 10),
+            submission_deadline: period.endDate.toISOString().slice(0, 10),
+            is_locked: period.isLocked,
+        }));
+    }
+    async getPeriodReps(periodId) {
+        const reps = await this.prisma.forecastUser.findMany({
+            where: { tenantid: '00000000-0000-0000-0000-000000000001', role: 'sales_rep' },
+        });
+        return reps.map(r => ({ rep_id: r.id, name: r.name }));
     }
     async getRepDrilldown(repId, periodId) {
         const period = await this.prisma.forecastPeriod.findUnique({ where: { id: periodId } });
@@ -634,7 +652,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
     }
     async getManagerBoard(managerId, periodId) {
         const reps = await this.prisma.forecastUser.findMany({
-            where: { tenantid: '00000000-0000-0000-0000-000000000001', role: 'sales_rep' },
+            where: { tenantid: '00000000-0000-0000-0000-000000000001', role: 'sales_rep', managerId },
         });
         const result = [];
         for (const rep of reps) {
@@ -643,7 +661,7 @@ let ForecastUpgradeService = class ForecastUpgradeService {
                 where: { periodId, repUserId: rep.id },
             });
             const scores = await this.getAiPredictionScores(rep.id);
-            const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s.ai_prediction_score, 0) / scores.length) : 75;
+            const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + (s.ai_prediction_score ?? 0), 0) / scores.length) : 75;
             const targetVal = quota ? quota.amount : 0;
             const progress = targetVal > 0 ? ((summary.closed_won_total + summary.commit_total) / targetVal) * 100 : 0;
             const drilldownDeals = await this.getRepDrilldown(rep.id, periodId);

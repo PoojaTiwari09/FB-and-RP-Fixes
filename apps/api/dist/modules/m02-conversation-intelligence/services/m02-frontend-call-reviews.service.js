@@ -118,7 +118,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
     }
     async getReview(tenantId, reviewId, userId, userRole) {
         await this.ensureSeeded(tenantId, userId);
-        const where = { tenantId, reviewId };
+        const where = { tenantid: tenantId, reviewId };
         if (userRole === 'sales_rep' && userId) {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (user) {
@@ -149,7 +149,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
     async listReviews(tenantId, raw, userId, userRole) {
         const q = m02_frontend_call_reviews_schema_1.CallReviewsListQuerySchema.parse(raw);
         await this.ensureSeeded(tenantId, userId);
-        const where = { tenantId };
+        const where = { tenantid: tenantId };
         if (userRole === 'sales_rep' && userId) {
             const user = await this.prisma.user.findUnique({ where: { id: userId } });
             if (user) {
@@ -252,6 +252,17 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         const questionsJson = review.questions;
         const answeredCount = Array.isArray(questionsJson) ? questionsJson.length : 0;
         const sections = (0, m02_frontend_call_reviews_mapper_1.scorecardSectionsTemplate)();
+        if (Array.isArray(questionsJson)) {
+            sections.forEach(sec => {
+                sec.questions.forEach(q => {
+                    const ans = questionsJson.find(a => a.questionId === q.questionId);
+                    if (ans) {
+                        q.existingAnswer = ans.value !== undefined ? ans.value : ans.answer;
+                        q.existingComment = ans.comment || '';
+                    }
+                });
+            });
+        }
         return {
             totalQuestions: 11,
             answeredCount,
@@ -311,7 +322,10 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             where: { reviewId },
             data: updateData,
         });
-        return { success: true, savedAt: new Date().toISOString(), score };
+        const sections = (0, m02_frontend_call_reviews_mapper_1.scorecardSectionsTemplate)();
+        const totalRequired = sections.reduce((sum, sec) => sum + sec.questions.filter(q => q.required).length, 0);
+        const answeredCount = questionsJson.length;
+        return { success: true, savedAt: new Date().toISOString(), score, answeredCount, totalRequired };
     }
     async saveAnswersBatch(tenantId, reviewId, answers, userId, userRole) {
         const review = await this.getReview(tenantId, reviewId, userId, userRole);
@@ -347,7 +361,8 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             where: { reviewId },
             data: updateData,
         });
-        return { success: true, savedAt: new Date().toISOString() };
+        const answeredCount = Array.isArray(updateData.questions) ? updateData.questions.length : (Array.isArray(review.questions) ? review.questions.length : 0);
+        return { success: true, savedAt: new Date().toISOString(), answeredCount, totalQuestions: 11 };
     }
     async getCoaching(tenantId, reviewId, userId, userRole) {
         const review = await this.getReview(tenantId, reviewId, userId, userRole);
@@ -381,6 +396,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         const questionsJson = review.questions;
         const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
         const { score, sections } = calculateCallReviewScore(review.questions);
+        const feedback = review.feedback;
         return {
             isReadyForSubmission: answered >= 8,
             overallScore: review.overallScore || score,
@@ -393,6 +409,12 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             repName: review.salesRep,
             sectionScores: sections,
             aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
+            coachingPreview: {
+                strengths: feedback?.strengths || [],
+                improvements: feedback?.improvements || [],
+                coachingNotes: feedback?.coachingNotes || '',
+                recommendedActions: feedback?.recommendedActions || [],
+            },
         };
     }
     async submitReview(tenantId, reviewId, body, userId, userRole) {
@@ -447,6 +469,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         return {
             callTitle: review.callTitle,
             salesRep: review.salesRep,
+            submittedBy: review.reviewer,
             finalScore: review.overallScore || score,
             finalTotal: 100,
             finalPercent: review.overallScore || score,
@@ -460,10 +483,21 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
         const submittedData = await this.getSubmitted(reviewId, userId, userRole);
         const { sections } = calculateCallReviewScore(review.questions);
         return {
-            ...submittedData,
-            reviewerName: review.reviewer,
-            scorecardName: review.scorecardName,
-            scorecardVersion: review.scorecardVersion,
+            callDetails: {
+                callTitle: review.callTitle,
+                salesRep: review.salesRep,
+                customer: review.customer || review.account || 'Acme Corp',
+                duration: review.duration,
+                dateTime: review.dateTime || review.callDate,
+            },
+            reviewInfo: {
+                reviewerName: review.reviewer,
+                scorecardName: review.scorecardName,
+                scorecardVersion: review.scorecardVersion,
+                submittedAt: review.updatedAt.toISOString(),
+                finalScore: submittedData.finalScore,
+                passingStatus: submittedData.passingStatus,
+            },
             aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
             sections,
             coaching: review.feedback || {},
@@ -479,8 +513,20 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             fileName: `${reviewId}-review.pdf`,
         };
     }
-    cloneReview(reviewId) {
-        return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}` };
+    cloneReview(reviewId, targetCallId) {
+        return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}`, targetCallId };
+    }
+    async shareReview(tenantId, reviewId, body, userId, userRole) {
+        await this.getReview(tenantId, reviewId, userId, userRole);
+        return { success: true, sharedWith: body.recipientEmails || [] };
+    }
+    async reopenReview(tenantId, reviewId, userId, userRole) {
+        await this.getReview(tenantId, reviewId, userId, userRole);
+        await this.prisma.callReview.update({
+            where: { reviewId },
+            data: { status: 'In Progress' },
+        });
+        return { success: true, newStatus: 'In Progress', redirectUrl: `/calls/reviews/${reviewId}/edit` };
     }
     async getAnalyticsSummary(userId, userRole) {
         const where = {};
@@ -507,6 +553,7 @@ let M02FrontendCallReviewsService = class M02FrontendCallReviewsService {
             repAverageScore: avgScore,
             repAverageTrend: '+2%',
             teamAverageScore: 78,
+            teamComparison: 'above_average',
             completionRate: totalReviews > 0 ? Math.round((completedReviews.length / totalReviews) * 100) : 0,
             totalReviews: totalReviews,
         };

@@ -22,6 +22,22 @@ let FeedbackController = class FeedbackController {
         this.feedbackService = feedbackService;
     }
     async submitReportFeedback(reportId, body, req) {
+        if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (!body.type || typeof body.type !== 'string') {
+            throw new common_1.BadRequestException('type is required and must be a string');
+        }
+        if (body.sectionId !== undefined && typeof body.sectionId !== 'string') {
+            throw new common_1.BadRequestException('sectionId must be a string');
+        }
+        if (body.note !== undefined && typeof body.note !== 'string') {
+            throw new common_1.BadRequestException('note must be a string');
+        }
+        const raw = JSON.stringify(body);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
         return this.feedbackService.submitFeedback({
             orgId: req.user.orgId,
             userId: req.user.userId,

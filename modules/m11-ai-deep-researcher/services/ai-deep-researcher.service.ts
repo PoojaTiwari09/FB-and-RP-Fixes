@@ -7,7 +7,7 @@ interface JobState {
   jobId: string;
   progressPercent: number;
   status: 'queued' | 'in_progress' | 'complete' | 'failed';
-  steps: Array<{ stepId: string; label: string; status: 'queued' | 'in_progress' | 'complete'; detail: string | null }>;
+  steps: Array<{ stepId: string; label: string; status: 'queued' | 'in_progress' | 'complete' | 'failed'; detail: string | null }>;
   report: any | null;
   evidence: any | null;
 }

@@ -13,7 +13,6 @@ const m06_controller_1 = require("./controllers/m06.controller");
 const executive_controller_1 = require("./controllers/executive.controller");
 const hubspot_controller_1 = require("./controllers/hubspot.controller");
 const admin_forecast_boards_controller_1 = require("./controllers/admin-forecast-boards.controller");
-const forecast_boards_controller_1 = require("./controllers/forecast-boards.controller");
 const m06_service_1 = require("./services/m06.service");
 const forecast_boards_service_1 = require("./services/forecast-boards.service");
 const admin_forecast_boards_service_1 = require("./services/admin-forecast-boards.service");
@@ -44,7 +43,6 @@ exports.M06ForecastingPredictionModule = M06ForecastingPredictionModule = __deco
             executive_controller_1.M06ExecutiveController,
             hubspot_controller_1.HubSpotController,
             admin_forecast_boards_controller_1.AdminForecastBoardsController,
-            forecast_boards_controller_1.ForecastBoardsController,
             forecast_upgrade_controller_1.ForecastUpgradeController,
         ],
         providers: [

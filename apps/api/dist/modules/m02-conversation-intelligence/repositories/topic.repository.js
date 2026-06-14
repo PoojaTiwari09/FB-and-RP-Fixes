@@ -72,34 +72,62 @@ let TopicRepository = class TopicRepository {
         }
     }
     async getTopicModelById(id) {
-        const results = await this.prisma.$queryRaw `
-      SELECT id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
-      FROM m02_topic_models
-      WHERE id = ${id}::uuid
-    `;
-        if (results.length === 0)
-            return null;
-        const result = results[0];
-        return {
-            ...result,
-            topics: typeof result.topics === 'string' ? JSON.parse(result.topics) : result.topics
-        };
+        try {
+            const results = await this.prisma.$queryRaw `
+        SELECT id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
+        FROM m02_topic_models
+        WHERE id = ${id}::uuid
+      `;
+            if (results.length === 0)
+                return null;
+            const result = results[0];
+            return {
+                ...result,
+                topics: typeof result.topics === 'string' ? JSON.parse(result.topics) : result.topics
+            };
+        }
+        catch (error) {
+            console.log(`[TopicRepository] getTopicModelById failed, using in-memory: ${error.message}`);
+            const model = TopicRepository_1.topicModels.find(m => m.id === id);
+            return model ?? null;
+        }
     }
     async deleteTopicModel(id) {
-        await this.prisma.$queryRaw `DELETE FROM m02_topic_models WHERE id = ${id}::uuid`;
+        try {
+            await this.prisma.$queryRaw `DELETE FROM m02_topic_models WHERE id = ${id}::uuid`;
+        }
+        catch (error) {
+            console.log(`[TopicRepository] deleteTopicModel failed, using in-memory: ${error.message}`);
+            const index = TopicRepository_1.topicModels.findIndex(m => m.id === id);
+            if (index !== -1) {
+                TopicRepository_1.topicModels.splice(index, 1);
+            }
+        }
     }
     async updateTopicModel(id, topics) {
-        const result = await this.prisma.$queryRaw `
-      UPDATE m02_topic_models
-      SET topics = ${JSON.stringify(topics)}::jsonb, updated_at = NOW()
-      WHERE id = ${id}::uuid
-      RETURNING id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
-    `;
-        const updated = result[0];
-        return {
-            ...updated,
-            topics: typeof updated.topics === 'string' ? JSON.parse(updated.topics) : updated.topics
-        };
+        try {
+            const result = await this.prisma.$queryRaw `
+        UPDATE m02_topic_models
+        SET topics = ${JSON.stringify(topics)}::jsonb, updated_at = NOW()
+        WHERE id = ${id}::uuid
+        RETURNING id, tenant_id as "tenantId", topics, type, last_trained_at as "lastTrainedAt", created_at as "createdAt", updated_at as "updatedAt"
+      `;
+            const updated = result[0];
+            return {
+                ...updated,
+                topics: typeof updated.topics === 'string' ? JSON.parse(updated.topics) : updated.topics
+            };
+        }
+        catch (error) {
+            console.log(`[TopicRepository] updateTopicModel failed, using in-memory: ${error.message}`);
+            const index = TopicRepository_1.topicModels.findIndex(m => m.id === id);
+            if (index !== -1) {
+                TopicRepository_1.topicModels[index].topics = topics;
+                TopicRepository_1.topicModels[index].updatedAt = new Date();
+                return TopicRepository_1.topicModels[index];
+            }
+            throw new Error(`Topic model not found: ${id}`);
+        }
     }
     async createTopicTag(dto) {
         try {
@@ -143,37 +171,74 @@ let TopicRepository = class TopicRepository {
         }
     }
     async getTagsForTenant(tenantId) {
-        return await this.prisma.$queryRaw `
-      SELECT id, call_id as "callId", email_id as "emailId", tenant_id as "tenantId", topic_name as "topicName", source, confidence_score as "confidenceScore", explanation, evidence_snippet as "evidenceSnippet", created_at as "createdAt"
-      FROM m02_topic_tags
-      WHERE tenant_id = ${tenantId}::uuid
-      ORDER BY created_at DESC
-    `;
+        try {
+            return await this.prisma.$queryRaw `
+        SELECT id, call_id as "callId", email_id as "emailId", tenant_id as "tenantId", topic_name as "topicName", source, confidence_score as "confidenceScore", explanation, evidence_snippet as "evidenceSnippet", created_at as "createdAt"
+        FROM m02_topic_tags
+        WHERE tenant_id = ${tenantId}::uuid
+        ORDER BY created_at DESC
+      `;
+        }
+        catch (error) {
+            console.log(`[TopicRepository] getTagsForTenant failed, using in-memory: ${error.message}`);
+            return TopicRepository_1.topicTags.filter(t => t.tenantId === tenantId);
+        }
     }
     async deleteTag(tagId) {
-        await this.prisma.$queryRaw `DELETE FROM m02_topic_tags WHERE id = ${tagId}::uuid`;
+        try {
+            await this.prisma.$queryRaw `DELETE FROM m02_topic_tags WHERE id = ${tagId}::uuid`;
+        }
+        catch (error) {
+            console.log(`[TopicRepository] deleteTag failed, using in-memory: ${error.message}`);
+            const index = TopicRepository_1.topicTags.findIndex(t => t.id === tagId);
+            if (index !== -1) {
+                TopicRepository_1.topicTags.splice(index, 1);
+            }
+        }
     }
     async deleteTagsForConversation(conversationId) {
-        await this.prisma.$queryRaw `DELETE FROM m02_topic_tags WHERE call_id = ${conversationId}::uuid OR email_id = ${conversationId}::uuid`;
+        try {
+            await this.prisma.$queryRaw `DELETE FROM m02_topic_tags WHERE call_id = ${conversationId}::uuid OR email_id = ${conversationId}::uuid`;
+        }
+        catch (error) {
+            console.log(`[TopicRepository] deleteTagsForConversation failed, using in-memory: ${error.message}`);
+            TopicRepository_1.topicTags = TopicRepository_1.topicTags.filter(t => t.callId !== conversationId && t.emailId !== conversationId);
+        }
     }
     async getUntaggedConversations(tenantId, limit = 50) {
-        return await this.prisma.$queryRaw `
-      SELECT c.id, c.title, c.transcript
-      FROM m01_calls c
-      WHERE c.tenant_id = ${tenantId}::uuid
-      AND NOT EXISTS (
-        SELECT 1 FROM m02_topic_tags t WHERE t.call_id = c.id
-      )
-      LIMIT ${limit}
-    `;
+        try {
+            return await this.prisma.$queryRaw `
+        SELECT c.id, c.title, t."fullText" as transcript
+        FROM ingestion.call_records c
+        JOIN ingestion.transcripts t ON t."callId" = c.id
+        WHERE c.tenantid = ${tenantId}::uuid
+        AND NOT EXISTS (
+          SELECT 1 FROM m02_topic_tags tg WHERE tg.call_id = c.id
+        )
+        LIMIT ${limit}
+      `;
+        }
+        catch (error) {
+            console.log(`[TopicRepository] getUntaggedConversations failed, using in-memory: ${error.message}`);
+            return [];
+        }
     }
     async getConversationById(conversationId) {
-        const results = await this.prisma.$queryRaw `
-      SELECT id, title, transcript
-      FROM m01_calls
-      WHERE id = ${conversationId}::uuid
-    `;
-        return results.length > 0 ? results[0] : null;
+        try {
+            const results = await this.prisma.$queryRaw `
+        SELECT c.id, c.title, t."fullText" as transcript
+        FROM ingestion.call_records c
+        JOIN ingestion.transcripts t ON t."callId" = c.id
+        WHERE c.id = ${conversationId}::uuid
+      `;
+            if (results.length > 0)
+                return results[0];
+            return null;
+        }
+        catch (error) {
+            console.log(`[TopicRepository] getConversationById failed, using in-memory fallback: ${error.message}`);
+            return null;
+        }
     }
 };
 exports.TopicRepository = TopicRepository;

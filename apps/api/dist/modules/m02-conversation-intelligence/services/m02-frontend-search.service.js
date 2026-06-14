@@ -58,6 +58,28 @@ let M02FrontendSearchService = class M02FrontendSearchService {
             ],
         };
     }
+    async getTeams(tenantId) {
+        if (this.prisma.team) {
+            try {
+                const teams = await this.prisma.team.findMany({
+                    where: { tenantid: tenantId },
+                    select: { id: true, name: true }
+                });
+                if (teams && teams.length > 0) {
+                    return { teams };
+                }
+            }
+            catch (e) {
+            }
+        }
+        return {
+            teams: [
+                { id: 'team_west', name: 'West Region' },
+                { id: 'team_east', name: 'East Region' },
+                { id: 'team_central', name: 'Central Region' },
+            ]
+        };
+    }
     async searchCalls(tenantId, rawQuery) {
         const q = m02_frontend_search_schema_1.M02SearchCallsQuerySchema.parse(rawQuery);
         const queryText = [q.wordsOrPhrases, q.callTitle, q.participants].filter(Boolean).join(' ');

@@ -52,7 +52,32 @@ let M08TaskRepository = class M08TaskRepository {
             },
         });
     }
+    isUuid(str) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    }
     async findTaskById(tenantId, taskId) {
+        if (!this.isUuid(taskId)) {
+            const et = await this.prisma.engageTask.findFirst({
+                where: { taskId, tenantid: tenantId },
+            });
+            if (!et) {
+                throw new common_1.NotFoundException(`Task with ID ${taskId} not found in engage tasks`);
+            }
+            return {
+                id: et.taskId,
+                tenantid: et.tenantid,
+                userId: et.assigneeId || '00000000-0000-0000-0000-000000000003',
+                type: et.channel || 'EMAIL',
+                description: et.title || '',
+                dueDate: et.dueDateTime ? new Date(et.dueDateTime) : new Date(et.dueDate || Date.now()),
+                priority: et.priority === 'HIGH' ? 1 : et.priority === 'LOW' ? 3 : 2,
+                source: et.todoType || 'manual',
+                sourceId: et.contactId || null,
+                status: et.status ? et.status.toLowerCase() : 'pending',
+                createdAt: et.createdAt,
+                updatedAt: et.updatedAt
+            };
+        }
         const task = await this.prisma.task.findFirst({
             where: { id: taskId, tenantid: tenantId },
         });
@@ -122,6 +147,26 @@ let M08TaskRepository = class M08TaskRepository {
     }
     async updateTaskStatus(tenantId, taskId, status) {
         await this.findTaskById(tenantId, taskId);
+        if (!this.isUuid(taskId)) {
+            const et = await this.prisma.engageTask.update({
+                where: { taskId },
+                data: { status: status.toUpperCase() },
+            });
+            return {
+                id: et.taskId,
+                tenantid: et.tenantid,
+                userId: et.assigneeId || '00000000-0000-0000-0000-000000000003',
+                type: et.channel || 'EMAIL',
+                description: et.title || '',
+                dueDate: et.dueDateTime ? new Date(et.dueDateTime) : new Date(et.dueDate || Date.now()),
+                priority: et.priority === 'HIGH' ? 1 : et.priority === 'LOW' ? 3 : 2,
+                source: et.todoType || 'manual',
+                sourceId: et.contactId || null,
+                status: et.status ? et.status.toLowerCase() : 'pending',
+                createdAt: et.createdAt,
+                updatedAt: et.updatedAt
+            };
+        }
         return this.prisma.task.update({
             where: { id: taskId },
             data: { status },
@@ -129,6 +174,26 @@ let M08TaskRepository = class M08TaskRepository {
     }
     async reassignTask(tenantId, taskId, userId) {
         await this.findTaskById(tenantId, taskId);
+        if (!this.isUuid(taskId)) {
+            const et = await this.prisma.engageTask.update({
+                where: { taskId },
+                data: { assigneeId: userId },
+            });
+            return {
+                id: et.taskId,
+                tenantid: et.tenantid,
+                userId: et.assigneeId || '00000000-0000-0000-0000-000000000003',
+                type: et.channel || 'EMAIL',
+                description: et.title || '',
+                dueDate: et.dueDateTime ? new Date(et.dueDateTime) : new Date(et.dueDate || Date.now()),
+                priority: et.priority === 'HIGH' ? 1 : et.priority === 'LOW' ? 3 : 2,
+                source: et.todoType || 'manual',
+                sourceId: et.contactId || null,
+                status: et.status ? et.status.toLowerCase() : 'pending',
+                createdAt: et.createdAt,
+                updatedAt: et.updatedAt
+            };
+        }
         return this.prisma.task.update({
             where: { id: taskId },
             data: { userId },

@@ -16,6 +16,7 @@ exports.M01FrontendCallsController = void 0;
 const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
 const m01_frontend_calls_service_1 = require("../services/m01-frontend-calls.service");
+const s3_recordings_catalog_1 = require("../services/s3-recordings-catalog");
 let M01FrontendCallsController = class M01FrontendCallsController {
     svc;
     constructor(svc) {
@@ -23,6 +24,15 @@ let M01FrontendCallsController = class M01FrontendCallsController {
     }
     listCalls(query, req) {
         return this.svc.listCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
+    }
+    listS3Recordings() {
+        return {
+            recordings: s3_recordings_catalog_1.S3_RECORDINGS_CATALOG.map(({ id, displayName, sourceUrl }) => ({
+                id,
+                displayName,
+                sourceUrl,
+            })),
+        };
     }
     searchCalls(query, req) {
         return this.svc.searchCalls(req.tenantId, query, req.userId, req.userRole, req.userName);
@@ -49,6 +59,12 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], M01FrontendCallsController.prototype, "listCalls", null);
+__decorate([
+    (0, common_1.Get)('s3-recordings'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallsController.prototype, "listS3Recordings", null);
 __decorate([
     (0, common_1.Get)('search'),
     __param(0, (0, common_1.Query)()),

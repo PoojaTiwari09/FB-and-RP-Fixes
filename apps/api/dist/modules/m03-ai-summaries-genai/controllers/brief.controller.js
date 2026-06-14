@@ -24,7 +24,36 @@ let BriefController = class BriefController {
     getBrief(briefType, entityId, req) {
         return this.briefService.getBrief(req.user.orgId, briefType, entityId);
     }
-    generateBrief(briefType, entityId, req) {
+    generateBrief(briefType, entityId, body, req) {
+        if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (body.exampleField === undefined || typeof body.exampleField !== 'string') {
+            throw new common_1.BadRequestException('exampleField is required and must be a string');
+        }
+        if (body.count === undefined || typeof body.count !== 'number') {
+            throw new common_1.BadRequestException('count is required and must be a number');
+        }
+        const raw = JSON.stringify(body);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
+        return this.briefService.generateBrief(req.user.orgId, briefType, entityId);
+    }
+    saveBrief(briefType, entityId, body, req) {
+        if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (body.exampleField === undefined || typeof body.exampleField !== 'string') {
+            throw new common_1.BadRequestException('exampleField is required and must be a string');
+        }
+        if (body.count === undefined || typeof body.count !== 'number') {
+            throw new common_1.BadRequestException('count is required and must be a number');
+        }
+        const raw = JSON.stringify(body);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
         return this.briefService.generateBrief(req.user.orgId, briefType, entityId);
     }
 };
@@ -42,11 +71,22 @@ __decorate([
     (0, common_1.Post)(':briefType/:entityId/generate'),
     __param(0, (0, common_1.Param)('briefType')),
     __param(1, (0, common_1.Param)('entityId')),
-    __param(2, (0, common_1.Req)()),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], BriefController.prototype, "generateBrief", null);
+__decorate([
+    (0, common_1.Post)(':briefType/:entityId'),
+    __param(0, (0, common_1.Param)('briefType')),
+    __param(1, (0, common_1.Param)('entityId')),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], BriefController.prototype, "saveBrief", null);
 exports.BriefController = BriefController = __decorate([
     (0, common_1.Controller)('api/v1/ai-summaries-genai/briefs'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),

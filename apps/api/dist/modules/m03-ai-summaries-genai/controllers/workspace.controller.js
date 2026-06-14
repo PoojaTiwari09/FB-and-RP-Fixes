@@ -28,12 +28,38 @@ let WorkspaceController = class WorkspaceController {
         return this.workspace.getChatHistory(req.user.orgId);
     }
     saveChat(body, req) {
+        if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (!body.question || typeof body.question !== 'string') {
+            throw new common_1.BadRequestException('question is required and must be a string');
+        }
+        if (!body.answer || typeof body.answer !== 'string') {
+            throw new common_1.BadRequestException('answer is required and must be a string');
+        }
+        const raw = JSON.stringify(body);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
         return this.workspace.saveChat(req.user.orgId, req.user.userId, body.question, body.answer, body.citations || []);
     }
     deleteChat(id, req) {
         return this.workspace.deleteChat(req.user.orgId, id);
     }
     createDeal(body, req) {
+        if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+            throw new common_1.BadRequestException('Request body is required and cannot be empty');
+        }
+        if (body.exampleField === undefined || typeof body.exampleField !== 'string') {
+            throw new common_1.BadRequestException('exampleField is required and must be a string');
+        }
+        if (body.count === undefined || typeof body.count !== 'number') {
+            throw new common_1.BadRequestException('count is required and must be a number');
+        }
+        const raw = JSON.stringify(body);
+        if (raw.length > 10000) {
+            throw new common_1.BadRequestException('Request payload too large');
+        }
         return this.workspace.upsertDeal(req.user.orgId, body);
     }
 };

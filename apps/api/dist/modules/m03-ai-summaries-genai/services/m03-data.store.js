@@ -40,6 +40,31 @@ class M03DataStore {
                 created_at: new Date().toISOString(),
             },
         ];
+        const staticJobId = 'j0000000-0000-0000-0000-000000000001';
+        const staticReportId = 'r0000000-0000-0000-0000-000000000001';
+        this.jobs.set(staticJobId, {
+            id: staticJobId,
+            org_id: org,
+            user_id: exports.M03_DEV_USER,
+            query: 'What are the top risks?',
+            status: 'COMPLETED',
+            progress_pct: 100,
+            progress_stage: 'Complete',
+            report_id: staticReportId,
+            created_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+        });
+        this.reports.set(staticReportId, {
+            id: staticReportId,
+            job_id: staticJobId,
+            org_id: org,
+            query: 'What are the top risks?',
+            status: 'COMPLETED',
+            version: 1,
+            content: { sections: [{ title: 'Executive Summary', body: 'Pre-seeded research report content.' }] },
+            model_used: 'mock',
+            created_at: new Date().toISOString(),
+        });
     }
     insertJob(row) {
         this.jobs.set(row.id, row);

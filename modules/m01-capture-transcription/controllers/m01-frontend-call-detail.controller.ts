@@ -191,7 +191,7 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
-    return { discussionPoints: brief.keyDiscussionPoints || [] };
+    return { discussionPoints: (brief as any).keyDiscussionPoints || [] };
   }
 
   @Get('briefs/:briefId/customer-needs')
@@ -201,7 +201,7 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
-    return { customerNeeds: brief.customerNeeds || [] };
+    return { customerNeeds: (brief as any).customerNeeds || [] };
   }
 
   @Get('briefs/:briefId/risks')
@@ -211,7 +211,7 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
-    return { risks: brief.risks || [] };
+    return { risks: (brief as any).risks || [] };
   }
 
   @Get('briefs/:briefId/commitments')
@@ -221,7 +221,7 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
-    return { commitments: brief.commitments || [] };
+    return { commitments: (brief as any).commitments || [] };
   }
 
   @Get('briefs/:briefId/stakeholders')
@@ -231,7 +231,7 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
-    return { stakeholders: brief.stakeholders || [] };
+    return { stakeholders: (brief as any).stakeholders || [] };
   }
 
   @Get('briefs/:briefId/activity-context')
@@ -241,15 +241,7 @@ export class M01FrontendCallDetailController {
     @Req() req: Record<string, string>,
   ) {
     const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
-    return { activities: brief.activityContext || [] };
-  }
-  @Post('briefs/:briefId/regenerate')
-  regenerateBrief(
-    @Param('callId') callId: string,
-    @Param('briefId') _briefId: string,
-    @Req() req: Record<string, string>,
-  ) {
-    return this.processing.processCall(callId, req.tenantId);
+    return { activities: (brief as any).activityContext || [] };
   }
 
   @Post('briefs/:briefId/share-link')
