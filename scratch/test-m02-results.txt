@@ -1,0 +1,113 @@
+Starting Module 2 API Functional & Security Tests...
+==================================================
+Connecting to database to fetch valid entities...
+Database entities retrieved:
+  Call ID: 00000000-0000-0000-0001-000000000001
+  Review ID: rv_002
+  Tracker ID: a02bb074-a028-4ff6-943e-b8930a973d30
+  Theme ID: 88888888-8888-8888-8888-888888888888
+  Vocab ID: c4f28160-8ed7-4a54-8e59-0f3c692aa69b
+[PASS] [REP] Search Calls (GET /api/v1/conversation-intelligence/search/calls?tab=calls&page=1&size=5) -> Status: 200
+[PASS] [MANAGER] Search Calls (GET /api/v1/conversation-intelligence/search/calls?tab=calls&page=1&size=5) -> Status: 200
+[PASS] [REP] Search Options (GET /api/v1/conversation-intelligence/search/options) -> Status: 200
+[PASS] [MANAGER] Search Options (GET /api/v1/conversation-intelligence/search/options) -> Status: 200
+[PASS] [REP] Search Call Details (GET /api/v1/conversation-intelligence/search/calls/00000000-0000-0000-0001-000000000001) -> Status: 200
+[PASS] [MANAGER] Search Call Details (GET /api/v1/conversation-intelligence/search/calls/00000000-0000-0000-0001-000000000001) -> Status: 200
+[PASS] [REP] Filter Options (GET /api/v1/conversation-intelligence/filters/options) -> Status: 200
+[PASS] [MANAGER] Filter Options (GET /api/v1/conversation-intelligence/filters/options) -> Status: 200
+[PASS] [REP] Filter Teams (GET /api/v1/conversation-intelligence/filters/teams) -> Status: 200
+[PASS] [MANAGER] Filter Teams (GET /api/v1/conversation-intelligence/filters/teams) -> Status: 200
+[PASS] [REP] AI Ask Question (POST /api/v1/conversation-intelligence/calls/ai-ask) -> Status: 201
+[PASS] [MANAGER] AI Ask Question (POST /api/v1/conversation-intelligence/calls/ai-ask) -> Status: 201
+[PASS] [REP] Export Call (POST /api/v1/conversation-intelligence/calls/export) -> Status: 201
+[PASS] [MANAGER] Export Call (POST /api/v1/conversation-intelligence/calls/export) -> Status: 201
+[PASS] [REP] Call Streams (POST /api/v1/conversation-intelligence/streams) -> Status: 201
+[PASS] [MANAGER] Call Streams (POST /api/v1/conversation-intelligence/streams) -> Status: 201
+[PASS] [REP] List Call Reviews (GET /api/v1/conversation-intelligence/call-reviews) -> Status: 200
+[PASS] [MANAGER] List Call Reviews (GET /api/v1/conversation-intelligence/call-reviews) -> Status: 200
+[PASS] [REP] List Scorecards (GET /api/v1/conversation-intelligence/scorecards) -> Status: 200
+[PASS] [MANAGER] List Scorecards (GET /api/v1/conversation-intelligence/scorecards) -> Status: 200
+[PASS] [REP] List Users (GET /api/v1/conversation-intelligence/users) -> Status: 200
+[PASS] [MANAGER] List Users (GET /api/v1/conversation-intelligence/users) -> Status: 200
+[PASS] [REP] Coaching Tags Meta (GET /api/v1/conversation-intelligence/meta/coaching-tags) -> Status: 200
+[PASS] [MANAGER] Coaching Tags Meta (GET /api/v1/conversation-intelligence/meta/coaching-tags) -> Status: 200
+[PASS] [REP] Manager Calls List (GET /api/v1/conversation-intelligence/manager/calls) -> Status: 200
+[PASS] [MANAGER] Manager Calls List (GET /api/v1/conversation-intelligence/manager/calls) -> Status: 200
+[PASS] [REP] Analytics Summary (GET /api/v1/conversation-intelligence/analytics/summary) -> Status: 200
+[PASS] [MANAGER] Analytics Summary (GET /api/v1/conversation-intelligence/analytics/summary) -> Status: 200
+[PASS] [REP] Analytics Score Trend (GET /api/v1/conversation-intelligence/analytics/score-trend) -> Status: 200
+[PASS] [MANAGER] Analytics Score Trend (GET /api/v1/conversation-intelligence/analytics/score-trend) -> Status: 200
+[PASS] [REP] Analytics Focus Areas (GET /api/v1/conversation-intelligence/analytics/focus-areas) -> Status: 200
+[PASS] [MANAGER] Analytics Focus Areas (GET /api/v1/conversation-intelligence/analytics/focus-areas) -> Status: 200
+[PASS] [REP] Analytics Common Tags (GET /api/v1/conversation-intelligence/analytics/common-tags) -> Status: 200
+[PASS] [MANAGER] Analytics Common Tags (GET /api/v1/conversation-intelligence/analytics/common-tags) -> Status: 200
+[PASS] [REP] Analytics Review History (GET /api/v1/conversation-intelligence/analytics/review-history) -> Status: 200
+[PASS] [MANAGER] Analytics Review History (GET /api/v1/conversation-intelligence/analytics/review-history) -> Status: 200
+[PASS] [REP] Dashboard Summary (GET /api/v1/conversation-intelligence/dashboard/summary) -> Status: 200
+[PASS] [MANAGER] Dashboard Summary (GET /api/v1/conversation-intelligence/dashboard/summary) -> Status: 200
+[PASS] [REP] Review Detail (GET /api/v1/conversation-intelligence/call-reviews/rv_002) -> Status: 404
+[PASS] [MANAGER] Review Detail (GET /api/v1/conversation-intelligence/call-reviews/rv_002) -> Status: 200
+[PASS] [REP] Review View (GET /api/v1/conversation-intelligence/call-reviews/rv_002/view) -> Status: 404
+[PASS] [MANAGER] Review View (GET /api/v1/conversation-intelligence/call-reviews/rv_002/view) -> Status: 200
+[PASS] [REP] Review Summary (GET /api/v1/conversation-intelligence/call-reviews/rv_002/summary) -> Status: 404
+[PASS] [MANAGER] Review Summary (GET /api/v1/conversation-intelligence/call-reviews/rv_002/summary) -> Status: 200
+[PASS] [REP] Review Coaching (GET /api/v1/conversation-intelligence/call-reviews/rv_002/coaching) -> Status: 404
+[PASS] [MANAGER] Review Coaching (GET /api/v1/conversation-intelligence/call-reviews/rv_002/coaching) -> Status: 200
+[PASS] [REP] Review Scorecard (GET /api/v1/conversation-intelligence/call-reviews/rv_002/scorecard) -> Status: 404
+[PASS] [MANAGER] Review Scorecard (GET /api/v1/conversation-intelligence/call-reviews/rv_002/scorecard) -> Status: 200
+[PASS] [REP] Review Transcript (GET /api/v1/conversation-intelligence/call-reviews/rv_002/transcript) -> Status: 404
+[PASS] [MANAGER] Review Transcript (GET /api/v1/conversation-intelligence/call-reviews/rv_002/transcript) -> Status: 200
+[PASS] [REP] Review AI Insights (GET /api/v1/conversation-intelligence/call-reviews/rv_002/ai-insights) -> Status: 404
+[PASS] [MANAGER] Review AI Insights (GET /api/v1/conversation-intelligence/call-reviews/rv_002/ai-insights) -> Status: 200
+[PASS] [REP] Review Detail Restricted (rv_002) (GET /api/v1/conversation-intelligence/call-reviews/rv_002) -> Status: 404
+[PASS] [MANAGER] Review Detail Restricted (rv_002) (GET /api/v1/conversation-intelligence/call-reviews/rv_002) -> Status: 200
+[PASS] [REP] List Trackers (GET /api/v1/conversation-intelligence/trackers) -> Status: 200
+[PASS] [MANAGER] List Trackers (GET /api/v1/conversation-intelligence/trackers) -> Status: 200
+[PASS] [REP] Admin Trackers List (GET /api/v1/conversation-intelligence/trackers/admin/list) -> Status: 200
+[PASS] [MANAGER] Admin Trackers List (GET /api/v1/conversation-intelligence/trackers/admin/list) -> Status: 200
+[PASS] [REP] Trackers Stats (GET /api/v1/conversation-intelligence/trackers/stats) -> Status: 200
+[PASS] [MANAGER] Trackers Stats (GET /api/v1/conversation-intelligence/trackers/stats) -> Status: 200
+[PASS] [REP] Trackers Detections (GET /api/v1/conversation-intelligence/trackers/detections) -> Status: 200
+[PASS] [MANAGER] Trackers Detections (GET /api/v1/conversation-intelligence/trackers/detections) -> Status: 200
+[PASS] [REP] Create Tracker (POST /api/v1/conversation-intelligence/trackers) -> Status: 201
+[PASS] [MANAGER] Create Tracker (POST /api/v1/conversation-intelligence/trackers) -> Status: 201
+[PASS] [REP] Tracker Detail (GET /api/v1/conversation-intelligence/trackers/a02bb074-a028-4ff6-943e-b8930a973d30/detail) -> Status: 200
+[PASS] [MANAGER] Tracker Detail (GET /api/v1/conversation-intelligence/trackers/a02bb074-a028-4ff6-943e-b8930a973d30/detail) -> Status: 200
+[PASS] [REP] Tracker Ask Question (POST /api/v1/conversation-intelligence/trackers/a02bb074-a028-4ff6-943e-b8930a973d30/ask) -> Status: 201
+[PASS] [MANAGER] Tracker Ask Question (POST /api/v1/conversation-intelligence/trackers/a02bb074-a028-4ff6-943e-b8930a973d30/ask) -> Status: 201
+[PASS] [REP] Create Theme Analysis (POST /api/v1/m02-conversation-intelligence/theme-analyses) -> Status: 201
+[PASS] [MANAGER] Create Theme Analysis (POST /api/v1/m02-conversation-intelligence/theme-analyses) -> Status: 201
+[PASS] [REP] Theme Analysis Detail (GET /api/v1/m02-conversation-intelligence/theme-analyses/88888888-8888-8888-8888-888888888888) -> Status: 200
+[PASS] [MANAGER] Theme Analysis Detail (GET /api/v1/m02-conversation-intelligence/theme-analyses/88888888-8888-8888-8888-888888888888) -> Status: 200
+[PASS] [REP] Theme Spotter Themes (GET /api/theme-spotter/themes) -> Status: 200
+[PASS] [MANAGER] Theme Spotter Themes (GET /api/theme-spotter/themes) -> Status: 200
+[PASS] [REP] Theme Spotter Theme Detail (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888) -> Status: 200
+[PASS] [MANAGER] Theme Spotter Theme Detail (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888) -> Status: 200
+[PASS] [REP] Theme Trend (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/trend) -> Status: 200
+[PASS] [MANAGER] Theme Trend (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/trend) -> Status: 200
+[PASS] [REP] Theme Rep Breakdown (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/rep-breakdown) -> Status: 200
+[PASS] [MANAGER] Theme Rep Breakdown (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/rep-breakdown) -> Status: 200
+[PASS] [REP] Theme Stage Breakdown (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/stage-breakdown) -> Status: 200
+[PASS] [MANAGER] Theme Stage Breakdown (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/stage-breakdown) -> Status: 200
+[PASS] [REP] Theme Quotes (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/quotes) -> Status: 200
+[PASS] [MANAGER] Theme Quotes (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/quotes) -> Status: 200
+[PASS] [REP] Theme Calls (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/calls) -> Status: 200
+[PASS] [MANAGER] Theme Calls (GET /api/theme-spotter/themes/88888888-8888-8888-8888-888888888888/calls) -> Status: 200
+[PASS] [REP] Translate Text (POST /api/v1/m02-conversation-intelligence/translate) -> Status: 201
+[PASS] [MANAGER] Translate Text (POST /api/v1/m02-conversation-intelligence/translate) -> Status: 201
+[PASS] [REP] Translation Settings (GET /api/v1/m02-conversation-intelligence/translate/settings) -> Status: 200
+[PASS] [MANAGER] Translation Settings (GET /api/v1/m02-conversation-intelligence/translate/settings) -> Status: 200
+[PASS] [REP] Create Vocab Correction (POST /api/v1/conversation-intelligence/vocabulary) -> Status: 201
+[PASS] [MANAGER] Create Vocab Correction (POST /api/v1/conversation-intelligence/vocabulary) -> Status: 201
+[PASS] [REP] List Vocab Corrections (GET /api/v1/conversation-intelligence/vocabulary) -> Status: 200
+[PASS] [MANAGER] List Vocab Corrections (GET /api/v1/conversation-intelligence/vocabulary) -> Status: 200
+[PASS] [REP] Vocab Stats (GET /api/v1/conversation-intelligence/vocabulary/stats) -> Status: 200
+[PASS] [MANAGER] Vocab Stats (GET /api/v1/conversation-intelligence/vocabulary/stats) -> Status: 200
+[PASS] [REP] List Topics (GET /api/v1/m02-conversation-intelligence/topics) -> Status: 200
+[PASS] [MANAGER] List Topics (GET /api/v1/m02-conversation-intelligence/topics) -> Status: 200
+[PASS] [REP] Seed Topics (POST /api/v1/m02-conversation-intelligence/topics/seed) -> Status: 201
+[PASS] [MANAGER] Seed Topics (POST /api/v1/m02-conversation-intelligence/topics/seed) -> Status: 201
+[PASS] [REP] Conversation Topics (GET /api/v1/m02-conversation-intelligence/conversations/00000000-0000-0000-0001-000000000001/topics) -> Status: 200
+[PASS] [MANAGER] Conversation Topics (GET /api/v1/m02-conversation-intelligence/conversations/00000000-0000-0000-0001-000000000001/topics) -> Status: 200
+==================================================
+Verification Completed: 102 passed, 0 failed.
