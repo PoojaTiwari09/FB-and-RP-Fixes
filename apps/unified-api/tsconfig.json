@@ -3,7 +3,9 @@
     "target": "ES2022",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "outDir": "./dist",
     "baseUrl": "./",
     "strict": false,
@@ -12,9 +14,13 @@
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "paths": {
-      "@/*": ["../../modules/m04-deal-intelligence/*"]
+      "@/*": [
+        "../../modules/m04-deal-intelligence/*"
+      ]
     }
   },
   "include": [
@@ -27,5 +33,11 @@
     "../../modules/m07-revenue-dashboards/**/*",
     "../../modules/platform-core/**/*"
   ],
-  "exclude": ["node_modules", "dist", "../../modules/**/features/**", "../../modules/**/*.spec.ts", "../../modules/**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../../modules/**/features/**",
+    "../../modules/**/*.spec.ts",
+    "../../modules/**/*.test.ts"
+  ]
 }

@@ -35,9 +35,10 @@ export class TrackerController {
     return this.frontendSvc.listTrackers(req.tenantId, query);
   }
 
-  @Get('admin-all')
+  @Get('admin/list')
   async getAllTrackers(@Req() req: Record<string, any>) {
-    return this.trackerService.getTrackers(req.tenantId);
+    const data = await this.trackerService.getTrackers(req.tenantId);
+    return { data };
   }
 
   @Get('stats')
@@ -76,6 +77,13 @@ export class TrackerController {
     @Query() query: any,
   ) {
     return this.frontendSvc.askTracker(req.tenantId, trackerId, body?.question ?? '', query);
+  }
+
+
+  @Get(':id')
+  async getTrackerById(@Req() req: Record<string, any>, @Param('id') id: string) {
+    const data = await this.trackerService.getTrackerById(id, req.tenantId);
+    return { data };
   }
 
   @Put(':id')

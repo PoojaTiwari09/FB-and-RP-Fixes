@@ -1,0 +1,76 @@
+# Backend Change Requirements for Tracker Module
+
+To achieve seamless integration with the existing frontend codebase without requiring frontend code changes, the backend must implement the following API endpoints, payload schemas, and field-mapping logic.
+
+---
+
+## 1. Required API Endpoints
+
+### Admin Tracker List
+- **Endpoint**: `GET /api/v1/conversation-intelligence/trackers/admin/list`
+- **Response Wrapper**: Must return the trackers array wrapped inside a `data` field (or directly as a top-level array).
+- **Response Payload Example**:
+```json
+{
+  "data": [
+    {
+      "id": "trk_example_123",
+      "name": "Did the customer mention pricing?",
+      "aiInsight": "Did the customer mention pricing?",
+      "isActive": true,
+      "speakerScope": "any",
+      "timingCondition": "anytime",
+      "timingMinutes": null,
+      "keywords": ["pricing", "cost", "budget"],
+      "createdAt": "2026-06-13T05:39:56.000Z",
+      "updatedAt": "2026-06-13T05:40:00.000Z"
+    }
+  ]
+}
+```
+
+### Tracker Detail (for Prefilling Edit Forms)
+- **Endpoint**: `GET /api/v1/conversation-intelligence/trackers/:id`
+- **Response Wrapper**: Must return a single tracker object wrapped inside a `data` field (or directly as a top-level object).
+- **Response Payload Shape**: Same fields as the list items above.
+
+### Create Tracker
+- **Endpoint**: `POST /api/v1/conversation-intelligence/trackers`
+- **Request Payload**:
+```json
+{
+  "name": "Did the customer mention pricing?",
+  "isActive": true,
+  "speakerScope": "any",
+  "timingCondition": "anytime",
+  "timingMinutes": 5,
+  "keywords": ["pricing", "cost"]
+}
+```
+- **Response Payload**: The newly created tracker object matching the structure above.
+
+### Update Tracker
+- **Endpoint**: `PUT /api/v1/conversation-intelligence/trackers/:id`
+- **Request Payload**: Same fields as Create Tracker (partial updates allowed).
+- **Response Payload**: The updated tracker object.
+
+### Delete Tracker
+- **Endpoint**: `DELETE /api/v1/conversation-intelligence/trackers/:id`
+- **Response**: Status `200 OK` or `204 No Content`.
+
+---
+
+## 2. Core Field Mapping & Database Logic
+
+To match how the frontend reads and writes data, the backend must adhere to the following mapping rules:
+
+| Frontend UI Field | Backend Request Payload Field | Backend Database/Response Field | Backend Logic / Notes |
+| :--- | :--- | :--- | :--- |
+| **Question** | Sent inside `name` | Returned as `aiInsight` | **CRITICAL**: The frontend sends the user's question inside the `name` payload field. To return this value back to the UI, the backend must populate both `name` and `aiInsight` in the database with this value. |
+| **Type** | *Not sent* | Computed from `speakerScope` & `timingCondition` | The frontend determines the tracker type dynamically based on the returned values. The backend does not need a dedicated type column. |
+| **Status** | Sent as `isActive` | `isActive` (boolean) | The frontend maps `isActive: true` to `published` status and `isActive: false` to `unpublished`/`draft`. |
+| **Filters** | *Not sent* | Computed from `speakerScope` & `timingCondition` | The frontend generates the filter array dynamically for display. The backend does not need to store a separate filters array. |
+| **Language** | *Not sent* | *Not required* | Hardcoded to `'all'` by the frontend mapper. |
+| **Created By** | *Not sent* | *Not required* | Hardcoded to `'System'` by the frontend mapper. |
+| **Last Modified** | *Not sent* | `updatedAt` (ISO string) | Frontend maps `updatedAt` or `createdAt` to a user-friendly date string. |
+| **Data Since** | *Not sent* | `createdAt` (ISO string) | Frontend maps `createdAt` to a user-friendly date string. |

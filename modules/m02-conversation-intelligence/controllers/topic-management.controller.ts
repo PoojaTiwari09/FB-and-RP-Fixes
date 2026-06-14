@@ -30,12 +30,12 @@ export class TopicManagementController {
     @Body('topics') topics: TopicDefinition[],
     @Body('type') type?: string,
   ) {
-    return this.topicManagementService.createTopicModel(req.tenantId, topics, type);
+    return { data: await this.topicManagementService.createTopicModel(req.tenantId, topics, type) };
   }
 
   @Get()
   async getTopicModels(@Req() req: Record<string, any>) {
-    return this.topicManagementService.getTopicModels(req.tenantId);
+    return { data: await this.topicManagementService.getTopicModels(req.tenantId) };
   }
 
   @Delete(':id')
@@ -45,7 +45,7 @@ export class TopicManagementController {
 
   @Post('topics')
   async addTopicToModel(@Req() req: Record<string, any>, @Body() body: any) {
-    return this.topicManagementService.addTopicToModel(req.tenantId, body);
+    return { data: await this.topicManagementService.addTopicToModel(req.tenantId, body) };
   }
 
   @Delete('remove')
@@ -53,7 +53,7 @@ export class TopicManagementController {
     @Req() req: Record<string, any>,
     @Body('topicName') topicName: string,
   ) {
-    return this.topicManagementService.removeTopicFromModel(req.tenantId, topicName);
+    return { data: await this.topicManagementService.removeTopicFromModel(req.tenantId, topicName) };
   }
 
   @Post('seed')
@@ -71,9 +71,9 @@ export class TopicManagementController {
 
     const existingModels = await this.topicManagementService.getTopicModels(req.tenantId);
     if (existingModels.length > 0) {
-      return { message: 'Topic model already exists for this tenant', models: existingModels };
+      return { data: { message: 'Topic model already exists for this tenant', models: existingModels } };
     }
 
-    return this.topicManagementService.createTopicModel(req.tenantId, defaultTopics, 'global');
+    return { data: await this.topicManagementService.createTopicModel(req.tenantId, defaultTopics, 'global') };
   }
 }

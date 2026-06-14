@@ -60,17 +60,10 @@ export class M02FrontendSearchService {
           return { teams };
         }
       } catch (e) {
-        // Fallback if schema doesn't match
+        // Fallback
       }
     }
-    // Fallback if no db teams
-    return {
-      teams: [
-        { id: 'team_west', name: 'West Region' },
-        { id: 'team_east', name: 'East Region' },
-        { id: 'team_central', name: 'Central Region' },
-      ]
-    };
+    return { teams: [] };
   }
 
   async searchCalls(tenantId: string, rawQuery: Record<string, string>) {
@@ -106,13 +99,13 @@ export class M02FrontendSearchService {
         tenantId,
         title: h.title || 'Untitled',
         channel: 'call',
-        customerName: h.customerName || h.snippet?.slice(0, 40) || '—',
-        agentName: h.agentName || 'Rep',
-        date: h.date || new Date().toISOString(),
+        customerName: h.customerName || h.snippet?.slice(0, 40) || '',
+        agentName: h.agentName || '',
+        date: h.date || '',
         duration: h.duration || '0m',
         sentiment: 'Neutral',
         sentimentScore: 0,
-        overallScore: h.overallScore ?? 75,
+        overallScore: h.overallScore || 0,
         topics: h.topics || [],
         summary: h.snippet || '',
         transcript: '',
@@ -122,7 +115,7 @@ export class M02FrontendSearchService {
       }),
     );
 
-    const emailsCount = 0;
+    const emailsCount = rows.filter((r: any) => r.channel === 'email').length;
     const callsCount = results.length;
     const count = results.length || 10;
     const gran = q.chartGranularity || 'weeks';
@@ -180,7 +173,7 @@ export class M02FrontendSearchService {
         name: name.replace(/\s*\(.*\)/, ''),
         role: name.includes('Rep') ? 'Rep' : 'Customer',
       })),
-      account: record.accountId || '—',
+      account: record.accountId || '',
       type: record.callSource || 'manual',
       status: record.callSource || 'manual',
       score,
@@ -216,26 +209,45 @@ export class M02FrontendSearchService {
     };
   }
 
-  async aiAsk(tenantId: string, body: { callId: string; question: string }) {
+  async aiAsk(tenantId: string, body: { callId?: string; question?: string }) {
     const dto = M02AiAskBodySchema.parse(body);
+    const question = dto.question || 'How can I improve this call?';
+
+    // If no callId provided, return a general AI response
+    if (!dto.callId) {
+      return {
+        callId: null,
+        question,
+        answer: `AI Analysis: ${question} — Please provide a callId to get call-specific insights.`,
+        suggestedQuestions: [
+          'What were the main objections raised?',
+          'What topics were discussed most?',
+          'What are the action items from this call?',
+        ],
+      };
+    }
+
     const record = await this.prisma.callRecord.findFirst({
       where: { id: dto.callId, tenantid: tenantId },
       include: { transcript: true },
     });
-    if (!record) throw new NotFoundException('Call not found');
+    if (!record) {
+      return {
+        callId: dto.callId,
+        question,
+        answer: `No call record found for ID ${dto.callId}.`,
+        suggestedQuestions: [],
+      };
+    }
 
     const summary = record.transcript?.summary || 'No summary available.';
-    const answer = `Based on the call "${record.title}": ${summary} (Question: ${dto.question})`;
+    const answer = `Based on the call "${record.title}": ${summary} (Question: ${question})`;
 
     return {
       callId: dto.callId,
-      question: dto.question,
+      question,
       answer,
-      suggestedQuestions: [
-        'What objections came up most?',
-        'Where did the rep struggle?',
-        'What were the key customer concerns?',
-      ],
+      suggestedQuestions: [],
     };
   }
 
@@ -245,9 +257,10 @@ export class M02FrontendSearchService {
     return { jobId, status: 'queued' };
   }
 
-  async createStream(_tenantId: string, body: { name: string }) {
+  async createStream(_tenantId: string, body: { name?: string; filters?: Record<string, unknown> }) {
     const streamId = `stream_${randomUUID().slice(0, 8)}`;
-    this.streams.set(streamId, { ...body, status: 'active' });
-    return { streamId, name: body.name, status: 'active' };
+    const name = body.name || 'Unnamed Stream';
+    this.streams.set(streamId, { ...body, name, status: 'active' });
+    return { streamId, name, status: 'active' };
   }
 }

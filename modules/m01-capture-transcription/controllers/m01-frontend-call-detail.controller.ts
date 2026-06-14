@@ -25,7 +25,7 @@ export class M01FrontendCallDetailController {
     private readonly processing: M01FrontendCallProcessingService,
     private readonly callsUi: M01FrontendCallsService,
     private readonly notesRepo: NotesRepository,
-  ) {}
+  ) { }
 
   @Get('metadata')
   getMetadata(@Param('callId') callId: string, @Req() req: Record<string, string>) {
@@ -187,8 +187,9 @@ export class M01FrontendCallDetailController {
     if (!noteText) {
       throw new BadRequestException('Note content is required');
     }
-    const authorId = body.userId || req.user?.sub || req.user?.id || req.userId;
-    const tenantId = req.tenantId || req.user?.tenantId;
+    const reqAny = req as any;
+    const authorId = body.userId || reqAny.user?.sub || reqAny.user?.id || reqAny.userId;
+    const tenantId = reqAny.tenantId || reqAny.user?.tenantId;
     if (!tenantId || !authorId) throw new BadRequestException('Authentication required');
     const created = await this.notesRepo.create(callId, tenantId, authorId, { content: noteText });
     return {
@@ -207,7 +208,7 @@ export class M01FrontendCallDetailController {
 @Controller('api/v1/capture-transcription/brief-templates')
 @UseGuards(TenantGuard)
 export class M01FrontendBriefTemplatesController {
-  constructor(private readonly svc: M01FrontendTranscriptService) {}
+  constructor(private readonly svc: M01FrontendTranscriptService) { }
 
   @Get()
   list() {
@@ -218,7 +219,7 @@ export class M01FrontendBriefTemplatesController {
 @Controller('api/v1/capture-transcription/brief-periods')
 @UseGuards(TenantGuard)
 export class M01FrontendBriefPeriodsController {
-  constructor(private readonly svc: M01FrontendTranscriptService) {}
+  constructor(private readonly svc: M01FrontendTranscriptService) { }
 
   @Get()
   list() {

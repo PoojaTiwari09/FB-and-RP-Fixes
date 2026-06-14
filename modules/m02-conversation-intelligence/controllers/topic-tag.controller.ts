@@ -28,7 +28,7 @@ export class TopicTagController {
 
   @Get('conversations/:id/topics')
   async getTagsForConversation(@Param('id') id: string) {
-    return this.topicTagService.getTagsForConversation(id);
+    return { data: await this.topicTagService.getTagsForConversation(id) };
   }
 
   @Post('conversations/:id/topics')
@@ -38,7 +38,7 @@ export class TopicTagController {
     @Body('topicName') topicName: string,
     @Body('explanation') explanation?: string,
   ) {
-    return this.topicTagService.addManualTag(req.tenantId, conversationId, topicName, explanation);
+    return { data: await this.topicTagService.addManualTag(req.tenantId, conversationId, topicName, explanation) };
   }
 
   @Delete('topics/tags/:tagId')

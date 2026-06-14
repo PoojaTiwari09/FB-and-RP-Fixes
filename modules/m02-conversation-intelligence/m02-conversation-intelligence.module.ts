@@ -15,6 +15,7 @@ import {
 import {
   M02FrontendAnalyticsController,
   M02FrontendCallReviewsController,
+  M02FrontendDashboardController,
   M02FrontendMetaController,
   M02FrontendManagerCallsController,
   M02FrontendScorecardsController,
@@ -38,7 +39,7 @@ import { M02ConversationIntelligenceRepository } from './repositories/m02.reposi
 import { TopicRepository } from './repositories/topic.repository';
 import { PrismaModule } from './database/prisma.module';
 import { EventPublisherModule } from '../platform-core/events/event-publisher.module';
-import { ThemeAnalysesController } from './controllers/theme-analyses.controller';
+import { ThemeAnalysesController, ThemeSpotterController } from './controllers/theme-analyses.controller';
 import { ThemeAnalysesService } from './services/theme-analyses.service';
 
 @Module({
@@ -61,7 +62,9 @@ import { ThemeAnalysesService } from './services/theme-analyses.service';
     M02FrontendUsersController,
     M02FrontendMetaController,
     M02FrontendAnalyticsController,
+    M02FrontendDashboardController,
     ThemeAnalysesController,
+    ThemeSpotterController,
   ],
   providers: [
     M02FrontendSearchService,

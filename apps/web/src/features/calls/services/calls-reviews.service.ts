@@ -23,6 +23,11 @@ function apiQueryParams(params: Record<string, string>): URLSearchParams {
   return qs;
 }
 
+async function unwrap<T>(res: Response): Promise<T> {
+  const payload = await res.json();
+  return (payload.data !== undefined ? payload.data : payload) as T;
+}
+
 // ─── Call Reviews ────────────────────────────────────────────────────────────
 
 export async function fetchCallReviews(params: {
@@ -38,7 +43,7 @@ export async function fetchCallReviews(params: {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch call reviews: ${res.status}`);
-  return res.json() as Promise<CallReviewsResponse>;
+  return unwrap<CallReviewsResponse>(res);
 }
 
 // ─── All Calls ───────────────────────────────────────────────────────────────
@@ -56,7 +61,7 @@ export async function fetchAllCalls(params: {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch all calls: ${res.status}`);
-  return res.json() as Promise<CallsResponse>;
+  return unwrap<CallsResponse>(res);
 }
 
 // ─── Review Detail ───────────────────────────────────────────────────────────
@@ -69,7 +74,7 @@ export async function fetchCallReviewDetail(
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch review detail: ${res.status}`);
-  return res.json() as Promise<CallReviewDetail>;
+  return unwrap<CallReviewDetail>(res);
 }
 
 // ─── Scorecards ──────────────────────────────────────────────────────────────
@@ -80,7 +85,7 @@ export async function fetchScorecards(): Promise<{ scorecards: Scorecard[] }> {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch scorecards: ${res.status}`);
-  return res.json() as Promise<{ scorecards: Scorecard[] }>;
+  return unwrap<{ scorecards: Scorecard[] }>(res);
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -91,7 +96,7 @@ export async function fetchUsers(): Promise<{ users: User[] }> {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
-  return res.json() as Promise<{ users: User[] }>;
+  return unwrap<{ users: User[] }>(res);
 }
 
 // ─── Patch Review ────────────────────────────────────────────────────────────
@@ -109,7 +114,7 @@ export async function patchCallReview(
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Failed to patch review: ${res.status}`);
-  return res.json() as Promise<{ success: boolean }>;
+  return unwrap<{ success: boolean }>(res);
 }
 
 // ─── Mark Not Applicable ─────────────────────────────────────────────────────
@@ -122,7 +127,7 @@ export async function markNotApplicable(
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to mark N/A: ${res.status}`);
-  return res.json() as Promise<{ success: boolean }>;
+  return unwrap<{ success: boolean }>(res);
 }
 
 // ─── Analytics Summary ───────────────────────────────────────────────────────
@@ -133,7 +138,7 @@ export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch analytics summary: ${res.status}`);
-  return res.json() as Promise<AnalyticsSummary>;
+  return unwrap<AnalyticsSummary>(res);
 }
 
 // ─── Score Trend ─────────────────────────────────────────────────────────────
@@ -144,10 +149,9 @@ export async function fetchScoreTrend(): Promise<{ trendData: TrendPoint[] }> {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch score trend: ${res.status}`);
-  const payload = await res.json();
-  // Map trendData if it comes back as `data` from backend
-  const data = payload.data || payload.trendData || [];
-  return { trendData: data } as { trendData: TrendPoint[] };
+  const data = await unwrap<any>(res);
+  const trendData = data.data || data.trendData || data || [];
+  return { trendData };
 }
 
 // ─── Focus Areas ─────────────────────────────────────────────────────────────
@@ -158,9 +162,9 @@ export async function fetchFocusAreas(): Promise<{ focusAreas: FocusArea[] }> {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch focus areas: ${res.status}`);
-  const payload = await res.json();
-  const data = payload.data || payload.areas || payload.focusAreas || [];
-  return { focusAreas: data } as { focusAreas: FocusArea[] };
+  const data = await unwrap<any>(res);
+  const focusAreas = data.areas || data.focusAreas || data.data || [];
+  return { focusAreas };
 }
 
 // ─── Common Tags ─────────────────────────────────────────────────────────────
@@ -171,9 +175,9 @@ export async function fetchCommonTags(): Promise<{ tags: TagCount[] }> {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch common tags: ${res.status}`);
-  const payload = await res.json();
-  const data = payload.data || payload.tags || [];
-  return { tags: data } as { tags: TagCount[] };
+  const data = await unwrap<any>(res);
+  const tags = data.tags || data.data || [];
+  return { tags };
 }
 
 // ─── Review History ──────────────────────────────────────────────────────────
@@ -191,7 +195,7 @@ export async function fetchReviewHistory(params: {
     headers: getBridgeHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch review history: ${res.status}`);
-  return res.json() as Promise<ReviewHistoryResponse>;
+  return unwrap<ReviewHistoryResponse>(res);
 }
 
 export async function saveCallReviewDraft(
@@ -207,7 +211,7 @@ export async function saveCallReviewDraft(
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Failed to save draft: ${res.status}`);
-  return res.json() as Promise<{ success: boolean }>;
+  return unwrap<{ success: boolean }>(res);
 }
 
 export async function submitCallReview(
@@ -223,7 +227,7 @@ export async function submitCallReview(
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Failed to submit review: ${res.status}`);
-  return res.json() as Promise<{ success: boolean; finalScore: number }>;
+  return unwrap<{ success: boolean; finalScore: number }>(res);
 }
 
 export async function saveCoachingFeedback(
@@ -239,5 +243,5 @@ export async function saveCoachingFeedback(
     body: JSON.stringify(coaching),
   });
   if (!res.ok) throw new Error(`Failed to save coaching: ${res.status}`);
-  return res.json() as Promise<{ success: boolean }>;
+  return unwrap<{ success: boolean }>(res);
 }

@@ -94,17 +94,23 @@ export default function CallDetailLayout({ callId, children }: CallDetailLayoutP
               {/* Participants — inline "Name (Role)" separated by commas */}
               <div className="flex flex-wrap items-baseline text-sm text-gray-500">
                 <span className="font-medium text-gray-700 mr-1.5">Participants:</span>
-                {call.participants.map((p, i) => (
-                  <span key={p.name} className="mr-0.5">
-                    <span className={`font-medium ${PARTICIPANT_COLORS[p.role] ?? 'text-gray-700'}`}>
-                      {p.name}
+                {(call.participants || []).map((p: any, i, arr) => {
+                  const name = typeof p === 'string' ? p : p?.name || 'Unknown';
+                  const role = typeof p === 'string' ? (i === 0 ? 'Rep' : 'Buyer') : p?.role || 'Participant';
+                  return (
+                    <span key={`${name}-${i}`} className="mr-0.5">
+                      <span className={`font-medium ${PARTICIPANT_COLORS[role] ?? 'text-gray-700'}`}>
+                        {name}
+                      </span>
+                      {role && role !== 'Participant' && (
+                        <span className="text-gray-500"> ({role})</span>
+                      )}
+                      {i < arr.length - 1 && (
+                        <span className="text-gray-400">,&nbsp;</span>
+                      )}
                     </span>
-                    <span className="text-gray-500"> ({p.role})</span>
-                    {i < call.participants.length - 1 && (
-                      <span className="text-gray-400">,&nbsp;</span>
-                    )}
-                  </span>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

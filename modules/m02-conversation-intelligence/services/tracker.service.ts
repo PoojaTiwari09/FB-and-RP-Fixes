@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 /**
@@ -18,7 +18,7 @@ export class TrackerService {
   private static memTrackers: any[] = [];
   private static memDetections: any[] = [];
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private get trackerDelegate(): any | null {
     return (this.prisma as any)?.m02Tracker ?? (this.prisma as any)?.tracker ?? null;
@@ -41,43 +41,112 @@ export class TrackerService {
     timingCondition?: string;
     timingMinutes?: number;
   }) {
+    const baseSlug = data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    let slug = baseSlug;
+    let counter = 1;
+
     if (!this.trackerDelegate?.create) {
       const created = {
         id: `mock-${Date.now()}`,
         ...data,
+        slug,
+        aiInsight: data.name,
         isActive: data.isActive ?? true,
         createdAt: new Date(),
+        updatedAt: new Date(),
       };
       TrackerService.memTrackers.push(created);
       return created;
     }
-    const { tenantId, ...rest } = data;
-    return this.trackerDelegate.create({ data: { ...rest, tenantid: tenantId } });
+
+    const { tenantId, speakerScope, timingCondition, timingMinutes, name, ...rest } = data;
+
+    while (
+      await this.trackerDelegate.findFirst({
+        where: {
+          tenantid: tenantId,
+          slug,
+        },
+      })
+    ) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    return this.trackerDelegate.create({
+      data: {
+        ...rest,
+        name,
+        slug,
+        aiInsight: name,
+        tenantid: tenantId,
+        isActive: data.isActive ?? true,
+      } as any,
+    });
   }
 
   async getTrackers(tenantId: string) {
+    let trackers = [];
     try {
       if (!this.trackerDelegate?.findMany) throw new Error('Delegate missing');
-      return await this.trackerDelegate.findMany({
+      trackers = await this.trackerDelegate.findMany({
         where: { tenantid: tenantId },
         orderBy: { createdAt: 'desc' },
       });
     } catch {
-      return TrackerService.memTrackers
+      trackers = TrackerService.memTrackers
         .filter((t) => t.tenantId === tenantId)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     }
+    return trackers.map((t: any) => ({
+      ...t,
+      name: t.name || t.aiInsight,
+      aiInsight: t.aiInsight || t.name,
+    }));
+  }
+
+
+  async getTrackerById(id: string, tenantId: string) {
+    let tracker = null;
+    try {
+      if (!this.trackerDelegate?.findFirst) {
+        tracker = TrackerService.memTrackers.find((t) => (t.id === id || t.slug === id) && t.tenantId === tenantId);
+      } else {
+        tracker = await this.trackerDelegate.findFirst({
+          where: { tenantid: tenantId, OR: [{ id }, { slug: id }] },
+        });
+      }
+    } catch (e: any) {
+      this.logger.warn(`getTrackerById DB error: ${e?.message}`);
+      tracker = TrackerService.memTrackers.find((t) => (t.id === id || t.slug === id) && t.tenantId === tenantId);
+    }
+    if (!tracker) throw new NotFoundException(`Tracker not found: ${id}`);
+    return {
+      ...tracker,
+      name: tracker.name || tracker.aiInsight,
+      aiInsight: tracker.aiInsight || tracker.name,
+    };
   }
 
   async updateTracker(id: string, tenantId: string, data: any) {
+    const mappedData = { ...data };
+    if (mappedData.name) {
+      mappedData.aiInsight = mappedData.name;
+      mappedData.slug = mappedData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
     if (!this.trackerDelegate?.update) {
       const idx = TrackerService.memTrackers.findIndex((t) => (t.id === id || t.slug === id) && t.tenantId === tenantId);
       if (idx === -1) throw new Error('Tracker not found');
-      TrackerService.memTrackers[idx] = { ...TrackerService.memTrackers[idx], ...data, updatedAt: new Date() };
+      TrackerService.memTrackers[idx] = { ...TrackerService.memTrackers[idx], ...mappedData, updatedAt: new Date() };
       return TrackerService.memTrackers[idx];
     }
     try {
-      const { tenantId: _, ...rest } = data;
+      const { tenantId: _, speakerScope, timingCondition, timingMinutes, ...rest } = mappedData;
       const tracker = await this.trackerDelegate.findFirst({
         where: { tenantid: tenantId, OR: [{ id }, { slug: id }] },
       });
@@ -88,7 +157,7 @@ export class TrackerService {
         where: { id: tracker.id },
         data: rest,
       });
-    } catch (e) {
+    } catch (e: any) {
       return { success: true, message: `Mocked update fallback: ${e.message}` };
     }
   }
@@ -166,12 +235,12 @@ export class TrackerService {
     for (const tracker of trackers) {
       for (const keyword of tracker.keywords) {
         const keywordLower = keyword.toLowerCase();
-        
+
         // Check if keyword exists in transcript
         if (transcriptLower.includes(keywordLower)) {
           // Find all occurrences with context
           const occurrences = this.findKeywordOccurrences(transcript, keyword);
-          
+
           for (const occurrence of occurrences) {
             // Check speaker scope if diarized transcript is available
             let speakerMatch = true;
@@ -235,19 +304,19 @@ export class TrackerService {
 
     while (position !== -1) {
       position = transcriptLower.indexOf(keywordLower, position);
-      
+
       if (position !== -1) {
         // Extract context (50 chars before and after)
         const start = Math.max(0, position - 50);
         const end = Math.min(transcript.length, position + keyword.length + 50);
         const context = transcript.substring(start, end);
-        
+
         occurrences.push({
           position,
           context,
           timestamp: null, // Will be calculated if diarized transcript is available
         });
-        
+
         position += keyword.length;
       }
     }
@@ -269,18 +338,18 @@ export class TrackerService {
       const turnLength = turn.text.length;
       if (position >= currentPosition && position < currentPosition + turnLength) {
         const speakerLower = turn.speaker.toLowerCase();
-        
+
         if (speakerScope === 'agent') {
           return speakerLower.includes('agent') || speakerLower.includes('sales') || speakerLower.includes('rep');
         } else if (speakerScope === 'customer') {
           return speakerLower.includes('customer') || speakerLower.includes('client') || speakerLower.includes('prospect');
         }
-        
+
         return true;
       }
       currentPosition += turnLength;
     }
-    
+
     return true; // Default to match if can't determine
   }
 
@@ -301,18 +370,18 @@ export class TrackerService {
       const turnLength = turn.text.length;
       if (position >= currentPosition && position < currentPosition + turnLength) {
         const turnStart = turn.start || 0;
-        
+
         if (timingCondition === 'within_first') {
           return turnStart <= timingMinutes * 60;
         } else if (timingCondition === 'after') {
           return turnStart >= timingMinutes * 60;
         }
-        
+
         return true;
       }
       currentPosition += turnLength;
     }
-    
+
     return true; // Default to match if can't determine
   }
 
@@ -370,7 +439,8 @@ export class TrackerService {
       trackerD.count({ where: { tenantid: tenantId, isActive: true } }),
       detectionD.count({ where: { tenantid: tenantId } }),
       detectionD.count({
-        where: { tenantid: tenantId,
+        where: {
+          tenantid: tenantId,
           createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
         },
       }),

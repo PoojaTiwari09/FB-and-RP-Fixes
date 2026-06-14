@@ -540,6 +540,8 @@ model CallRecord {
   notes             CallNote[]
   shares            CallShare[]
   extractionResults AiExtractionResult[]
+  themeMappings     ThemeCallMapping[]
+  themeQuotes       ThemeQuote[]
 
   @@index([tenantid])
   @@index([tenantid, callDate])
@@ -2099,3 +2101,49 @@ model DealNotification {
   @@map("m04_deal_notifications")
   @@schema("revenuegraph")
 }
+
+model ThemeAnalysis {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid          String             @db.Uuid
+  name              String
+  summary           String?
+  callCount         Int
+  accountCount      Int
+  associatedRevenue Float
+  createdAt         DateTime           @default(now())
+  mappings          ThemeCallMapping[]
+  quotes            ThemeQuote[]
+
+  @@map("theme_analyses")
+  @@schema("public")
+}
+
+model ThemeCallMapping {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String        @db.Uuid
+  themeAnalysisId String        @db.Uuid
+  callRecordId    String        @db.Uuid
+  theme           ThemeAnalysis @relation(fields: [themeAnalysisId], references: [id], onDelete: Cascade)
+  call            CallRecord    @relation(fields: [callRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([themeAnalysisId, callRecordId])
+  @@map("theme_call_mappings")
+  @@schema("public")
+}
+
+model ThemeQuote {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantid        String        @db.Uuid
+  themeAnalysisId String        @db.Uuid
+  callRecordId    String        @db.Uuid
+  quoteText       String
+  timestampMs     Int
+  company         String?
+  callName        String?
+  theme           ThemeAnalysis @relation(fields: [themeAnalysisId], references: [id], onDelete: Cascade)
+  call            CallRecord    @relation(fields: [callRecordId], references: [id], onDelete: Cascade)
+
+  @@map("theme_quotes")
+  @@schema("public")
+}
+
