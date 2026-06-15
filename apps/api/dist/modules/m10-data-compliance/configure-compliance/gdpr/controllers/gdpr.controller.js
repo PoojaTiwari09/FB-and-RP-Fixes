@@ -23,7 +23,7 @@ const jwt_guard_1 = require("../../../../platform-core/guards/jwt.guard");
 const tenant_guard_1 = require("../../../../platform-core/guards/tenant.guard");
 const m10_dev_auth_guard_1 = require("../../../guards/m10-dev-auth.guard");
 const gdpr_schema_1 = require("../schemas/gdpr.schema");
-const M10AuthGuard = process.env.M10_STANDALONE_AUTH === 'true' ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
+const M10AuthGuard = process.env.M10_STANDALONE_AUTH === "true" ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
 let GdprController = GdprController_1 = class GdprController {
     dsarService;
     erasureService;
@@ -61,7 +61,7 @@ let GdprController = GdprController_1 = class GdprController {
 };
 exports.GdprController = GdprController;
 __decorate([
-    (0, common_1.Post)('dsar'),
+    (0, common_1.Post)("dsar"),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -70,33 +70,33 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GdprController.prototype, "createDsar", null);
 __decorate([
-    (0, common_1.Patch)('dsar/:id/status'),
+    (0, common_1.Patch)("dsar/:id/status"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Param)("id")),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], GdprController.prototype, "updateDsarStatus", null);
 __decorate([
-    (0, common_1.Post)('dsar/:id/execute-erasure'),
+    (0, common_1.Post)("dsar/:id/execute-erasure"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Body)('contactEmail')),
+    __param(1, (0, common_1.Param)("id")),
+    __param(2, (0, common_1.Body)("contactEmail")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], GdprController.prototype, "executeErasure", null);
 __decorate([
-    (0, common_1.Get)('dsar/portability'),
+    (0, common_1.Get)("dsar/portability"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Body)('contactEmail')),
+    __param(1, (0, common_1.Body)("contactEmail")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], GdprController.prototype, "getPortabilityExport", null);
 __decorate([
-    (0, common_1.Post)('ropa'),
+    (0, common_1.Post)("ropa"),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -105,7 +105,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GdprController.prototype, "createRopa", null);
 __decorate([
-    (0, common_1.Post)('data-breach'),
+    (0, common_1.Post)("data-breach"),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -114,7 +114,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GdprController.prototype, "createDataBreach", null);
 exports.GdprController = GdprController = GdprController_1 = __decorate([
-    (0, common_1.Controller)('api/v1/m10-data-compliance/gdpr'),
+    (0, common_1.Controller)("api/v1/m10-data-compliance/gdpr"),
     (0, common_1.UseGuards)(M10AuthGuard, tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [gdpr_dsar_service_1.GdprDsarService,
         gdpr_erasure_service_1.GdprErasureService,

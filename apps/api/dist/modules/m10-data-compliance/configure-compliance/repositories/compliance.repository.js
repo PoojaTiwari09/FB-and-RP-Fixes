@@ -39,7 +39,7 @@ let ComplianceRepository = ComplianceRepository_1 = class ComplianceRepository {
                 tenantid: tenantId,
                 ...(activeOnly ? { isActive: true } : {}),
             },
-            orderBy: { updatedAt: 'desc' },
+            orderBy: { updatedAt: "desc" },
         });
     }
     async findPolicyById(tenantId, id) {
@@ -53,22 +53,30 @@ let ComplianceRepository = ComplianceRepository_1 = class ComplianceRepository {
         });
     }
     async updatePolicy(tenantId, id, dto) {
-        const existing = await this.prisma.m10CompliancePolicy.findFirst({ where: { id, tenantid: tenantId } });
+        const existing = await this.prisma.m10CompliancePolicy.findFirst({
+            where: { id, tenantid: tenantId },
+        });
         return this.prisma.m10CompliancePolicy.update({
             where: { id },
             data: {
                 ...(dto.name !== undefined && { name: dto.name }),
                 ...(dto.description !== undefined && { description: dto.description }),
                 ...(dto.channel !== undefined && { channel: dto.channel }),
-                ...(dto.regionFamily !== undefined && { regionFamily: dto.regionFamily }),
-                ...(dto.ruleDefinition !== undefined && { ruleDefinition: dto.ruleDefinition }),
+                ...(dto.regionFamily !== undefined && {
+                    regionFamily: dto.regionFamily,
+                }),
+                ...(dto.ruleDefinition !== undefined && {
+                    ruleDefinition: dto.ruleDefinition,
+                }),
                 ...(dto.isActive !== undefined && { isActive: dto.isActive }),
                 version: (existing?.version ?? 1) + 1,
             },
         });
     }
     async deactivatePolicy(tenantId, id) {
-        const existing = await this.prisma.m10CompliancePolicy.findFirst({ where: { id, tenantid: tenantId } });
+        const existing = await this.prisma.m10CompliancePolicy.findFirst({
+            where: { id, tenantid: tenantId },
+        });
         return this.prisma.m10CompliancePolicy.update({
             where: { id },
             data: { isActive: false, version: (existing?.version ?? 1) + 1 },
@@ -99,7 +107,11 @@ let ComplianceRepository = ComplianceRepository_1 = class ComplianceRepository {
     async findOptOut(tenantId, contactEmail, channel) {
         return this.prisma.m10CrmOptOut.findUnique({
             where: {
-                tenantid_contactEmail_channel: { tenantid: tenantId, contactEmail, channel },
+                tenantid_contactEmail_channel: {
+                    tenantid: tenantId,
+                    contactEmail,
+                    channel,
+                },
             },
         });
     }
@@ -125,7 +137,7 @@ let ComplianceRepository = ComplianceRepository_1 = class ComplianceRepository {
     async findLatestConsentForContact(tenantId, contactEmail, consentType) {
         return this.prisma.m10ConsentLog.findFirst({
             where: { tenantid: tenantId, contactEmail, consentType },
-            orderBy: { loggedAt: 'desc' },
+            orderBy: { loggedAt: "desc" },
         });
     }
     async findAllConsentLogs(tenantId, contactEmail) {
@@ -134,7 +146,7 @@ let ComplianceRepository = ComplianceRepository_1 = class ComplianceRepository {
                 tenantid: tenantId,
                 ...(contactEmail ? { contactEmail } : {}),
             },
-            orderBy: { loggedAt: 'desc' },
+            orderBy: { loggedAt: "desc" },
         });
     }
     async createAuditEntry(data) {
@@ -160,7 +172,7 @@ let ComplianceRepository = ComplianceRepository_1 = class ComplianceRepository {
                 ...(recipientEmail ? { recipientEmail } : {}),
                 ...(decision ? { decision } : {}),
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
             take: limit,
             skip: offset,
         });

@@ -25,7 +25,10 @@ let M10DataComplianceService = class M10DataComplianceService {
     }
     async create(dto, tenantId) {
         const record = await this.repo.create({ ...dto, tenantId });
-        await this.events.publish('compliance.policy.updated', { tenantId, recordId: record.id });
+        await this.events.publish("compliance.policy.updated", {
+            tenantId,
+            recordId: record.id,
+        });
         return record;
     }
 };

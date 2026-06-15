@@ -842,7 +842,9 @@ let M06ForecastingPredictionService = class M06ForecastingPredictionService {
         if (region && region !== 'Company')
             repWhere.region = region;
         const reps = await this.prisma.forecastUser.findMany({ where: repWhere });
-        const repIds = Array.from(new Set(reps.flatMap((r) => [r.id, r.repId]).filter(Boolean)));
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const repIds = Array.from(new Set(reps.flatMap((r) => [r.id, r.repId]).filter(Boolean)))
+            .filter(id => uuidRegex.test(id));
         let realDeals = await this.prisma.crmDeal.findMany({
             where: { tenantid: tenantId, closeDate: { gte: period.startDate, lte: period.endDate } }
         });
@@ -863,13 +865,14 @@ let M06ForecastingPredictionService = class M06ForecastingPredictionService {
         const activeReps = activeRepIds.size
             ? reps.filter(r => activeRepIds.has(r.id) || (r.repId && activeRepIds.has(r.repId)))
             : reps;
+        console.log('repIds array is:', repIds);
         const allSubmissions = await this.prisma.forecastSubmission.findMany({
             where: { tenantid: tenantId, periodId: period.id, repUserId: { in: repIds } },
             orderBy: [{ repUserId: 'asc' }, { lob: 'asc' }, { version: 'desc' }],
         });
         const activeSubmissionsMap = new Map();
         for (const sub of allSubmissions) {
-            const key = `${sub.repUserId}-${sub.lob}`;
+            const key = sub.dealId ? `${sub.repUserId}-${sub.lob}-${sub.dealId}` : `${sub.repUserId}-${sub.lob}`;
             if (!activeSubmissionsMap.has(key))
                 activeSubmissionsMap.set(key, sub);
         }
@@ -901,7 +904,26 @@ let M06ForecastingPredictionService = class M06ForecastingPredictionService {
         });
         const teamData = activeReps.map(rep => {
             const repIdentifiers = new Set([rep.id, rep.repId].filter(Boolean));
-            const submission = submissions.find((s) => repIdentifiers.has(s.repUserId)) || null;
+            const allRepSubmissions = submissions.filter((s) => repIdentifiers.has(s.repUserId));
+            const uniqueSubsMap = new Map();
+            for (const s of allRepSubmissions) {
+                const key = s.dealId ? `${s.lob}-${s.dealId}` : s.lob;
+                if (!uniqueSubsMap.has(key))
+                    uniqueSubsMap.set(key, s);
+            }
+            const repSubmissions = Array.from(uniqueSubsMap.values());
+            const hasOverride = repSubmissions.some(s => s.commitState === 'overridden' || s.managerOverride !== null || s.approvedCommit !== null);
+            const commit = repSubmissions.reduce((sum, s) => sum + (s.commitForecast ?? 0), 0);
+            const effectiveCommit = repSubmissions.reduce((sum, s) => {
+                if (s.commitState === 'overridden')
+                    return sum + (s.approvedCommit ?? s.commitForecast ?? 0);
+                return sum + (s.managerOverride ?? s.commitForecast ?? 0);
+            }, 0);
+            const submission = repSubmissions.length > 0 ? { ...repSubmissions[0] } : null;
+            if (submission) {
+                submission.commitForecast = commit;
+                submission.managerOverride = hasOverride ? effectiveCommit : null;
+            }
             let repAiProj = 0;
             if (period.status === 'open' && !period.isLocked) {
                 const repDeals = realDeals.filter(d => d.repUserId && repIdentifiers.has(d.repUserId));
@@ -918,12 +940,10 @@ let M06ForecastingPredictionService = class M06ForecastingPredictionService {
                 repAiProj = repClosedWon + repWeighted + repExpected;
             }
             else {
-                repAiProj = submission?.commitForecast ? submission.commitForecast * 0.92 : ((predictionResponse?.aiPrediction?.predictedAmount ?? 0) / Math.max(activeReps.length, 1));
+                repAiProj = commit ? commit * 0.92 : ((predictionResponse?.aiPrediction?.predictedAmount ?? 0) / Math.max(activeReps.length, 1));
             }
             const quotaRecord = quotas.find(q => q.repUserId === rep.id || (rep.repId && q.repUserId === rep.repId));
             const quota = quotaRecord ? quotaRecord.amount : repAiProj * 1.1;
-            const commit = submission?.commitForecast ?? 0;
-            const effectiveCommit = submission?.managerOverride ?? commit;
             const variance = effectiveCommit - quota;
             const varianceVsAi = effectiveCommit - repAiProj;
             const variancePctAi = repAiProj > 0 ? (varianceVsAi / repAiProj) * 100 : 0;

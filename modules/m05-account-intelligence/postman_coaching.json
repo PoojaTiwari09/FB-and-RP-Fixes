@@ -52,9 +52,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/filters",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/filters",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "filters"]
+              "path": ["api", "v1", "account-intelligence", "coaching", "filters"]
             }
           },
           "event": [
@@ -85,9 +85,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/activity?period=Last 30 days&teamId=team_001",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/activity?period=Last 30 days&teamId=team_001",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "activity"],
+              "path": ["api", "v1", "account-intelligence", "coaching", "activity"],
               "query": [
                 { "key": "period", "value": "Last 30 days" },
                 { "key": "teamId", "value": "team_001" }
@@ -121,9 +121,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/interaction?period=Last 30 days&teamId=team_001",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/interaction?period=Last 30 days&teamId=team_001",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "interaction"],
+              "path": ["api", "v1", "account-intelligence", "coaching", "interaction"],
               "query": [
                 { "key": "period", "value": "Last 30 days" },
                 { "key": "teamId", "value": "team_001" }
@@ -158,9 +158,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/responsiveness?period=Last 30 days&teamId=team_001",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/responsiveness?period=Last 30 days&teamId=team_001",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "responsiveness"],
+              "path": ["api", "v1", "account-intelligence", "coaching", "responsiveness"],
               "query": [
                 { "key": "period", "value": "Last 30 days" },
                 { "key": "teamId", "value": "team_001" }
@@ -194,9 +194,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/scorecards?period=Last 30 days&teamId=team_001",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/scorecards?period=Last 30 days&teamId=team_001",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "scorecards"],
+              "path": ["api", "v1", "account-intelligence", "coaching", "scorecards"],
               "query": [
                 { "key": "period", "value": "Last 30 days" },
                 { "key": "teamId", "value": "team_001" }
@@ -230,9 +230,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/ai-insights?period=Last 30 days&teamId=team_001",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/ai-insights?period=Last 30 days&teamId=team_001",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "ai-insights"],
+              "path": ["api", "v1", "account-intelligence", "coaching", "ai-insights"],
               "query": [
                 { "key": "period", "value": "Last 30 days" },
                 { "key": "teamId", "value": "team_001" }
@@ -266,9 +266,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/team-vs-benchmark?period=Last 30 days&teamId=team_001",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/team-vs-benchmark?period=Last 30 days&teamId=team_001",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "team-vs-benchmark"],
+              "path": ["api", "v1", "account-intelligence", "coaching", "team-vs-benchmark"],
               "query": [
                 { "key": "period", "value": "Last 30 days" },
                 { "key": "teamId", "value": "team_001" }
@@ -302,9 +302,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/manager/coaching/rep/{{rep_id}}",
+              "raw": "{{base_url}}/api/v1/account-intelligence/coaching/rep/{{rep_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "manager", "coaching", "rep", "{{rep_id}}"]
+              "path": ["api", "v1", "account-intelligence", "coaching", "rep", "{{rep_id}}"]
             }
           },
           "event": [

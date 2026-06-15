@@ -8,12 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryBoardDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 class QueryBoardDto {
     page = 1;
     limit = 25;
@@ -45,13 +46,13 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.BoardAudience, description: 'Filter by audience' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.BoardAudience),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof entities_1.BoardAudience !== "undefined" && entities_1.BoardAudience) === "function" ? _a : Object)
 ], QueryBoardDto.prototype, "audience", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.BoardStatus, description: 'Filter by status' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.BoardStatus),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof entities_1.BoardStatus !== "undefined" && entities_1.BoardStatus) === "function" ? _b : Object)
 ], QueryBoardDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by owner ID' }),

@@ -10,8 +10,9 @@ exports.M04DatabaseModule = void 0;
 const common_1 = require("@nestjs/common");
 const entities_1 = require("../entities");
 const inject_repository_1 = require("./inject-repository");
-const m04_entity_repository_1 = require("./m04-entity.repository");
-const m04_memory_store_1 = require("./m04-memory.store");
+const m04_prisma_repository_1 = require("./m04-prisma.repository");
+const prisma_service_1 = require("./prisma.service");
+const prisma_module_1 = require("./prisma.module");
 const ENTITY_BINDINGS = [
     { entity: entities_1.Deal, collection: 'deals' },
     { entity: entities_1.DealBoard, collection: 'boards' },
@@ -34,8 +35,8 @@ const ENTITY_BINDINGS = [
 ];
 const repositoryProviders = ENTITY_BINDINGS.map(({ entity, collection }) => ({
     provide: (0, inject_repository_1.getRepositoryToken)(entity),
-    useFactory: (store) => new m04_entity_repository_1.M04EntityRepository(entity, store, collection),
-    inject: [m04_memory_store_1.M04MemoryStore],
+    useFactory: (prisma) => new m04_prisma_repository_1.M04PrismaRepository(entity, prisma, collection),
+    inject: [prisma_service_1.PrismaService],
 }));
 let M04DatabaseModule = class M04DatabaseModule {
 };
@@ -43,11 +44,11 @@ exports.M04DatabaseModule = M04DatabaseModule;
 exports.M04DatabaseModule = M04DatabaseModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
         providers: [
-            { provide: m04_memory_store_1.M04MemoryStore, useValue: m04_memory_store_1.m04MemoryStore },
             ...repositoryProviders,
         ],
-        exports: [m04_memory_store_1.M04MemoryStore, ...repositoryProviders.map((p) => p.provide)],
+        exports: [...repositoryProviders.map((p) => p.provide)],
     })
 ], M04DatabaseModule);
 //# sourceMappingURL=m04-database.module.js.map

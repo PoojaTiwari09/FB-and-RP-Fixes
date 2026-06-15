@@ -11,16 +11,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CoachingController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const coaching_service_1 = require("@/services/coaching.service");
-const coaching_dto_1 = require("@/schemas/coaching.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
+const coaching_service_1 = require("@m04/services/coaching.service");
+const coaching_dto_1 = require("@m04/schemas/coaching.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const roles_guard_1 = require("../../platform-core/guards/roles.guard");
+const roles_decorator_1 = require("../../platform-core/decorators/roles.decorator");
+const database_1 = require("@rri/database");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let CoachingController = class CoachingController {
     coachingService;
     constructor(coachingService) {
@@ -52,10 +55,10 @@ __decorate([
         status: 404,
         description: 'Deal not found',
     }),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.MANAGER, database_1.UserRole.ADMIN),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [coaching_dto_1.GenerateCoachingPromptsDto]),
+    __metadata("design:paramtypes", [typeof (_b = typeof coaching_dto_1.GenerateCoachingPromptsDto !== "undefined" && coaching_dto_1.GenerateCoachingPromptsDto) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], CoachingController.prototype, "generatePrompts", null);
 __decorate([
@@ -78,7 +81,7 @@ __decorate([
         status: 404,
         description: 'Deal not found',
     }),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.MANAGER, database_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)('dealId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -95,17 +98,17 @@ __decorate([
         description: 'Coaching opportunities retrieved successfully',
         type: [coaching_dto_1.CoachingPromptsResponseDto],
     }),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.MANAGER, database_1.UserRole.ADMIN),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], CoachingController.prototype, "getTeamOpportunities", null);
 exports.CoachingController = CoachingController = __decorate([
     (0, swagger_1.ApiTags)('Coaching'),
     (0, common_1.Controller)('coaching'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [coaching_service_1.CoachingService])
+    __metadata("design:paramtypes", [typeof (_a = typeof coaching_service_1.CoachingService !== "undefined" && coaching_service_1.CoachingService) === "function" ? _a : Object])
 ], CoachingController);
 //# sourceMappingURL=coaching.controller.js.map

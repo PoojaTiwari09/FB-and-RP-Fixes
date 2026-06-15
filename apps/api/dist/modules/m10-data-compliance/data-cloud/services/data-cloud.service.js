@@ -26,9 +26,9 @@ const csv_export_writer_1 = require("../export/csv-export.writer");
 const parquet_export_writer_1 = require("../export/parquet-export.writer");
 const export_storage_service_1 = require("../export/export-storage.service");
 const warehouse_registry_1 = require("../warehouse/warehouse-registry");
-const EXPORT_ENABLED = process.env.M10_DATA_EXPORT_ENABLED !== 'false';
+const EXPORT_ENABLED = process.env.M10_DATA_EXPORT_ENABLED !== "false";
 const LOCK_TTL_SECONDS = 4 * 60 * 60;
-const DATASETS = ['accounts', 'contacts', 'deals', 'activities'];
+const DATASETS = ["accounts", "contacts", "deals", "activities"];
 let DataCloudService = DataCloudService_1 = class DataCloudService {
     repo;
     storage;
@@ -41,17 +41,17 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
         this.storage = storage;
         this.warehouse = warehouse;
         this.exportQueue = exportQueue;
-        this.redis = new ioredis_1.Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
+        this.redis = new ioredis_1.Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
             maxRetriesPerRequest: null,
             lazyConnect: true,
             enableOfflineQueue: false,
             retryStrategy: (times) => {
-                if (process.env.DISABLE_REDIS === 'true')
+                if (process.env.DISABLE_REDIS === "true")
                     return null;
                 return Math.min(times * 300, 10000);
             },
         });
-        this.redis.on('error', () => { });
+        this.redis.on("error", () => { });
     }
     async registerConnection(tenantId, dto) {
         const conn = await this.repo.createConnection(tenantId, {
@@ -70,7 +70,7 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
     }
     async getConnections(tenantId) {
         const conns = await this.repo.findConnections(tenantId);
-        return conns.map(c => ({
+        return conns.map((c) => ({
             connectionId: c.id,
             destination: c.destination,
             destinationName: c.destinationName,
@@ -82,18 +82,24 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
     async testConnection(tenantId, connectionId) {
         const conn = await this.repo.findConnectionById(tenantId, connectionId);
         if (!conn)
-            throw new common_1.HttpException('Connection not found', common_1.HttpStatus.NOT_FOUND);
+            throw new common_1.HttpException("Connection not found", common_1.HttpStatus.NOT_FOUND);
         try {
             const sample = await this.repo.extractAccounts(tenantId);
-            return { success: true, message: `Connection OK — ${sample.length} accounts available` };
+            return {
+                success: true,
+                message: `Connection OK — ${sample.length} accounts available`,
+            };
         }
         catch (err) {
-            return { success: false, message: `Connection test failed: ${err.message}` };
+            return {
+                success: false,
+                message: `Connection test failed: ${err.message}`,
+            };
         }
     }
     async getExportRuns(tenantId, connectionId) {
         const runs = await this.repo.findExportRuns(tenantId, connectionId);
-        return runs.map(r => ({
+        return runs.map((r) => ({
             runId: r.id,
             connectionId: r.connectionId,
             destination: r.connection?.destination,
@@ -109,38 +115,51 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
     async getExportDownloadStream(tenantId, runId, dataset, format) {
         const run = await this.repo.findExportRunById(tenantId, runId);
         if (!run)
-            throw new common_1.NotFoundException('Export run not found');
+            throw new common_1.NotFoundException("Export run not found");
         const path = this.storage.resolveDownloadPath(tenantId, runId, dataset, format);
         if (!path)
-            throw new common_1.NotFoundException('Export file not found');
-        return { stream: (0, fs_1.createReadStream)(path), path, contentType: format === 'csv' ? 'text/csv' : 'application/octet-stream' };
+            throw new common_1.NotFoundException("Export file not found");
+        return {
+            stream: (0, fs_1.createReadStream)(path),
+            path,
+            contentType: format === "csv" ? "text/csv" : "application/octet-stream",
+        };
     }
     async triggerReplay(tenantId, dto) {
         const conn = await this.repo.findConnectionById(tenantId, dto.connectionId);
         if (!conn)
-            throw new common_1.HttpException('Connection not found', common_1.HttpStatus.NOT_FOUND);
-        const idempotencyKey = `${tenantId}:${dto.connectionId}:${dto.datasetName}:${dto.windowStart}:${dto.windowEnd}`;
+            throw new common_1.HttpException("Connection not found", common_1.HttpStatus.NOT_FOUND);
+        const idempotencyStr = `${tenantId}-${dto.connectionId}-${dto.datasetName}-${dto.windowStart}-${dto.windowEnd}`;
+        const idempotencyKey = idempotencyStr.replace(/:/g, "-");
         const runId = (0, crypto_1.randomUUID)();
-        await this.exportQueue.add('data-cloud-export', {
+        await this.exportQueue.add("data-cloud-export", {
             tenantId,
             connectionId: dto.connectionId,
             datasetName: dto.datasetName,
-            syncMode: 'full_backfill',
+            syncMode: "full_backfill",
             windowStart: dto.windowStart,
             windowEnd: dto.windowEnd,
             idempotencyKey,
             runId,
-        }, { jobId: idempotencyKey, attempts: 3, backoff: { type: 'exponential', delay: 3000 } });
-        return { status: 'queued', runId, message: 'Replay run queued for execution.' };
+        }, {
+            jobId: idempotencyKey,
+            attempts: 3,
+            backoff: { type: "exponential", delay: 3000 },
+        });
+        return {
+            status: "queued",
+            runId,
+            message: "Replay run queued for execution.",
+        };
     }
     async runScheduledExport(tenantId, connectionId, existingRunId) {
         if (!EXPORT_ENABLED) {
-            this.logger.warn('Data export disabled — M10_DATA_EXPORT_ENABLED=false');
+            this.logger.warn("Data export disabled — M10_DATA_EXPORT_ENABLED=false");
             return;
         }
         const conn = await this.repo.findConnectionById(tenantId, connectionId);
         if (!conn)
-            throw new common_1.HttpException('Connection not found', common_1.HttpStatus.NOT_FOUND);
+            throw new common_1.HttpException("Connection not found", common_1.HttpStatus.NOT_FOUND);
         const lockKey = `m10_data_export:lock:${tenantId}:${connectionId}`;
         const existing = await this.redis.get(lockKey);
         if (existing) {
@@ -148,12 +167,16 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
             return;
         }
         const syncId = (0, crypto_1.randomUUID)();
-        await this.redis.set(lockKey, syncId, 'EX', LOCK_TTL_SECONDS);
+        await this.redis.set(lockKey, syncId, "EX", LOCK_TTL_SECONDS);
         const run = existingRunId
             ? await this.repo.findExportRunById(tenantId, existingRunId)
-            : await this.repo.createExportRun({ tenantId, connectionId, status: 'running' });
+            : await this.repo.createExportRun({
+                tenantId,
+                connectionId,
+                status: "running",
+            });
         if (!run)
-            throw new common_1.HttpException('Export run not found', common_1.HttpStatus.NOT_FOUND);
+            throw new common_1.HttpException("Export run not found", common_1.HttpStatus.NOT_FOUND);
         const filePaths = {};
         let totalRows = 0;
         try {
@@ -163,7 +186,7 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
                 filePaths[dataset] = result.files;
             }
             await this.repo.updateExportRun(run.id, {
-                status: 'success',
+                status: "success",
                 rowsExported: totalRows,
                 filePaths,
                 completedAt: new Date(),
@@ -171,7 +194,7 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
         }
         catch (err) {
             await this.repo.updateExportRun(run.id, {
-                status: 'failed',
+                status: "failed",
                 errorMessage: err.message,
                 filePaths,
                 completedAt: new Date(),
@@ -184,19 +207,21 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
     }
     async exportDataset(tenantId, runId, destination, config, dataset) {
         const checkpoint = await this.repo.getCheckpoint(tenantId, dataset);
-        const since = checkpoint?.lastCursor ? new Date(checkpoint.lastCursor) : undefined;
+        const since = checkpoint?.lastCursor
+            ? new Date(checkpoint.lastCursor)
+            : undefined;
         let rows = [];
         switch (dataset) {
-            case 'accounts':
+            case "accounts":
                 rows = await this.repo.extractAccounts(tenantId, since);
                 break;
-            case 'contacts':
+            case "contacts":
                 rows = await this.repo.extractContacts(tenantId, since);
                 break;
-            case 'deals':
+            case "deals":
                 rows = await this.repo.extractDeals(tenantId, since);
                 break;
-            case 'activities':
+            case "activities":
                 rows = await this.repo.extractActivities(tenantId, since);
                 break;
         }
@@ -207,12 +232,15 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
                 files: {
                     csv: paths.csv,
                     parquet: paths.parquet,
-                    downloadCsv: this.storage.downloadUrl(runId, dataset, 'csv'),
-                    downloadParquet: this.storage.downloadUrl(runId, dataset, 'parquet'),
+                    downloadCsv: this.storage.downloadUrl(runId, dataset, "csv"),
+                    downloadParquet: this.storage.downloadUrl(runId, dataset, "parquet"),
                 },
             };
         }
-        const plain = rows.map(r => ({ ...r, updatedAt: r.updatedAt?.toISOString?.() ?? r.updatedAt }));
+        const plain = rows.map((r) => ({
+            ...r,
+            updatedAt: r.updatedAt?.toISOString?.() ?? r.updatedAt,
+        }));
         await (0, csv_export_writer_1.writeCsvExport)(paths.csv, plain);
         await (0, parquet_export_writer_1.writeParquetExport)(paths.parquet, plain);
         const latestUpdatedAt = rows.reduce((max, r) => (new Date(r.updatedAt) > max ? new Date(r.updatedAt) : max), new Date(0));
@@ -232,8 +260,8 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
             files: {
                 csv: paths.csv,
                 parquet: paths.parquet,
-                downloadCsv: this.storage.downloadUrl(runId, dataset, 'csv'),
-                downloadParquet: this.storage.downloadUrl(runId, dataset, 'parquet'),
+                downloadCsv: this.storage.downloadUrl(runId, dataset, "csv"),
+                downloadParquet: this.storage.downloadUrl(runId, dataset, "parquet"),
             },
         };
     }
@@ -243,8 +271,10 @@ let DataCloudService = DataCloudService_1 = class DataCloudService {
         const out = {};
         for (const ds of Object.keys(filePaths)) {
             out[ds] = {
-                csv: filePaths[ds]?.downloadCsv ?? this.storage.downloadUrl(runId, ds, 'csv'),
-                parquet: filePaths[ds]?.downloadParquet ?? this.storage.downloadUrl(runId, ds, 'parquet'),
+                csv: filePaths[ds]?.downloadCsv ??
+                    this.storage.downloadUrl(runId, ds, "csv"),
+                parquet: filePaths[ds]?.downloadParquet ??
+                    this.storage.downloadUrl(runId, ds, "parquet"),
             };
         }
         return out;

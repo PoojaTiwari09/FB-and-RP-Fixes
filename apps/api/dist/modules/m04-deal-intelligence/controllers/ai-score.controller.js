@@ -11,13 +11,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AIScoreController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const ai_score_service_1 = require("@/services/ai-score.service");
-const ai_score_dto_1 = require("@/schemas/ai-score.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const ai_score_service_1 = require("@m04/services/ai-score.service");
+const ai_score_dto_1 = require("@m04/schemas/ai-score.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
 let AIScoreController = class AIScoreController {
     scoreService;
     constructor(scoreService) {
@@ -112,8 +114,8 @@ __decorate([
 exports.AIScoreController = AIScoreController = __decorate([
     (0, swagger_1.ApiTags)('AI Score'),
     (0, common_1.Controller)('deals/:dealId/score'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [ai_score_service_1.AIScoreService])
+    __metadata("design:paramtypes", [typeof (_a = typeof ai_score_service_1.AIScoreService !== "undefined" && ai_score_service_1.AIScoreService) === "function" ? _a : Object])
 ], AIScoreController);
 //# sourceMappingURL=ai-score.controller.js.map

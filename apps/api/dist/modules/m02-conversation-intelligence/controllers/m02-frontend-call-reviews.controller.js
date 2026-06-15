@@ -69,14 +69,14 @@ let M02FrontendCallReviewsController = class M02FrontendCallReviewsController {
     export(reviewId) {
         return this.svc.exportReview(reviewId);
     }
-    clone(reviewId) {
-        return this.svc.cloneReview(reviewId);
+    clone(reviewId, targetCallId) {
+        return this.svc.cloneReview(reviewId, targetCallId);
     }
-    share() {
-        return { success: true };
+    share(reviewId, body, req) {
+        return this.svc.shareReview(req.tenantId, reviewId, body, req.userId, req.userRole);
     }
     reopen(reviewId, req) {
-        return this.svc.patchReview(req.tenantId, reviewId, {});
+        return this.svc.reopenReview(req.tenantId, reviewId, req.userId, req.userRole);
     }
 };
 exports.M02FrontendCallReviewsController = M02FrontendCallReviewsController;
@@ -214,14 +214,18 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':reviewId/clone'),
     __param(0, (0, common_1.Param)('reviewId')),
+    __param(1, (0, common_1.Body)('targetCallId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], M02FrontendCallReviewsController.prototype, "clone", null);
 __decorate([
     (0, common_1.Post)(':reviewId/share'),
+    __param(0, (0, common_1.Param)('reviewId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], M02FrontendCallReviewsController.prototype, "share", null);
 __decorate([
@@ -338,6 +342,12 @@ let M02FrontendAnalyticsController = class M02FrontendAnalyticsController {
     focusAreas(req) {
         return this.svc.focusAreas(req.userId, req.userRole);
     }
+    commonTags() {
+        return this.svc.getCommonTags();
+    }
+    reviewHistory(query) {
+        return this.svc.getReviewHistory(query);
+    }
 };
 exports.M02FrontendAnalyticsController = M02FrontendAnalyticsController;
 __decorate([
@@ -361,6 +371,19 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], M02FrontendAnalyticsController.prototype, "focusAreas", null);
+__decorate([
+    (0, common_1.Get)('common-tags'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], M02FrontendAnalyticsController.prototype, "commonTags", null);
+__decorate([
+    (0, common_1.Get)('review-history'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], M02FrontendAnalyticsController.prototype, "reviewHistory", null);
 exports.M02FrontendAnalyticsController = M02FrontendAnalyticsController = __decorate([
     (0, common_1.Controller)('api/v1/conversation-intelligence/analytics'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

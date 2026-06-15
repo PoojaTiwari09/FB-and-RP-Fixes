@@ -12,12 +12,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var WebhookService_1;
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebhookService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const deal_entity_1 = require("@/entities/deal.entity");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const deal_entity_1 = require("@m04/entities/deal.entity");
 const hubspot_client_service_1 = require("./hubspot-client.service");
 const deal_sync_service_1 = require("./deal-sync.service");
 let WebhookService = WebhookService_1 = class WebhookService {
@@ -122,8 +123,7 @@ exports.WebhookService = WebhookService;
 exports.WebhookService = WebhookService = WebhookService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(deal_entity_1.Deal)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        hubspot_client_service_1.HubSpotClientService,
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, hubspot_client_service_1.HubSpotClientService,
         deal_sync_service_1.DealSyncService])
 ], WebhookService);
 //# sourceMappingURL=webhook.service.js.map

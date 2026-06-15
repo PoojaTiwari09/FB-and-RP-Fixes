@@ -17,7 +17,6 @@ const vocabulary_correction_controller_1 = require("./controllers/vocabulary-cor
 const ingest_controller_1 = require("./controllers/ingest.controller");
 const m02_frontend_search_controller_1 = require("./controllers/m02-frontend-search.controller");
 const m02_frontend_call_reviews_controller_1 = require("./controllers/m02-frontend-call-reviews.controller");
-const m02_frontend_trackers_controller_1 = require("./controllers/m02-frontend-trackers.controller");
 const m02_frontend_trackers_service_1 = require("./services/m02-frontend-trackers.service");
 const m02_frontend_call_reviews_service_1 = require("./services/m02-frontend-call-reviews.service");
 const m02_frontend_search_service_1 = require("./services/m02-frontend-search.service");
@@ -35,6 +34,8 @@ const m02_repository_1 = require("./repositories/m02.repository");
 const topic_repository_1 = require("./repositories/topic.repository");
 const prisma_module_1 = require("./database/prisma.module");
 const event_publisher_module_1 = require("../platform-core/events/event-publisher.module");
+const theme_analyses_controller_1 = require("./controllers/theme-analyses.controller");
+const theme_analyses_service_1 = require("./services/theme-analyses.service");
 let M02ConversationIntelligenceModule = class M02ConversationIntelligenceModule {
 };
 exports.M02ConversationIntelligenceModule = M02ConversationIntelligenceModule;
@@ -59,7 +60,7 @@ exports.M02ConversationIntelligenceModule = M02ConversationIntelligenceModule = 
             m02_frontend_call_reviews_controller_1.M02FrontendUsersController,
             m02_frontend_call_reviews_controller_1.M02FrontendMetaController,
             m02_frontend_call_reviews_controller_1.M02FrontendAnalyticsController,
-            m02_frontend_trackers_controller_1.M02FrontendTrackersController,
+            theme_analyses_controller_1.ThemeAnalysesController,
         ],
         providers: [
             m02_frontend_search_service_1.M02FrontendSearchService,
@@ -77,6 +78,7 @@ exports.M02ConversationIntelligenceModule = M02ConversationIntelligenceModule = 
             vocabulary_correction_service_1.VocabularyCorrectionService,
             m02_repository_1.M02ConversationIntelligenceRepository,
             topic_repository_1.TopicRepository,
+            theme_analyses_service_1.ThemeAnalysesService,
         ],
         exports: [
             m02_service_1.M02ConversationIntelligenceService,

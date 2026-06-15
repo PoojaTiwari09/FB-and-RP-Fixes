@@ -17,6 +17,9 @@ let ResponseTransformInterceptor = class ResponseTransformInterceptor {
             if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
                 return data;
             }
+            if (req.url && req.url.includes('/m10-data-compliance')) {
+                return data;
+            }
             const res = ctx.getResponse();
             if (res.headersSent) {
                 return data;

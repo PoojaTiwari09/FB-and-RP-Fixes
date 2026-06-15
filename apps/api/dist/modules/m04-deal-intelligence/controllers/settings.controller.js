@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SettingsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const settings_service_1 = require("@/services/settings.service");
-const settings_dto_1 = require("@/schemas/settings.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const settings_service_1 = require("@m04/services/settings.service");
+const settings_dto_1 = require("@m04/schemas/settings.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let SettingsController = class SettingsController {
     settingsService;
     constructor(settingsService) {
@@ -80,7 +83,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [settings_dto_1.SaveFiltersRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof settings_dto_1.SaveFiltersRequestDto !== "undefined" && settings_dto_1.SaveFiltersRequestDto) === "function" ? _b : Object, typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "saveFilters", null);
 __decorate([
@@ -98,7 +101,7 @@ __decorate([
     __param(0, (0, common_1.Query)('boardId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_d = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getFilters", null);
 __decorate([
@@ -115,7 +118,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [settings_dto_1.SaveViewSettingsRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_e = typeof settings_dto_1.SaveViewSettingsRequestDto !== "undefined" && settings_dto_1.SaveViewSettingsRequestDto) === "function" ? _e : Object, typeof (_f = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "saveViewSettings", null);
 __decorate([
@@ -133,7 +136,7 @@ __decorate([
     __param(0, (0, common_1.Query)('boardId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_g = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getViewSettings", null);
 __decorate([
@@ -150,7 +153,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [settings_dto_1.SaveNotificationSettingsRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_h = typeof settings_dto_1.SaveNotificationSettingsRequestDto !== "undefined" && settings_dto_1.SaveNotificationSettingsRequestDto) === "function" ? _h : Object, typeof (_j = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _j : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "saveNotificationSettings", null);
 __decorate([
@@ -166,7 +169,7 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_k = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _k : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getNotificationSettings", null);
 __decorate([
@@ -183,7 +186,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [settings_dto_1.SaveCoachingSettingsRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_l = typeof settings_dto_1.SaveCoachingSettingsRequestDto !== "undefined" && settings_dto_1.SaveCoachingSettingsRequestDto) === "function" ? _l : Object, typeof (_m = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "saveCoachingSettings", null);
 __decorate([
@@ -199,7 +202,7 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_o = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _o : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getCoachingSettings", null);
 __decorate([
@@ -216,7 +219,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [settings_dto_1.SaveGlobalSettingsRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_p = typeof settings_dto_1.SaveGlobalSettingsRequestDto !== "undefined" && settings_dto_1.SaveGlobalSettingsRequestDto) === "function" ? _p : Object, typeof (_q = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _q : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "saveGlobalSettings", null);
 __decorate([
@@ -232,7 +235,7 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_r = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _r : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getGlobalSettings", null);
 __decorate([
@@ -248,7 +251,7 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_s = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _s : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "getAllSettings", null);
 __decorate([
@@ -267,7 +270,7 @@ __decorate([
     __param(1, (0, common_1.Query)('boardId')),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_t = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _t : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "deleteSettings", null);
 __decorate([
@@ -282,14 +285,14 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_u = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _u : Object]),
     __metadata("design:returntype", Promise)
 ], SettingsController.prototype, "resetAllSettings", null);
 exports.SettingsController = SettingsController = __decorate([
     (0, swagger_1.ApiTags)('Settings'),
     (0, common_1.Controller)('settings'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [settings_service_1.SettingsService])
+    __metadata("design:paramtypes", [typeof (_a = typeof settings_service_1.SettingsService !== "undefined" && settings_service_1.SettingsService) === "function" ? _a : Object])
 ], SettingsController);
 //# sourceMappingURL=settings.controller.js.map

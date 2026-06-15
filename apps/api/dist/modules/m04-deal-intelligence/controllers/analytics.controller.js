@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f, _g, _h;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalyticsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const analytics_service_1 = require("@/services/analytics.service");
-const analytics_dto_1 = require("@/schemas/analytics.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const analytics_service_1 = require("@m04/services/analytics.service");
+const analytics_dto_1 = require("@m04/schemas/analytics.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let AnalyticsController = class AnalyticsController {
     analyticsService;
     constructor(analyticsService) {
@@ -68,7 +71,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [analytics_dto_1.GetAnalyticsRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof analytics_dto_1.GetAnalyticsRequestDto !== "undefined" && analytics_dto_1.GetAnalyticsRequestDto) === "function" ? _b : Object, typeof (_c = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getAnalytics", null);
 __decorate([
@@ -92,7 +95,7 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [analytics_dto_1.HistoricalMetricsRequestDto, Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof analytics_dto_1.HistoricalMetricsRequestDto !== "undefined" && analytics_dto_1.HistoricalMetricsRequestDto) === "function" ? _d : Object, typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getHistoricalMetrics", null);
 __decorate([
@@ -110,7 +113,7 @@ __decorate([
     __param(0, (0, common_1.Query)('boardId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_f = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getAEAnalytics", null);
 __decorate([
@@ -128,7 +131,7 @@ __decorate([
     __param(0, (0, common_1.Query)('boardId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_g = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getManagerAnalytics", null);
 __decorate([
@@ -144,14 +147,14 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_h = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getExecutiveAnalytics", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('Analytics'),
     (0, common_1.Controller)('analytics'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [analytics_service_1.AnalyticsService])
+    __metadata("design:paramtypes", [typeof (_a = typeof analytics_service_1.AnalyticsService !== "undefined" && analytics_service_1.AnalyticsService) === "function" ? _a : Object])
 ], AnalyticsController);
 //# sourceMappingURL=analytics.controller.js.map

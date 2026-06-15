@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealPlaybookController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_playbook_service_1 = require("@/services/deal-playbook.service");
-const playbook_dto_1 = require("@/schemas/playbook.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const deal_playbook_service_1 = require("@m04/services/deal-playbook.service");
+const playbook_dto_1 = require("@m04/schemas/playbook.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let DealPlaybookController = class DealPlaybookController {
     playbookService;
     constructor(playbookService) {
@@ -76,7 +79,7 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Query)('type')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof playbook_dto_1.PlaybookType !== "undefined" && playbook_dto_1.PlaybookType) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], DealPlaybookController.prototype, "getPlaybook", null);
 __decorate([
@@ -102,7 +105,7 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, playbook_dto_1.CreatePlaybookItemDto]),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof playbook_dto_1.CreatePlaybookItemDto !== "undefined" && playbook_dto_1.CreatePlaybookItemDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], DealPlaybookController.prototype, "createPlaybookItem", null);
 __decorate([
@@ -135,7 +138,7 @@ __decorate([
     __param(2, (0, common_1.Body)()),
     __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, playbook_dto_1.UpdatePlaybookItemDto, Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_d = typeof playbook_dto_1.UpdatePlaybookItemDto !== "undefined" && playbook_dto_1.UpdatePlaybookItemDto) === "function" ? _d : Object, typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], DealPlaybookController.prototype, "updatePlaybookItem", null);
 __decorate([
@@ -249,14 +252,14 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, playbook_dto_1.GeneratePlaybookSuggestionsDto]),
+    __metadata("design:paramtypes", [String, typeof (_f = typeof playbook_dto_1.GeneratePlaybookSuggestionsDto !== "undefined" && playbook_dto_1.GeneratePlaybookSuggestionsDto) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], DealPlaybookController.prototype, "generateAISuggestions", null);
 exports.DealPlaybookController = DealPlaybookController = __decorate([
     (0, swagger_1.ApiTags)('Deal Playbooks'),
     (0, common_1.Controller)('deals/:dealId/playbook'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [deal_playbook_service_1.DealPlaybookService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_playbook_service_1.DealPlaybookService !== "undefined" && deal_playbook_service_1.DealPlaybookService) === "function" ? _a : Object])
 ], DealPlaybookController);
 //# sourceMappingURL=deal-playbook.controller.js.map

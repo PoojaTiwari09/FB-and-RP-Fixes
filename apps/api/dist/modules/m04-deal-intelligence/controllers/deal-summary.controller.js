@@ -11,16 +11,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SummaryManagementController = exports.DealSummaryController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_summary_service_1 = require("@/services/deal-summary.service");
-const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
-const deal_summary_dto_1 = require("@/schemas/deal-summary.dto");
+const deal_summary_service_1 = require("@m04/services/deal-summary.service");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const roles_guard_1 = require("../../platform-core/guards/roles.guard");
+const roles_decorator_1 = require("../../platform-core/decorators/roles.decorator");
+const database_1 = require("@rri/database");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
+const deal_summary_dto_1 = require("@m04/schemas/deal-summary.dto");
 let DealSummaryController = class DealSummaryController {
     summaryService;
     constructor(summaryService) {
@@ -57,7 +60,7 @@ let DealSummaryController = class DealSummaryController {
 exports.DealSummaryController = DealSummaryController;
 __decorate([
     (0, common_1.Post)('generate'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Generate AI summary for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -72,12 +75,12 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], DealSummaryController.prototype, "generateSummary", null);
 __decorate([
     (0, common_1.Get)('current'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get current summary for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -96,7 +99,7 @@ __decorate([
 ], DealSummaryController.prototype, "getCurrentSummary", null);
 __decorate([
     (0, common_1.Get)('history'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Get summary history for deal' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -107,12 +110,12 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, deal_summary_dto_1.QuerySummaryDto]),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof deal_summary_dto_1.QuerySummaryDto !== "undefined" && deal_summary_dto_1.QuerySummaryDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], DealSummaryController.prototype, "getSummaryHistory", null);
 __decorate([
     (0, common_1.Get)('weekly-changes'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER, user_role_enum_1.UserRole.USER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER, database_1.UserRole.SALES_REP),
     (0, swagger_1.ApiOperation)({ summary: 'Detect weekly changes in deal summary' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiResponse)({
@@ -127,7 +130,7 @@ __decorate([
 ], DealSummaryController.prototype, "detectWeeklyChanges", null);
 __decorate([
     (0, common_1.Patch)(':summaryId/flag'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Flag summary for review' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiParam)({ name: 'summaryId', description: 'Summary ID' }),
@@ -138,12 +141,12 @@ __decorate([
     __param(0, (0, common_1.Param)('summaryId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_d = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], DealSummaryController.prototype, "flagForReview", null);
 __decorate([
     (0, common_1.Patch)(':summaryId/unflag'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Unflag summary from review' }),
     (0, swagger_1.ApiParam)({ name: 'dealId', description: 'Deal ID' }),
     (0, swagger_1.ApiParam)({ name: 'summaryId', description: 'Summary ID' }),
@@ -154,15 +157,15 @@ __decorate([
     __param(0, (0, common_1.Param)('summaryId')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], DealSummaryController.prototype, "unflagForReview", null);
 exports.DealSummaryController = DealSummaryController = __decorate([
     (0, swagger_1.ApiTags)('Deal Summaries'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('deals/:dealId/summaries'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [deal_summary_service_1.DealSummaryService])
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_summary_service_1.DealSummaryService !== "undefined" && deal_summary_service_1.DealSummaryService) === "function" ? _a : Object])
 ], DealSummaryController);
 let SummaryManagementController = class SummaryManagementController {
     summaryService;
@@ -177,7 +180,7 @@ let SummaryManagementController = class SummaryManagementController {
 exports.SummaryManagementController = SummaryManagementController;
 __decorate([
     (0, common_1.Get)('flagged'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Get all flagged summaries' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.OK,
@@ -186,14 +189,14 @@ __decorate([
     }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [deal_summary_dto_1.QuerySummaryDto]),
+    __metadata("design:paramtypes", [typeof (_g = typeof deal_summary_dto_1.QuerySummaryDto !== "undefined" && deal_summary_dto_1.QuerySummaryDto) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], SummaryManagementController.prototype, "getFlaggedSummaries", null);
 exports.SummaryManagementController = SummaryManagementController = __decorate([
     (0, swagger_1.ApiTags)('Deal Summaries'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('summaries'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [deal_summary_service_1.DealSummaryService])
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
+    __metadata("design:paramtypes", [typeof (_f = typeof deal_summary_service_1.DealSummaryService !== "undefined" && deal_summary_service_1.DealSummaryService) === "function" ? _f : Object])
 ], SummaryManagementController);
 //# sourceMappingURL=deal-summary.controller.js.map

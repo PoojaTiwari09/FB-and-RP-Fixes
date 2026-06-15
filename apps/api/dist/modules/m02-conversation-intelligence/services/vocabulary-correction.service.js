@@ -24,7 +24,7 @@ let VocabularyCorrectionService = class VocabularyCorrectionService {
     }
     async createRule(tenantId, incorrectTerm, correctTerm, language = 'en', category = 'Custom', mispronunciations = [], variations = []) {
         const newRule = {
-            id: Date.now().toString(), tenantid: tenantId,
+            id: Date.now().toString(), tenantid: tenantId, tenantId: tenantId,
             incorrectTerm,
             correctTerm,
             language,

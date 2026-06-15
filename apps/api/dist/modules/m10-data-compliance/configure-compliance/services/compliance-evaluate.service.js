@@ -16,19 +16,49 @@ const compliance_repository_1 = require("../repositories/compliance.repository")
 const eprivacy_repository_1 = require("../eprivacy/repositories/eprivacy.repository");
 const gdpr_repository_1 = require("../gdpr/repositories/gdpr.repository");
 const compliance_events_1 = require("../events/compliance.events");
-const ENFORCEMENT_ENABLED = process.env.M10_COMPLIANCE_RUNTIME_ENFORCEMENT_ENABLED !== 'false';
-const FAIL_CLOSED = process.env.M10_COMPLIANCE_FAIL_CLOSED_ON_MISSING_OPTOUT !== 'false';
-const GDPR_ENABLED = process.env.M10_COMPLIANCE_GDPR_RULESET_ENABLED !== 'false';
-const CCPA_ENABLED = process.env.M10_COMPLIANCE_CCPA_RULESET_ENABLED !== 'false';
-const DEFAULT_ACTION = (process.env.M10_COMPLIANCE_DEFAULT_POLICY_ACTION ?? 'block');
-const CRM_OPTOUT_API_BASE = process.env.M10_COMPLIANCE_CRM_OPTOUT_API_BASE_URL ?? 'http://crm-adapter.internal';
-const CRM_OPTOUT_API_KEY = process.env.M10_COMPLIANCE_CRM_OPTOUT_API_KEY ?? '';
+const ENFORCEMENT_ENABLED = process.env.M10_COMPLIANCE_RUNTIME_ENFORCEMENT_ENABLED !== "false";
+const FAIL_CLOSED = process.env.M10_COMPLIANCE_FAIL_CLOSED_ON_MISSING_OPTOUT !== "false";
+const GDPR_ENABLED = process.env.M10_COMPLIANCE_GDPR_RULESET_ENABLED !== "false";
+const CCPA_ENABLED = process.env.M10_COMPLIANCE_CCPA_RULESET_ENABLED !== "false";
+const DEFAULT_ACTION = (process.env.M10_COMPLIANCE_DEFAULT_POLICY_ACTION ??
+    "block");
+const CRM_OPTOUT_API_BASE = process.env.M10_COMPLIANCE_CRM_OPTOUT_API_BASE_URL ??
+    "http://crm-adapter.internal";
+const CRM_OPTOUT_API_KEY = process.env.M10_COMPLIANCE_CRM_OPTOUT_API_KEY ?? "";
 const OPTOUT_API_TIMEOUT_MS = 5_000;
 const GDPR_JURISDICTIONS = new Set([
-    'EU', 'DE', 'FR', 'IT', 'ES', 'NL', 'PL', 'SE', 'NO', 'FI', 'DK', 'AT', 'BE',
-    'PT', 'CZ', 'HU', 'RO', 'BG', 'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'LU', 'MT', 'CY', 'IE', 'EL', 'GB',
+    "EU",
+    "DE",
+    "FR",
+    "IT",
+    "ES",
+    "NL",
+    "PL",
+    "SE",
+    "NO",
+    "FI",
+    "DK",
+    "AT",
+    "BE",
+    "PT",
+    "CZ",
+    "HU",
+    "RO",
+    "BG",
+    "HR",
+    "SK",
+    "SI",
+    "LT",
+    "LV",
+    "EE",
+    "LU",
+    "MT",
+    "CY",
+    "IE",
+    "EL",
+    "GB",
 ]);
-const CCPA_JURISDICTIONS = new Set(['US-CA', 'CA-US', 'CALIFORNIA']);
+const CCPA_JURISDICTIONS = new Set(["US-CA", "CA-US", "CALIFORNIA"]);
 let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEvaluateService {
     repo;
     eprivacyRepo;
@@ -41,13 +71,13 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
     }
     async evaluate(tenantId, dto) {
         const { correlationId, recipientEmail, channel, context } = dto;
-        const jurisdiction = (context.jurisdiction ?? 'GLOBAL').toUpperCase();
+        const jurisdiction = (context.jurisdiction ?? "GLOBAL").toUpperCase();
         this.logger.log(`Evaluating outreach correlationId=${correlationId} tenant=${tenantId} email=${recipientEmail} channel=${channel} jurisdiction=${jurisdiction}`);
         if (!ENFORCEMENT_ENABLED) {
             const result = {
-                decision: 'allow',
+                decision: "allow",
                 reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.ALLOW.POLICY_PASSED,
-                explanation: 'Enforcement engine is disabled (M10_COMPLIANCE_RUNTIME_ENFORCEMENT_ENABLED=false)',
+                explanation: "Enforcement engine is disabled (M10_COMPLIANCE_RUNTIME_ENFORCEMENT_ENABLED=false)",
                 correlationId,
             };
             await this.writeAudit(tenantId, dto, result, null);
@@ -61,7 +91,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
             this.logger.warn(`Opt-out fetch failed for ${recipientEmail}: ${err.message}`);
             if (FAIL_CLOSED) {
                 const result = {
-                    decision: 'block',
+                    decision: "block",
                     reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.FAIL_CLOSED_MISSING_DATA,
                     explanation: `Opt-out state could not be verified. Blocked per fail-closed policy. Error: ${err.message}`,
                     correlationId,
@@ -73,7 +103,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
         const suppression = await this.eprivacyRepo.checkSuppression(tenantId, recipientEmail);
         if (suppression) {
             const result = {
-                decision: 'block',
+                decision: "block",
                 reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.SUPPRESSED,
                 explanation: `Contact is on the suppression list (reason: ${suppression.reason}).`,
                 correlationId,
@@ -84,7 +114,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
         const activeErasure = await this.gdprRepo.getActiveErasureRequest(tenantId, recipientEmail);
         if (activeErasure) {
             const result = {
-                decision: 'block',
+                decision: "block",
                 reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.GDPR_ERASURE_IN_PROGRESS,
                 explanation: `Contact has an active Right to Erasure (DSAR) request pending.`,
                 correlationId,
@@ -94,7 +124,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
         }
         if (optOutRecord?.isOptedOut === true) {
             const result = {
-                decision: 'block',
+                decision: "block",
                 reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.CRM_OPTED_OUT,
                 explanation: `Contact ${recipientEmail} has opted out of ${channel} communications.`,
                 correlationId,
@@ -103,9 +133,9 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
             return result;
         }
         const policies = await this.repo.findActivePoliciesForChannel(tenantId, channel);
-        if (policies.length === 0 && DEFAULT_ACTION === 'block') {
+        if (policies.length === 0 && DEFAULT_ACTION === "block") {
             const result = {
-                decision: 'block',
+                decision: "block",
                 reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.NO_ACTIVE_POLICY,
                 explanation: `No active compliance policies configured for channel=${channel}. Default action is 'block'.`,
                 correlationId,
@@ -114,10 +144,10 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
             return result;
         }
         if (GDPR_ENABLED && GDPR_JURISDICTIONS.has(jurisdiction)) {
-            const consentLog = await this.repo.findLatestConsentForContact(tenantId, recipientEmail, 'email_marketing');
-            if (!consentLog || consentLog.status !== 'granted') {
+            const consentLog = await this.repo.findLatestConsentForContact(tenantId, recipientEmail, "email_marketing");
+            if (!consentLog || consentLog.status !== "granted") {
                 const result = {
-                    decision: 'block',
+                    decision: "block",
                     reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.GDPR_CONSENT_REQUIRED,
                     explanation: `Contact resides in ${jurisdiction} (EU/GDPR). No active explicit consent record found.`,
                     correlationId,
@@ -130,7 +160,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
             const optOut = await this.repo.findOptOut(tenantId, recipientEmail, channel);
             if (optOut?.isOptedOut) {
                 const result = {
-                    decision: 'block',
+                    decision: "block",
                     reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.CCPA_RESTRICTED,
                     explanation: `Contact is in California (CCPA). Contact has opted out of the sale/sharing of personal information.`,
                     correlationId,
@@ -139,11 +169,12 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
                 return result;
             }
         }
-        if (GDPR_JURISDICTIONS.has(jurisdiction) && (channel === 'email' || channel === 'sms')) {
-            const eprivacyConsent = await this.eprivacyRepo.getConsentStatus(tenantId, recipientEmail, channel, 'marketing');
-            if (!eprivacyConsent || eprivacyConsent.status !== 'granted') {
+        if (GDPR_JURISDICTIONS.has(jurisdiction) &&
+            (channel === "email" || channel === "sms")) {
+            const eprivacyConsent = await this.eprivacyRepo.getConsentStatus(tenantId, recipientEmail, channel, "marketing");
+            if (!eprivacyConsent || eprivacyConsent.status !== "granted") {
                 const result = {
-                    decision: 'block',
+                    decision: "block",
                     reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.EPRIVACY_CONSENT_REQUIRED,
                     explanation: `Contact resides in ${jurisdiction} (EU). Explicit ePrivacy consent required for ${channel} marketing.`,
                     correlationId,
@@ -155,10 +186,10 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
         for (const policy of policies) {
             const ruleDef = policy.ruleDefinition;
             if (ruleDef.requireExplicitConsent) {
-                const consentLog = await this.repo.findLatestConsentForContact(tenantId, recipientEmail, 'email_marketing');
-                if (!consentLog || consentLog.status !== 'granted') {
+                const consentLog = await this.repo.findLatestConsentForContact(tenantId, recipientEmail, "email_marketing");
+                if (!consentLog || consentLog.status !== "granted") {
                     const result = {
-                        decision: 'block',
+                        decision: "block",
                         reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.BLOCK.GDPR_CONSENT_REQUIRED,
                         explanation: `Policy "${policy.name}" requires explicit consent. None found for ${recipientEmail}.`,
                         correlationId,
@@ -170,9 +201,9 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
             }
         }
         const result = {
-            decision: 'allow',
+            decision: "allow",
             reasonCode: compliance_events_1.COMPLIANCE_REASON_CODES.ALLOW.POLICY_PASSED,
-            explanation: 'All compliance checks passed.',
+            explanation: "All compliance checks passed.",
             correlationId,
         };
         await this.writeAudit(tenantId, dto, result, null);
@@ -187,7 +218,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
         const timeout = setTimeout(() => controller.abort(), OPTOUT_API_TIMEOUT_MS);
         try {
             const response = await fetch(url, {
-                headers: { 'x-api-key': CRM_OPTOUT_API_KEY, 'x-tenant-id': tenantId },
+                headers: { "x-api-key": CRM_OPTOUT_API_KEY, "x-tenant-id": tenantId },
                 signal: controller.signal,
             });
             clearTimeout(timeout);
@@ -195,7 +226,11 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
                 throw new Error(`CRM opt-out API returned HTTP ${response.status}`);
             }
             const data = (await response.json());
-            await this.repo.upsertOptOut(tenantId, { contactEmail, channel: channel, isOptedOut: data.isOptedOut });
+            await this.repo.upsertOptOut(tenantId, {
+                contactEmail,
+                channel: channel,
+                isOptedOut: data.isOptedOut,
+            });
             return data;
         }
         catch (err) {
@@ -215,7 +250,7 @@ let ComplianceEvaluateService = ComplianceEvaluateService_1 = class ComplianceEv
                 explanation: result.explanation,
                 triggeredPolicyId: triggeredPolicyId ?? undefined,
                 evaluationMetadata: {
-                    jurisdiction: dto.context.jurisdiction ?? 'GLOBAL',
+                    jurisdiction: dto.context.jurisdiction ?? "GLOBAL",
                     outboundType: dto.context.outboundType ?? null,
                     senderId: dto.context.senderId ?? null,
                     contactId: dto.context.contactId ?? null,

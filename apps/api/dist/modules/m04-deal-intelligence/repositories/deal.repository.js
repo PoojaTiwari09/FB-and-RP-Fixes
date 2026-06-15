@@ -14,9 +14,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealRepository = void 0;
 const common_1 = require("@nestjs/common");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 const inject_repository_1 = require("../database/inject-repository");
-const m04_entity_repository_1 = require("../database/m04-entity.repository");
+const m04_prisma_repository_1 = require("../database/m04-prisma.repository");
 let DealRepository = class DealRepository {
     dealRepository;
     constructor(dealRepository) {
@@ -144,8 +144,8 @@ let DealRepository = class DealRepository {
         futureDate.setDate(today.getDate() + days);
         return this.dealRepository.find({
             where: {
-                closeDate: (0, m04_entity_repository_1.Between)(today, futureDate),
-                stage: (0, m04_entity_repository_1.In)([entities_1.DealStage.PROPOSAL, entities_1.DealStage.NEGOTIATION]),
+                closeDate: (0, m04_prisma_repository_1.Between)(today, futureDate),
+                stage: (0, m04_prisma_repository_1.In)([entities_1.DealStage.PROPOSAL, entities_1.DealStage.NEGOTIATION]),
             },
             order: { closeDate: 'ASC' },
         });
@@ -186,6 +186,6 @@ exports.DealRepository = DealRepository;
 exports.DealRepository = DealRepository = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(entities_1.Deal)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository])
+    __metadata("design:paramtypes", [m04_prisma_repository_1.M04EntityRepository])
 ], DealRepository);
 //# sourceMappingURL=deal.repository.js.map

@@ -28,6 +28,9 @@ let M02FrontendSearchController = class M02FrontendSearchController {
     getCallDrawer(callId, req) {
         return this.svc.getCallDrawer(req.tenantId, callId);
     }
+    getFilterOptionsAlias() {
+        return this.svc.getFilterOptions();
+    }
 };
 exports.M02FrontendSearchController = M02FrontendSearchController;
 __decorate([
@@ -46,6 +49,12 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], M02FrontendSearchController.prototype, "getCallDrawer", null);
+__decorate([
+    (0, common_1.Get)('options'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], M02FrontendSearchController.prototype, "getFilterOptionsAlias", null);
 exports.M02FrontendSearchController = M02FrontendSearchController = __decorate([
     (0, common_1.Controller)('api/v1/conversation-intelligence/search'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
@@ -59,6 +68,9 @@ let M02FrontendFiltersController = class M02FrontendFiltersController {
     getFilterOptions() {
         return this.svc.getFilterOptions();
     }
+    async getTeams(req) {
+        return this.svc.getTeams(req.tenantId);
+    }
 };
 exports.M02FrontendFiltersController = M02FrontendFiltersController;
 __decorate([
@@ -67,6 +79,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], M02FrontendFiltersController.prototype, "getFilterOptions", null);
+__decorate([
+    (0, common_1.Get)('teams'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], M02FrontendFiltersController.prototype, "getTeams", null);
 exports.M02FrontendFiltersController = M02FrontendFiltersController = __decorate([
     (0, common_1.Controller)('api/v1/conversation-intelligence/filters'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),

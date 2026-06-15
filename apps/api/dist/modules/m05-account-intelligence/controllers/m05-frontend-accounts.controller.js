@@ -19,26 +19,19 @@ const edits_service_1 = require("../services/edits.service");
 const todos_service_1 = require("../services/todos.service");
 const ai_service_1 = require("../services/ai.service");
 const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
-const MOCK_TEAMS = [
-    { id: 'team_01', name: 'Enterprise West', memberCount: 4 },
-    { id: 'team_02', name: 'Commercial East', memberCount: 6 },
-];
-const MOCK_REPS = [
-    { id: 'rep_01', name: 'Sarah Mitchell', initials: 'SM', avatarUrl: '' },
-    { id: 'rep_02', name: 'James Torres', initials: 'JT', avatarUrl: '' },
-    { id: 'rep_03', name: 'Priya Nair', initials: 'PN', avatarUrl: '' },
-    { id: 'manager_01', name: 'Alan Clayborn', initials: 'AC', avatarUrl: '' },
-];
+const prisma_service_1 = require("../database/prisma.service");
 let M05FrontendAccountsController = class M05FrontendAccountsController {
     accountsService;
     editsService;
     todosService;
     aiService;
-    constructor(accountsService, editsService, todosService, aiService) {
+    prisma;
+    constructor(accountsService, editsService, todosService, aiService, prisma) {
         this.accountsService = accountsService;
         this.editsService = editsService;
         this.todosService = todosService;
         this.aiService = aiService;
+        this.prisma = prisma;
     }
     async getAlertBanner(req) {
         const res = await this.accountsService.getEngagementGap('demo', 14);
@@ -65,10 +58,33 @@ let M05FrontendAccountsController = class M05FrontendAccountsController {
             { label: 'Churn Risk', value: allArr * 0.1, count: atRiskCount }
         ];
     }
-    async getViewers() {
+    async getViewers(req) {
+        const tenantId = req.tenantId;
+        if (!tenantId) {
+            return { teams: [], reps: [] };
+        }
+        const dbTeams = await this.prisma.team.findMany({
+            where: { tenantid: tenantId }
+        });
+        const dbUsers = await this.prisma.user.findMany({
+            where: { tenantid: tenantId }
+        });
         return {
-            teams: MOCK_TEAMS,
-            reps: MOCK_REPS,
+            teams: dbTeams.map(t => ({
+                id: t.id,
+                name: t.name,
+                memberCount: t.members ? t.members.length : 0,
+            })),
+            reps: dbUsers.map(u => {
+                const parts = u.name.split(' ');
+                const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0]?.[0] || 'U';
+                return {
+                    id: u.id,
+                    name: u.name,
+                    initials: initials.toUpperCase(),
+                    avatarUrl: ''
+                };
+            }),
         };
     }
     async getAccountsList(req, viewing, period, noActivity, search, sortBy, sortOrder, page, size) {
@@ -359,8 +375,9 @@ __decorate([
 ], M05FrontendAccountsController.prototype, "getSummary", null);
 __decorate([
     (0, common_1.Get)('viewers'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], M05FrontendAccountsController.prototype, "getViewers", null);
 __decorate([
@@ -388,6 +405,7 @@ __decorate([
 ], M05FrontendAccountsController.prototype, "getRecentActivities", null);
 __decorate([
     (0, common_1.Post)(':accountId/ai-chat'),
+    (0, common_1.HttpCode)(200),
     __param(0, (0, common_1.Param)('accountId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -463,6 +481,7 @@ exports.M05FrontendAccountsController = M05FrontendAccountsController = __decora
     __metadata("design:paramtypes", [accounts_service_1.AccountsService,
         edits_service_1.EditsService,
         todos_service_1.TodosService,
-        ai_service_1.AiService])
+        ai_service_1.AiService,
+        prisma_service_1.PrismaService])
 ], M05FrontendAccountsController);
 //# sourceMappingURL=m05-frontend-accounts.controller.js.map

@@ -8,12 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealBoardService = void 0;
 const common_1 = require("@nestjs/common");
-const deal_board_repository_1 = require("@/repositories/deal-board.repository");
+const deal_board_repository_1 = require("@m04/repositories/deal-board.repository");
 const audit_log_service_1 = require("./audit-log.service");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 let DealBoardService = class DealBoardService {
     boardRepository;
     auditLogService;
@@ -267,7 +268,6 @@ let DealBoardService = class DealBoardService {
 exports.DealBoardService = DealBoardService;
 exports.DealBoardService = DealBoardService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [deal_board_repository_1.DealBoardRepository,
-        audit_log_service_1.AuditLogService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_board_repository_1.DealBoardRepository !== "undefined" && deal_board_repository_1.DealBoardRepository) === "function" ? _a : Object, audit_log_service_1.AuditLogService])
 ], DealBoardService);
 //# sourceMappingURL=deal-board.service.js.map

@@ -11,13 +11,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealCommentService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const deal_comment_entity_1 = require("@/entities/deal-comment.entity");
-const deal_entity_1 = require("@/entities/deal.entity");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const deal_comment_entity_1 = require("@m04/entities/deal-comment.entity");
+const deal_entity_1 = require("@m04/entities/deal.entity");
 let DealCommentService = class DealCommentService {
     commentRepository;
     dealRepository;
@@ -119,7 +120,6 @@ exports.DealCommentService = DealCommentService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(deal_comment_entity_1.DealComment)),
     __param(1, (0, inject_repository_1.InjectRepository)(deal_entity_1.Deal)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        m04_entity_repository_1.M04EntityRepository])
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, typeof (_b = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _b : Object])
 ], DealCommentService);
 //# sourceMappingURL=deal-comment.service.js.map

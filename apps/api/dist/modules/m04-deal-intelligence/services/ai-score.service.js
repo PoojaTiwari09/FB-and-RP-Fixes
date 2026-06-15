@@ -11,12 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AIScoreService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const deal_entity_1 = require("@/entities/deal.entity");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const deal_entity_1 = require("@m04/entities/deal.entity");
 const ai_client_service_1 = require("./ai-client.service");
 const deal_service_1 = require("./deal.service");
 let AIScoreService = class AIScoreService {
@@ -170,8 +171,7 @@ exports.AIScoreService = AIScoreService;
 exports.AIScoreService = AIScoreService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(deal_entity_1.Deal)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository,
-        ai_client_service_1.AIClientService,
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object, ai_client_service_1.AIClientService,
         deal_service_1.DealService])
 ], AIScoreService);
 //# sourceMappingURL=ai-score.service.js.map

@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealActivityController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_activity_service_1 = require("@/services/deal-activity.service");
-const activity_dto_1 = require("@/schemas/activity.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const deal_activity_service_1 = require("@m04/services/deal-activity.service");
+const activity_dto_1 = require("@m04/schemas/activity.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let DealActivityController = class DealActivityController {
     activityService;
     constructor(activityService) {
@@ -67,7 +70,7 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, activity_dto_1.ActivityQueryDto]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof activity_dto_1.ActivityQueryDto !== "undefined" && activity_dto_1.ActivityQueryDto) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], DealActivityController.prototype, "getTimeline", null);
 __decorate([
@@ -93,7 +96,7 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, activity_dto_1.ActivityQueryDto]),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof activity_dto_1.ActivityQueryDto !== "undefined" && activity_dto_1.ActivityQueryDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], DealActivityController.prototype, "getActivities", null);
 __decorate([
@@ -151,7 +154,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, activity_dto_1.CreateActivityDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_d = typeof activity_dto_1.CreateActivityDto !== "undefined" && activity_dto_1.CreateActivityDto) === "function" ? _d : Object, typeof (_e = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], DealActivityController.prototype, "createActivity", null);
 __decorate([
@@ -183,7 +186,7 @@ __decorate([
     __param(1, (0, common_1.Param)('activityId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, activity_dto_1.UpdateActivityDto]),
+    __metadata("design:paramtypes", [String, String, typeof (_f = typeof activity_dto_1.UpdateActivityDto !== "undefined" && activity_dto_1.UpdateActivityDto) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], DealActivityController.prototype, "updateActivity", null);
 __decorate([
@@ -219,8 +222,8 @@ __decorate([
 exports.DealActivityController = DealActivityController = __decorate([
     (0, swagger_1.ApiTags)('Deal Activities'),
     (0, common_1.Controller)('deals/:dealId/activities'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [deal_activity_service_1.DealActivityService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_activity_service_1.DealActivityService !== "undefined" && deal_activity_service_1.DealActivityService) === "function" ? _a : Object])
 ], DealActivityController);
 //# sourceMappingURL=deal-activity.controller.js.map

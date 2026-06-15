@@ -11,12 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuditLogService = void 0;
 const common_1 = require("@nestjs/common");
-const inject_repository_1 = require("@/database/inject-repository");
-const m04_entity_repository_1 = require("@/database/m04-entity.repository");
-const entities_1 = require("@/entities");
+const inject_repository_1 = require("@m04/database/inject-repository");
+const m04_prisma_repository_1 = require("@m04/database/m04-prisma.repository");
+const entities_1 = require("@m04/entities");
 let AuditLogService = class AuditLogService {
     auditLogRepository;
     constructor(auditLogRepository) {
@@ -59,6 +60,6 @@ exports.AuditLogService = AuditLogService;
 exports.AuditLogService = AuditLogService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, inject_repository_1.InjectRepository)(entities_1.AuditLog)),
-    __metadata("design:paramtypes", [m04_entity_repository_1.M04EntityRepository])
+    __metadata("design:paramtypes", [typeof (_a = typeof m04_prisma_repository_1.M04EntityRepository !== "undefined" && m04_prisma_repository_1.M04EntityRepository) === "function" ? _a : Object])
 ], AuditLogService);
 //# sourceMappingURL=audit-log.service.js.map

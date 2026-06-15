@@ -54,11 +54,13 @@ let M01FrontendTranscriptService = class M01FrontendTranscriptService {
     async getSummary(callId, tenantId) {
         const record = await this.loadCall(callId, tenantId);
         const t = record.transcript;
+        const rawDate = t?.updatedAt || t?.createdAt;
+        const generatedAt = rawDate
+            ? new Date(rawDate).toISOString()
+            : new Date().toISOString();
         return {
             summary: t?.summary || '—',
-            generatedAt: (t?.updatedAt || t?.createdAt || new Date()).toISOString?.()
-                ? new Date(t.updatedAt || t.createdAt).toISOString()
-                : new Date().toISOString(),
+            generatedAt,
         };
     }
     async getTalkRatio(callId, tenantId) {

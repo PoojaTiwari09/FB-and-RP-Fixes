@@ -150,23 +150,99 @@ let M07DealAccountService = class M07DealAccountService {
                 return "TBD";
             return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
         };
-        const lastUpdated = (id) => `${(id.charCodeAt(5) % 20) + 5}d`;
-        const contactCount = (id, riskFlags) => riskFlags.includes("SINGLE_THREADED") ? 1 : (id.charCodeAt(3) % 2) + 1;
         const TRACKER_TENANT = "00000000-0000-0000-0000-000000000001";
         const DEALS_DEMO_TENANT = "11111111-1111-1111-1111-111111111111";
         const activeStages = ["Discovery", "Proposal", "Negotiation"];
+        const { quarterLabel, startDate, endDate, isCurrentQuarter } = this.parsePeriod(period);
+        const periodWhere = isCurrentQuarter
+            ? { stage: { in: activeStages } }
+            : { OR: [{ quarter: quarterLabel }, { closeDate: { gte: startDate, lte: endDate } }] };
         let deals = await this.prisma.deal.findMany({
-            where: { tenantid: tenantId, stage: { in: activeStages } },
+            where: { tenantid: tenantId, ...periodWhere },
             include: { account: true },
             orderBy: { amount: "desc" },
         });
         if (deals.length < 5) {
-            deals = await this.prisma.deal.findMany({
-                where: { tenantid: DEALS_DEMO_TENANT, stage: { in: activeStages } },
+            let demoDeals = await this.prisma.deal.findMany({
+                where: { tenantid: DEALS_DEMO_TENANT, ...periodWhere },
                 include: { account: true },
                 orderBy: { amount: "desc" },
             });
+            if (demoDeals.length === 0 && !isCurrentQuarter) {
+                demoDeals = await this.prisma.deal.findMany({
+                    where: { tenantid: DEALS_DEMO_TENANT, stage: { in: activeStages } },
+                    include: { account: true },
+                    orderBy: { amount: "desc" },
+                });
+            }
+            if (demoDeals.length > deals.length)
+                deals = demoDeals;
         }
+        const activeTenantId = deals.length > 0 ? deals[0].tenantid : DEALS_DEMO_TENANT;
+        const dealIds = deals.map((d) => d.id);
+        let callRecordsForDeals = [];
+        try {
+            callRecordsForDeals = await this.prisma.callRecord.findMany({
+                where: { tenantid: activeTenantId, opportunityId: { in: dealIds } },
+                select: { opportunityId: true, participants: true },
+            });
+        }
+        catch { }
+        let recentCallsForDeals = [];
+        try {
+            recentCallsForDeals = await this.prisma.call.findMany({
+                where: { tenantid: activeTenantId, dealId: { in: dealIds } },
+                select: { dealId: true, occurredAt: true },
+                orderBy: { occurredAt: 'desc' },
+            });
+        }
+        catch { }
+        const dealLatestCallMap = new Map();
+        for (const call of recentCallsForDeals) {
+            if (!call.dealId)
+                continue;
+            const existing = dealLatestCallMap.get(call.dealId);
+            const callDate = new Date(call.occurredAt);
+            if (!existing || callDate > existing)
+                dealLatestCallMap.set(call.dealId, callDate);
+        }
+        const VP_ROLE_SIGNALS = ['vp', 'vice president', 'svp', 'evp', 'chief', 'ceo', 'cro', 'cto', 'cfo', 'director'];
+        const dealHasVPMap = new Set();
+        const dealParticipantSets = new Map();
+        for (const cr of callRecordsForDeals) {
+            if (!cr.opportunityId)
+                continue;
+            if (!dealParticipantSets.has(cr.opportunityId))
+                dealParticipantSets.set(cr.opportunityId, new Set());
+            const participants = Array.isArray(cr.participants) ? cr.participants : [];
+            for (const p of participants) {
+                const key = p.email ?? p.name ?? p.id ?? JSON.stringify(p);
+                dealParticipantSets.get(cr.opportunityId).add(key);
+                const role = (p.role ?? p.title ?? p.jobTitle ?? '').toLowerCase();
+                if (VP_ROLE_SIGNALS.some((sig) => role.includes(sig)))
+                    dealHasVPMap.add(cr.opportunityId);
+            }
+        }
+        const dealParticipantMap = new Map([...dealParticipantSets.entries()].map(([id, pSet]) => [id, pSet.size]));
+        const lastUpdated = (deal) => {
+            const callDate = dealLatestCallMap.get(deal.id);
+            const dealUpdated = deal.updatedAt ? new Date(deal.updatedAt) : null;
+            const latestActivity = callDate && dealUpdated
+                ? (callDate > dealUpdated ? callDate : dealUpdated)
+                : (callDate ?? dealUpdated);
+            if (!latestActivity)
+                return 'N/A';
+            const daysAgo = Math.floor((Date.now() - latestActivity.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysAgo <= 0)
+                return 'Today';
+            return `${daysAgo}d`;
+        };
+        const contactCount = (id, riskFlags) => {
+            const fromCalls = dealParticipantMap.get(id);
+            if (fromCalls !== undefined && fromCalls > 0)
+                return fromCalls;
+            return riskFlags.includes('SINGLE_THREADED') ? 1 : 1;
+        };
         const competitorDetections = await this.prisma.m02TrackerDetection.findMany({
             where: { tenantid: TRACKER_TENANT },
             include: { tracker: true },
@@ -217,7 +293,9 @@ let M07DealAccountService = class M07DealAccountService {
             ? trackerMatchedCompetitive
             : lateStageDeals.slice(0, Math.min(5, lateStageDeals.length));
         const missingPricing = lateStageDeals.filter((d) => !hasPricing(d));
-        const closingNoVP = deals.filter((d) => d.stage === "Negotiation");
+        const closingNoVP = callRecordsForDeals.length > 0
+            ? lateStageDeals.filter((d) => !dealHasVPMap.has(d.id))
+            : deals.filter((d) => d.stage === 'Negotiation');
         const totalPipeline = deals.reduce((s, d) => s + Number(d.amount), 0);
         const competitivePipeline = competitiveOpps.reduce((s, d) => s + Number(d.amount), 0);
         const pct = totalPipeline > 0 ? Math.round((competitivePipeline / totalPipeline) * 100) : 0;
@@ -273,7 +351,7 @@ let M07DealAccountService = class M07DealAccountService {
                 account: d.account?.name ?? d.name,
                 stage: d.stage,
                 amount: fmt(Number(d.amount)),
-                lastUpdated: lastUpdated(d.id),
+                lastUpdated: lastUpdated(d),
             })),
             closingNoVP: closingNoVP.slice(0, 4).map((d) => ({
                 id: d.id,
@@ -305,17 +383,30 @@ let M07DealAccountService = class M07DealAccountService {
         };
         const TRACKER_TENANT = '00000000-0000-0000-0000-000000000001';
         const DEALS_DEMO_TENANT = '11111111-1111-1111-1111-111111111111';
+        const { quarterLabel: caQuarterLabel, startDate: caStart, endDate: caEnd, isCurrentQuarter: caIsCurrent } = this.parsePeriod(period);
+        const caPeriodWhere = caIsCurrent
+            ? {}
+            : { OR: [{ quarter: caQuarterLabel }, { closeDate: { gte: caStart, lte: caEnd } }] };
         let allDeals = await this.prisma.deal.findMany({
-            where: { tenantid: tenantId },
+            where: { tenantid: tenantId, ...caPeriodWhere },
             include: { account: true },
             orderBy: { amount: 'desc' },
         });
         if (allDeals.length < 5) {
-            allDeals = await this.prisma.deal.findMany({
-                where: { tenantid: DEALS_DEMO_TENANT },
+            let demoDeals = await this.prisma.deal.findMany({
+                where: { tenantid: DEALS_DEMO_TENANT, ...caPeriodWhere },
                 include: { account: true },
                 orderBy: { amount: 'desc' },
             });
+            if (demoDeals.length === 0 && !caIsCurrent) {
+                demoDeals = await this.prisma.deal.findMany({
+                    where: { tenantid: DEALS_DEMO_TENANT },
+                    include: { account: true },
+                    orderBy: { amount: 'desc' },
+                });
+            }
+            if (demoDeals.length > allDeals.length)
+                allDeals = demoDeals;
         }
         const activeStages = ['Discovery', 'Proposal', 'Negotiation'];
         const activeDeals = allDeals.filter((d) => activeStages.includes(d.stage));
@@ -430,10 +521,6 @@ let M07DealAccountService = class M07DealAccountService {
             quarter,
             winRate: won + lost > 0 ? Math.round((won / (won + lost)) * 100) : 0,
         }));
-        if (historicalWinRates.length === 0) {
-            const base = overallWinRate || 40;
-            historicalWinRates.push({ quarter: 'Q1-2025', winRate: Math.max(10, base - 6) }, { quarter: 'Q2-2025', winRate: Math.max(10, base - 3) }, { quarter: 'Q3-2025', winRate: Math.min(90, base + 4) }, { quarter: 'Q4-2025', winRate: base });
-        }
         const perQMap = {};
         for (const d of wonDeals) {
             const q = getQuarter(d);
@@ -472,6 +559,18 @@ let M07DealAccountService = class M07DealAccountService {
         }));
         if (valueOfWonOpps.length === 0) {
             valueOfWonOpps.push({ quarter: 'Q3 FY2024', value: '$940K', barWidth: 72, color: '#a78bfa' }, { quarter: 'Q4 FY2024', value: '$1.04M', barWidth: 82, color: '#8b5cf6' }, { quarter: 'Q1 FY2025', value: '$1.04M', barWidth: 82, color: '#7c3aed' }, { quarter: 'Q2 FY2025', value: '$1.18M', barWidth: 95, color: '#e91e8c' });
+        }
+        const sortedValueQEntries = Object.entries(valueQMap).sort(([a], [b]) => a.localeCompare(b));
+        let valueWonDelta = '';
+        if (sortedValueQEntries.length >= 2) {
+            const latestRaw = sortedValueQEntries[sortedValueQEntries.length - 1][1];
+            const prevRaw = sortedValueQEntries[sortedValueQEntries.length - 2][1];
+            const delta = latestRaw - prevRaw;
+            const prevQLabel = sortedValueQEntries[sortedValueQEntries.length - 2][0].replace('-', ' FY');
+            valueWonDelta = `${delta >= 0 ? '+' : ''}${fmt(delta)} vs ${prevQLabel}`;
+        }
+        else if (sortedValueQEntries.length === 1) {
+            valueWonDelta = fmt(sortedValueQEntries[0][1]);
         }
         const COMP_GRID_META = {
             Salesforce: { abbr: 'SF', bar: '#ef4444' },
@@ -519,6 +618,7 @@ let M07DealAccountService = class M07DealAccountService {
                 pctWonOppsDelta: pctDelta,
                 valueOfWonOpps: latestValue,
                 valuePrevQuarter: prevValue,
+                valueWonDelta,
                 winRateCompetitive: overallWinRate,
                 winRateDelta: `vs ${Math.min(99, overallWinRate + 12)}% overall`,
             },
@@ -803,17 +903,30 @@ let M07DealAccountService = class M07DealAccountService {
         const EP_KEYWORDS = ['budget freeze', 'headcount reduction', 'cost cutting', 'delayed decision', 'economic uncertainty'];
         const TRACKER_TENANT = '00000000-0000-0000-0000-000000000001';
         const DEALS_DEMO_TENANT = '11111111-1111-1111-1111-111111111111';
+        const { quarterLabel: epQuarterLabel, startDate: epStart, endDate: epEnd, isCurrentQuarter: epIsCurrent } = this.parsePeriod(period);
+        const epPeriodWhere = epIsCurrent
+            ? {}
+            : { OR: [{ quarter: epQuarterLabel }, { closeDate: { gte: epStart, lte: epEnd } }] };
         let allDeals = await this.prisma.deal.findMany({
-            where: { tenantid: tenantId },
+            where: { tenantid: tenantId, ...epPeriodWhere },
             include: { account: true },
             orderBy: { amount: 'desc' },
         });
         if (allDeals.length < 5) {
-            allDeals = await this.prisma.deal.findMany({
-                where: { tenantid: DEALS_DEMO_TENANT },
+            let demoDeals = await this.prisma.deal.findMany({
+                where: { tenantid: DEALS_DEMO_TENANT, ...epPeriodWhere },
                 include: { account: true },
                 orderBy: { amount: 'desc' },
             });
+            if (demoDeals.length === 0 && !epIsCurrent) {
+                demoDeals = await this.prisma.deal.findMany({
+                    where: { tenantid: DEALS_DEMO_TENANT },
+                    include: { account: true },
+                    orderBy: { amount: 'desc' },
+                });
+            }
+            if (demoDeals.length > allDeals.length)
+                allDeals = demoDeals;
         }
         const dealsTenant = allDeals.length > 0 ? (allDeals[0].tenantid) : DEALS_DEMO_TENANT;
         const activeStages = ['Discovery', 'Proposal', 'Negotiation', 'Commit'];
@@ -1016,7 +1129,12 @@ let M07DealAccountService = class M07DealAccountService {
             barWidth: Math.round((count / maxIndCount) * 100),
         }));
         const topIndustryInsight = industryBreakdown.length > 0
-            ? `${industryBreakdown[0].industry} most impacted — budget concerns mentioned in ${industryBreakdown[0].count} open opps`
+            ? (() => {
+                const top = industryBreakdown[0];
+                const totalEpCount = industryBreakdown.reduce((s, i) => s + i.count, 0);
+                const pct = totalEpCount > 0 ? Math.round((top.count / totalEpCount) * 100) : 0;
+                return `${top.industry} leads EP exposure with ${top.count} impacted deal${top.count !== 1 ? 's' : ''} (${pct}% of EP-impacted pipeline)`;
+            })()
             : '';
         const ACCT_COLORS = {
             Prospect: '#ef4444', Customer: '#f97316', Partner: '#eab308', Renewal: '#94a3b8',
@@ -1084,6 +1202,23 @@ let M07DealAccountService = class M07DealAccountService {
         const aiInsight = gapDiff > 0
             ? `Win rate gap between EP-impacted and overall deals increased from ${Math.abs(prevRow.delta)}pp in ${prevRow.quarter} to ${Math.abs(latestRow.delta)}pp in ${latestRow.quarter}. Recommend proactive economic ROI talk track and earlier executive sponsorship on EP-flagged deals.`
             : `EP-impacted win rate is ${Math.abs(latestRow.delta)}pp below overall. Focus on value-based selling and budget justification for EP-flagged accounts.`;
+        const topAccountEntry = Object.entries(accountTypeMap)
+            .filter(([, count]) => count > 0)
+            .sort(([, a], [, b]) => b - a)[0];
+        const accountTypeInsight = (() => {
+            if (!topAccountEntry)
+                return 'No account type data available for EP-impacted deals';
+            const [topType, topCount] = topAccountEntry;
+            const total = Object.values(accountTypeMap).reduce((s, c) => s + c, 0);
+            const pct = total > 0 ? Math.round((topCount / total) * 100) : 0;
+            const messageMap = {
+                Prospect: `Prospects represent ${pct}% of EP-impacted deals — elevated risk of deal delays among new opportunities`,
+                Customer: `Customers account for ${pct}% of EP-impacted deals — budget pressure may affect renewals and expansions`,
+                Partner: `Partner accounts make up ${pct}% of EP-impacted deals — downstream pipeline exposure elevated`,
+                Renewal: `Renewal accounts represent ${pct}% of EP-impacted deals — retention at risk from budget scrutiny`,
+            };
+            return messageMap[topType] ?? `${topType} accounts are the most EP-impacted segment at ${pct}% of affected pipeline`;
+        })();
         return {
             period,
             trackerTerms: EP_KEYWORDS,
@@ -1114,7 +1249,7 @@ let M07DealAccountService = class M07DealAccountService {
             industryBreakdown,
             topIndustryInsight,
             accountTypes,
-            accountTypeInsight: 'Prospects mention EP signals most frequently — indicating deal delays and budget scrutiny',
+            accountTypeInsight,
             winRatesByQuarter,
             aiInsight,
         };
@@ -1251,6 +1386,31 @@ let M07DealAccountService = class M07DealAccountService {
             grouped.set(label, bucket);
         }
         return [...grouped.entries()].map(([label, bucket]) => ({ label, value: valueSelector(bucket) }));
+    }
+    parsePeriod(period) {
+        const now = new Date();
+        const currentQNum = Math.ceil((now.getMonth() + 1) / 3);
+        const currentYear = now.getFullYear();
+        let qNum = currentQNum;
+        let qYear = currentYear;
+        const norm = period.toLowerCase().trim();
+        if (norm === 'last quarter' || norm === 'last_quarter') {
+            qNum = currentQNum === 1 ? 4 : currentQNum - 1;
+            qYear = currentQNum === 1 ? currentYear - 1 : currentYear;
+        }
+        else {
+            const match = period.match(/Q([1-4])[-\s](?:FY)?(\d{4})/i);
+            if (match) {
+                qNum = parseInt(match[1], 10);
+                qYear = parseInt(match[2], 10);
+            }
+        }
+        const isCurrentQuarter = qNum === currentQNum && qYear === currentYear;
+        const quarterLabel = `Q${qNum}-${qYear}`;
+        const startMonth = (qNum - 1) * 3;
+        const startDate = new Date(qYear, startMonth, 1);
+        const endDate = new Date(qYear, startMonth + 3, 0, 23, 59, 59, 999);
+        return { quarterLabel, startDate, endDate, isCurrentQuarter };
     }
     resolveQuarter(timeRange) {
         const now = new Date();

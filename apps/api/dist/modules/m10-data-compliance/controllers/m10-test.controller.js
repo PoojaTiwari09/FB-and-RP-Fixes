@@ -17,7 +17,7 @@ const common_1 = require("@nestjs/common");
 const revenue_graph_service_1 = require("../revenue-graph/services/revenue-graph.service");
 const prisma_service_1 = require("../database/prisma.service");
 const entity_resolution_engine_1 = require("../revenue-graph/entity-resolution/entity-resolution.engine");
-const { seedM10Demo } = require('../../../scripts/seed_m10_demo.cjs');
+const { seedM10Demo } = require("../../../scripts/seed_m10_demo.cjs");
 let M10TestController = class M10TestController {
     graph;
     prisma;
@@ -26,27 +26,27 @@ let M10TestController = class M10TestController {
         this.prisma = prisma;
     }
     health() {
-        return { success: true, module: 'm10-data-compliance', status: 'ok' };
+        return { success: true, module: "m10-data-compliance", status: "ok" };
     }
     smoke() {
-        const ranked = (0, entity_resolution_engine_1.rankAccountCandidates)('Acme Corporation', 'acme.com', [
-            { id: '1', name: 'Acme Corp', domain: 'acme.com' },
-            { id: '2', name: 'Beta LLC', domain: 'beta.io' },
+        const ranked = (0, entity_resolution_engine_1.rankAccountCandidates)("Acme Corporation", "acme.com", [
+            { id: "1", name: "Acme Corp", domain: "acme.com" },
+            { id: "2", name: "Beta LLC", domain: "beta.io" },
         ]);
         const { best, ambiguous } = (0, entity_resolution_engine_1.pickBestCandidate)(ranked);
         return {
             success: true,
-            module: 'm10-data-compliance',
+            module: "m10-data-compliance",
             entityResolution: {
-                similarity: (0, entity_resolution_engine_1.stringSimilarity)('Acme Corporation', 'Acme Corp'),
+                similarity: (0, entity_resolution_engine_1.stringSimilarity)("Acme Corporation", "Acme Corp"),
                 bestMatch: best,
                 ambiguous,
             },
-            checks: ['entity-engine', 'export-pipeline', 'warehouse-hooks'],
+            checks: ["entity-engine", "export-pipeline", "warehouse-hooks"],
         };
     }
     async accounts(req) {
-        const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+        const tenantId = req.headers["x-tenant-id"] || "00000000-0000-0000-0000-000000000001";
         return this.graph.getAccounts(tenantId, { limit: 5 });
     }
     async seed() {
@@ -55,32 +55,32 @@ let M10TestController = class M10TestController {
 };
 exports.M10TestController = M10TestController;
 __decorate([
-    (0, common_1.Get)('health'),
+    (0, common_1.Get)("health"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], M10TestController.prototype, "health", null);
 __decorate([
-    (0, common_1.Post)('smoke'),
+    (0, common_1.Post)("smoke"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], M10TestController.prototype, "smoke", null);
 __decorate([
-    (0, common_1.Get)('accounts'),
+    (0, common_1.Get)("accounts"),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], M10TestController.prototype, "accounts", null);
 __decorate([
-    (0, common_1.Post)('seed'),
+    (0, common_1.Post)("seed"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], M10TestController.prototype, "seed", null);
 exports.M10TestController = M10TestController = __decorate([
-    (0, common_1.Controller)('api/v1/m10-data-compliance/test'),
+    (0, common_1.Controller)("api/v1/m10-data-compliance/test"),
     __metadata("design:paramtypes", [revenue_graph_service_1.RevenueGraphService,
         prisma_service_1.PrismaService])
 ], M10TestController);

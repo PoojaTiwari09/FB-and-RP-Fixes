@@ -16,19 +16,26 @@ exports.M01FrontendBriefPeriodsController = exports.M01FrontendBriefTemplatesCon
 const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
 const notes_repository_1 = require("../repositories/notes.repository");
+const next_steps_repository_1 = require("../repositories/next-steps.repository");
 const m01_frontend_transcript_service_1 = require("../services/m01-frontend-transcript.service");
 const m01_frontend_call_processing_service_1 = require("../services/m01-frontend-call-processing.service");
 const m01_frontend_calls_service_1 = require("../services/m01-frontend-calls.service");
+const call_service_1 = require("../services/call.service");
+const m01_schema_1 = require("../schemas/m01.schema");
 let M01FrontendCallDetailController = class M01FrontendCallDetailController {
     svc;
     processing;
     callsUi;
     notesRepo;
-    constructor(svc, processing, callsUi, notesRepo) {
+    nextSteps;
+    callService;
+    constructor(svc, processing, callsUi, notesRepo, nextSteps, callService) {
         this.svc = svc;
         this.processing = processing;
         this.callsUi = callsUi;
         this.notesRepo = notesRepo;
+        this.nextSteps = nextSteps;
+        this.callService = callService;
     }
     getMetadata(callId, req) {
         return this.callsUi.getCallMetadata(callId, req.tenantId);
@@ -54,11 +61,30 @@ let M01FrontendCallDetailController = class M01FrontendCallDetailController {
     getTopics(callId, req) {
         return this.svc.getTopics(callId, req.tenantId);
     }
-    getNextSteps(callId, req) {
-        return this.svc.getNextSteps(callId, req.tenantId);
+    async getNextSteps(callId, req) {
+        const steps = await this.nextSteps.findByCallId(callId, req.tenantId);
+        return {
+            nextSteps: steps.map((description, index) => ({
+                stepId: `step-${index}`,
+                description,
+                completed: false,
+            })),
+        };
+    }
+    addNextStep(callId, body, req) {
+        const dto = m01_schema_1.AddNextStepSchema.parse(body);
+        return this.nextSteps.addNextStep(callId, req.tenantId, dto.step);
+    }
+    updateNextStep(callId, body, req) {
+        const dto = m01_schema_1.UpdateNextStepSchema.parse(body);
+        return this.nextSteps.updateNextStep(callId, req.tenantId, dto.index, dto.step);
     }
     patchNextStep(callId, stepId, body, req) {
         return this.svc.patchNextStep(callId, stepId, req.tenantId, body);
+    }
+    deleteNextStep(callId, index, req) {
+        const dto = m01_schema_1.DeleteNextStepSchema.parse({ index });
+        return this.nextSteps.deleteNextStep(callId, req.tenantId, dto.index);
     }
     listBriefs(callId, query, req) {
         return this.svc.listBriefs(callId, req.tenantId, query);
@@ -68,6 +94,33 @@ let M01FrontendCallDetailController = class M01FrontendCallDetailController {
     }
     generateBrief(callId, body, req) {
         return this.svc.generateBrief(callId, req.tenantId, body);
+    }
+    regenerateBrief(callId, _briefId, req) {
+        return this.processing.processCall(callId, req.tenantId);
+    }
+    async getDiscussionPoints(callId, briefId, req) {
+        const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+        return { discussionPoints: brief.keyDiscussionPoints || [] };
+    }
+    async getCustomerNeeds(callId, briefId, req) {
+        const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+        return { customerNeeds: brief.customerNeeds || [] };
+    }
+    async getRisks(callId, briefId, req) {
+        const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+        return { risks: brief.risks || [] };
+    }
+    async getCommitments(callId, briefId, req) {
+        const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+        return { commitments: brief.commitments || [] };
+    }
+    async getStakeholders(callId, briefId, req) {
+        const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+        return { stakeholders: brief.stakeholders || [] };
+    }
+    async getActivityContext(callId, briefId, req) {
+        const brief = await this.svc.getBrief(callId, briefId, req.tenantId);
+        return { activities: brief.activityContext || [] };
     }
     regenerateBrief(callId, _briefId, req) {
         return this.processing.processCall(callId, req.tenantId);
@@ -106,10 +159,10 @@ let M01FrontendCallDetailController = class M01FrontendCallDetailController {
         if (!noteText) {
             throw new common_1.BadRequestException('Note content is required');
         }
-        const authorId = body.userId || req.user?.sub || req.user?.id || req.userId;
+        const authorId = body.userId || req.user?.sub || req.user?.id || req.userId || 'anonymous';
         const tenantId = req.tenantId || req.user?.tenantId;
-        if (!tenantId || !authorId)
-            throw new common_1.BadRequestException('Authentication required');
+        if (!tenantId)
+            throw new common_1.BadRequestException('Tenant context required');
         const created = await this.notesRepo.create(callId, tenantId, authorId, { content: noteText });
         return {
             data: {
@@ -121,6 +174,37 @@ let M01FrontendCallDetailController = class M01FrontendCallDetailController {
                 createdAt: created.createdAt.toISOString(),
             },
         };
+    }
+    async updateNote(noteId, body, req) {
+        const dto = m01_schema_1.UpdateNoteSchema.parse(body);
+        const updated = await this.notesRepo.update(noteId, req.tenantId, dto);
+        return {
+            data: {
+                noteId: updated.id,
+                callId: updated.callId,
+                note: updated.content,
+                userId: updated.authorId,
+                timestamp: updated.createdAt.toISOString(),
+                createdAt: updated.createdAt.toISOString(),
+            },
+        };
+    }
+    async deleteNote(noteId, req) {
+        await this.notesRepo.delete(noteId, req.tenantId);
+    }
+    shareCall(callId, body, req) {
+        const dto = m01_schema_1.ShareCallSchema.parse(body);
+        const userId = req.user?.sub || req.user?.id || req.userId || 'anonymous';
+        return this.callService.shareCall(callId, req.tenantId, userId, dto);
+    }
+    extractAi(callId, req) {
+        return this.callService.triggerAiExtraction(callId, req.tenantId);
+    }
+    deleteCall(callId, req) {
+        return this.callService.deleteCall(callId, req.tenantId);
+    }
+    searchWithinCall(callId, query, req) {
+        return this.callService.searchWithinCall(callId, req.tenantId, { q: query.q || '' });
     }
 };
 exports.M01FrontendCallDetailController = M01FrontendCallDetailController;
@@ -195,8 +279,26 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], M01FrontendCallDetailController.prototype, "getNextSteps", null);
+__decorate([
+    (0, common_1.Post)('next-steps'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "addNextStep", null);
+__decorate([
+    (0, common_1.Patch)('next-steps'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "updateNextStep", null);
 __decorate([
     (0, common_1.Patch)('next-steps/:stepId'),
     __param(0, (0, common_1.Param)('callId')),
@@ -207,6 +309,16 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], M01FrontendCallDetailController.prototype, "patchNextStep", null);
+__decorate([
+    (0, common_1.Delete)('next-steps/:index'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('index')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "deleteNextStep", null);
 __decorate([
     (0, common_1.Get)('briefs'),
     __param(0, (0, common_1.Param)('callId')),
@@ -234,6 +346,69 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], M01FrontendCallDetailController.prototype, "generateBrief", null);
+__decorate([
+    (0, common_1.Post)('briefs/:briefId/regenerate'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "regenerateBrief", null);
+__decorate([
+    (0, common_1.Get)('briefs/:briefId/discussion-points'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "getDiscussionPoints", null);
+__decorate([
+    (0, common_1.Get)('briefs/:briefId/customer-needs'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "getCustomerNeeds", null);
+__decorate([
+    (0, common_1.Get)('briefs/:briefId/risks'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "getRisks", null);
+__decorate([
+    (0, common_1.Get)('briefs/:briefId/commitments'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "getCommitments", null);
+__decorate([
+    (0, common_1.Get)('briefs/:briefId/stakeholders'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "getStakeholders", null);
+__decorate([
+    (0, common_1.Get)('briefs/:briefId/activity-context'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Param)('briefId')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "getActivityContext", null);
 __decorate([
     (0, common_1.Post)('briefs/:briefId/regenerate'),
     __param(0, (0, common_1.Param)('callId')),
@@ -294,13 +469,69 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], M01FrontendCallDetailController.prototype, "createNote", null);
+__decorate([
+    (0, common_1.Put)('notes/:noteId'),
+    __param(0, (0, common_1.Param)('noteId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "updateNote", null);
+__decorate([
+    (0, common_1.Delete)('notes/:noteId'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    __param(0, (0, common_1.Param)('noteId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], M01FrontendCallDetailController.prototype, "deleteNote", null);
+__decorate([
+    (0, common_1.Post)('share'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "shareCall", null);
+__decorate([
+    (0, common_1.Post)('extract-ai'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.ACCEPTED),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "extractAi", null);
+__decorate([
+    (0, common_1.Delete)(),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "deleteCall", null);
+__decorate([
+    (0, common_1.Get)('search'),
+    __param(0, (0, common_1.Param)('callId')),
+    __param(1, (0, common_1.Query)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], M01FrontendCallDetailController.prototype, "searchWithinCall", null);
 exports.M01FrontendCallDetailController = M01FrontendCallDetailController = __decorate([
     (0, common_1.Controller)('api/v1/capture-transcription/calls/:callId'),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [m01_frontend_transcript_service_1.M01FrontendTranscriptService,
         m01_frontend_call_processing_service_1.M01FrontendCallProcessingService,
         m01_frontend_calls_service_1.M01FrontendCallsService,
-        notes_repository_1.NotesRepository])
+        notes_repository_1.NotesRepository,
+        next_steps_repository_1.NextStepsRepository,
+        call_service_1.CallService])
 ], M01FrontendCallDetailController);
 let M01FrontendBriefTemplatesController = class M01FrontendBriefTemplatesController {
     svc;

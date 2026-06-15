@@ -13,8 +13,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComplianceService = void 0;
 const common_1 = require("@nestjs/common");
 const compliance_repository_1 = require("../repositories/compliance.repository");
-const COMPLIANCE_ENABLED = process.env.M10_COMPLIANCE_ENABLED !== 'false';
-const POLICY_WRITE_ENABLED = process.env.M10_COMPLIANCE_POLICY_WRITE_ENABLED !== 'false';
+const COMPLIANCE_ENABLED = process.env.M10_COMPLIANCE_ENABLED !== "false";
+const POLICY_WRITE_ENABLED = process.env.M10_COMPLIANCE_POLICY_WRITE_ENABLED !== "false";
 let ComplianceService = ComplianceService_1 = class ComplianceService {
     repo;
     logger = new common_1.Logger(ComplianceService_1.name);
@@ -23,10 +23,10 @@ let ComplianceService = ComplianceService_1 = class ComplianceService {
     }
     async createPolicy(tenantId, dto, createdBy) {
         if (!COMPLIANCE_ENABLED) {
-            throw new common_1.ForbiddenException('M10 Compliance is disabled — set M10_COMPLIANCE_ENABLED=true');
+            throw new common_1.ForbiddenException("M10 Compliance is disabled — set M10_COMPLIANCE_ENABLED=true");
         }
         if (!POLICY_WRITE_ENABLED) {
-            throw new common_1.ForbiddenException('Policy writes are disabled — set M10_COMPLIANCE_POLICY_WRITE_ENABLED=true');
+            throw new common_1.ForbiddenException("Policy writes are disabled — set M10_COMPLIANCE_POLICY_WRITE_ENABLED=true");
         }
         this.logger.log(`Creating compliance policy for tenant=${tenantId} channel=${dto.channel} region=${dto.regionFamily}`);
         const policy = await this.repo.createPolicy(tenantId, dto);
@@ -35,7 +35,7 @@ let ComplianceService = ComplianceService_1 = class ComplianceService {
     }
     async getPolicies(tenantId, activeOnly = false) {
         const policies = await this.repo.findAllPolicies(tenantId, activeOnly);
-        return policies.map(p => this.formatPolicy(p));
+        return policies.map((p) => this.formatPolicy(p));
     }
     async getPolicyById(tenantId, id) {
         const policy = await this.repo.findPolicyById(tenantId, id);
@@ -45,7 +45,7 @@ let ComplianceService = ComplianceService_1 = class ComplianceService {
     }
     async updatePolicy(tenantId, id, dto) {
         if (!POLICY_WRITE_ENABLED) {
-            throw new common_1.ForbiddenException('Policy writes are disabled — set M10_COMPLIANCE_POLICY_WRITE_ENABLED=true');
+            throw new common_1.ForbiddenException("Policy writes are disabled — set M10_COMPLIANCE_POLICY_WRITE_ENABLED=true");
         }
         const existing = await this.repo.findPolicyById(tenantId, id);
         if (!existing)
@@ -56,7 +56,7 @@ let ComplianceService = ComplianceService_1 = class ComplianceService {
     }
     async deactivatePolicy(tenantId, id) {
         if (!POLICY_WRITE_ENABLED) {
-            throw new common_1.ForbiddenException('Policy writes are disabled');
+            throw new common_1.ForbiddenException("Policy writes are disabled");
         }
         const existing = await this.repo.findPolicyById(tenantId, id);
         if (!existing)

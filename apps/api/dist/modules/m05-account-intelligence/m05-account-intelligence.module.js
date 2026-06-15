@@ -27,6 +27,7 @@ const webhook_controller_1 = require("./controllers/webhook.controller");
 const ai_controller_1 = require("./controllers/ai.controller");
 const m05_frontend_accounts_controller_1 = require("./controllers/m05-frontend-accounts.controller");
 const m05_frontend_deals_controller_1 = require("./controllers/m05-frontend-deals.controller");
+const coaching_controller_1 = require("./controllers/coaching.controller");
 const m05_service_1 = require("./services/m05.service");
 const accounts_service_1 = require("./services/accounts.service");
 const activities_service_1 = require("./services/activities.service");
@@ -68,6 +69,7 @@ exports.M05AccountIntelligenceModule = M05AccountIntelligenceModule = __decorate
             ai_controller_1.AiController,
             m05_frontend_accounts_controller_1.M05FrontendAccountsController,
             m05_frontend_deals_controller_1.M05FrontendDealsController,
+            coaching_controller_1.CoachingController,
         ],
         providers: [
             m05_service_1.M05AccountIntelligenceService,

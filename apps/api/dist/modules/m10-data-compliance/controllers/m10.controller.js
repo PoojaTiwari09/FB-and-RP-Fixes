@@ -45,7 +45,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], M10DataComplianceController.prototype, "create", null);
 exports.M10DataComplianceController = M10DataComplianceController = __decorate([
-    (0, common_1.Controller)('api/v1/data-compliance'),
+    (0, common_1.Controller)("api/v1/data-compliance"),
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [m10_service_1.M10DataComplianceService])
 ], M10DataComplianceController);

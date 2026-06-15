@@ -11,16 +11,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DealBoardController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_board_service_1 = require("@/services/deal-board.service");
-const schemas_1 = require("@/schemas");
-const auth_guard_1 = require("@/guards/auth.guard");
-const roles_guard_1 = require("@/guards/roles.guard");
-const roles_decorator_1 = require("@/decorators/roles.decorator");
-const user_role_enum_1 = require("@/interfaces/user-role.enum");
+const deal_board_service_1 = require("@m04/services/deal-board.service");
+const schemas_1 = require("@m04/schemas");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const roles_guard_1 = require("../../platform-core/guards/roles.guard");
+const roles_decorator_1 = require("../../platform-core/decorators/roles.decorator");
+const database_1 = require("@rri/database");
 let DealBoardController = class DealBoardController {
     boardService;
     constructor(boardService) {
@@ -51,7 +53,7 @@ let DealBoardController = class DealBoardController {
 exports.DealBoardController = DealBoardController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new deal board' }),
     (0, swagger_1.ApiResponse)({
         status: common_1.HttpStatus.CREATED,
@@ -63,7 +65,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [schemas_1.CreateBoardDto, Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof schemas_1.CreateBoardDto !== "undefined" && schemas_1.CreateBoardDto) === "function" ? _b : Object, Object]),
     __metadata("design:returntype", Promise)
 ], DealBoardController.prototype, "createBoard", null);
 __decorate([
@@ -77,7 +79,7 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [schemas_1.QueryBoardDto, Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof schemas_1.QueryBoardDto !== "undefined" && schemas_1.QueryBoardDto) === "function" ? _c : Object, Object]),
     __metadata("design:returntype", Promise)
 ], DealBoardController.prototype, "listBoards", null);
 __decorate([
@@ -99,7 +101,7 @@ __decorate([
 ], DealBoardController.prototype, "getBoardById", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Update board configuration' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Board ID' }),
     (0, swagger_1.ApiResponse)({
@@ -114,12 +116,12 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, schemas_1.UpdateBoardDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_d = typeof schemas_1.UpdateBoardDto !== "undefined" && schemas_1.UpdateBoardDto) === "function" ? _d : Object, Object]),
     __metadata("design:returntype", Promise)
 ], DealBoardController.prototype, "updateBoard", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN),
     (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
     (0, swagger_1.ApiOperation)({ summary: 'Delete a board' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Board ID' }),
@@ -134,7 +136,7 @@ __decorate([
 ], DealBoardController.prototype, "deleteBoard", null);
 __decorate([
     (0, common_1.Post)(':id/publish'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Publish a board' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Board ID' }),
     (0, swagger_1.ApiResponse)({
@@ -153,7 +155,7 @@ __decorate([
 ], DealBoardController.prototype, "publishBoard", null);
 __decorate([
     (0, common_1.Post)(':id/unpublish'),
-    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN, user_role_enum_1.UserRole.MANAGER),
+    (0, roles_decorator_1.Roles)(database_1.UserRole.ADMIN, database_1.UserRole.MANAGER),
     (0, swagger_1.ApiOperation)({ summary: 'Unpublish a board' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Board ID' }),
     (0, swagger_1.ApiResponse)({
@@ -173,8 +175,8 @@ __decorate([
 exports.DealBoardController = DealBoardController = __decorate([
     (0, swagger_1.ApiTags)('Deal Boards'),
     (0, common_1.Controller)('boards'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard, roles_guard_1.RolesGuard),
     (0, swagger_1.ApiBearerAuth)(),
-    __metadata("design:paramtypes", [deal_board_service_1.DealBoardService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_board_service_1.DealBoardService !== "undefined" && deal_board_service_1.DealBoardService) === "function" ? _a : Object])
 ], DealBoardController);
 //# sourceMappingURL=deal-board.controller.js.map

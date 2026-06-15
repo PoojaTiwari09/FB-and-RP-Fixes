@@ -32,7 +32,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
     async findConnections(tenantId) {
         return this.prisma.m10DataCloudConnection.findMany({
             where: { tenantid: tenantId },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
         });
     }
     async findConnectionById(tenantId, connectionId) {
@@ -78,7 +78,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
                 tenantid: tenantId,
                 ...(connectionId ? { connectionId } : {}),
             },
-            orderBy: { startedAt: 'desc' },
+            orderBy: { startedAt: "desc" },
             take: 50,
             include: { connection: { select: { destination: true, id: true } } },
         });
@@ -101,7 +101,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
                 tenantid: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
-            orderBy: { updatedAt: 'asc' },
+            orderBy: { updatedAt: "asc" },
         });
     }
     async extractContacts(tenantId, since) {
@@ -110,7 +110,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
                 tenantid: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
-            orderBy: { updatedAt: 'asc' },
+            orderBy: { updatedAt: "asc" },
         });
     }
     async extractDeals(tenantId, since) {
@@ -119,7 +119,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
                 tenantid: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
-            orderBy: { updatedAt: 'asc' },
+            orderBy: { updatedAt: "asc" },
         });
     }
     async extractActivities(tenantId, since) {
@@ -128,7 +128,7 @@ let DataCloudRepository = DataCloudRepository_1 = class DataCloudRepository {
                 tenantid: tenantId,
                 ...(since ? { updatedAt: { gt: since } } : {}),
             },
-            orderBy: { updatedAt: 'asc' },
+            orderBy: { updatedAt: "asc" },
         });
     }
 };

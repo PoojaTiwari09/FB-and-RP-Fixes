@@ -8,12 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateBoardDto = exports.CreateBoardPermissionDto = exports.CreateBoardColumnDto = exports.CreateBoardTabDto = exports.CreateBoardFilterDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 class CreateBoardFilterDto {
     fieldName;
     operator;
@@ -33,7 +34,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.FilterOperator, description: 'Filter operator' }),
     (0, class_validator_1.IsEnum)(entities_1.FilterOperator),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof entities_1.FilterOperator !== "undefined" && entities_1.FilterOperator) === "function" ? _a : Object)
 ], CreateBoardFilterDto.prototype, "operator", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Filter value (can be any type)' }),
@@ -43,7 +44,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.FilterLogic, description: 'Logic to combine with next filter' }),
     (0, class_validator_1.IsEnum)(entities_1.FilterLogic),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof entities_1.FilterLogic !== "undefined" && entities_1.FilterLogic) === "function" ? _b : Object)
 ], CreateBoardFilterDto.prototype, "logic", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Display order' }),
@@ -125,12 +126,12 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.ColumnType, description: 'Column type' }),
     (0, class_validator_1.IsEnum)(entities_1.ColumnType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_c = typeof entities_1.ColumnType !== "undefined" && entities_1.ColumnType) === "function" ? _c : Object)
 ], CreateBoardColumnDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.ColumnDataType, description: 'Data type' }),
     (0, class_validator_1.IsEnum)(entities_1.ColumnDataType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_d = typeof entities_1.ColumnDataType !== "undefined" && entities_1.ColumnDataType) === "function" ? _d : Object)
 ], CreateBoardColumnDto.prototype, "dataType", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Display order' }),
@@ -169,7 +170,7 @@ exports.CreateBoardPermissionDto = CreateBoardPermissionDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.PermissionSubjectType, description: 'Subject type (user or team)' }),
     (0, class_validator_1.IsEnum)(entities_1.PermissionSubjectType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_e = typeof entities_1.PermissionSubjectType !== "undefined" && entities_1.PermissionSubjectType) === "function" ? _e : Object)
 ], CreateBoardPermissionDto.prototype, "subjectType", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'User or team ID' }),
@@ -179,7 +180,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.PermissionRole, description: 'Permission role' }),
     (0, class_validator_1.IsEnum)(entities_1.PermissionRole),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_f = typeof entities_1.PermissionRole !== "undefined" && entities_1.PermissionRole) === "function" ? _f : Object)
 ], CreateBoardPermissionDto.prototype, "role", void 0);
 class CreateBoardDto {
     name;

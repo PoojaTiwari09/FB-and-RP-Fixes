@@ -8,19 +8,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.M10DevAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
-const DEMO_TENANT = '00000000-0000-0000-0000-000000000001';
-const DEMO_USER = '00000000-0000-0000-0000-000000000002';
+const DEMO_TENANT = "00000000-0000-0000-0000-000000000001";
+const DEMO_USER = "00000000-0000-0000-0000-000000000002";
 let M10DevAuthGuard = class M10DevAuthGuard {
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
-        const tenantId = req.headers['x-tenant-id'] ||
-            req.headers['x-org-id'] ||
+        const tenantId = req.headers["x-tenant-id"] ||
+            req.headers["x-org-id"] ||
             DEMO_TENANT;
-        const userId = req.headers['x-user-id'] || DEMO_USER;
+        const userId = req.headers["x-user-id"] || DEMO_USER;
         req.user = {
             userId,
             tenantId,
-            email: req.headers['x-email'] || 'dev@m10.local',
+            email: req.headers["x-email"] || "dev@m10.local",
         };
         req.tenantId = tenantId;
         return true;

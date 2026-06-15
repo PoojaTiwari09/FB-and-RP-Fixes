@@ -20,7 +20,7 @@ const jwt_guard_1 = require("../../../../platform-core/guards/jwt.guard");
 const tenant_guard_1 = require("../../../../platform-core/guards/tenant.guard");
 const m10_dev_auth_guard_1 = require("../../../guards/m10-dev-auth.guard");
 const eprivacy_schema_1 = require("../schemas/eprivacy.schema");
-const M10AuthGuard = process.env.M10_STANDALONE_AUTH === 'true' ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
+const M10AuthGuard = process.env.M10_STANDALONE_AUTH === "true" ? m10_dev_auth_guard_1.M10DevAuthGuard : jwt_guard_1.JwtAuthGuard;
 let EPrivacyController = EPrivacyController_1 = class EPrivacyController {
     service;
     logger = new common_1.Logger(EPrivacyController_1.name);
@@ -44,7 +44,7 @@ let EPrivacyController = EPrivacyController_1 = class EPrivacyController {
 };
 exports.EPrivacyController = EPrivacyController;
 __decorate([
-    (0, common_1.Post)('consent'),
+    (0, common_1.Post)("consent"),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -53,17 +53,17 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EPrivacyController.prototype, "updateConsent", null);
 __decorate([
-    (0, common_1.Get)('consent'),
+    (0, common_1.Get)("consent"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)('email')),
-    __param(2, (0, common_1.Query)('channel')),
-    __param(3, (0, common_1.Query)('purpose')),
+    __param(1, (0, common_1.Query)("email")),
+    __param(2, (0, common_1.Query)("channel")),
+    __param(3, (0, common_1.Query)("purpose")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", Promise)
 ], EPrivacyController.prototype, "getConsentStatus", null);
 __decorate([
-    (0, common_1.Post)('suppression'),
+    (0, common_1.Post)("suppression"),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -72,15 +72,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EPrivacyController.prototype, "addSuppression", null);
 __decorate([
-    (0, common_1.Get)('suppression'),
+    (0, common_1.Get)("suppression"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)('email')),
+    __param(1, (0, common_1.Query)("email")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], EPrivacyController.prototype, "checkSuppression", null);
 exports.EPrivacyController = EPrivacyController = EPrivacyController_1 = __decorate([
-    (0, common_1.Controller)('api/v1/m10-data-compliance/eprivacy'),
+    (0, common_1.Controller)("api/v1/m10-data-compliance/eprivacy"),
     (0, common_1.UseGuards)(M10AuthGuard, tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [eprivacy_service_1.EPrivacyService])
 ], EPrivacyController);

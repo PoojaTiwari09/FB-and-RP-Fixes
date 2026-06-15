@@ -61,18 +61,23 @@ let CallRepository = class CallRepository {
         return { records, total };
     }
     async findById(id, tenantId) {
-        return this.prisma.callRecord.findFirst({
-            where: { id, tenantid: tenantId },
-            include: {
-                transcript: {
-                    include: {
-                        utterances: { orderBy: { sequenceIndex: 'asc' } },
+        try {
+            return await this.prisma.callRecord.findFirst({
+                where: { id, tenantid: tenantId },
+                include: {
+                    transcript: {
+                        include: {
+                            utterances: { orderBy: { sequenceIndex: 'asc' } },
+                        },
                     },
+                    notes: { orderBy: { createdAt: 'desc' } },
+                    shares: true,
                 },
-                notes: { orderBy: { createdAt: 'desc' } },
-                shares: true,
-            },
-        });
+            });
+        }
+        catch {
+            return null;
+        }
     }
     async updateStatus(id, tenantId, status, failureReason) {
         return this.prisma.callRecord.updateMany({

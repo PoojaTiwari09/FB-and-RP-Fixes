@@ -2293,8 +2293,8 @@ model M05PermissionProfile {
   name                   String
   can_edit_board_config  Boolean @default(false)
   can_edit_cells         Boolean @default(false)
-
   @@map("m05_permission_profiles")
+  @@schema("public")
 }
 
 model M04DealBoard {

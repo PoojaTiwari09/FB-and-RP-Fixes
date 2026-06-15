@@ -5,17 +5,7 @@ import { TodosService } from '../services/todos.service';
 import { AiService } from '../services/ai.service';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 
-// Mock for /viewers endpoint since it's not currently stored in DB.
-const MOCK_TEAMS = [
-  { id: 'team_01', name: 'Enterprise West', memberCount: 4 },
-  { id: 'team_02', name: 'Commercial East', memberCount: 6 },
-];
-const MOCK_REPS = [
-  { id: 'rep_01', name: 'Sarah Mitchell', initials: 'SM', avatarUrl: '' },
-  { id: 'rep_02', name: 'James Torres', initials: 'JT', avatarUrl: '' },
-  { id: 'rep_03', name: 'Priya Nair', initials: 'PN', avatarUrl: '' },
-  { id: 'manager_01', name: 'Alan Clayborn', initials: 'AC', avatarUrl: '' },
-];
+import { PrismaService } from '../database/prisma.service';
 
 @Controller('api/manager/revenue/accounts')
 @UseGuards(TenantGuard)
@@ -25,6 +15,7 @@ export class M05FrontendAccountsController {
     private readonly editsService: EditsService,
     private readonly todosService: TodosService,
     private readonly aiService: AiService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('alert')
@@ -53,21 +44,51 @@ export class M05FrontendAccountsController {
     const allArr = res.summary.all_arr || 0;
     const allCount = res.summary.all_count || 0;
     const atRiskCount = res.summary.tab_counts['at-risk']?.count || 0;
+    const atRiskArr = res.summary.tab_counts['at-risk']?.arr || 0;
+    
     const highArrCount = res.summary.tab_counts['high-arr']?.count || 0;
+    const highArrValue = res.summary.tab_counts['high-arr']?.arr || 0;
 
+    // Use actual database aggregations where possible
     return [
       { label: 'Accounts', value: allArr, count: allCount },
-      { label: 'Renewal', value: allArr * 0.4, count: atRiskCount }, // Simplified mock splits
-      { label: 'Upsell', value: allArr * 0.2, count: highArrCount },
-      { label: 'Churn Risk', value: allArr * 0.1, count: atRiskCount }
+      { label: 'Renewal', value: res.summary.tab_counts['renewal']?.arr || (allArr * 0.4), count: res.summary.tab_counts['renewal']?.count || atRiskCount },
+      { label: 'Upsell', value: highArrValue, count: highArrCount },
+      { label: 'Churn Risk', value: atRiskArr, count: atRiskCount }
     ];
   }
 
   @Get('viewers')
-  async getViewers() {
+  async getViewers(@Req() req: any) {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return { teams: [], reps: [] };
+    }
+
+    const dbTeams = await this.prisma.team.findMany({
+      where: { tenantid: tenantId }
+    });
+
+    const dbUsers = await this.prisma.user.findMany({
+      where: { tenantid: tenantId }
+    });
+
     return {
-      teams: MOCK_TEAMS,
-      reps: MOCK_REPS,
+      teams: dbTeams.map(t => ({
+        id: t.id,
+        name: t.name,
+        memberCount: t.members ? t.members.length : 0,
+      })),
+      reps: dbUsers.map(u => {
+        const parts = u.name.split(' ');
+        const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0]?.[0] || 'U';
+        return {
+          id: u.id,
+          name: u.name,
+          initials: initials.toUpperCase(),
+          avatarUrl: ''
+        };
+      }),
     };
   }
 

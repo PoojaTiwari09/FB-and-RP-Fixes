@@ -8,10 +8,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaginatedBoardResponseDto = exports.BoardListItemResponseDto = exports.BoardResponseDto = exports.BoardPermissionResponseDto = exports.BoardColumnResponseDto = exports.BoardTabResponseDto = exports.BoardFilterResponseDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 class BoardFilterResponseDto {
     id;
     fieldName;
@@ -32,7 +33,7 @@ __decorate([
 ], BoardFilterResponseDto.prototype, "fieldName", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.FilterOperator }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof entities_1.FilterOperator !== "undefined" && entities_1.FilterOperator) === "function" ? _a : Object)
 ], BoardFilterResponseDto.prototype, "operator", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
@@ -40,7 +41,7 @@ __decorate([
 ], BoardFilterResponseDto.prototype, "value", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.FilterLogic }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof entities_1.FilterLogic !== "undefined" && entities_1.FilterLogic) === "function" ? _b : Object)
 ], BoardFilterResponseDto.prototype, "logic", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -110,11 +111,11 @@ __decorate([
 ], BoardColumnResponseDto.prototype, "fieldKey", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.ColumnType }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_c = typeof entities_1.ColumnType !== "undefined" && entities_1.ColumnType) === "function" ? _c : Object)
 ], BoardColumnResponseDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.ColumnDataType }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_d = typeof entities_1.ColumnDataType !== "undefined" && entities_1.ColumnDataType) === "function" ? _d : Object)
 ], BoardColumnResponseDto.prototype, "dataType", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -151,7 +152,7 @@ __decorate([
 ], BoardPermissionResponseDto.prototype, "id", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.PermissionSubjectType }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_e = typeof entities_1.PermissionSubjectType !== "undefined" && entities_1.PermissionSubjectType) === "function" ? _e : Object)
 ], BoardPermissionResponseDto.prototype, "subjectType", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -159,7 +160,7 @@ __decorate([
 ], BoardPermissionResponseDto.prototype, "subjectId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.PermissionRole }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_f = typeof entities_1.PermissionRole !== "undefined" && entities_1.PermissionRole) === "function" ? _f : Object)
 ], BoardPermissionResponseDto.prototype, "role", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -207,7 +208,7 @@ __decorate([
 ], BoardResponseDto.prototype, "audience", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.BoardStatus }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_g = typeof entities_1.BoardStatus !== "undefined" && entities_1.BoardStatus) === "function" ? _g : Object)
 ], BoardResponseDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -255,7 +256,7 @@ __decorate([
 ], BoardResponseDto.prototype, "permissions", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.PermissionRole }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_h = typeof entities_1.PermissionRole !== "undefined" && entities_1.PermissionRole) === "function" ? _h : Object)
 ], BoardResponseDto.prototype, "userPermission", void 0);
 class BoardListItemResponseDto {
     id;
@@ -286,7 +287,7 @@ __decorate([
 ], BoardListItemResponseDto.prototype, "audience", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.BoardStatus }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_j = typeof entities_1.BoardStatus !== "undefined" && entities_1.BoardStatus) === "function" ? _j : Object)
 ], BoardListItemResponseDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
@@ -298,7 +299,7 @@ __decorate([
 ], BoardListItemResponseDto.prototype, "updatedAt", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_k = typeof entities_1.PermissionRole !== "undefined" && entities_1.PermissionRole) === "function" ? _k : Object)
 ], BoardListItemResponseDto.prototype, "userPermission", void 0);
 class PaginatedBoardResponseDto {
     data;

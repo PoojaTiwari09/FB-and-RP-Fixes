@@ -218,7 +218,12 @@ let CallService = class CallService {
             throw new common_1.NotFoundException(`Call ${callId} not found`);
         const transcript = await this.transcripts.findByCallId(callId, tenantId);
         if (!transcript) {
-            throw new common_1.BadRequestException(`Call ${callId} has no transcript yet — wait for transcription to complete`);
+            return {
+                accepted: true,
+                callId,
+                transcriptId: null,
+                message: 'No transcript yet — AI extraction will trigger automatically when transcription completes',
+            };
         }
         const envelope = {
             tenantId,

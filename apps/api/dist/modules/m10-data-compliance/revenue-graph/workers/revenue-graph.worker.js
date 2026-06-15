@@ -26,7 +26,8 @@ let RevenueGraphWorker = RevenueGraphWorker_1 = class RevenueGraphWorker extends
     }
     async process(job) {
         this.logger.log(`Processing job [id=${job.id}] [name=${job.name}] [attempt=${job.attemptsMade + 1}]`);
-        if (job.name !== revenue_graph_events_1.M10_REVENUE_GRAPH_EVENTS.CONSUMED.CALL_TRANSCRIPTION_COMPLETED) {
+        if (job.name !==
+            revenue_graph_events_1.M10_REVENUE_GRAPH_EVENTS.CONSUMED.CALL_TRANSCRIPTION_COMPLETED) {
             this.logger.warn(`Unknown job name "${job.name}" — skipping`);
             return;
         }
@@ -38,7 +39,7 @@ let RevenueGraphWorker = RevenueGraphWorker_1 = class RevenueGraphWorker extends
         const event = parsed.data;
         if (!event.tenantId) {
             this.logger.error(`Job [id=${job.id}] rejected: missing tenantId`);
-            throw new Error('UNRECOVERABLE: tenantId is required for Revenue Graph linking');
+            throw new Error("UNRECOVERABLE: tenantId is required for Revenue Graph linking");
         }
         const intake = revenue_graph_schema_1.NormalizedIntakeSchema.parse({
             eventId: event.eventId,
@@ -58,8 +59,8 @@ let RevenueGraphWorker = RevenueGraphWorker_1 = class RevenueGraphWorker extends
         this.logger.debug(`Job [id=${job.id}] completed`);
     }
     onFailed(job, error) {
-        const isUnrecoverable = error.message.startsWith('UNRECOVERABLE:');
-        this.logger.error(`Job [id=${job?.id}] failed (attempt ${job?.attemptsMade ?? '?'}): ${error.message}`);
+        const isUnrecoverable = error.message.startsWith("UNRECOVERABLE:");
+        this.logger.error(`Job [id=${job?.id}] failed (attempt ${job?.attemptsMade ?? "?"}): ${error.message}`);
         if (isUnrecoverable) {
             this.logger.error(`Job [id=${job?.id}] is unrecoverable — will NOT be retried`);
         }
@@ -70,19 +71,19 @@ let RevenueGraphWorker = RevenueGraphWorker_1 = class RevenueGraphWorker extends
 };
 exports.RevenueGraphWorker = RevenueGraphWorker;
 __decorate([
-    (0, bullmq_1.OnWorkerEvent)('completed'),
+    (0, bullmq_1.OnWorkerEvent)("completed"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [bullmq_2.Job]),
     __metadata("design:returntype", void 0)
 ], RevenueGraphWorker.prototype, "onCompleted", null);
 __decorate([
-    (0, bullmq_1.OnWorkerEvent)('failed'),
+    (0, bullmq_1.OnWorkerEvent)("failed"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [bullmq_2.Job, Error]),
     __metadata("design:returntype", void 0)
 ], RevenueGraphWorker.prototype, "onFailed", null);
 __decorate([
-    (0, bullmq_1.OnWorkerEvent)('stalled'),
+    (0, bullmq_1.OnWorkerEvent)("stalled"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)

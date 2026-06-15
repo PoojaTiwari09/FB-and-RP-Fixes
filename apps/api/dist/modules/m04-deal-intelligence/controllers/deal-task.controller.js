@@ -11,13 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskManagementController = exports.DealTaskController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const deal_task_service_1 = require("@/services/deal-task.service");
-const task_dto_1 = require("@/schemas/task.dto");
-const auth_guard_1 = require("@/guards/auth.guard");
+const deal_task_service_1 = require("@m04/services/deal-task.service");
+const task_dto_1 = require("@m04/schemas/task.dto");
+const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
+const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
+const authenticated_request_interface_1 = require("@m04/interfaces/authenticated-request.interface");
 let DealTaskController = class DealTaskController {
     taskService;
     constructor(taskService) {
@@ -73,7 +76,7 @@ __decorate([
     __param(0, (0, common_1.Param)('dealId')),
     __param(1, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof task_dto_1.TaskStatus !== "undefined" && task_dto_1.TaskStatus) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], DealTaskController.prototype, "getTasksForDeal", null);
 __decorate([
@@ -131,7 +134,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, task_dto_1.CreateTaskDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof task_dto_1.CreateTaskDto !== "undefined" && task_dto_1.CreateTaskDto) === "function" ? _c : Object, typeof (_d = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], DealTaskController.prototype, "createTask", null);
 __decorate([
@@ -164,7 +167,7 @@ __decorate([
     __param(2, (0, common_1.Body)()),
     __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, task_dto_1.UpdateTaskDto, Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_e = typeof task_dto_1.UpdateTaskDto !== "undefined" && task_dto_1.UpdateTaskDto) === "function" ? _e : Object, typeof (_f = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], DealTaskController.prototype, "updateTask", null);
 __decorate([
@@ -221,15 +224,15 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, task_dto_1.GenerateNextStepsDto, Object]),
+    __metadata("design:paramtypes", [String, typeof (_g = typeof task_dto_1.GenerateNextStepsDto !== "undefined" && task_dto_1.GenerateNextStepsDto) === "function" ? _g : Object, typeof (_h = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], DealTaskController.prototype, "generateNextSteps", null);
 exports.DealTaskController = DealTaskController = __decorate([
     (0, swagger_1.ApiTags)('Deal Tasks'),
     (0, common_1.Controller)('deals/:dealId/tasks'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [deal_task_service_1.DealTaskService])
+    __metadata("design:paramtypes", [typeof (_a = typeof deal_task_service_1.DealTaskService !== "undefined" && deal_task_service_1.DealTaskService) === "function" ? _a : Object])
 ], DealTaskController);
 let TaskManagementController = class TaskManagementController {
     taskService;
@@ -264,7 +267,7 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [typeof (_k = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _k : Object, typeof (_l = typeof task_dto_1.TaskStatus !== "undefined" && task_dto_1.TaskStatus) === "function" ? _l : Object]),
     __metadata("design:returntype", Promise)
 ], TaskManagementController.prototype, "getMyTasks", null);
 __decorate([
@@ -280,14 +283,14 @@ __decorate([
     }),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_m = typeof authenticated_request_interface_1.AuthenticatedRequest !== "undefined" && authenticated_request_interface_1.AuthenticatedRequest) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)
 ], TaskManagementController.prototype, "getOverdueTasks", null);
 exports.TaskManagementController = TaskManagementController = __decorate([
     (0, swagger_1.ApiTags)('Tasks'),
     (0, common_1.Controller)('tasks'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, swagger_1.ApiCookieAuth)(),
-    __metadata("design:paramtypes", [deal_task_service_1.DealTaskService])
+    __metadata("design:paramtypes", [typeof (_j = typeof deal_task_service_1.DealTaskService !== "undefined" && deal_task_service_1.DealTaskService) === "function" ? _j : Object])
 ], TaskManagementController);
 //# sourceMappingURL=deal-task.controller.js.map

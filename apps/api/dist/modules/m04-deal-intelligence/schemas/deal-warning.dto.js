@@ -8,12 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResolveWarningDto = exports.QueryWarningDto = exports.WarningListResponseDto = exports.DealWarningResponseDto = exports.GenerateWarningsDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
-const entities_1 = require("@/entities");
+const entities_1 = require("@m04/entities");
 class GenerateWarningsDto {
     dealId;
 }
@@ -47,11 +48,11 @@ __decorate([
 ], DealWarningResponseDto.prototype, "dealId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.WarningType, description: 'Warning type' }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof entities_1.WarningType !== "undefined" && entities_1.WarningType) === "function" ? _a : Object)
 ], DealWarningResponseDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: entities_1.WarningSeverity, description: 'Warning severity' }),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_b = typeof entities_1.WarningSeverity !== "undefined" && entities_1.WarningSeverity) === "function" ? _b : Object)
 ], DealWarningResponseDto.prototype, "severity", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Warning message' }),
@@ -108,13 +109,13 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.WarningType, description: 'Filter by warning type' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.WarningType),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_c = typeof entities_1.WarningType !== "undefined" && entities_1.WarningType) === "function" ? _c : Object)
 ], QueryWarningDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: entities_1.WarningSeverity, description: 'Filter by severity' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(entities_1.WarningSeverity),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_d = typeof entities_1.WarningSeverity !== "undefined" && entities_1.WarningSeverity) === "function" ? _d : Object)
 ], QueryWarningDto.prototype, "severity", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Limit number of results', default: 50, minimum: 1, maximum: 100 }),
