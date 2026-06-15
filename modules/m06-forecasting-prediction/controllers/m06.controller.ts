@@ -311,6 +311,7 @@ export class M06ForecastingPredictionController {
         reps: data.team.map((rep: any) => ({
           id: rep.userId,
           repName: rep.name,
+          commit: rep.commit,
           aiPrediction: rep.aiProjection,
           managerOverride: rep.submission?.managerOverride ?? null,
           confidenceLevel: rep.riskLevel === 'On Track' ? 'High' : (rep.riskLevel === 'At Risk' ? 'Medium' : 'Low'),

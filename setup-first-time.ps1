@@ -5,7 +5,7 @@ $ErrorActionPreference = "Continue"
 $Root = $PSScriptRoot
 $BackendRoot = $Root
 $UnifiedUi = Join-Path $Root "apps\web"
-$dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
+$dbUrl = "postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public"
 
 # Ensure global npm prefix (where pnpm is installed) is in PATH if pnpm is not recognized
 if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {

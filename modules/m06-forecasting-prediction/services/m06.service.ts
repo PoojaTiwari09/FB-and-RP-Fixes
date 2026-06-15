@@ -207,12 +207,19 @@ export class M06ForecastingPredictionService {
       const timeDecay = this.timeDecay(deal.closeDate);
       const contributionFactor = stageRate * timeDecay;
       return {
-        deal: deal.dealName, stage: deal.stage, amount: deal.amount,
+        id: deal.id,
+        deal: deal.dealName,
+        dealName: deal.dealName,
+        name: deal.dealName,
+        stage: deal.stage,
+        amount: deal.amount,
+        probability: deal.probability,
         aiConf: this.confidenceLabel(stageRate, deal.probability, timeDecay),
         close: deal.closeDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         closeDate: deal.closeDate.toISOString(),
         stageRate, timeDecay, contributionFactor, contribution: Math.round(deal.amount * contributionFactor),
         region: deal.region, lob: deal.lob,
+        repUserId: deal.repUserId,
       };
     });
 

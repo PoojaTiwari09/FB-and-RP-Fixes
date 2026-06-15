@@ -566,11 +566,21 @@ export class ForecastUpgradeService {
     const period = await this.prisma.forecastPeriod.findUnique({ where: { id: periodId } });
     if (!period) return;
 
+    const stageRates: Record<string, number> = {
+      Discovery: 0.20,
+      Proposal: 0.58,
+      'Proposal sent': 0.58,
+      Negotiation: 0.74,
+      'Closed Won': 1.0,
+      'Closed Lost': 0.0,
+    };
+
     if (dealId) {
       const deal = await this.prisma.crmDeal.findUnique({ where: { id: dealId } });
       if (deal && !deal.isClosedWon && !deal.isClosedLost) {
         // contribution = amount * probability
-        const val = deal.amount * (deal.probability ?? 0.4);
+        const prob = deal.probability ?? (stageRates[deal.stage] ?? 0.4);
+        const val = deal.amount * prob;
         await this.prisma.pipelineValuesCache.upsert({
           where: {
             tenantid_periodId_repId_dealId: {
@@ -602,7 +612,10 @@ export class ForecastUpgradeService {
       },
     });
 
-    const totalVal = allDeals.reduce((sum, d) => sum + (d.amount * (d.probability ?? 0.4)), 0);
+    const totalVal = allDeals.reduce((sum, d) => {
+      const prob = d.probability ?? (stageRates[d.stage] ?? 0.4);
+      return sum + (d.amount * prob);
+    }, 0);
 
     await this.prisma.pipelineValuesCache.upsert({
       where: {
@@ -626,16 +639,49 @@ export class ForecastUpgradeService {
 
   // ── B9. AI REVENUE PREDICTOR SYNC ──────────────────────────────────────────
 
+  private async calculateAndStoreAiScore(deal: any): Promise<number> {
+    let stageRate = 0.5;
+    if (deal.isClosedWon || deal.stage === 'Closed Won') {
+      stageRate = 1.0;
+    } else if (deal.isClosedLost || deal.stage === 'Closed Lost') {
+      stageRate = 0.0;
+    } else {
+      const probability = deal.probability ?? 0.5;
+      const daysToClose = (new Date(deal.closeDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+      let timeFactor = 1.0;
+      if (daysToClose < 0) {
+        timeFactor = 0.3; // past due penalty
+      } else if (daysToClose > 90) {
+        timeFactor = 0.5;
+      } else if (daysToClose > 60) {
+        timeFactor = 0.75;
+      }
+      stageRate = probability * timeFactor;
+    }
+    const score = Math.min(100, Math.max(0, Math.round(stageRate * 100)));
+    if (deal.aiPredictionScore !== score) {
+      await this.prisma.crmDeal.update({
+        where: { id: deal.id },
+        data: { aiPredictionScore: score },
+      });
+    }
+    return score;
+  }
+
   async getAiPredictionScores(repId: string) {
     const deals = await this.prisma.crmDeal.findMany({
-      where: { repUserId: repId, isClosedWon: false, isClosedLost: false, aiPredictionScore: { not: null } },
-      select: { id: true, aiPredictionScore: true },
+      where: { repUserId: repId },
     });
 
-    return deals.map(d => ({
-      deal_id: d.id,
-      ai_prediction_score: d.aiPredictionScore,
-    }));
+    const result = [];
+    for (const deal of deals) {
+      const score = await this.calculateAndStoreAiScore(deal);
+      result.push({
+        deal_id: deal.id,
+        ai_prediction_score: score,
+      });
+    }
+    return result;
   }
 
   async syncManualForecast(repId: string, dealId: string, periodId: string, finalValue: number) {
@@ -660,6 +706,8 @@ export class ForecastUpgradeService {
       where: { repUserId: repId, closeDate: { gte: period.startDate, lte: period.endDate } },
     });
 
+    const scoreList = await this.getAiPredictionScores(repId);
+
     const result = [];
     for (const deal of deals) {
       const latestSub = await this.prisma.forecastSubmission.findFirst({
@@ -668,8 +716,7 @@ export class ForecastUpgradeService {
       });
 
       const pipeVal = await this.getPipelineDealValue(repId, deal.id, periodId);
-      const scoreList = await this.getAiPredictionScores(repId);
-      const score = scoreList.find((s) => s.deal_id === deal.id)?.ai_prediction_score ?? 65;
+      const score = scoreList.find((s) => s.deal_id === deal.id)?.ai_prediction_score ?? 0;
 
       const closedVal = deal.isClosedWon ? deal.amount : 0;
       const hasPending = latestSub?.commitState === 'submitted' || latestSub?.bestCaseState === 'submitted';
@@ -737,7 +784,7 @@ export class ForecastUpgradeService {
       });
 
       const scores = await this.getAiPredictionScores(rep.id);
-      const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + (s.ai_prediction_score ?? 0), 0) / scores.length) : 75;
+      const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + (s.ai_prediction_score ?? 0), 0) / scores.length) : 0;
 
       const targetVal = quota ? quota.amount : 0;
       const progress = targetVal > 0 ? ((summary.closed_won_total + summary.commit_total) / targetVal) * 100 : 0;

@@ -6,7 +6,7 @@ const { PrismaClient } = require('../packages/database/node_modules/@prisma/clie
 const TENANT = '00000000-0000-0000-0000-000000000001';
 const url =
   process.env.DATABASE_URL ||
-  'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public';
+  'postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public';
 
 const prisma = new PrismaClient({ datasources: { db: { url } } });
 

@@ -1,7 +1,7 @@
 /**
  * Seed M10 Revenue Graph + Data Cloud for demo tenant.
  *
- *   $env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
+ *   $env:DATABASE_URL="postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public"
  *   node scripts/seed_m10_demo.cjs
  *
  * Or: POST http://localhost:4011/api/v1/m10-data-compliance/test/seed

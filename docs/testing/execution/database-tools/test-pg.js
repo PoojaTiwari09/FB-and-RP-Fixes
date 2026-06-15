@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const url = 'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence';
+const url = 'postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence';
 console.log('Connecting to:', url);
 
 (async () => {

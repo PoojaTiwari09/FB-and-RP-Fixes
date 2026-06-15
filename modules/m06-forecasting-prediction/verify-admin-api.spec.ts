@@ -18,13 +18,13 @@ describe('AdminForecastBoardsService (End-to-End Admin Functionalities)', () => 
 
   it('should execute all Admin Wizard API operations sequentially', async () => {
     console.log('--- Testing Step 1: Create Board ---');
-    
+
     // Ensure period exists for quota test
     await prisma.forecastPeriod.upsert({
       where: { id: 'Q1-2026-admin' },
       create: {
         id: 'Q1-2026-admin',
-        tenantId,
+        tenantid: tenantId,
         name: 'Q1 2026 Admin',
         startDate: new Date('2026-01-01'),
         endDate: new Date('2026-03-31'),
@@ -41,7 +41,7 @@ describe('AdminForecastBoardsService (End-to-End Admin Functionalities)', () => 
       activePeriod: 'Q1-2026-admin',
       description: 'End to end testing board'
     });
-    
+
     expect(newBoard.id).toBeDefined();
     expect(newBoard.status).toBe('draft');
     expect(newBoard.name).toBe('Global Enterprise Board');
@@ -53,7 +53,7 @@ describe('AdminForecastBoardsService (End-to-End Admin Functionalities)', () => 
         { label: 'Commit', type: 'Submission', submissionMode: 'Manual', isVisible: true, sortOrder: 2 },
       ]
     });
-    
+
     expect(boardWithCols?.columns.length).toBe(2);
     expect(boardWithCols?.columns[0].label).toBe('Pipeline');
 
@@ -95,8 +95,8 @@ describe('AdminForecastBoardsService (End-to-End Admin Functionalities)', () => 
     // Verify quota wrote successfully to DB
     const writtenQuota = await prisma.quota.findUnique({
       where: {
-        tenantId_periodId_repUserId: {
-          tenantId, periodId: 'Q1-2026-admin', repUserId: 'rep-test-admin-1'
+        tenantid_periodId_repUserId: {
+          tenantid: tenantId, periodId: 'Q1-2026-admin', repUserId: 'rep-test-admin-1'
         }
       }
     });

@@ -21,9 +21,9 @@ if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
 }
 
 # Set global environment variables
-$env:DATABASE_URL = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
-$env:M10_DATABASE_URL = "postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public"
-Write-Host "[v] Set DATABASE_URL and M10_DATABASE_URL to port 5438" -ForegroundColor Green
+$env:DATABASE_URL = "postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public"
+$env:M10_DATABASE_URL = "postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public"
+Write-Host "[v] Set DATABASE_URL and M10_DATABASE_URL to port 5432" -ForegroundColor Green
 
 # 1. Verify Docker containers are running
 Write-Host "[i] Checking Docker database and redis services..." -ForegroundColor Yellow
@@ -125,8 +125,8 @@ function Launch-Service {
     
     # Construct window launch script setting env variables and launching pnpm
     $cmdString = "$Host.UI.RawUI.WindowTitle = '$Title'; " +
-                 "`$env:DATABASE_URL = 'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public'; " +
-                 "`$env:M10_DATABASE_URL = 'postgresql://revenue_user:revenue_pass@127.0.0.1:5438/revenue_intelligence?schema=public'; " +
+                 "`$env:DATABASE_URL = 'postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public'; " +
+                 "`$env:M10_DATABASE_URL = 'postgresql://revenue_user:revenue_pass@127.0.0.1:5432/revenue_intelligence?schema=public'; " +
                  "pnpm run $Command"
                  
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmdString -WindowStyle Normal

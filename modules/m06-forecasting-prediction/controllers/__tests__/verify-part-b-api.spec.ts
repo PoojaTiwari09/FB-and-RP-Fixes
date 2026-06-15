@@ -199,7 +199,7 @@ describe('ForecastUpgradeService - Part B Verification', () => {
       prisma.pipelineValuesCache.findUnique.mockResolvedValue({ pipelineValue: 1000 });
       const res = await service.getPipelineTotal('rep1', 'p1');
       expect(prisma.pipelineValuesCache.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ tenantid_periodId_repId_dealId: expect.objectContaining({ dealId: '' }) })
+        where: expect.objectContaining({ tenantid_periodId_repId_dealId: expect.objectContaining({ dealId: '00000000-0000-0000-0000-000000000000' }) })
       }));
       expect(res.pipeline_value).toBe(1000);
     });
