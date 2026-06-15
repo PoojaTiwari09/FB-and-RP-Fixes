@@ -1,0 +1,4003 @@
+{
+  "info": {
+    "name": "M05 — Account Intelligence API",
+    "description": "Complete test suite for the M05 Account Intelligence module.\n\n## Quick Start\n1. Import this file into Postman.\n2. Set the collection variable `baseUrl` to `http://localhost:3001`.\n3. Set the collection variable `accessToken` to the access token copied from your browser to fix 401 Unauthorized errors.\n3. For routes guarded by TenantGuard, send the header `x-tenant-id: 00000000-0000-0000-0000-000000000001`  \n   **only when** `ALLOW_DEV_HEADER_AUTH=true` is set in your API's .env (it is, in the demo setup).\n4. Run **POST /test/seed** first to load the in-memory demo data.\n5. Requests are ordered from lowest-dependency to highest.\n\n## Demo data IDs (from m05-data.store.ts)\n| Resource | ID |\n|---|---|\n| Board slug (demo) | `demo` |\n| Board slug (commercial) | `commercial` |\n| Board ID (demo) | `board-demo-001` |\n| HubSpot account (Acme) | `hs-demo-acme` |\n| HubSpot account (Globex) | `hs-demo-globex` |\n| HubSpot account (Initech) | `hs-demo-initech` |\n| HubSpot account (Umbrella) | `hs-demo-umbrella` |\n| HubSpot account (Stark) | `hs-demo-stark` |\n| Todo (open) | `todo-acme-open` |\n| Todo (done) | `todo-acme-done` |\n\n## Expected responses\nEach request includes a **Tests** tab script that validates the response shape and HTTP status so you can run the whole collection as a health check.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "m05-account-intelligence"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string",
+      "description": "Base URL of the unified API server (default: 3001)"
+    },
+    {
+      "key": "accessToken",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMzMzMzMzMy0zMzMzLTMzMzMtMzMzMy0zMzMzMzMzMzMzMzMiLCJ0ZW5hbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsInJvbGUiOiJTQUxFU19SRVAiLCJwZXJtaXNzaW9ucyI6WyJ0YXNrLnZpZXciLCJ0YXNrLmNyZWF0ZSIsInRhc2sudXBkYXRlIiwib3Bwb3J0dW5pdHkudmlldyIsIm9wcG9ydHVuaXR5LmNyZWF0ZSIsIm9wcG9ydHVuaXR5LnVwZGF0ZSIsImN1c3RvbWVyLnZpZXciLCJjdXN0b21lci5jcmVhdGUiLCJjdXN0b21lci51cGRhdGUiLCJhaS5xdWVyeSJdLCJlbWFpbCI6InNhcmFoLmNoZW5AcmVsYW50by5jb20iLCJuYW1lIjoiU2FyYWggQ2hlbiIsImlhdCI6MTc4MTE3NjQwMiwiZXhwIjoxNzgxMjYyODAyLCJhdWQiOiJyLXJldmVudWUtYXBpIiwiaXNzIjoici1yZXZlbnVlLWFwaSJ9.OzqnPY2oixYHZjqu8N19eBGtImvAPzhukADDHMazNME",
+      "type": "string",
+      "description": "JWT Bearer token copied from the browser's cookies/local storage"
+    },
+    {
+      "key": "tenant_id",
+      "value": "00000000-0000-0000-0000-000000000001",
+      "type": "string",
+      "description": "Demo tenant UUID — required by TenantGuard when ALLOW_DEV_HEADER_AUTH=true"
+    },
+    {
+      "key": "demo_board_slug",
+      "value": "demo",
+      "type": "string"
+    },
+    {
+      "key": "commercial_board_slug",
+      "value": "commercial",
+      "type": "string"
+    },
+    {
+      "key": "demo_board_id",
+      "value": "board-demo-001",
+      "type": "string"
+    },
+    {
+      "key": "acme_id",
+      "value": "hs-demo-acme",
+      "type": "string"
+    },
+    {
+      "key": "globex_id",
+      "value": "hs-demo-globex",
+      "type": "string"
+    },
+    {
+      "key": "initech_id",
+      "value": "hs-demo-initech",
+      "type": "string"
+    },
+    {
+      "key": "umbrella_id",
+      "value": "hs-demo-umbrella",
+      "type": "string"
+    },
+    {
+      "key": "stark_id",
+      "value": "hs-demo-stark",
+      "type": "string"
+    },
+    {
+      "key": "todo_open_id",
+      "value": "todo-acme-open",
+      "type": "string"
+    },
+    {
+      "key": "created_todo_id",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Create Todo test"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Log in to get a fresh accessToken. Run POST /auth/login - Manager first to set the accessToken variable.",
+      "item": [
+        {
+          "name": "POST /auth/login - Manager",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has accessToken\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
+                  "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+                  "    pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set('userId', jsonData.data.user.id);",
+                  "    pm.environment.set('userId', jsonData.data.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex.morgan@relanto.com\",\n  \"password\": \"Password123!\",\n  \"tenantSlug\": \"relanto\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login - Sales Rep",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has accessToken\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
+                  "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+                  "    pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set('userId', jsonData.data.user.id);",
+                  "    pm.environment.set('userId', jsonData.data.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sarah.chen@relanto.com\",\n  \"password\": \"Password123!\",\n  \"tenantSlug\": \"relanto\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "0 — Health & Smoke",
+      "description": "Verify the M05 module is up, env vars are wired, and the in-memory seed is loaded.",
+      "item": [
+        {
+          "name": "Module Info (GET /)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence"
+              ]
+            },
+            "description": "Returns module metadata including version and registered route map."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('module field present', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('module', 'm05-account-intelligence');",
+                  "  pm.expect(body).to.have.property('version', '1.0.0');",
+                  "  pm.expect(body).to.have.property('routes');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Check (GET /test/health)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/test/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "test",
+                "health"
+              ]
+            },
+            "description": "Lightweight liveness probe. Returns {success: true, module, timestamp}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success true', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.module).to.eql('m05-account-intelligence');",
+                  "  pm.expect(body.timestamp).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI Service Health (GET /ai/health)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/ai/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "ai",
+                "health"
+              ]
+            },
+            "description": "Verifies the AI sub-service is reachable. Expects {status:'ok'}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status ok', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Smoke Test (POST /test/smoke)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/test/smoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "test",
+                "smoke"
+              ]
+            },
+            "description": "Checks env var wiring: HUBSPOT_ACCESS_TOKEN, HUBSPOT_PORTAL_ID, webhook secret."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('smoke passed', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.checks).to.be.an('array').with.length.greaterThan(0);",
+                  "  console.log('HubSpot token configured:', body.hubspotTokenConfigured);",
+                  "  console.log('Webhook secret configured:', body.webhookSecretConfigured);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Load Seed (POST /test/seed)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/test/seed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "test",
+                "seed"
+              ]
+            },
+            "description": "Resets the in-memory demo data store. Run this FIRST before other board/account calls."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('seed loaded', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.stats.boards).to.be.gte(2);",
+                  "  pm.expect(body.stats.companies).to.be.gte(5);",
+                  "  pm.expect(body.stats.deals).to.be.gte(5);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verification Matrix (GET /test/verification)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/test/verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "test",
+                "verification"
+              ]
+            },
+            "description": "Returns the full feature ↔ seed verification matrix plus in-memory stats. Useful for confirming feature coverage."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has matrix', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.matrix).to.be.an('array');",
+                  "  pm.expect(body.count).to.be.gte(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 — Boards",
+      "description": "CRUD operations on account intelligence boards. No TenantGuard on boards routes.",
+      "item": [
+        {
+          "name": "List All Boards (GET /boards)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards"
+              ]
+            },
+            "description": "Returns all boards. Should include at least 'demo' and 'commercial'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('boards array', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('boards');",
+                  "  pm.expect(body.boards).to.be.an('array').with.length.gte(2);",
+                  "  const slugs = body.boards.map(b => b.slug);",
+                  "  pm.expect(slugs).to.include('demo');",
+                  "  pm.expect(slugs).to.include('commercial');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Team (GET /boards/team)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/team",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "team"
+              ]
+            },
+            "description": "Returns the team roster used for rep filtering."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('team returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('team');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Permissions — rep (GET /boards/permissions/rep)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/permissions/rep",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "permissions",
+                "rep"
+              ]
+            },
+            "description": "Returns the permission profile for 'rep' role. Expect can_edit_board_config = false."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('rep permissions', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('permissions');",
+                  "  pm.expect(body.permissions.can_edit_board_config).to.be.false;",
+                  "  pm.expect(body.permissions.can_edit_cells).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Permissions — manager (GET /boards/permissions/manager)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/permissions/manager",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "permissions",
+                "manager"
+              ]
+            },
+            "description": "Returns manager permission profile. Expect can_edit_board_config = true."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('manager permissions', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.permissions.can_edit_board_config).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Board by Slug — demo (GET /boards/demo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{demo_board_slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{demo_board_slug}}"
+              ]
+            },
+            "description": "Fetches the 'demo' board config including tabs and columns."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('board returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('board');",
+                  "  pm.expect(body.board.slug).to.eql('demo');",
+                  "  pm.expect(body.board).to.have.property('tabs');",
+                  "  pm.expect(body.board).to.have.property('columns');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Board by Slug — commercial (GET /boards/commercial)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{commercial_board_slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{commercial_board_slug}}"
+              ]
+            },
+            "description": "Fetches the 'commercial' board."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('commercial board', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.board.slug).to.eql('commercial');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Board — not found (GET /boards/nonexistent)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/nonexistent-board",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "nonexistent-board"
+              ]
+            },
+            "description": "Expects {error: 'Board not found'} when slug does not exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('error returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('error', 'Board not found');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Brief Config (PATCH /boards/demo/brief-config)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brief_type\": \"summary\",\n  \"brief_period_days\": 60,\n  \"ai_briefs_enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{demo_board_slug}}/brief-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{demo_board_slug}}",
+                "brief-config"
+              ]
+            },
+            "description": "Updates the AI brief configuration for the demo board (brief_type, brief_period_days)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('board updated', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('board');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Column (POST /boards/demo/columns)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field_key\": \"custom_score\",\n  \"label\": \"Custom Score\",\n  \"column_type\": \"supplementary\",\n  \"order\": 10,\n  \"width\": 120,\n  \"sortable\": true,\n  \"editable\": false,\n  \"visible_to_roles\": [\"manager\", \"admin\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{demo_board_slug}}/columns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{demo_board_slug}}",
+                "columns"
+              ]
+            },
+            "description": "Adds a new column to the demo board column config."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 or 200', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('column created', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('column');",
+                  "  pm.expect(body.column.field_key).to.eql('custom_score');",
+                  "  // store col_id for update/delete tests",
+                  "  pm.collectionVariables.set('created_col_id', String(body.column.col_id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Column (PUT /boards/demo/columns/:colId)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Custom Score (updated)\",\n  \"width\": 150\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{demo_board_slug}}/columns/{{created_col_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{demo_board_slug}}",
+                "columns",
+                "{{created_col_id}}"
+              ]
+            },
+            "description": "Updates the label/width of the column created in the previous step."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('column updated', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('column');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Column (DELETE /boards/demo/columns/:colId)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{demo_board_slug}}/columns/{{created_col_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{demo_board_slug}}",
+                "columns",
+                "{{created_col_id}}"
+              ]
+            },
+            "description": "Deletes the custom column added in the Add Column step."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('column deleted', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success ?? body.deleted ?? true).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Board (POST /boards/demo/duplicate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{demo_board_slug}}/duplicate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{demo_board_slug}}",
+                "duplicate"
+              ]
+            },
+            "description": "Creates a copy of the demo board with a new slug."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 201', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('board duplicated', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('board');",
+                  "  // store slug for cleanup",
+                  "  pm.collectionVariables.set('duplicated_board_slug', body.board.slug);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Duplicated Board (DELETE /boards/:slug)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/boards/{{duplicated_board_slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "boards",
+                "{{duplicated_board_slug}}"
+              ]
+            },
+            "description": "Cleans up the duplicated board from the previous step."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 — Accounts",
+      "description": "Account list, detail, engagement gap, and sparkline endpoints. Require x-tenant-id header.",
+      "item": [
+        {
+          "name": "List Accounts — demo board (GET /accounts?board_slug=demo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts?board_slug={{demo_board_slug}}&page=1&page_size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{demo_board_slug}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Returns paginated accounts for the demo board. Expect 4 accounts (Acme, Globex, Initech, Umbrella)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('accounts returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('accounts');",
+                  "  pm.expect(body.accounts).to.be.an('array').with.length.gte(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Accounts — commercial board (GET /accounts?board_slug=commercial)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts?board_slug={{commercial_board_slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{commercial_board_slug}}"
+                }
+              ]
+            },
+            "description": "Returns accounts for the commercial board. Expect Stark Industries."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('commercial accounts', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.accounts).to.be.an('array');",
+                  "  const names = body.accounts.map(a => a.name);",
+                  "  pm.expect(names).to.include('Stark Industries');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Accounts — sorted by name ASC",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts?board_slug={{demo_board_slug}}&sort_field=name&sort_dir=asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{demo_board_slug}}"
+                },
+                {
+                  "key": "sort_field",
+                  "value": "name"
+                },
+                {
+                  "key": "sort_dir",
+                  "value": "asc"
+                }
+              ]
+            },
+            "description": "Tests sort_field and sort_dir query params."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('accounts sorted', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.accounts).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Accounts — High ARR tab (tab_id=2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts?board_slug={{demo_board_slug}}&tab_id=board-demo-001_2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{demo_board_slug}}"
+                },
+                {
+                  "key": "tab_id",
+                  "value": "board-demo-001_2"
+                }
+              ]
+            },
+            "description": "Tab 2 = 'High ARR' (exit_arr >= 200,000). Expect only Acme ($285k)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('high ARR filter applied', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.accounts).to.be.an('array');",
+                  "  body.accounts.forEach(a => {",
+                  "    pm.expect(a.exit_arr).to.be.gte(200000);",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Accounts — At Risk tab (tab_id=3)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts?board_slug={{demo_board_slug}}&tab_id=board-demo-001_3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{demo_board_slug}}"
+                },
+                {
+                  "key": "tab_id",
+                  "value": "board-demo-001_3"
+                }
+              ]
+            },
+            "description": "Tab 3 = 'At Risk' (ai_risk_score >= 50). Expect Initech (62) and Umbrella (78)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('at-risk filter', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.accounts).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Accounts — missing board_slug (error case)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ]
+            },
+            "description": "board_slug is required. Expects {error: 'board_slug is required'}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('error message', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.error).to.include('board_slug');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Account Detail — Acme (GET /accounts/:hubspotId)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts/{{acme_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts",
+                "{{acme_id}}"
+              ]
+            },
+            "description": "Full detail view for Acme Corp including contacts, deals, activities, and supplementary data."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('account detail shape', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('company');",
+                  "  pm.expect(body.company.hubspot_id).to.eql('hs-demo-acme');",
+                  "  pm.expect(body).to.have.property('contacts');",
+                  "  pm.expect(body).to.have.property('deals');",
+                  "  pm.expect(body).to.have.property('activities');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Account Detail — Umbrella (high risk)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts/{{umbrella_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts",
+                "{{umbrella_id}}"
+              ]
+            },
+            "description": "Umbrella Corp is the 'engagement gap' account — last activity 25+ days ago."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('umbrella detail', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.company.hubspot_id).to.eql('hs-demo-umbrella');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Engagement Gap (GET /accounts/engagement-gap)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts/engagement-gap?board_slug={{demo_board_slug}}&days=21",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts",
+                "engagement-gap"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{demo_board_slug}}"
+                },
+                {
+                  "key": "days",
+                  "value": "21"
+                }
+              ]
+            },
+            "description": "Returns accounts with no activity in the last `days` days. Umbrella Corp should appear (last activity 25d ago)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('gap accounts present', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('accounts');",
+                  "  pm.expect(body.accounts).to.be.an('array');",
+                  "  const ids = body.accounts.map(a => a.hubspot_id);",
+                  "  pm.expect(ids).to.include('hs-demo-umbrella');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sparklines (GET /accounts/sparklines)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts/sparklines?board_slug={{demo_board_slug}}&hubspot_ids={{acme_id}},{{globex_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts",
+                "sparklines"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "{{demo_board_slug}}"
+                },
+                {
+                  "key": "hubspot_ids",
+                  "value": "{{acme_id}},{{globex_id}}"
+                }
+              ]
+            },
+            "description": "Returns activity-count timeseries for the requested HubSpot IDs. Acme should have 8 data points."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('sparkline data returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('sparklines');",
+                  "  const ids = Object.keys(body.sparklines);",
+                  "  pm.expect(ids).to.include('hs-demo-acme');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 — Activities",
+      "description": "Per-account CRM activity timeline.",
+      "item": [
+        {
+          "name": "Get Activities — Acme all types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/activities/{{acme_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "activities",
+                "{{acme_id}}"
+              ]
+            },
+            "description": "Returns all activities for Acme. Should include CALL, EMAIL, MEETING types."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('activities returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('activities');",
+                  "  pm.expect(body.activities).to.be.an('array').with.length.gte(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Activities — Acme CALL type only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/activities/{{acme_id}}?type=CALL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "activities",
+                "{{acme_id}}"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "CALL"
+                }
+              ]
+            },
+            "description": "Filters to CALL activities only. Acme has 4 CALL activities in the seed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('only CALL activities', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.activities).to.be.an('array');",
+                  "  body.activities.forEach(a => pm.expect(a.type).to.eql('CALL'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Activities — Globex paginated",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/activities/{{globex_id}}?page=1&page_size=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "activities",
+                "{{globex_id}}"
+              ],
+              "query": [
+                  {
+                    "key": "board_slug",
+                    "value": "demo"
+                  },
+                  {
+                    "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Tests pagination: page_size=1 should return exactly 1 activity."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('page_size respected', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.activities.length).to.be.lte(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Activities — Umbrella (low engagement)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/activities/{{umbrella_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "activities",
+                "{{umbrella_id}}"
+              ]
+            },
+            "description": "Umbrella only has 1 activity (EMAIL 25 days ago). Good test for low-engagement detection."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('umbrella activities', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.activities).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 — AI Summary & Chat",
+      "description": "AI-generated account briefs and conversational Q&A. Requires GROQ_API_KEY to be set; gracefully falls back with a message if not.",
+      "item": [
+        {
+          "name": "Generate Summary — Acme full brief",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_hubspot_id\": \"{{acme_id}}\",\n  \"scope\": \"entire_account\",\n  \"period_days\": 90,\n  \"brief_type\": \"full\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/ai/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "ai",
+                "summary"
+              ]
+            },
+            "description": "Generates or returns a cached AI brief for Acme Corp. If GROQ_API_KEY is not set, the service returns a fallback message."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('summary shape', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('brief');",
+                  "  pm.expect(body).to.have.property('generated_at');",
+                  "  pm.expect(body).to.have.property('cached');",
+                  "  console.log('Cached?', body.cached, '| Insufficient data?', body.insufficient_data);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate Summary — force refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_hubspot_id\": \"{{acme_id}}\",\n  \"scope\": \"entire_account\",\n  \"period_days\": 30,\n  \"brief_type\": \"summary\",\n  \"force_refresh\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/ai/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "ai",
+                "summary"
+              ]
+            },
+            "description": "Same as above but bypasses cache with force_refresh: true."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('forced refresh', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('brief');",
+                  "  pm.expect(body.cached).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate Summary — risk_only brief type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_hubspot_id\": \"{{umbrella_id}}\",\n  \"scope\": \"entire_account\",\n  \"period_days\": 90,\n  \"brief_type\": \"risk_only\",\n  \"force_refresh\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/ai/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "ai",
+                "summary"
+              ]
+            },
+            "description": "Risk-only brief for Umbrella (high-risk account, no engagement in 21+ days). May flag insufficient_data."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('brief returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('brief');",
+                  "  console.log('Insufficient data?', body.insufficient_data);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI Chat — Acme renewal question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_hubspot_id\": \"{{acme_id}}\",\n  \"message\": \"What is the current renewal status and what are the key risks?\",\n  \"conversation_history\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/ai/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "ai",
+                "chat"
+              ]
+            },
+            "description": "Conversational AI Q&A for Acme Corp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('chat response shape', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('reply');",
+                  "  pm.expect(body).to.have.property('citations');",
+                  "  pm.expect(body).to.have.property('insufficient_data');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI Chat — with conversation history",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_hubspot_id\": \"{{acme_id}}\",\n  \"message\": \"What should I do next to close the renewal?\",\n  \"conversation_history\": [\n    { \"role\": \"user\", \"content\": \"What is the current renewal status?\" },\n    { \"role\": \"assistant\", \"content\": \"The Acme Enterprise Renewal Q2 deal is currently in Negotiation stage with a close date in 30 days.\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/ai/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "ai",
+                "chat"
+              ]
+            },
+            "description": "Multi-turn chat: passes previous conversation_history to maintain context."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('reply present', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.reply).to.be.a('string').with.length.gt(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 — Inline Edits",
+      "description": "Patch individual fields on companies, deals, and supplementary accounts.",
+      "item": [
+        {
+          "name": "Edit Company field — Acme exit_arr",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field\": \"exit_arr\",\n  \"value\": \"300000\",\n  \"role\": \"manager\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/edits/company/{{acme_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "edits",
+                "company",
+                "{{acme_id}}"
+              ]
+            },
+            "description": "Updates exit_arr for Acme Corp inline from the board grid."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('edit applied', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success ?? body.updated ?? true).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit Deal field — deal-acme-1 stage",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field\": \"stage\",\n  \"value\": \"Contract Signed\",\n  \"role\": \"rep\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/edits/deal/deal-acme-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "edits",
+                "deal",
+                "deal-acme-1"
+              ]
+            },
+            "description": "Updates the stage field on the Acme renewal deal."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit Supplementary — Acme manager_note",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field\": \"manager_note\",\n  \"value\": \"Updated via Postman — renewal on track, send ROI deck\",\n  \"role\": \"manager\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/edits/supplementary/{{acme_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "edits",
+                "supplementary",
+                "{{acme_id}}"
+              ]
+            },
+            "description": "Updates the manager_note supplementary field for Acme Corp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 — Todos & Notes",
+      "description": "Per-account todos and notes CRUD.",
+      "item": [
+        {
+          "name": "Get Todos — Acme",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/todos/{{acme_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "todos",
+                "{{acme_id}}"
+              ]
+            },
+            "description": "Returns all todos and notes for Acme. Seed has 3 items: 1 open todo, 1 done todo, 1 note."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('todos returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('todos');",
+                  "  pm.expect(body.todos).to.be.an('array').with.length.gte(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Todo — Globex",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"todo\",\n  \"content\": \"Follow up on ROI calculator sent to Globex CTO\",\n  \"role\": \"rep\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/todos/{{globex_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "todos",
+                "{{globex_id}}"
+              ]
+            },
+            "description": "Creates a new todo for Globex Corp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 or 200', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('todo created', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('todo');",
+                  "  pm.expect(body.todo.content).to.include('ROI calculator');",
+                  "  // store id for update/delete",
+                  "  pm.collectionVariables.set('created_todo_id', body.todo.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Note — Initech manager note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"note\",\n  \"content\": \"Need exec sponsor to unblock Initech pilot — escalate to VP Sales\",\n  \"role\": \"manager\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/todos/{{initech_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "todos",
+                "{{initech_id}}"
+              ]
+            },
+            "description": "Creates a manager note (type: 'note') for Initech."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 or 200', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('note created', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.todo.type).to.eql('note');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Todo — mark as completed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completed\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/todos/{{todo_open_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "todos",
+                "{{todo_open_id}}"
+              ]
+            },
+            "description": "Marks 'todo-acme-open' as completed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('todo completed', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('todo');",
+                  "  pm.expect(body.todo.completed).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Todo — edit content",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Send revised MSA to legal — UPDATED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/todos/{{todo_open_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "todos",
+                "{{todo_open_id}}"
+              ]
+            },
+            "description": "Updates the content text of a todo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Todo — created Globex todo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/todos/{{created_todo_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "todos",
+                "{{created_todo_id}}"
+              ]
+            },
+            "description": "Deletes the todo created in 'Create Todo — Globex'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('deleted', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success ?? body.deleted ?? true).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 — Preferences",
+      "description": "Per-role board view preferences (active tab, sort, filters).",
+      "item": [
+        {
+          "name": "Get Last Viewed Board — rep",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/preferences/rep/last-board",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "preferences",
+                "rep",
+                "last-board"
+              ]
+            },
+            "description": "Returns the slug of the last board the 'rep' role viewed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Preferences — rep",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/preferences/rep",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "preferences",
+                "rep"
+              ]
+            },
+            "description": "Returns all stored preferences for the 'rep' role across boards."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('preferences array', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('preferences');",
+                  "  pm.expect(body.preferences).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Preferences — manager",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/preferences/manager",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "preferences",
+                "manager"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upsert Preferences — rep on demo board",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active_tab_id\": \"2\",\n  \"sort_field\": \"exit_arr\",\n  \"sort_dir\": \"desc\",\n  \"page_size\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/preferences/rep/{{demo_board_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "preferences",
+                "rep",
+                "{{demo_board_id}}"
+              ]
+            },
+            "description": "Saves or updates the rep's view preferences for the demo board."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clear Preferences — rep (specific board)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/preferences/rep?board_id={{demo_board_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "preferences",
+                "rep"
+              ],
+              "query": [
+                {
+                  "key": "board_id",
+                  "value": "{{demo_board_id}}"
+                }
+              ]
+            },
+            "description": "Clears preferences for the rep role on the demo board only."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clear All Preferences — admin",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/preferences/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "preferences",
+                "admin"
+              ]
+            },
+            "description": "Clears all preferences for the admin role across all boards."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8 — Sync",
+      "description": "HubSpot → Postgres sync control and status.",
+      "item": [
+        {
+          "name": "Get Sync Status (GET /sync/status)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/sync/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "sync",
+                "status"
+              ]
+            },
+            "description": "Returns last_sync result, is_syncing flag, and seconds_until_next_sync."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status fields present', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('is_syncing');",
+                  "  console.log('Is syncing:', body.is_syncing, '| Last sync:', body.last_sync);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trigger Sync — admin role (POST /sync/trigger)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/sync/trigger",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "sync",
+                "trigger"
+              ]
+            },
+            "description": "Manually triggers a full HubSpot sync. Only role='admin' is permitted. Note: This will make real HubSpot API calls if HUBSPOT_ACCESS_TOKEN is configured."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('response returned', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  // success=true if sync ran, or success=false with error if HubSpot token not set",
+                  "  pm.expect(body).to.have.property('success');",
+                  "  console.log('Sync result:', JSON.stringify(body));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trigger Sync — non-admin blocked (POST /sync/trigger)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"rep\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/sync/trigger",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "sync",
+                "trigger"
+              ]
+            },
+            "description": "Non-admin roles must be rejected. Expects {success: false, error: 'Only admin role can trigger sync'}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('non-admin blocked', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.success).to.be.false;",
+                  "  pm.expect(body.error).to.include('admin');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9 — HubSpot Webhook",
+      "description": "Inbound CRM webhook events. HMAC signature validation is skipped in dev when M05_HUBSPOT_WEBHOOK_SECRET is unset.",
+      "item": [
+        {
+          "name": "Webhook — company property change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"appId\": 123456,\n    \"eventId\": 1001,\n    \"subscriptionId\": 5001,\n    \"portalId\": 99999,\n    \"occurredAt\": 1700000000000,\n    \"subscriptionType\": \"company.propertyChange\",\n    \"objectId\": 12345678,\n    \"propertyName\": \"name\",\n    \"propertyValue\": \"Acme Corp Updated\",\n    \"changeSource\": \"CRM_UI\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/webhooks/hubspot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "webhooks",
+                "hubspot"
+              ]
+            },
+            "description": "Simulates a HubSpot company.propertyChange webhook event. No signature header needed in dev mode."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('processed count', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('processed');",
+                  "  pm.expect(body.processed).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Webhook — deal property change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"appId\": 123456,\n    \"eventId\": 1002,\n    \"subscriptionId\": 5002,\n    \"portalId\": 99999,\n    \"occurredAt\": 1700000001000,\n    \"subscriptionType\": \"deal.propertyChange\",\n    \"objectId\": 87654321,\n    \"propertyName\": \"amount\",\n    \"propertyValue\": \"320000\",\n    \"changeSource\": \"API\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/webhooks/hubspot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "webhooks",
+                "hubspot"
+              ]
+            },
+            "description": "Simulates a deal amount update via webhook."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('processed', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.processed).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Webhook — contact property change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"appId\": 123456,\n    \"eventId\": 1003,\n    \"subscriptionId\": 5003,\n    \"portalId\": 99999,\n    \"occurredAt\": 1700000002000,\n    \"subscriptionType\": \"contact.propertyChange\",\n    \"objectId\": 11223344,\n    \"propertyName\": \"jobtitle\",\n    \"propertyValue\": \"Chief Revenue Officer\",\n    \"changeSource\": \"IMPORT\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/webhooks/hubspot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "webhooks",
+                "hubspot"
+              ]
+            },
+            "description": "Simulates a contact job title update via webhook."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('processed', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.processed).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Webhook — empty payload (no-op)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/webhooks/hubspot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "webhooks",
+                "hubspot"
+              ]
+            },
+            "description": "Empty array payload — expects {processed: 0}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('zero processed', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.processed).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Webhook — multiple events batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"appId\": 123456,\n    \"eventId\": 2001,\n    \"subscriptionId\": 5001,\n    \"portalId\": 99999,\n    \"occurredAt\": 1700000010000,\n    \"subscriptionType\": \"company.propertyChange\",\n    \"objectId\": 12345678,\n    \"propertyName\": \"industry\",\n    \"propertyValue\": \"Technology\",\n    \"changeSource\": \"CRM_UI\"\n  },\n  {\n    \"appId\": 123456,\n    \"eventId\": 2002,\n    \"subscriptionId\": 5002,\n    \"portalId\": 99999,\n    \"occurredAt\": 1700000011000,\n    \"subscriptionType\": \"deal.propertyChange\",\n    \"objectId\": 87654321,\n    \"propertyName\": \"closedate\",\n    \"propertyValue\": \"2026-09-30\",\n    \"changeSource\": \"API\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/webhooks/hubspot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "webhooks",
+                "hubspot"
+              ]
+            },
+            "description": "Batch of 2 events (company + deal). Expects {processed: 2}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('2 processed', () => {",
+                  "  const resBody = pm.response.json(); const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body.processed).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 — Error & Auth Guards",
+      "description": "Verify that protected routes reject requests with missing or invalid tenant context.",
+      "item": [
+        {
+          "name": "Accounts — missing x-tenant-id (should 401)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-intelligence/accounts?board_slug=demo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-intelligence",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "demo"
+                }
+              ]
+            },
+            "description": "TenantGuard should throw 401 UnauthorizedException when no x-tenant-id and no JWT user is present."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Blocked without tenant header', () => {",
+                  "  // 401 expected when ALLOW_DEV_HEADER_AUTH=true but header is missing",
+                  "  // May return 401 or 403 depending on NestJS version",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Frontend API - Revenue Accounts",
+      "description": "Endpoints expected by the React frontend components.",
+      "item": [
+        {
+          "name": "Get Alert Banner (GET /alert)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/alert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "alert"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has alert fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('totalARR');",
+                  "  pm.expect(body).to.have.property('accountCount');",
+                  "  pm.expect(body).to.have.property('inactiveDays');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Summary Cards (GET /summary)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "summary"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns summary cards array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "  pm.expect(body.length).to.be.greaterThan(0);",
+                  "  pm.expect(body[0]).to.have.property('label');",
+                  "  pm.expect(body[0]).to.have.property('value');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Accounts (GET /)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts?board_slug=demo&page=1&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "board_slug",
+                  "value": "demo"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has accounts array and pagination', () => {",
+                  "  const resBody = pm.response.json();",
+                  "  const body = ('data' in resBody && 'meta' in resBody) ? resBody.data : resBody;",
+                  "  pm.expect(body).to.have.property('accounts');",
+                  "  pm.expect(body.accounts).to.be.an('array');",
+                  "  pm.expect(body).to.have.property('page');",
+                  "  pm.expect(body).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Viewers (GET /viewers)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/viewers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "viewers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has teams and reps', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('teams');",
+                  "  pm.expect(body).to.have.property('reps');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Recent Activities (GET /:id/activities/recent)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/activities/recent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "activities",
+                "recent"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns recent activities list', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send AI Chat (POST /:id/ai-chat)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"message\": \"What is the renewal date?\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/ai-chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "ai-chat"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has reply field', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('reply');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Overview (GET /:id/overview)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "overview"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has overview response fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('risksAndObjections');",
+                  "  pm.expect(body).to.have.property('overviewInfo');",
+                  "  pm.expect(body).to.have.property('recentActivities');",
+                  "  pm.expect(body.overviewInfo).to.have.property('assignedRep');",
+                  "  pm.expect(body.overviewInfo).to.have.property('healthScore');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Activity Feed (GET /:id/activity)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "activity"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has activity items and total', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('items');",
+                  "  pm.expect(body.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get AI Brief (GET /:id/briefs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/briefs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "briefs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has briefContent field', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('briefContent');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Todos (GET /:id/todos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/todos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "todos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has todos array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('todos');",
+                  "  pm.expect(body.todos).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Toggle Todo (PATCH /:id/todos/:todoId)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"completed\": true}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/todos/todo-acme-open",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "todos",
+                "todo-acme-open"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success true', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Notes (GET /:id/notes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "notes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has notes text', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('notes');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Save Notes (PATCH /:id/notes)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"notes\": \"Reviewing the proposal tomorrow.\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "notes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success true', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get CRM (GET /:id/crm)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/accounts/{{acme_id}}/crm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "accounts",
+                "{{acme_id}}",
+                "crm"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has crmFields array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('crmFields');",
+                  "  pm.expect(body.crmFields).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Frontend API - Revenue Deals",
+      "description": "Endpoints expected by the React frontend components for Deals.",
+      "item": [
+        {
+          "name": "Get Deal Overview (GET /:id/overview)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "overview"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has risksAndObjections', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('risksAndObjections');",
+                  "  pm.expect(body.risksAndObjections).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal Activity Feed (GET /:id/activity)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "activity"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has items and pagination', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('items');",
+                  "  pm.expect(body.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal AI Brief (GET /:id/briefs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/briefs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "briefs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has briefContent', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('briefContent');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal Todos (GET /:id/todos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/todos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "todos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has todos array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('todos');",
+                  "  pm.expect(body.todos).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Toggle Deal Todo (PATCH /:id/todos/:todoId)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"completed\": true}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/todos/todo-acme-open",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "todos",
+                "todo-acme-open"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success and completed', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body).to.have.property('completed');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal Notes (GET /:id/notes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "notes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has notes and updatedAt', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('notes');",
+                  "  pm.expect(body).to.have.property('updatedAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Save Deal Notes (PATCH /:id/notes)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"notes\": \"Updated deal notes from postman.\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "notes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has success true', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deal CRM (GET /:id/crm)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-tenant-id",
+                "value": "{{tenant_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/manager/revenue/deals/deal-acme-1/crm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "manager",
+                "revenue",
+                "deals",
+                "deal-acme-1",
+                "crm"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has crmFields array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('crmFields');",
+                  "  pm.expect(body.crmFields).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  }
+}

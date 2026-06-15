@@ -45,7 +45,7 @@ export class PreferencesService {
 
   async upsertPreferences(
     sessionRole: string,
-    slug: string,
+    boardId: string,
     prefs: {
       active_tab_id?: string;
       sort_field?: string;
@@ -57,15 +57,14 @@ export class PreferencesService {
     if (prefs.sort_dir && !['asc', 'desc'].includes(prefs.sort_dir))
       throw new BadRequestException("sort_dir must be 'asc' or 'desc'");
 
-    // Resolve slug to board_id
+    // Validate board exists
     const { data: board } = await this.supabase
       .from('board_config')
       .select('board_id')
-      .eq('slug', slug)
+      .eq('board_id', boardId)
       .single();
     
-    if (!board) throw new BadRequestException(`Board with slug ${slug} not found`);
-    const boardId = board.board_id;
+    if (!board) throw new BadRequestException(`Board with ID ${boardId} not found`);
 
     // Check if it exists
     const { data: existing } = await this.supabase

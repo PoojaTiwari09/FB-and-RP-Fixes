@@ -215,17 +215,8 @@ let M02FrontendTrackersService = class M02FrontendTrackersService {
                     .filter((d) => d.trackerId === tracker.id);
             }
         }
-        if (!tracker) {
-            return {
-                trackerId: trackerSlug,
-                trackerName: trackerSlug,
-                percentage: 0,
-                mentions: 0,
-                topAccounts: [],
-                topReps: [],
-                aiInsight: 'No data available for this tracker yet. Add keywords and wait for call analysis to populate insights.',
-            };
-        }
+        if (!tracker)
+            throw new common_1.NotFoundException('Tracker not found');
         const detections = tracker.detections ?? [];
         const entityIds = new Set(detections.map((d) => d.entityId));
         let totalCalls = 0;
@@ -280,20 +271,12 @@ let M02FrontendTrackersService = class M02FrontendTrackersService {
         const listRes = await this.listTrackers(tenantId, query || {});
         const rows = listRes.data ?? listRes;
         const tracker = rows.find((t) => t.id === trackerSlug);
-        let detail = null;
-        try {
-            detail = await this.getTrackerDetail(tenantId, trackerSlug, query);
-        }
-        catch {
-            const name = tracker?.trackerName ?? trackerSlug;
-            return wrapData({
-                answer: `No tracker found with ID "${trackerSlug}". Please verify the tracker ID or create a new tracker first.`,
-            });
-        }
-        const name = detail?.trackerName ?? tracker?.trackerName ?? trackerSlug;
+        const detailRes = await this.getTrackerDetail(tenantId, trackerSlug, query);
+        const detail = detailRes;
+        const name = tracker?.name ?? trackerSlug;
         const pct = detail.percentage ?? tracker?.percentage ?? 0;
-        const trend = tracker?.trendValue ?? 0;
-        const trendWord = (tracker?.trendDirection ?? 'up') === 'up' ? 'increasing' : 'decreasing';
+        const trend = tracker?.trend ?? 0;
+        const trendWord = trend >= 0 ? 'increasing' : 'decreasing';
         const contextFilterDesc = [
             query?.teamId && query?.teamId !== 'all' ? `Team: ${query.teamId}` : '',
             query?.interactionType && query?.interactionType !== 'all' ? `Channel: ${query.interactionType}` : '',

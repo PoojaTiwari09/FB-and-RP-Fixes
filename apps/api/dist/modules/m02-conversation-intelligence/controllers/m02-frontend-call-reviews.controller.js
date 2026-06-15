@@ -12,7 +12,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.M02FrontendDashboardController = exports.M02FrontendAnalyticsController = exports.M02FrontendManagerCallsController = exports.M02FrontendMetaController = exports.M02FrontendUsersController = exports.M02FrontendScorecardsController = exports.M02FrontendCallReviewsController = void 0;
+exports.M02FrontendAnalyticsController = exports.M02FrontendManagerCallsController = exports.M02FrontendMetaController = exports.M02FrontendUsersController = exports.M02FrontendScorecardsController = exports.M02FrontendCallReviewsController = void 0;
 const common_1 = require("@nestjs/common");
 const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
 const m02_frontend_call_reviews_service_1 = require("../services/m02-frontend-call-reviews.service");
@@ -45,8 +45,8 @@ let M02FrontendCallReviewsController = class M02FrontendCallReviewsController {
     transcript(reviewId, req) {
         return this.svc.getTranscript(req.tenantId, reviewId, req.userId, req.userRole);
     }
-    aiInsights(reviewId, req) {
-        return this.svc.getAiInsights(req.tenantId, reviewId, req.userId, req.userRole);
+    aiInsights(req) {
+        return this.svc.getAiInsights(req.userId, req.userRole);
     }
     detail(reviewId, req) {
         return this.svc.getReviewDetail(req.tenantId, reviewId, req.userId, req.userRole);
@@ -69,8 +69,8 @@ let M02FrontendCallReviewsController = class M02FrontendCallReviewsController {
     export(reviewId) {
         return this.svc.exportReview(reviewId);
     }
-    clone(reviewId, targetCallId, req) {
-        return this.svc.cloneReview(req.tenantId, reviewId, targetCallId);
+    clone(reviewId, targetCallId) {
+        return this.svc.cloneReview(reviewId, targetCallId);
     }
     share(reviewId, body, req) {
         return this.svc.shareReview(req.tenantId, reviewId, body, req.userId, req.userRole);
@@ -147,10 +147,9 @@ __decorate([
 ], M02FrontendCallReviewsController.prototype, "transcript", null);
 __decorate([
     (0, common_1.Get)(':reviewId/ai-insights'),
-    __param(0, (0, common_1.Param)('reviewId')),
-    __param(1, (0, common_1.Req)()),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], M02FrontendCallReviewsController.prototype, "aiInsights", null);
 __decorate([
@@ -216,9 +215,8 @@ __decorate([
     (0, common_1.Post)(':reviewId/clone'),
     __param(0, (0, common_1.Param)('reviewId')),
     __param(1, (0, common_1.Body)('targetCallId')),
-    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], M02FrontendCallReviewsController.prototype, "clone", null);
 __decorate([
@@ -336,19 +334,19 @@ let M02FrontendAnalyticsController = class M02FrontendAnalyticsController {
         this.svc = svc;
     }
     summary(req) {
-        return this.svc.getAnalyticsSummary(req.tenantId, req.userId, req.userRole);
+        return this.svc.getAnalyticsSummary(req.userId, req.userRole);
     }
     scoreTrend(req) {
-        return this.svc.getScoreTrend(req.tenantId, req.userId, req.userRole);
+        return this.svc.getScoreTrend(req.userId, req.userRole);
     }
     focusAreas(req) {
-        return this.svc.focusAreas(req.tenantId, req.userId, req.userRole);
+        return this.svc.focusAreas(req.userId, req.userRole);
     }
-    commonTags(req) {
-        return this.svc.getCommonTags(req.tenantId);
+    commonTags() {
+        return this.svc.getCommonTags();
     }
-    reviewHistory(query, req) {
-        return this.svc.getReviewHistory(req.tenantId, query, req.userId, req.userRole);
+    reviewHistory(query) {
+        return this.svc.getReviewHistory(query);
     }
 };
 exports.M02FrontendAnalyticsController = M02FrontendAnalyticsController;
@@ -375,17 +373,15 @@ __decorate([
 ], M02FrontendAnalyticsController.prototype, "focusAreas", null);
 __decorate([
     (0, common_1.Get)('common-tags'),
-    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], M02FrontendAnalyticsController.prototype, "commonTags", null);
 __decorate([
     (0, common_1.Get)('review-history'),
     __param(0, (0, common_1.Query)()),
-    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], M02FrontendAnalyticsController.prototype, "reviewHistory", null);
 exports.M02FrontendAnalyticsController = M02FrontendAnalyticsController = __decorate([
@@ -393,26 +389,4 @@ exports.M02FrontendAnalyticsController = M02FrontendAnalyticsController = __deco
     (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
     __metadata("design:paramtypes", [m02_frontend_call_reviews_service_1.M02FrontendCallReviewsService])
 ], M02FrontendAnalyticsController);
-let M02FrontendDashboardController = class M02FrontendDashboardController {
-    svc;
-    constructor(svc) {
-        this.svc = svc;
-    }
-    summary(req) {
-        return this.svc.getAnalyticsSummary(req.tenantId, req.userId, req.userRole);
-    }
-};
-exports.M02FrontendDashboardController = M02FrontendDashboardController;
-__decorate([
-    (0, common_1.Get)('summary'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], M02FrontendDashboardController.prototype, "summary", null);
-exports.M02FrontendDashboardController = M02FrontendDashboardController = __decorate([
-    (0, common_1.Controller)('api/v1/conversation-intelligence/dashboard'),
-    (0, common_1.UseGuards)(tenant_guard_1.TenantGuard),
-    __metadata("design:paramtypes", [m02_frontend_call_reviews_service_1.M02FrontendCallReviewsService])
-], M02FrontendDashboardController);
 //# sourceMappingURL=m02-frontend-call-reviews.controller.js.map

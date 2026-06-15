@@ -215,7 +215,7 @@ __decorate([
 ], DealBoardsController.prototype, "getDealBoards", null);
 __decorate([
     (0, common_1.Get)(':boardId'),
-    __param(0, (0, common_1.Param)('boardId')),
+    __param(0, (0, common_1.Param)('boardId', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Query)('owner')),
     __metadata("design:type", Function),
@@ -224,7 +224,7 @@ __decorate([
 ], DealBoardsController.prototype, "getBoardDetail", null);
 __decorate([
     (0, common_1.Get)(':boardId/deals'),
-    __param(0, (0, common_1.Param)('boardId')),
+    __param(0, (0, common_1.Param)('boardId', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Query)('owner')),
     __metadata("design:type", Function),

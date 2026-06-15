@@ -60,9 +60,7 @@ exports.M02ConversationIntelligenceModule = M02ConversationIntelligenceModule = 
             m02_frontend_call_reviews_controller_1.M02FrontendUsersController,
             m02_frontend_call_reviews_controller_1.M02FrontendMetaController,
             m02_frontend_call_reviews_controller_1.M02FrontendAnalyticsController,
-            m02_frontend_call_reviews_controller_1.M02FrontendDashboardController,
             theme_analyses_controller_1.ThemeAnalysesController,
-            theme_analyses_controller_1.ThemeSpotterController,
         ],
         providers: [
             m02_frontend_search_service_1.M02FrontendSearchService,

@@ -29,6 +29,12 @@ export class ResponseTransformInterceptor implements NestInterceptor {
           return data;
         }
 
+        // Bypass response wrapping for manager/frontend API routes
+        const url = req.url || '';
+        if (url.includes('/api/manager/')) {
+          return data;
+        }
+
         // Bypass formatting if the response is already in the success format, but ensure meta is populated
         if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
           return {

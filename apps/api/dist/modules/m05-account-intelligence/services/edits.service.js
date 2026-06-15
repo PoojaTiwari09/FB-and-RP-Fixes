@@ -12,7 +12,7 @@ const supabase_1 = require("../config/supabase");
 const hubspot_1 = require("../config/hubspot");
 const VALID_DEAL_STAGES = [
     'Prospecting', 'Qualification', 'Solution Presentation',
-    'Proposal Sent', 'Contract Negotiation', 'Closed Won', 'Closed Lost',
+    'Proposal Sent', 'Contract Negotiation', 'Contract Signed', 'Closed Won', 'Closed Lost',
 ];
 const DEAL_STAGE_MAP = {
     'Prospecting': 'appointmentscheduled',

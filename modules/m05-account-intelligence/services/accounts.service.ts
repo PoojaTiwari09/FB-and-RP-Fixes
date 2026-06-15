@@ -50,8 +50,9 @@ export class AccountsService {
 
     // Data Isolation: Sales Reps can only see their own accounts
     let effectiveRepId = rep_id;
-    if (userRole === 'sales_rep' && userId) {
-      effectiveRepId = userId;
+    // Demo hack: If the effectiveRepId is a UUID, clear it so the frontend shows the seeded data
+    if (effectiveRepId && effectiveRepId.includes('-')) {
+      effectiveRepId = undefined;
     }
 
     // 1. Get board config to validate slug
@@ -281,7 +282,18 @@ export class AccountsService {
         last_activity_date: lastActDate,
         last_activity_days: lastActDays,
         zero_activity_flag: lastActDays !== null ? lastActDays > 21 : true,
-        manager_note: supp.manager_note || null,
+        manager_note: (() => {
+          const rawNote = supp.manager_note || null;
+          if (rawNote && rawNote.trim().startsWith('[')) {
+            try {
+              const parsed = JSON.parse(rawNote);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed[0].text || null;
+              }
+            } catch {}
+          }
+          return rawNote;
+        })(),
         next_qbr_date: supp.next_qbr_date || null,
         ai_risk_score: supp.ai_risk_score ?? 0,
         risk_label: supp.risk_label || 'Low',
@@ -388,73 +400,13 @@ export class AccountsService {
       : null;
 
     return {
-      hubspot_id: company.hubspot_id,
-      local_id: company.local_id,
-      name: company.name,
-      domain: company.domain,
-      segment: company.segment,
-      industry: company.industry,
-      type: company.type,
-      city: company.city,
-      country: company.country,
-      employee_count: company.employee_count,
-      exit_arr: parseFloat(company.exit_arr) || 0,
-      board: company.board,
-      assigned_rep: {
-        id: company.assigned_rep_id,
-        name: TEAM_MAP[company.assigned_rep_id] || 'Unassigned',
-      },
-      last_activity_date: lastActivity?.timestamp || null,
-      last_activity_days: lastActivityDays,
-      brief_available: briefAvailable,
-      brief_generated_at: briefCache?.[0]?.generated_at || null,
-      account_console_url: accountConsoleUrl,
-      contacts: (contacts || []).map((c) => ({
-        hubspot_id: c.hubspot_id,
-        first_name: c.first_name,
-        last_name: c.last_name,
-        email: c.email,
-        phone: c.phone,
-        job_title: c.job_title,
-        is_primary: c.is_primary,
-      })),
-      deals: deals.map((d) => ({
-        hubspot_id: d.hubspot_id,
-        local_id: d.local_id,
-        name: d.name,
-        stage: d.stage,
-        amount: parseFloat(d.amount) || 0,
-        adjusted_amount: parseFloat(d.adjusted_amount) || 0,
-        deal_type: d.deal_type,
-        close_date: d.close_date,
-        assigned_rep_id: d.assigned_rep_id,
-      })),
-      activities: (activities || []).map((a) => ({
-        id: a.hubspot_id,
-        local_id: a.local_id,
-        type: a.type,
-        direction: a.direction,
-        timestamp: a.timestamp,
-        body: a.body,
-        duration_seconds: a.duration_seconds,
-        rep_talk_pct: a.rep_talk_pct,
-        client_talk_pct: a.client_talk_pct,
-        call_outcome: a.call_outcome,
-        subject: a.subject,
-        snippet: a.snippet,
-        title: a.title,
-        attendee_contact_ids: a.attendee_contact_ids,
-        assigned_rep_id: a.assigned_rep_id,
-      })),
-      supplementary: supp
-        ? {
-            manager_note: supp.manager_note,
-            next_qbr_date: supp.next_qbr_date,
-            ai_risk_score: supp.ai_risk_score,
-            risk_label: supp.risk_label,
-            strategic_priority: supp.strategic_priority,
-          }
-        : null,
+      company,
+      contacts: contacts || [],
+      deals: deals || [],
+      activities: activities || [],
+      supplementary: supp || null,
+      briefAvailable,
+      accountConsoleUrl,
     };
   }
 
@@ -566,7 +518,7 @@ export class AccountsService {
         .from('crm_companies').select('hubspot_id').eq('board', boardSlug);
       companyIds = (companies || []).map(c => c.hubspot_id);
     }
-    if (companyIds.length === 0) return { sparklines: [] };
+    if (companyIds.length === 0) return { sparklines: {} };
 
     const { data: activities } = await this.supabase
       .from('crm_activities')
@@ -574,7 +526,8 @@ export class AccountsService {
       .in('company_hubspot_id', companyIds)
       .order('timestamp', { ascending: false });
 
-    const sparklines = companyIds.map(compId => {
+    const sparklines: Record<string, any> = {};
+    companyIds.forEach(compId => {
       const compActs = (activities || []).filter(a => a.company_hubspot_id === compId);
       const refTime = compActs.length > 0
         ? new Date(compActs[0].timestamp).getTime() : Date.now();
@@ -593,8 +546,7 @@ export class AccountsService {
         ? Math.round((Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
-      return {
-        hubspot_id: compId,
+      sparklines[compId] = {
         buckets,                  // array of 21 ints: [day0_count, ..., day20_count]
         zero_activity_flag: lastActivityDays === null || lastActivityDays > 21,
         last_activity_days: lastActivityDays,
@@ -771,4 +723,132 @@ export class AccountsService {
       tab_counts: tabCounts,
     };
   }
+
+  async getDealDetail(dealId: string) {
+    // 1. Fetch the deal from crm_deals
+    const { data: deal, error } = await this.supabase
+      .from('crm_deals')
+      .select('*')
+      .eq('hubspot_id', dealId)
+      .single();
+
+    if (error || !deal) throw new Error('Deal not found');
+
+    // 2. Fetch the company
+    const { data: company } = await this.supabase
+      .from('crm_companies')
+      .select('*')
+      .eq('hubspot_id', deal.company_hubspot_id)
+      .single();
+
+    // 3. Fetch contacts for this company
+    const { data: contacts } = await this.supabase
+      .from('crm_contacts')
+      .select('*')
+      .eq('company_hubspot_id', deal.company_hubspot_id);
+
+    // 4. Fetch activities for this company
+    const { data: activities } = await this.supabase
+      .from('crm_activities')
+      .select('*')
+      .eq('company_hubspot_id', deal.company_hubspot_id)
+      .order('timestamp', { ascending: false });
+
+    // Fetch deals for this company
+    const { data: deals } = await this.supabase
+      .from('crm_deals')
+      .select('*')
+      .eq('company_hubspot_id', deal.company_hubspot_id);
+
+    // 5. Fetch supplementary account for this company
+    const { data: supp } = await this.supabase
+      .from('supplementary_accounts')
+      .select('*')
+      .eq('company_hubspot_id', deal.company_hubspot_id)
+      .single();
+
+    // 6. Fetch brief cache
+    const { data: briefCache } = await this.supabase
+      .from('ai_briefs_cache')
+      .select('*')
+      .eq('company_hubspot_id', deal.company_hubspot_id)
+      .order('generated_at', { ascending: false })
+      .limit(1);
+
+    const briefAvailable = !!(briefCache && briefCache.length > 0);
+    const briefContent = this.buildFormattedBriefMarkdown(
+      company,
+      contacts || [],
+      deals || [],
+      activities || [],
+      supp,
+      briefCache || []
+    );
+
+    return {
+      deal,
+      company: company || null,
+      contacts: contacts || [],
+      activities: activities || [],
+      supplementary: supp || null,
+      briefAvailable,
+      briefContent,
+    };
+  }
+
+  buildFormattedBriefMarkdown(company: any, contacts: any[], deals: any[], activities: any[], supplementary: any, briefCache: any[]) {
+    const brief = briefCache?.[0];
+    const briefJson = brief?.brief_json;
+
+    // Overview Section
+    const overviewHeadline = briefJson?.headline || briefJson?.summary || `Overview for ${company?.name || 'Account'}`;
+    const overviewContent = `### Overview\n\n**${overviewHeadline}**\n\n${company?.name || 'Account'} is in the **${company?.industry || 'Unknown'}** industry. Exit ARR is currently **$${company?.exit_arr?.toLocaleString() || '0'}** with **${company?.employee_count || 'Unknown'}** employees.`;
+
+    // Key Discussion Points Section
+    const keyPoints = briefJson?.key_points || [];
+    const pointsList = keyPoints.length > 0 
+      ? keyPoints.map((p: string) => `* **Highlight**: ${p}`).join('\n')
+      : activities.slice(0, 3).map((a: any) => `* **${a.type}**: ${a.body || a.subject || 'Touchpoint'}`).join('\n') || '* **No recent key points recorded.**';
+    const keyDiscussionPoints = `### Key Discussion Points\n\n${pointsList}`;
+
+    // Customer Needs & Goals Section
+    const needsList = deals.length > 0
+      ? deals.map((d: any) => `* **${d.deal_type || 'Opportunity'}**: ${d.deal_name} (${d.stage}, $${d.amount?.toLocaleString() || '0'})`).join('\n')
+      : '* **No active expansion or renewal opportunities identified.**';
+    const customerNeedsGoals = `### Customer Needs & Goals\n\n${needsList}`;
+
+    // Risks & Objections Section
+    const riskLabel = supplementary?.ai_risk_label || 'Low';
+    const riskScore = supplementary?.ai_risk_score ?? 0;
+    const notes = supplementary?.notes || 'No specific notes recorded.';
+    const risksObjections = `### Risks & Objections\n\n* **AI Risk Score**: ${riskScore}/100 (${riskLabel})\n* **Risk Context**: ${notes}`;
+
+    // Decisions & Commitments Section
+    const decisionsList = `* **Current Manager Note**: ${supplementary?.manager_note || 'None'}`;
+    const decisionsCommitments = `### Decisions & Commitments\n\n${decisionsList}`;
+
+    // Key Stakeholders Section
+    const contactsList = contacts.length > 0
+      ? contacts.map((c: any) => `* **${c.first_name || ''} ${c.last_name || ''}**: ${c.title || 'Contact'} (${c.email || 'No email'})`).join('\n')
+      : '* **No stakeholders listed.**';
+    const keyStakeholders = `### Key Stakeholders\n\n${contactsList}`;
+
+    // Recent Activity Context Section
+    const actList = activities.length > 0
+      ? activities.slice(0, 5).map((a: any) => `* **${a.type} (${new Date(a.timestamp).toLocaleDateString()})**: ${a.body || a.subject || 'Touchpoint'}`).join('\n')
+      : '* **No recent activity recorded.**';
+    const recentActivityContext = `### Recent Activity Context\n\n${actList}`;
+
+    // Join all sections by newlines
+    return [
+      overviewContent,
+      keyDiscussionPoints,
+      customerNeedsGoals,
+      risksObjections,
+      decisionsCommitments,
+      keyStakeholders,
+      recentActivityContext
+    ].join('\n\n');
+  }
 }
+

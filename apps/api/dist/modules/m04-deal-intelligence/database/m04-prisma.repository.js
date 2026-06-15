@@ -679,7 +679,6 @@ class M04PrismaRepository {
         e.message = dbRow.description;
         e.recommendedAction = dbRow.suggestedAction;
         e.isActive = dbRow.status === 'active';
-        e.type = dbRow.title;
         return e;
     }
     mapPlaybookToEntity(dbRow) {
@@ -754,10 +753,6 @@ class M04PrismaRepository {
             entity.preferenceKey = dbRow.key;
             entity.preferenceValue = dbRow.value;
         }
-        if (this.entityName === 'AuditLog') {
-            entity.userId = dbRow.actorId;
-            entity.metadata = dbRow.meta;
-        }
         return entity;
     }
     mapToPrisma(entity) {
@@ -777,7 +772,7 @@ class M04PrismaRepository {
             dbData.tenantid = entity.tenantId;
             delete dbData.tenantId;
         }
-        else if (entity.tenantid === undefined && Object.keys(entity).length > 3) {
+        else {
             dbData.tenantid = '00000000-0000-0000-0000-000000000000';
         }
         if (this.entityName === 'BoardFilter') {
@@ -796,31 +791,17 @@ class M04PrismaRepository {
             dbData.externalId = entity.crmDealId;
             dbData.lastActivity = entity.lastActivityAt;
             dbData.warningsCount = entity.warningCount;
-            if ('isHighRisk' in entity) {
-                dbData.escalated = entity.isHighRisk;
-            }
-            if ('riskReason' in entity) {
-                dbData.riskLabel = entity.riskReason;
-            }
             delete dbData.crmDealId;
             delete dbData.lastActivityAt;
             delete dbData.warningCount;
-            delete dbData.isHighRisk;
-            delete dbData.riskReason;
         }
         if (this.entityName === 'DealWarning') {
-            dbData.description = entity.message || entity.description || '';
-            dbData.suggestedAction = entity.recommendedAction || entity.suggestedAction || '';
+            dbData.description = entity.message;
+            dbData.suggestedAction = entity.recommendedAction;
             dbData.status = entity.isActive === false ? 'resolved' : 'active';
-            dbData.title = entity.type || 'Warning';
             delete dbData.message;
             delete dbData.recommendedAction;
             delete dbData.isActive;
-            delete dbData.type;
-            delete dbData.metadata;
-            delete dbData.resolvedAt;
-            delete dbData.resolvedBy;
-            delete dbData.updatedAt;
         }
         if (this.entityName === 'DealPlaybook') {
             dbData.criterionName = entity.criterion;
@@ -830,7 +811,7 @@ class M04PrismaRepository {
         }
         if (this.entityName === 'DealActivity') {
             dbData.date = entity.activityDate ? (entity.activityDate instanceof Date ? entity.activityDate.toISOString() : entity.activityDate) : new Date().toISOString();
-            dbData.duration = entity.duration || entity.durationMinutes || 0;
+            dbData.duration = entity.durationMinutes;
             delete dbData.activityDate;
             delete dbData.durationMinutes;
         }
@@ -843,29 +824,6 @@ class M04PrismaRepository {
             dbData.value = entity.preferenceValue;
             delete dbData.preferenceKey;
             delete dbData.preferenceValue;
-        }
-        if (this.entityName === 'AuditLog') {
-            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entity.userId || '');
-            dbData.actorId = isUuid ? entity.userId : null;
-            dbData.actorType = isUuid ? 'user' : 'system';
-            dbData.meta = entity.metadata;
-            delete dbData.userId;
-            delete dbData.userName;
-            delete dbData.changesBefore;
-            delete dbData.changesAfter;
-            delete dbData.ipAddress;
-            delete dbData.userAgent;
-            delete dbData.metadata;
-        }
-        if (this.entityName === 'DealSummary') {
-            dbData.generatedAt = new Date();
-            delete dbData.isCurrent;
-            delete dbData.keyPoints;
-            delete dbData.nextSteps;
-            delete dbData.competitorMentions;
-            delete dbData.confidenceScore;
-            delete dbData.weeklyChanges;
-            delete dbData.flaggedForReview;
         }
         return dbData;
     }

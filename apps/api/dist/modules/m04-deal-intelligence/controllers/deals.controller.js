@@ -22,23 +22,16 @@ const zod_validation_pipe_1 = require("../../platform-core/pipes/zod-validation.
 const m04_dto_1 = require("../dto/m04.dto");
 const prisma_service_1 = require("../database/prisma.service");
 const deal_summary_service_1 = require("../services/deal-summary.service");
-const deal_warning_service_1 = require("../services/deal-warning.service");
-const deal_playbook_service_1 = require("../services/deal-playbook.service");
-const deal_playbook_entity_1 = require("@m04/entities/deal-playbook.entity");
 const jwt_guard_1 = require("../../platform-core/guards/jwt.guard");
 const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
 const FALLBACK_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 let DealsController = DealsController_1 = class DealsController {
     prisma;
     summaryService;
-    warningService;
-    playbookService;
     logger = new common_1.Logger(DealsController_1.name);
-    constructor(prisma, summaryService, warningService, playbookService) {
+    constructor(prisma, summaryService) {
         this.prisma = prisma;
         this.summaryService = summaryService;
-        this.warningService = warningService;
-        this.playbookService = playbookService;
     }
     async getAllDeals(req, query) {
         try {
@@ -293,16 +286,18 @@ let DealsController = DealsController_1 = class DealsController {
     }
     async getDealWarnings(dealId, req) {
         try {
-            const warnings = await this.warningService.getActiveWarnings(dealId);
+            const warnings = await this.prisma.dealWarning.findMany({
+                where: { dealId, tenantid: req.tenantId },
+            });
             return {
                 success: true,
                 data: warnings.map((w) => ({
                     warningId: w.id,
                     severity: w.severity,
-                    title: w.type || 'Warning',
-                    description: w.message,
-                    suggestedAction: w.recommendedAction,
-                    status: w.isActive ? 'active' : 'resolved',
+                    title: w.title,
+                    description: w.description,
+                    suggestedAction: w.suggestedAction,
+                    status: w.status,
                 })),
                 isMock: false,
             };
@@ -342,37 +337,11 @@ let DealsController = DealsController_1 = class DealsController {
     }
     async getDealPlaybook(dealId, req) {
         try {
-            const summaries = await this.playbookService.getPlaybook(dealId, deal_playbook_entity_1.PlaybookType.MEDDICC);
-            const summary = summaries[0];
-            const criteria = summary ? summary.items : [];
-            const completedCount = criteria.filter((c) => c.status === deal_playbook_entity_1.PlaybookItemStatus.COMPLETED).length;
+            const criteria = await this.prisma.dealPlaybook.findMany({
+                where: { dealId, tenantid: req.tenantId },
+            });
+            const completedCount = criteria.filter((c) => c.status === 'Completed').length;
             const scorePercentage = criteria.length > 0 ? Math.round((completedCount / criteria.length) * 100) : 0;
-            const mapStatus = (status) => {
-                if (status === 'NOT_STARTED')
-                    return 'Pending';
-                if (status === 'IN_PROGRESS')
-                    return 'In Progress';
-                if (status === 'COMPLETED')
-                    return 'Completed';
-                return status;
-            };
-            const mapCriterionName = (name) => {
-                if (name === 'Metrics')
-                    return 'METRICS';
-                if (name === 'Economic Buyer')
-                    return 'ECONOMIC BUYER';
-                if (name === 'Decision Criteria')
-                    return 'DECISION CRITERIA';
-                if (name === 'Decision Process')
-                    return 'DECISION PROCESS';
-                if (name === 'Identify Pain')
-                    return 'IDENTIFY PAIN';
-                if (name === 'Champion')
-                    return 'CHAMPION';
-                if (name === 'Competition')
-                    return 'COMPETITION';
-                return name.toUpperCase();
-            };
             return {
                 success: true,
                 data: {
@@ -382,11 +351,11 @@ let DealsController = DealsController_1 = class DealsController {
                     totalCount: criteria.length,
                     criteria: criteria.map((c) => ({
                         criterionId: c.id,
-                        criterionName: mapCriterionName(c.criterion),
-                        question: c.question || 'Review recent transcripts for key details.',
-                        status: mapStatus(c.status),
-                        notes: c.notes || 'Not discussed in transcripts',
-                        aiSuggestedNote: c.aiSuggestion || 'Ask the champion for details.',
+                        criterionName: c.criterionName,
+                        question: c.question,
+                        status: c.status,
+                        notes: c.notes,
+                        aiSuggestedNote: c.aiSuggestedNote,
                     })),
                 },
                 isMock: false,
@@ -436,9 +405,9 @@ let DealsController = DealsController_1 = class DealsController {
                 where: { dealId, tenantid: req.tenantId },
                 orderBy: { date: 'asc' },
             });
-            const outbound = events.filter((e) => e.direction?.toLowerCase() === 'outbound');
-            const inbound = events.filter((e) => e.direction?.toLowerCase() === 'inbound');
-            const totalMinutes = events.reduce((sum, e) => sum + (Number(e.duration) || 0), 0);
+            const outbound = events.filter((e) => e.direction === 'outbound');
+            const inbound = events.filter((e) => e.direction === 'inbound');
+            const totalMinutes = events.reduce((sum, e) => sum + e.duration, 0);
             return {
                 success: true,
                 data: {
@@ -449,10 +418,10 @@ let DealsController = DealsController_1 = class DealsController {
                         activityId: e.id,
                         date: e.date,
                         type: e.type,
-                        duration: Number(e.duration) || 0,
-                        direction: e.direction?.toLowerCase() || 'inbound',
-                        participants: e.participants || [],
-                        notes: e.notes || '',
+                        duration: e.duration,
+                        direction: e.direction,
+                        participants: e.participants,
+                        notes: e.notes,
                     })),
                 },
                 isMock: false,
@@ -890,8 +859,6 @@ exports.DealsController = DealsController = DealsController_1 = __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, tenant_guard_1.TenantGuard),
     (0, roles_decorator_1.Roles)('SALES_REP', 'MANAGER', 'ADMIN', 'ANALYST', 'EXECUTIVE'),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        deal_summary_service_1.DealSummaryService,
-        deal_warning_service_1.DealWarningService,
-        deal_playbook_service_1.DealPlaybookService])
+        deal_summary_service_1.DealSummaryService])
 ], DealsController);
 //# sourceMappingURL=deals.controller.js.map

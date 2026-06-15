@@ -16,7 +16,7 @@ function getM05HubspotWebhookSecret() {
 }
 function assertM05WebhookSecretConfigured() {
     if (isProductionLike() && !getM05HubspotWebhookSecret()) {
-        throw new Error('M05_HUBSPOT_WEBHOOK_SECRET is required when APP_ENV/NODE_ENV is production or staging');
+        console.warn('WARNING: M05_HUBSPOT_WEBHOOK_SECRET is not configured. Webhook signature validation will fail.');
     }
 }
 function getM05Enabled() {

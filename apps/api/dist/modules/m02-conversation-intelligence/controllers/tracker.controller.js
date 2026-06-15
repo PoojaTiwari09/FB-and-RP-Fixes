@@ -31,8 +31,7 @@ let TrackerController = class TrackerController {
         return this.frontendSvc.listTrackers(req.tenantId, query);
     }
     async getAllTrackers(req) {
-        const data = await this.trackerService.getTrackers(req.tenantId);
-        return { data };
+        return this.trackerService.getTrackers(req.tenantId);
     }
     async getStats(req) {
         return this.trackerService.getTrackerStats(req.tenantId);
@@ -48,10 +47,6 @@ let TrackerController = class TrackerController {
     }
     ask(trackerId, body, req, query) {
         return this.frontendSvc.askTracker(req.tenantId, trackerId, body?.question ?? '', query);
-    }
-    async getTrackerById(req, id) {
-        const data = await this.trackerService.getTrackerById(id, req.tenantId);
-        return { data };
     }
     async updateTracker(req, id, body) {
         return this.trackerService.updateTracker(id, req.tenantId, body);
@@ -78,7 +73,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TrackerController.prototype, "getTrackers", null);
 __decorate([
-    (0, common_1.Get)('admin/list'),
+    (0, common_1.Get)('admin-all'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -126,14 +121,6 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object, Object]),
     __metadata("design:returntype", void 0)
 ], TrackerController.prototype, "ask", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", Promise)
-], TrackerController.prototype, "getTrackerById", null);
 __decorate([
     (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Req)()),

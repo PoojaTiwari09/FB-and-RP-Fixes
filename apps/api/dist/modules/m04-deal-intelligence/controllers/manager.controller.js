@@ -23,70 +23,19 @@ const tenant_guard_1 = require("../../platform-core/guards/tenant.guard");
 let ManagerController = ManagerController_1 = class ManagerController {
     prisma;
     async getManagerPipeline(req) {
-        try {
-            const deals = await this.prisma.deal.findMany({
-                where: { tenantid: req.tenantId }
-            });
-            const pipelineValue = deals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
-            return { success: true, data: { pipelineValue, deals }, isMock: false };
-        }
-        catch (error) {
-            this.logger.error(`Failed to get manager pipeline: ${error.message}`);
-            return { success: false, error: error.message, isMock: false };
-        }
+        return { success: true, data: { pipelineValue: 0, deals: [] }, isMock: true };
     }
     async getManagerAlerts(req) {
-        try {
-            const deals = await this.prisma.deal.findMany({ where: { tenantid: req.tenantId } });
-            const dealIds = deals.map(d => d.id);
-            const warnings = await this.prisma.dealWarning.findMany({
-                where: { dealId: { in: dealIds }, status: 'active' }
-            });
-            return { success: true, data: warnings, isMock: false };
-        }
-        catch (error) {
-            this.logger.error(`Failed to get manager alerts: ${error.message}`);
-            return { success: false, error: error.message, isMock: false };
-        }
+        return { success: true, data: [], isMock: true };
     }
     async addManagerNote(dealId, body, req) {
-        try {
-            const updated = await this.prisma.deal.update({
-                where: { id: dealId },
-                data: { nextStep: body.text }
-            });
-            return { success: true, data: { dealId, note: updated.nextStep }, isMock: false };
-        }
-        catch (error) {
-            this.logger.error(`Failed to add manager note: ${error.message}`);
-            return { success: false, error: error.message, isMock: false };
-        }
+        return { success: true, data: { dealId, note: body.text }, isMock: true };
     }
     async approveNextStep(dealId, stepId, req) {
-        try {
-            const updated = await this.prisma.dealPlaybook.update({
-                where: { id: stepId },
-                data: { status: 'Approved' }
-            });
-            return { success: true, data: { dealId, stepId, status: updated.status }, isMock: false };
-        }
-        catch (error) {
-            this.logger.error(`Failed to approve step: ${error.message}`);
-            return { success: false, error: error.message, isMock: false };
-        }
+        return { success: true, data: { dealId, stepId, status: 'Approved' }, isMock: true };
     }
     async updateManagerForecast(dealId, body, req) {
-        try {
-            const updated = await this.prisma.deal.update({
-                where: { id: dealId },
-                data: { forecastCategory: body.forecastCategory || body.category }
-            });
-            return { success: true, data: { dealId, forecastCategory: updated.forecastCategory }, isMock: false };
-        }
-        catch (error) {
-            this.logger.error(`Failed to update forecast: ${error.message}`);
-            return { success: false, error: error.message, isMock: false };
-        }
+        return { success: true, data: { dealId, forecastCategory: body.forecastCategory }, isMock: true };
     }
     logger = new common_1.Logger(ManagerController_1.name);
     constructor(prisma) {

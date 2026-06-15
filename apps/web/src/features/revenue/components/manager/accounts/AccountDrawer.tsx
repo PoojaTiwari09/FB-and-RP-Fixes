@@ -64,42 +64,109 @@ function OverviewTab({ accountId }: { accountId: string }) {
   );
 
   const risks = data?.risksAndObjections ?? [];
-
-  if (risks.length === 0) return (
-    <div className="p-6 text-center text-sm text-gray-400">No risks or objections recorded.</div>
-  );
+  const info = (data as any)?.overviewInfo;
+  const recentActs = (data as any)?.recentActivities ?? [];
 
   return (
-    <div className="divide-y divide-gray-100">
-      <p className="px-4 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Risks & Objections</p>
-      {risks.map((r, i) => (
-        <div key={i} className="px-4 py-3">
-          <button
-            onClick={() => {
-              const next = new Set(expanded);
-              next.has(i) ? next.delete(i) : next.add(i);
-              setExpanded(next);
-            }}
-            className="flex w-full items-center justify-between text-left"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[r.severity]}`}>
-                {r.severity}
+    <div className="divide-y divide-gray-100 pb-6">
+      {info && (
+        <div className="px-5 py-4 bg-gray-50/50">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Account Summary</p>
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+            <div>
+              <span className="text-xs text-gray-400 block">Assigned Rep</span>
+              <span className="font-medium text-gray-800">{info.assignedRep || 'Unassigned'}</span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-400 block">Health Score</span>
+              <span className={`font-semibold ${(info.healthScore ?? 0) >= 70 ? 'text-green-600' : 'text-amber-600'}`}>
+                {info.healthScore != null ? `${info.healthScore}/100` : 'N/A'}
               </span>
-              <span className="text-sm font-medium text-gray-800 truncate">{r.title}</span>
             </div>
-            <div className="flex items-center gap-2 shrink-0 ml-2">
-              <span className="text-xs text-gray-400">{r.mentionedCount}×</span>
-              {expanded.has(i) ? <ChevronUp size={14} className="text-gray-400"/> : <ChevronDown size={14} className="text-gray-400"/>}
+            <div>
+              <span className="text-xs text-gray-400 block">Exit ARR</span>
+              <span className="font-medium text-gray-800">${info.exitArr?.toLocaleString() || '0'}</span>
             </div>
-          </button>
-          {expanded.has(i) && (
-            <p className="mt-2 text-xs text-gray-500">
-              Last mentioned: {r.lastMentioned} · Mentioned {r.mentionedCount} time{r.mentionedCount !== 1 ? 's' : ''}
-            </p>
-          )}
+            <div>
+              <span className="text-xs text-gray-400 block">Open Deals</span>
+              <span className="font-medium text-gray-800">${info.openDealsAmount?.toLocaleString() || '0'}</span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-400 block">Contacts Count</span>
+              <span className="font-medium text-gray-800">{info.contactsCount}</span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-400 block">Last Activity</span>
+              <span className="font-medium text-gray-800">{info.lastActivityLabel}</span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-400 block">Renewal Date</span>
+              <span className="font-medium text-gray-800">
+                {info.renewalDate ? new Date(info.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+              </span>
+            </div>
+            <div className="col-span-2">
+              <span className="text-xs text-gray-400 block">Manager Note</span>
+              <p className="font-medium text-gray-700 mt-0.5 text-xs whitespace-pre-wrap">{info.managerNote || 'None'}</p>
+            </div>
+          </div>
         </div>
-      ))}
+      )}
+      <div>
+        <p className="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-50/20">Risks & Objections</p>
+        {risks.length === 0 ? (
+          <div className="p-4 text-center text-sm text-gray-400">No risks or objections recorded.</div>
+        ) : (
+          risks.map((r, i) => (
+            <div key={i} className="px-5 py-2.5 last:pb-4">
+              <button
+                onClick={() => {
+                  const next = new Set(expanded);
+                  next.has(i) ? next.delete(i) : next.add(i);
+                  setExpanded(next);
+                }}
+                className="flex w-full items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[r.severity]}`}>
+                    {r.severity}
+                  </span>
+                  <span className="text-sm font-medium text-gray-800 truncate">{r.title}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 ml-2">
+                  <span className="text-xs text-gray-400">{r.mentionedCount}×</span>
+                  {expanded.has(i) ? <ChevronUp size={14} className="text-gray-400"/> : <ChevronDown size={14} className="text-gray-400"/>}
+                </div>
+              </button>
+              {expanded.has(i) && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Last mentioned: {r.lastMentioned} · Mentioned {r.mentionedCount} time{r.mentionedCount !== 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+      <div>
+        <p className="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-50/20">Recent Activity Timeline</p>
+        {recentActs.length === 0 ? (
+          <div className="p-4 text-center text-sm text-gray-400">No recent activity recorded.</div>
+        ) : (
+          <div className="divide-y divide-gray-50 px-2">
+            {recentActs.map((act: any, i: number) => (
+              <div key={i} className="flex gap-3 px-3 py-2 text-xs">
+                <span className="text-sm mt-0.5 shrink-0">{ACTIVITY_ICONS[act.type] ?? '•'}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-800 truncate">{act.subject}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {act.type} · {new Date(act.datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -645,6 +712,9 @@ export default function AccountDrawer({ account, onClose }: Props) {
           </div>
         </div>
 
+        {/* AI Chat — always visible at top */}
+        <AiChatInput accountId={account.accountId} accountName={account.accountName} />
+
         {/* Tab bar */}
         <div className="flex gap-0 border-b border-gray-100 shrink-0 px-4 overflow-x-auto">
           {TABS.map((tab) => (
@@ -671,9 +741,6 @@ export default function AccountDrawer({ account, onClose }: Props) {
           {activeTab === 'notes'     && <NotesTab accountId={account.accountId} />}
           {activeTab === 'crm'       && <CrmTab accountId={account.accountId} />}
         </div>
-
-        {/* AI Chat — always visible at bottom */}
-        <AiChatInput accountId={account.accountId} accountName={account.accountName} />
       </div>
     </>
   );

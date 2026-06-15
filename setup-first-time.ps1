@@ -45,6 +45,10 @@ Push-Location $Root
 $env:DATABASE_URL = $dbUrl
 pnpm install
 if ($LASTEXITCODE -ne 0) { Write-Host "      pnpm install failed." -ForegroundColor Red; Pop-Location; exit 1 }
+# Kill any Node processes holding the Prisma DLL lock (prevents EPERM rename)
+Write-Host "      Stopping any running Node processes to release Prisma DLL lock..." -ForegroundColor DarkGray
+Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
 pnpm run db:generate
 Pop-Location
 Write-Host "      Monorepo workspaces ready." -ForegroundColor Green

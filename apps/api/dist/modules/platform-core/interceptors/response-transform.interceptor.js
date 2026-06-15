@@ -23,6 +23,10 @@ let ResponseTransformInterceptor = class ResponseTransformInterceptor {
             if (res.headersSent) {
                 return data;
             }
+            const url = req.url || '';
+            if (url.includes('/api/manager/')) {
+                return data;
+            }
             if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
                 return {
                     ...data,
