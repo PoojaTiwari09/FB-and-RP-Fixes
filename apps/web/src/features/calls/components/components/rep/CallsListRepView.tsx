@@ -497,7 +497,7 @@ function CallDetailPanel({ callId, onBack }: CallDetailPanelProps) {
                 <div className="flex items-center gap-1.5">
                   <span>Participants:</span>
                   <span style={{ color: '#111827' }}>
-                    {metadata.participants.map(p => p.name).join(', ')}
+                    {(metadata.participants || []).map((p: any) => typeof p === 'string' ? p : p?.name || 'Unknown').join(', ')}
                   </span>
                 </div>
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#D1D5DB' }} />

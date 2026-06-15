@@ -182,6 +182,18 @@ export class ActivityResponseDto {
   })
   durationMinutes?: number;
 
+  @ApiPropertyOptional({
+    description: 'Duration in minutes (alias)',
+    example: 30,
+  })
+  duration?: number;
+
+  @ApiPropertyOptional({
+    description: 'Direction of activity (inbound or outbound)',
+    example: 'inbound',
+  })
+  direction?: string;
+
   @ApiProperty({
     description: 'CRM activity ID',
     example: '12345678',

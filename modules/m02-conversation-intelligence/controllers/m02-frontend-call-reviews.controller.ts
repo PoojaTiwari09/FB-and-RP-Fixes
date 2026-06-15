@@ -63,8 +63,8 @@ export class M02FrontendCallReviewsController {
   }
 
   @Get(':reviewId/ai-insights')
-  aiInsights(@Req() req: any) {
-    return this.svc.getAiInsights(req.userId, req.userRole);
+  aiInsights(@Param('reviewId') reviewId: string, @Req() req: any) {
+    return this.svc.getAiInsights(req.tenantId, reviewId, req.userId, req.userRole);
   }
 
   @Get(':reviewId')
@@ -119,8 +119,8 @@ export class M02FrontendCallReviewsController {
   }
 
   @Post(':reviewId/clone')
-  clone(@Param('reviewId') reviewId: string, @Body('targetCallId') targetCallId: string) {
-    return this.svc.cloneReview(reviewId, targetCallId);
+  clone(@Param('reviewId') reviewId: string, @Body('targetCallId') targetCallId: string, @Req() req: any) {
+    return this.svc.cloneReview(req.tenantId, reviewId, targetCallId);
   }
 
   @Post(':reviewId/share')
@@ -186,26 +186,37 @@ export class M02FrontendAnalyticsController {
 
   @Get('summary')
   summary(@Req() req: any) {
-    return this.svc.getAnalyticsSummary(req.userId, req.userRole);
+    return this.svc.getAnalyticsSummary(req.tenantId, req.userId, req.userRole);
   }
 
   @Get('score-trend')
   scoreTrend(@Req() req: any) {
-    return this.svc.getScoreTrend(req.userId, req.userRole);
+    return this.svc.getScoreTrend(req.tenantId, req.userId, req.userRole);
   }
 
   @Get('focus-areas')
   focusAreas(@Req() req: any) {
-    return this.svc.focusAreas(req.userId, req.userRole);
+    return this.svc.focusAreas(req.tenantId, req.userId, req.userRole);
   }
 
   @Get('common-tags')
-  commonTags() {
-    return this.svc.getCommonTags();
+  commonTags(@Req() req: any) {
+    return this.svc.getCommonTags(req.tenantId);
   }
 
   @Get('review-history')
-  reviewHistory(@Query() query: Record<string, string>) {
-    return this.svc.getReviewHistory(query);
+  reviewHistory(@Query() query: Record<string, string>, @Req() req: any) {
+    return this.svc.getReviewHistory(req.tenantId, query, req.userId, req.userRole);
+  }
+}
+
+@Controller('api/v1/conversation-intelligence/dashboard')
+@UseGuards(TenantGuard)
+export class M02FrontendDashboardController {
+  constructor(private readonly svc: M02FrontendCallReviewsService) {}
+
+  @Get('summary')
+  summary(@Req() req: any) {
+    return this.svc.getAnalyticsSummary(req.tenantId, req.userId, req.userRole);
   }
 }

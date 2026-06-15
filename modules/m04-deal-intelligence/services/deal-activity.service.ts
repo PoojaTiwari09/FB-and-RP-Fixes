@@ -307,6 +307,8 @@ export class DealActivityService {
       contactName: (activity as any).contactName ?? undefined,
       activityDate: activity.activityDate,
       durationMinutes: (activity as any).durationMinutes ?? undefined,
+      duration: (activity as any).duration ?? (activity as any).durationMinutes ?? undefined,
+      direction: (activity as any).direction ?? undefined,
       crmActivityId: (activity as any).crmActivityId,
       crmData: (activity as any).crmData ?? undefined,
       createdAt: activity.createdAt,

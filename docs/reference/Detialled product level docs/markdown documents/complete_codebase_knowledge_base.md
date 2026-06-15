@@ -357,11 +357,23 @@ This section maps all customer-facing product modules to their corresponding tec
 ---
 
 ### 📦 MODULE: M4 Deal Intelligence
-*   **v1 Features:** Deals Boards UI, Deal drivers scoring, MEDDIC/BANT extraction, risk indicators.
+*   **v1 Features:** Deals Boards UI, Deal drivers scoring, MEDDIC/BANT extraction, risk indicators, manager insights, tasks & comments tracking.
 *   **Technical Workspace:** `modules/m04-deal-intelligence/`
 *   **Platform Lifecycle Stage:** Stage 5 — `Execute`
-*   **Canonical API Prefix:** `/api/v1/m04-deal-intelligence`
-*   **Owned Table Schema:** `m04_deal_intelligence`
+*   **Canonical API Prefix:**
+    *   `/api/v1/deal-management` (Rep deals, tasks, comments, playbooks, warnings, and notifications)
+    *   `/api/v1/deal-management/boards` (Deals boards metadata and details)
+    *   `/api/v1/manager` (Manager pipeline overview, team alerts, team-members, deal-stages, CSV/JSON export utility)
+*   **Owned Table Schema:** M4 is physically integrated into the centralized schema layout under the `revenuegraph` schema namespace in PostgreSQL (`packages/database/prisma/schema.prisma`), rather than a separate database namespace. Tables include:
+    *   `Deal` (Standard CRM deal, mapped to domain entity)
+    *   `M04DealBoard`, `M04BoardFilter`, `M04BoardTab`, `M04BoardColumn`, `M04BoardPermission` (Deal Board configurations)
+    *   `DealWarning` (AI warnings flagged on deals)
+    *   `DealPlaybook` (MEDDIC/BANT playbook indicators)
+    *   `DealActivityEvent` (Historical timelines of client interactions)
+    *   `DealComment` (User discussion threads on deals)
+    *   `DealTask` (Action items and tasks assigned to deals)
+    *   `M04DealSummary` (AI structured briefs and summaries)
+    *   `M04UserPreference`, `M04SyncLog`, `M04AnalyticsSnapshot`, `M04Session` (Operational and tracking models)
 *   **Events Emitted:** None. (UI-serving module).
 *   **Events Consumed:**
     *   `revenue_graph.entity.linked` (Updates active boards with new entity relation lines).
@@ -370,6 +382,15 @@ This section maps all customer-facing product modules to their corresponding tec
     *   `email.sent` (Updates deal's last activity timestamps).
     *   `call.summary.generated` (Invalidates deal brief cache and signals board UI to fetch fresh details).
 *   **Special Domain Rules & Constraints:**
+    *   **Unified Database-First Architecture:** The backend enforces a strict Database-First design using PostgreSQL and Prisma client. All volatile mock fallbacks (`M04MemoryStore`, `M04EntityRepository`) are deprecated and deleted. A database mapping adapter `M04PrismaRepository` and query builder `M04PrismaQueryBuilder` (under `modules/m04-deal-intelligence/database/`) resolve mappings between abstract domain entities and Prisma database models.
+    *   **Domain Field Mappings & Schema Derivation:** The database mapping layer resolves discrepancies between domain definitions and database schema columns (e.g. domain field `isHighRisk` is mapped to database column `escalated`, and domain field `riskReason` is mapped to database column `riskLabel` on `Deal` records). For structurally sparse tables like `DealPlaybook` that lack application-required columns (e.g., `type` and `order`), the mapping adapter (`m04-prisma.repository.ts`) must systematically reconstruct these fields in-memory during read operations (e.g., assigning `entity.type = 'MEDDICC'` and dynamically mapping `order` from `criterionName`). Failing to map these properties results in undefined entity fields, which breaks in-memory query builder filters (`where playbook.type = :type`) and causes recursive fallback initialization methods to trigger infinite loops.
+    *   **Interactive AI Brief & Fallback Pipeline:**
+        *   Handled dynamically by `DealSummaryService` (`deal-summary.service.ts`) using the `generateSummary` endpoint.
+        *   **Gemini Engine:** If `process.env.GEMINI_API_KEY` is present, the service makes an HTTP request to Google's Generative Language API (`gemini-2.0-flash`) using a comprehensive prompt containing deal metadata, activities, tasks, playbooks, and comments, obtaining a structured 7-section JSON brief.
+        *   **Dynamic Fallback:** If the API Key is missing or the external API call fails, the service invokes `generateSimulatedBrief`, which compiles a high-fidelity local summary from existing metadata.
+        *   **Prisma Upsert Strategy:** To prevent unique constraint violations on `(tenantid, dealId)`, the service runs a find-before-create check. Existing summaries are updated in-place.
+        *   **Weekly Change Detection:** Generates a delta object (`weeklyChanges`) comparing the new summary with the previous summary (if two or more summaries are present).
+    *   **UUID Validation & Parameter Safety:** All route parameters querying UUID database columns (such as `:dealId`, `:boardId`, `:activityId`) are verified at the controller layer (`isUuid` check) inside `DealsController`, `DealBoardsController`, and `ManagerController`. Invalid UUID formats immediately abort with a `400 Bad Request` exception to prevent unhandled database 500 error cascades.
     *   **UI Stage-Change Request Pattern (ADR-005):** When a salesperson drags and drops a deal card to a new stage in the Deals Board UI:
         1. M4 performs an optimistic local DB update and publishes an internal `deal.stage.update.requested` request message.
         2. **M10** (Data & Compliance / Revenue Graph) consumes this internal message, performs the outbound synchronization to the external CRM system, and waits for success.

@@ -155,7 +155,7 @@ export default function CallDetailReview({ callId }: { callId: string }) {
               <div className="flex items-center gap-4 text-sm" style={{ color: '#6B7280' }}>
                 <span>Version {review.scorecardVersion}</span>
                 <span>•</span>
-                <span>Reviewed by {review.reviewedBy.role} - {review.reviewedBy.name}</span>
+                <span>Reviewed by {review.reviewedBy?.role || 'Manager'} - {review.reviewedBy?.name || 'Unknown'}</span>
                 <span>•</span>
                 <span>{review.reviewDate}</span>
               </div>
@@ -197,11 +197,11 @@ export default function CallDetailReview({ callId }: { callId: string }) {
           <div
             className="grid gap-4 text-center pt-6 border-t"
             style={{
-              gridTemplateColumns: `repeat(${review.sections.length}, 1fr)`,
+              gridTemplateColumns: `repeat(${(review.sections || []).length || 1}, 1fr)`,
               borderColor: '#E5E7EB',
             }}
           >
-            {review.sections.map((s) => (
+            {(review.sections || []).map((s) => (
               <div key={s.sectionName}>
                 <div className="text-2xl font-semibold mb-1" style={{ color: '#111827' }}>{s.sectionScore}</div>
                 <div className="text-sm" style={{ color: '#6B7280' }}>{s.sectionName}</div>
@@ -212,7 +212,7 @@ export default function CallDetailReview({ callId }: { callId: string }) {
 
         {/* Section Accordions */}
         <div className="space-y-4">
-          {review.sections.map((section, i) => (
+          {(review.sections || []).map((section, i) => (
             <SectionAccordion
               key={section.sectionName}
               section={section}

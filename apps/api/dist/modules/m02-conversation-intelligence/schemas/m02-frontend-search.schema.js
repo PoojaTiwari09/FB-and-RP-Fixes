@@ -28,16 +28,16 @@ exports.M02SearchCallsQuerySchema = zod_1.z.object({
         .default('weeks'),
 });
 exports.M02AiAskBodySchema = zod_1.z.object({
-    callId: zod_1.z.string().min(1),
-    question: zod_1.z.string().min(1),
+    callId: zod_1.z.string().min(1).optional(),
+    question: zod_1.z.string().optional().default(''),
 });
 exports.M02ExportBodySchema = zod_1.z.object({
-    filters: zod_1.z.record(zod_1.z.unknown()),
-    fields: zod_1.z.record(zod_1.z.unknown()),
+    filters: zod_1.z.record(zod_1.z.unknown()).optional().default({}),
+    fields: zod_1.z.record(zod_1.z.unknown()).optional().default({}),
 });
 exports.M02CreateStreamBodySchema = zod_1.z.object({
-    name: zod_1.z.string().min(1),
-    filters: zod_1.z.record(zod_1.z.unknown()),
+    name: zod_1.z.string().optional().default('Unnamed Stream'),
+    filters: zod_1.z.record(zod_1.z.unknown()).optional().default({}),
     notifications: zod_1.z
         .object({
         inApp: zod_1.z.boolean().optional(),

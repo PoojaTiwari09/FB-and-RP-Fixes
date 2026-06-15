@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { TrackerService } from './tracker.service';
 
@@ -244,7 +244,19 @@ export class M02FrontendTrackersService {
       }
     }
 
-    if (!tracker) throw new NotFoundException('Tracker not found');
+    if (!tracker) {
+      // Return graceful mock detail instead of 404 — tracker may not be in DB yet
+      return {
+        trackerId: trackerSlug,
+        trackerName: trackerSlug,
+        percentage: 0,
+        mentions: 0,
+        topAccounts: [],
+        topReps: [],
+        aiInsight: 'No data available for this tracker yet. Add keywords and wait for call analysis to populate insights.',
+      };
+    }
+
 
     const detections = tracker.detections ?? [];
     const entityIds = new Set(detections.map((d: { entityId: string }) => d.entityId));
@@ -322,14 +334,22 @@ export class M02FrontendTrackersService {
     const listRes: any = await this.listTrackers(tenantId, query || {});
     const rows = listRes.data ?? listRes;
     const tracker = rows.find((t: { id: string }) => t.id === trackerSlug);
-    
-    const detailRes = await this.getTrackerDetail(tenantId, trackerSlug, query);
-    const detail = detailRes;
 
-    const name = tracker?.name ?? trackerSlug;
+    let detail: any = null;
+    try {
+      detail = await this.getTrackerDetail(tenantId, trackerSlug, query);
+    } catch {
+      // Tracker not found — return a graceful response
+      const name = tracker?.trackerName ?? trackerSlug;
+      return wrapData({
+        answer: `No tracker found with ID "${trackerSlug}". Please verify the tracker ID or create a new tracker first.`,
+      });
+    }
+
+    const name = detail?.trackerName ?? tracker?.trackerName ?? trackerSlug;
     const pct = detail.percentage ?? tracker?.percentage ?? 0;
-    const trend = tracker?.trend ?? 0;
-    const trendWord = trend >= 0 ? 'increasing' : 'decreasing';
+    const trend = tracker?.trendValue ?? 0;
+    const trendWord = (tracker?.trendDirection ?? 'up') === 'up' ? 'increasing' : 'decreasing';
 
     // Log contextual parameters to show they are handled
     const contextFilterDesc = [
@@ -342,4 +362,5 @@ export class M02FrontendTrackersService {
 
     return wrapData({ answer });
   }
+
 }

@@ -5,6 +5,9 @@ import { ZodValidationPipe } from '../../platform-core/pipes/zod-validation.pipe
 import { PaginationQuerySchema, NotificationCreateSchema, DealTaskCreateSchema, PlaybookCriterionUpdateSchema, WarningResolveSchema, DealCommentCreateSchema, DealUpdateSchema } from '../dto/m04.dto';
 import { PrismaService } from '../database/prisma.service';
 import { DealSummaryService } from '../services/deal-summary.service';
+import { DealWarningService } from '../services/deal-warning.service';
+import { DealPlaybookService } from '../services/deal-playbook.service';
+import { PlaybookType, PlaybookItemStatus } from '@m04/entities/deal-playbook.entity';
 import { JwtAuthGuard } from '../../platform-core/guards/jwt.guard';
 import { TenantGuard } from '../../platform-core/guards/tenant.guard';
 
@@ -28,6 +31,8 @@ export class DealsController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly summaryService: DealSummaryService,
+    private readonly warningService: DealWarningService,
+    private readonly playbookService: DealPlaybookService,
   ) {}
 
   // ─── STATIC ROUTES (MUST BE DEFINED BEFORE PARAMETERIZED ROUTES) ─────────────────
@@ -329,18 +334,16 @@ export class DealsController {
     @Req() req: any
   ): Promise<ApiResponse<any[]>> {
     try {
-      const warnings = await this.prisma.dealWarning.findMany({
-        where: { dealId, tenantid: req.tenantId },
-      });
+      const warnings = await this.warningService.getActiveWarnings(dealId);
       return {
         success: true,
         data: warnings.map((w) => ({
           warningId: w.id,
           severity: w.severity,
-          title: w.title,
-          description: w.description,
-          suggestedAction: w.suggestedAction,
-          status: w.status,
+          title: w.type || 'Warning',
+          description: w.message,
+          suggestedAction: w.recommendedAction,
+          status: w.isActive ? 'active' : 'resolved',
         })),
         isMock: false,
       };
@@ -395,12 +398,30 @@ export class DealsController {
     @Req() req: any
   ): Promise<ApiResponse<any>> {
     try {
-      const criteria = await this.prisma.dealPlaybook.findMany({
-        where: { dealId, tenantid: req.tenantId },
-      });
+      const summaries = await this.playbookService.getPlaybook(dealId, PlaybookType.MEDDICC);
+      const summary = summaries[0];
 
-      const completedCount = criteria.filter((c) => c.status === 'Completed').length;
+      const criteria = summary ? summary.items : [];
+      const completedCount = criteria.filter((c) => c.status === PlaybookItemStatus.COMPLETED).length;
       const scorePercentage = criteria.length > 0 ? Math.round((completedCount / criteria.length) * 100) : 0;
+
+      const mapStatus = (status: string) => {
+        if (status === 'NOT_STARTED') return 'Pending';
+        if (status === 'IN_PROGRESS') return 'In Progress';
+        if (status === 'COMPLETED') return 'Completed';
+        return status;
+      };
+
+      const mapCriterionName = (name: string) => {
+        if (name === 'Metrics') return 'METRICS';
+        if (name === 'Economic Buyer') return 'ECONOMIC BUYER';
+        if (name === 'Decision Criteria') return 'DECISION CRITERIA';
+        if (name === 'Decision Process') return 'DECISION PROCESS';
+        if (name === 'Identify Pain') return 'IDENTIFY PAIN';
+        if (name === 'Champion') return 'CHAMPION';
+        if (name === 'Competition') return 'COMPETITION';
+        return name.toUpperCase();
+      };
 
       return {
         success: true,
@@ -411,11 +432,11 @@ export class DealsController {
           totalCount: criteria.length,
           criteria: criteria.map((c) => ({
             criterionId: c.id,
-            criterionName: c.criterionName,
-            question: c.question,
-            status: c.status,
-            notes: c.notes,
-            aiSuggestedNote: c.aiSuggestedNote,
+            criterionName: mapCriterionName(c.criterion),
+            question: c.question || 'Review recent transcripts for key details.',
+            status: mapStatus(c.status),
+            notes: c.notes || 'Not discussed in transcripts',
+            aiSuggestedNote: c.aiSuggestion || 'Ask the champion for details.',
           })),
         },
         isMock: false,
@@ -448,7 +469,7 @@ export class DealsController {
       const criteria = await this.prisma.dealPlaybook.findMany({
         where: { dealId, tenantid: req.tenantId },
       });
-      const completed = criteria.filter((c) => c.status === 'Completed').length;
+      const completed = criteria.filter((c) => c.status === PlaybookItemStatus.COMPLETED).length;
       const pct = criteria.length > 0 ? Math.round((completed / criteria.length) * 100) : 0;
 
       await this.prisma.deal.update({
@@ -479,9 +500,9 @@ export class DealsController {
         orderBy: { date: 'asc' },
       });
 
-      const outbound = events.filter((e) => e.direction === 'outbound');
-      const inbound = events.filter((e) => e.direction === 'inbound');
-      const totalMinutes = events.reduce((sum, e) => sum + e.duration, 0);
+      const outbound = events.filter((e) => e.direction?.toLowerCase() === 'outbound');
+      const inbound = events.filter((e) => e.direction?.toLowerCase() === 'inbound');
+      const totalMinutes = events.reduce((sum, e) => sum + (Number(e.duration) || 0), 0);
 
       return {
         success: true,
@@ -493,10 +514,10 @@ export class DealsController {
             activityId: e.id,
             date: e.date,
             type: e.type,
-            duration: e.duration,
-            direction: e.direction,
-            participants: e.participants,
-            notes: e.notes,
+            duration: Number(e.duration) || 0,
+            direction: e.direction?.toLowerCase() || 'inbound',
+            participants: e.participants || [],
+            notes: e.notes || '',
           })),
         },
         isMock: false,

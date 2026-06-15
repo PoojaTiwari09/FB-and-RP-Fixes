@@ -246,6 +246,8 @@ class DealActivity {
     contactId;
     contactName;
     durationMinutes;
+    duration;
+    direction;
     crmActivityId;
     crmData;
     activityDate;

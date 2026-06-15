@@ -342,7 +342,7 @@ export class HubSpotService {
   ): TransformedDeal {
     const props = deal.properties;
 
-    // Calculate AI score based on deal properties (mock algorithm)
+    // Calculate base AI score (will be overridden by DB-stored MEDDPICC score if available)
     const aiScore = this.calculateAIScore(props);
 
     // Count warnings (deals without close date, low probability, etc.)
@@ -404,8 +404,8 @@ export class HubSpotService {
       aiSuggestedNextStep: 'Schedule follow-up call',
       lastActivity: props.hs_lastmodifieddate || deal.updatedAt,
       nextStep: props.hs_nextstep || '',
-      // Activity data for charts (mock values for now)
-      activityData: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      // Default activity data array for charts
+      activityData: Array(10).fill(0),
     };
   }
 

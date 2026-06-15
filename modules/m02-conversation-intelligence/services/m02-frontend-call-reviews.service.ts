@@ -288,8 +288,9 @@ export class M02FrontendCallReviewsService {
         });
       });
     }
+    const totalQuestions = sections.reduce((sum, sec) => sum + sec.questions.length, 0);
     return {
-      totalQuestions: 11,
+      totalQuestions,
       answeredCount,
       sections,
     };
@@ -306,25 +307,47 @@ export class M02FrontendCallReviewsService {
       speaker: u.speaker,
       text: u.text,
     }));
-    if (!entries.length) {
-      return {
-        entries: [
-          { timestamp: '00:00', speaker: 'Rep', text: 'Thanks for joining today.' },
-          { timestamp: '00:45', speaker: 'Customer', text: 'Happy to discuss our evaluation.' },
-        ],
-      };
-    }
+    
     return { entries };
   }
 
-  getAiInsights(userId?: string, userRole?: string) {
-    return {
-      insights: [
-        { type: 'positive', title: 'Strong Discovery', description: 'Rep asked multiple open-ended questions.' },
-        { type: 'warning', title: 'Missing: Next Steps', description: 'No explicit next meeting scheduled.' },
-        { type: 'positive', title: 'Good Rapport', description: 'Positive tone throughout the call.' },
-      ],
-    };
+  async getAiInsights(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
+    const review = await this.getReview(tenantId, reviewId, userId, userRole);
+    const call = await this.prisma.callRecord.findFirst({
+      where: { title: review.callTitle, tenantid: tenantId },
+      include: { transcript: true },
+    });
+
+    const insights = [];
+
+    // 1. Summary
+    const summary = call?.transcript?.summary || review.aiSummary;
+    if (summary) {
+      insights.push({ type: 'info', title: 'Call Summary', description: summary });
+    }
+
+    // 2. Highlights
+    const highlights = call?.transcript?.keyHighlights || review.keyHighlights || [];
+    if (Array.isArray(highlights)) {
+      highlights.forEach((h: any) => {
+        insights.push({ type: 'positive', title: 'Key Highlight', description: h.text || h.description || String(h) });
+      });
+    }
+
+    // 3. Talk Ratio
+    const ratio = call?.transcript?.talkRatio || review.talkRatio;
+    if (ratio && typeof ratio === 'object') {
+      const rep = (ratio as any).rep || (ratio as any).salesRep || 0;
+      const cust = (ratio as any).customer || 0;
+      insights.push({ type: 'info', title: 'Talk Ratio', description: `Rep: ${rep}%, Customer: ${cust}%` });
+    }
+
+    // Fallback if empty
+    if (insights.length === 0) {
+      insights.push({ type: 'warning', title: 'Processing', description: 'AI insights are currently being generated or no data is available.' });
+    }
+
+    return { insights };
   }
 
   async saveAnswer(tenantId: string, reviewId: string, body: unknown, userId?: string, userRole?: string) {
@@ -399,7 +422,9 @@ export class M02FrontendCallReviewsService {
 
     const answeredCount = Array.isArray(updateData.questions) ? updateData.questions.length : (Array.isArray(review.questions) ? review.questions.length : 0);
 
-    return { success: true, savedAt: new Date().toISOString(), answeredCount, totalQuestions: 11 };
+    const sections = scorecardSectionsTemplate();
+    const totalQuestions = sections.reduce((sum, sec) => sum + sec.questions.length, 0);
+    return { success: true, savedAt: new Date().toISOString(), answeredCount, totalQuestions };
   }
 
   async getCoaching(tenantId: string, reviewId: string, userId?: string, userRole?: string) {
@@ -437,10 +462,13 @@ export class M02FrontendCallReviewsService {
     const answered = Array.isArray(questionsJson) ? questionsJson.length : 0;
     const { score, sections } = calculateCallReviewScore(review.questions);
     const feedback = review.feedback as any;
+    const templateSections = scorecardSectionsTemplate();
+    const totalRequired = templateSections.reduce((sum, sec) => sum + sec.questions.filter(q => q.required).length, 0);
+    const overallTotal = sections.reduce((sum, sec) => sum + sec.total, 0) || 100;
     return {
-      isReadyForSubmission: answered >= 8,
+      isReadyForSubmission: answered >= totalRequired,
       overallScore: review.overallScore || score,
-      overallTotal: 100,
+      overallTotal,
       overallPercent: review.overallScore || score,
       passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
       passThreshold: 75,
@@ -448,7 +476,7 @@ export class M02FrontendCallReviewsService {
       scorecardVersion: review.scorecardVersion,
       repName: review.salesRep,
       sectionScores: sections,
-      aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
+      aiAnalysis: (review.quickStats as any)?.aiAnalysis || { accepted: 0, modified: 0, rejected: 0 },
       coachingPreview: {
         strengths: feedback?.strengths || [],
         improvements: feedback?.improvements || [],
@@ -515,7 +543,7 @@ export class M02FrontendCallReviewsService {
       salesRep: review.salesRep,
       submittedBy: review.reviewer,
       finalScore: review.overallScore || score,
-      finalTotal: 100,
+      finalTotal: (calculateCallReviewScore(review.questions).sections.reduce((sum, sec) => sum + sec.total, 0) || 100),
       finalPercent: review.overallScore || score,
       passingStatus: (review.overallScore || score) >= 75 ? 'Passing' : 'Failed',
       submittedAt: review.updatedAt.toISOString(),
@@ -531,7 +559,7 @@ export class M02FrontendCallReviewsService {
       callDetails: {
         callTitle: review.callTitle,
         salesRep: review.salesRep,
-        customer: review.customer || review.account || 'Acme Corp',
+        customer: review.customer,
         duration: review.duration,
         dateTime: review.dateTime || review.callDate,
       },
@@ -543,25 +571,39 @@ export class M02FrontendCallReviewsService {
         finalScore: submittedData.finalScore,
         passingStatus: submittedData.passingStatus,
       },
-      aiAnalysis: { accepted: 6, modified: 2, rejected: 1 },
+      aiAnalysis: (review.quickStats as any)?.aiAnalysis || { accepted: 0, modified: 0, rejected: 0 },
       sections,
       coaching: review.feedback || {},
       auditTrail: [
         { event: 'Review Created', user: 'System', at: review.createdAt.toISOString() },
-        { event: 'Review Submitted', user: review.reviewer || 'usr_manager_001', at: review.updatedAt.toISOString() },
+        { event: 'Review Submitted', user: review.reviewer || 'System', at: review.updatedAt.toISOString() },
       ],
     };
   }
 
   exportReview(reviewId: string) {
     return {
-      downloadUrl: `/api/call-reviews/${reviewId}/export/download`,
+      downloadUrl: `/api/v1/conversation-intelligence/call-reviews/${reviewId}/export/download`,
       fileName: `${reviewId}-review.pdf`,
     };
   }
 
-  cloneReview(reviewId: string, targetCallId?: string) {
-    return { newReviewId: `rv_clone_${reviewId}`, redirectUrl: `/calls/reviews/rv_clone_${reviewId}`, targetCallId };
+  async cloneReview(tenantId: string, reviewId: string, targetCallId?: string) {
+    const existing = await this.prisma.callReview.findFirst({ where: { reviewId, tenantid: tenantId } });
+    if (!existing) throw new Error('Review not found');
+    const newId = `rv_${Math.random().toString(36).substr(2, 9)}`;
+    await this.prisma.callReview.create({
+      data: {
+        ...existing,
+        id: undefined,
+        reviewId: newId,
+        status: 'Pending',
+        overallScore: null,
+        updatedAt: undefined,
+        createdAt: undefined,
+      } as any
+    });
+    return { newReviewId: newId, redirectUrl: `/calls/reviews/${newId}`, targetCallId };
   }
 
   async shareReview(tenantId: string, reviewId: string, body: any, userId?: string, userRole?: string) {
@@ -578,7 +620,8 @@ export class M02FrontendCallReviewsService {
     return { success: true, newStatus: 'In Progress', redirectUrl: `/calls/reviews/${reviewId}/edit` };
   }
 
-  async getAnalyticsSummary(userId?: string, userRole?: string) {
+  async getAnalyticsSummary(tenantId: string, userId?: string, userRole?: string) {
+    const tenantWhere = { tenantid: tenantId };
     const where: any = {};
     if (userRole === 'sales_rep' && userId) {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -592,10 +635,31 @@ export class M02FrontendCallReviewsService {
       }
     }
 
+    where.tenantid = tenantId;
     const reviews = await this.prisma.callReview.findMany({ where });
     const totalReviews = reviews.length;
     const completedReviews = reviews.filter(r => r.status === 'Completed');
     
+    const allCompleted = await this.prisma.callReview.findMany({
+      where: { tenantid: tenantId, status: 'Completed' },
+      select: { overallScore: true }
+    });
+    const teamAverageScore = allCompleted.length > 0
+      ? Math.round(allCompleted.reduce((sum, r) => sum + (r.overallScore || 0), 0) / allCompleted.length)
+      : 75;
+
+    const repReviews = completedReviews.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    let repAverageTrend = '+0%';
+    if (repReviews.length >= 2) {
+      const mid = Math.ceil(repReviews.length / 2);
+      const recent = repReviews.slice(0, mid);
+      const older = repReviews.slice(mid);
+      const recentAvg = recent.reduce((sum, r) => sum + (r.overallScore || 0), 0) / recent.length;
+      const olderAvg = older.reduce((sum, r) => sum + (r.overallScore || 0), 0) / older.length;
+      const diff = Math.round(recentAvg - olderAvg);
+      repAverageTrend = diff >= 0 ? `+${diff}%` : `${diff}%`;
+    }
+
     let avgScore = 0;
     if (completedReviews.length > 0) {
       avgScore = Math.round(completedReviews.reduce((sum, r) => sum + (r.overallScore || 0), 0) / completedReviews.length);
@@ -603,63 +667,109 @@ export class M02FrontendCallReviewsService {
 
     return {
       repAverageScore: avgScore,
-      repAverageTrend: '+2%', // Mock trend for now
-      teamAverageScore: 78,
-      teamComparison: 'above_average',
+      repAverageTrend,
+      teamAverageScore,
+      teamComparison: avgScore > teamAverageScore ? 'above_average' : (avgScore < teamAverageScore ? 'below_average' : 'equal'),
       completionRate: totalReviews > 0 ? Math.round((completedReviews.length / totalReviews) * 100) : 0,
       totalReviews: totalReviews,
     };
   }
 
-  async getScoreTrend(userId?: string, userRole?: string) {
-    // In a real app, we'd group by week. For now, we'll return mock data but keep the signature
-    return {
-      data: [
-        { week: 'Apr 1', score: 74 },
-        { week: 'Apr 8', score: 78 },
-        { week: 'Apr 15', score: 80 },
-        { week: 'Apr 22', score: 79 },
-        { week: 'Apr 29', score: 82 },
-        { week: 'May 6', score: 85 },
-        { week: 'May 13', score: 88 },
-      ],
-    };
+  async getScoreTrend(tenantId: string, userId?: string, userRole?: string) {
+    const where: any = { tenantid: tenantId, status: 'Completed' };
+    if (userRole === 'sales_rep' && userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      where.OR = user ? [{ salesRep: userId }, { salesRep: user.name }] : [{ salesRep: userId }];
+    }
+    const reviews = await this.prisma.callReview.findMany({ where, orderBy: { updatedAt: 'asc' } });
+    const grouped: Record<string, { total: number; count: number }> = {};
+    reviews.forEach(r => {
+      const dateKey = r.updatedAt.toISOString().split('T')[0];
+      if (!grouped[dateKey]) grouped[dateKey] = { total: 0, count: 0 };
+      grouped[dateKey].total += (r.overallScore || 0);
+      grouped[dateKey].count += 1;
+    });
+    const data = Object.keys(grouped).slice(-7).map(date => ({
+      week: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      score: Math.round(grouped[date].total / grouped[date].count),
+    }));
+    if (data.length === 0) {
+      data.push({ week: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), score: 0 });
+    }
+    return { data };
   }
 
-  async focusAreas(userId?: string, userRole?: string) {
-    return {
-      areas: [
-        { sectionName: 'Objection Handling', percent: 68 },
-        { sectionName: 'Discovery — Decision Process', percent: 72 },
-        { sectionName: 'Next Steps Clarity', percent: 75 },
-      ],
-    };
+  async focusAreas(tenantId: string, userId?: string, userRole?: string) {
+    const where: any = { tenantid: tenantId, status: 'Completed' };
+    if (userRole === 'sales_rep' && userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      where.OR = user ? [{ salesRep: userId }, { salesRep: user.name }] : [{ salesRep: userId }];
+    }
+    const reviews = await this.prisma.callReview.findMany({ where });
+    const sectionTotals: Record<string, { earned: number; max: number }> = {};
+    reviews.forEach(r => {
+      const { sections } = calculateCallReviewScore(r.questions);
+      sections.forEach(sec => {
+        if (!sectionTotals[sec.sectionName]) sectionTotals[sec.sectionName] = { earned: 0, max: 0 };
+        sectionTotals[sec.sectionName].earned += sec.scored;
+        sectionTotals[sec.sectionName].max += sec.total;
+      });
+    });
+    const areas = Object.keys(sectionTotals)
+      .map(name => ({
+        sectionName: name,
+        percent: sectionTotals[name].max > 0 ? Math.round((sectionTotals[name].earned / sectionTotals[name].max) * 100) : 0
+      }))
+      .sort((a, b) => a.percent - b.percent)
+      .slice(0, 3);
+    return { areas };
   }
 
-  getCommonTags() {
-    return {
-      tags: [
-        { label: 'Needs Coaching', count: 12 },
-        { label: 'Best Practice', count: 8 },
-        { label: 'Good Rapport', count: 6 },
-      ],
-    };
+  async getCommonTags(tenantId: string) {
+    const reviews = await this.prisma.callReview.findMany({ where: { tenantid: tenantId } });
+    const tagCounts: Record<string, number> = {};
+    reviews.forEach(r => {
+      if (r.aiFlags && Array.isArray(r.aiFlags)) {
+        r.aiFlags.forEach(tag => {
+          tagCounts[tag as string] = (tagCounts[tag as string] || 0) + 1;
+        });
+      }
+    });
+    const tags = Object.entries(tagCounts)
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    return { tags };
   }
 
-  getReviewHistory(raw: Record<string, string>) {
-    AnalyticsHistoryQuerySchema.parse(raw);
+  async getReviewHistory(tenantId: string, raw: Record<string, string>, userId?: string, userRole?: string) {
+    const q = AnalyticsHistoryQuerySchema.parse(raw);
+    
+    const where: any = { tenantid: tenantId, status: 'Completed' };
+    
+    // Search
+    if (q.search) {
+      where.callTitle = { contains: q.search, mode: 'insensitive' };
+    }
+
+    const reviews = await this.prisma.callReview.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    });
+
+    const totalCount = await this.prisma.callReview.count({ where });
+
     return {
-      totalCount: 3,
-      reviews: [
-        {
-          reviewId: 'rv_001',
-          callTitle: 'Discovery Call - Acme Corp Q2',
-          reviewerName: 'Alex Martinez',
-          reviewedAt: new Date().toISOString(),
-          tags: ['Best Practice', 'Strong Discovery'],
-          score: 88,
-        },
-      ],
+      totalCount,
+      reviews: reviews.map((r) => ({
+        reviewId: r.reviewId,
+        callTitle: r.callTitle,
+        reviewerName: r.reviewer || 'System',
+        reviewedAt: r.updatedAt ? r.updatedAt.toISOString() : r.createdAt.toISOString(),
+        tags: r.aiFlags || [],
+        score: r.overallScore || 0,
+      })),
     };
   }
 }
@@ -675,16 +785,8 @@ function calculateCallReviewScore(answers: any): { score: number; sections: any[
     objection_handling: { title: 'Objection Handling', earned: 0, max: 0 },
   };
 
-  if (!answers || typeof answers !== 'object') {
-    return {
-      score: 88,
-      sections: [
-        { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
-        { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
-      ]
-    };
+  if (!answers || typeof answers !== 'object' || (Array.isArray(answers) && answers.length === 0)) {
+    return { score: 0, sections: [] };
   }
 
   // Check if answers is an array or key-value object
@@ -733,15 +835,7 @@ function calculateCallReviewScore(answers: any): { score: number; sections: any[
   }
 
   if (totalMax === 0) {
-    return {
-      score: 88,
-      sections: [
-        { sectionName: 'Opening', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Discovery', scored: 35, total: 40, percent: 88 },
-        { sectionName: 'Product Fit', scored: 18, total: 20, percent: 90 },
-        { sectionName: 'Objection Handling', scored: 17, total: 20, percent: 85 },
-      ]
-    };
+    return { score: 0, sections: [] };
   }
 
   const score = Math.round((totalEarned / totalMax) * 100);

@@ -779,6 +779,7 @@ export class M04PrismaRepository<T extends { id: string }> {
     e.message = dbRow.description;
     e.recommendedAction = dbRow.suggestedAction;
     e.isActive = dbRow.status === 'active';
+    e.type = dbRow.title;
     return e;
   }
 
@@ -848,6 +849,17 @@ export class M04PrismaRepository<T extends { id: string }> {
     if (this.entityName === 'DealPlaybook') {
       entity.criterion = dbRow.criterionName;
       entity.aiSuggestion = dbRow.aiSuggestedNote;
+      entity.type = 'MEDDICC';
+      const meddiccOrder: Record<string, number> = {
+        'METRICS': 1,
+        'ECONOMIC BUYER': 2,
+        'DECISION CRITERIA': 3,
+        'DECISION PROCESS': 4,
+        'IDENTIFY PAIN': 5,
+        'CHAMPION': 6,
+        'COMPETITION': 7,
+      };
+      entity.order = meddiccOrder[entity.criterion] || 99;
     }
     if (this.entityName === 'DealActivity') {
       entity.activityDate = dbRow.date ? new Date(dbRow.date) : dbRow.createdAt;
@@ -859,6 +871,10 @@ export class M04PrismaRepository<T extends { id: string }> {
     if (this.entityName === 'UserPreference') {
       entity.preferenceKey = dbRow.key;
       entity.preferenceValue = dbRow.value;
+    }
+    if (this.entityName === 'AuditLog') {
+      entity.userId = dbRow.actorId;
+      entity.metadata = dbRow.meta;
     }
     
     return entity;
@@ -882,7 +898,7 @@ export class M04PrismaRepository<T extends { id: string }> {
     if (entity.tenantId) {
       dbData.tenantid = entity.tenantId;
       delete dbData.tenantId;
-    } else {
+    } else if (entity.tenantid === undefined && Object.keys(entity).length > 3) {
       dbData.tenantid = '00000000-0000-0000-0000-000000000000'; // Default fallback tenant
     }
     
@@ -902,27 +918,46 @@ export class M04PrismaRepository<T extends { id: string }> {
       dbData.externalId = entity.crmDealId;
       dbData.lastActivity = entity.lastActivityAt;
       dbData.warningsCount = entity.warningCount;
+      if ('isHighRisk' in entity) {
+        dbData.escalated = entity.isHighRisk;
+      }
+      if ('riskReason' in entity) {
+        dbData.riskLabel = entity.riskReason;
+      }
       delete dbData.crmDealId;
       delete dbData.lastActivityAt;
       delete dbData.warningCount;
+      delete dbData.isHighRisk;
+      delete dbData.riskReason;
     }
     if (this.entityName === 'DealWarning') {
-      dbData.description = entity.message;
-      dbData.suggestedAction = entity.recommendedAction;
+      dbData.description = entity.message || entity.description || '';
+      dbData.suggestedAction = entity.recommendedAction || entity.suggestedAction || '';
       dbData.status = entity.isActive === false ? 'resolved' : 'active';
+      dbData.title = entity.type || 'Warning';
       delete dbData.message;
       delete dbData.recommendedAction;
       delete dbData.isActive;
+      delete dbData.type;
+      delete dbData.metadata;
+      delete dbData.resolvedAt;
+      delete dbData.resolvedBy;
+      delete dbData.updatedAt;
     }
     if (this.entityName === 'DealPlaybook') {
       dbData.criterionName = entity.criterion;
       dbData.aiSuggestedNote = entity.aiSuggestion;
       delete dbData.criterion;
       delete dbData.aiSuggestion;
+      delete dbData.type;
+      delete dbData.order;
+      delete dbData.completedBy;
+      delete dbData.completedAt;
+      delete dbData.updatedAt;
     }
     if (this.entityName === 'DealActivity') {
       dbData.date = entity.activityDate ? (entity.activityDate instanceof Date ? entity.activityDate.toISOString() : entity.activityDate) : new Date().toISOString();
-      dbData.duration = entity.durationMinutes;
+      dbData.duration = entity.duration || entity.durationMinutes || 0;
       delete dbData.activityDate;
       delete dbData.durationMinutes;
     }
@@ -936,7 +971,30 @@ export class M04PrismaRepository<T extends { id: string }> {
       delete dbData.preferenceKey;
       delete dbData.preferenceValue;
     }
+    if (this.entityName === 'AuditLog') {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entity.userId || '');
+      dbData.actorId = isUuid ? entity.userId : null;
+      dbData.actorType = isUuid ? 'user' : 'system';
+      dbData.meta = entity.metadata;
+      delete dbData.userId;
+      delete dbData.userName;
+      delete dbData.changesBefore;
+      delete dbData.changesAfter;
+      delete dbData.ipAddress;
+      delete dbData.userAgent;
+      delete dbData.metadata;
+    }
     
+    if (this.entityName === 'DealSummary') {
+      dbData.generatedAt = new Date();
+      delete dbData.isCurrent;
+      delete dbData.keyPoints;
+      delete dbData.nextSteps;
+      delete dbData.competitorMentions;
+      delete dbData.confidenceScore;
+      delete dbData.weeklyChanges;
+      delete dbData.flaggedForReview;
+    }
     return dbData;
   }
 }

@@ -246,6 +246,8 @@ export class DealActivity {
   contactId?: string;
   contactName?: string;
   durationMinutes?: number;
+  duration?: number;
+  direction?: string;
   crmActivityId?: string;
   crmData?: Record<string, any>;
   activityDate: Date;

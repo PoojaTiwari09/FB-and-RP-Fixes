@@ -92,6 +92,14 @@ export class PlaybookItemResponseDto {
   })
   criterion: string;
 
+  @ApiPropertyOptional({
+    description: 'Playbook item question',
+    example: 'What are the key metrics?',
+  })
+  @IsString()
+  @IsOptional()
+  question?: string;
+
   @ApiProperty({
     description: 'Playbook status',
     enum: PlaybookItemStatus,

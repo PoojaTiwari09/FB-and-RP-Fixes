@@ -224,6 +224,8 @@ let DealActivityService = class DealActivityService {
             contactName: activity.contactName ?? undefined,
             activityDate: activity.activityDate,
             durationMinutes: activity.durationMinutes ?? undefined,
+            duration: activity.duration ?? activity.durationMinutes ?? undefined,
+            direction: activity.direction ?? undefined,
             crmActivityId: activity.crmActivityId,
             crmData: activity.crmData ?? undefined,
             createdAt: activity.createdAt,

@@ -154,19 +154,23 @@ export default function CallsReviewDetailView({ reviewId }: CallsReviewDetailVie
               <div className="mt-5">
                 <p className="text-xs text-gray-400 mb-2">Participants</p>
                 <div className="flex flex-wrap gap-2">
-                  {detail.participants.map((p) => (
-                    <span
-                      key={p.name}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700"
-                    >
-                      {/* person icon */}
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                      {p.name} ({p.role})
-                    </span>
-                  ))}
+                  {(detail.participants || []).map((p: any, i) => {
+                    const name = typeof p === 'string' ? p : p?.name || 'Unknown';
+                    const role = typeof p === 'string' ? 'Participant' : p?.role || 'Participant';
+                    return (
+                      <span
+                        key={`${name}-${i}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700"
+                      >
+                        {/* person icon */}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        {name} {role && `(${role})`}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -370,7 +374,7 @@ export default function CallsReviewDetailView({ reviewId }: CallsReviewDetailVie
                 <div className="space-y-2">
                   {[
                     { label: 'Duration', value: detail.duration },
-                    { label: 'Participants', value: detail.participants.length },
+                    { label: 'Participants', value: detail.participants?.length || 0 },
                     { label: 'Topics', value: detail.quickStats.topics },
                     { label: 'Action Items', value: detail.quickStats.actionItems },
                   ].map(({ label, value }) => (

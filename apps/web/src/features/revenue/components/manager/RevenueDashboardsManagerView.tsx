@@ -28,6 +28,7 @@ export default function RevenueDashboardsManagerView() {
   const [period, setPeriod] = useState('This Quarter');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [viewAllModal, setViewAllModal] = useState<null | 'competitiveOpps' | 'closingNoVP' | 'competitiveAnalysisOpps'>(null);
 
   const fetchData = async () => {
     if (!activeTab) return;
@@ -130,7 +131,7 @@ export default function RevenueDashboardsManagerView() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[320px]">
             <div className="p-4 flex justify-between items-center border-b border-gray-100">
               <h3 className="text-[13px] font-bold text-gray-900">Competitive opps closing this Q</h3>
-              <button className="text-[#00A1E0] text-xs font-bold flex items-center gap-1 hover:underline">View all <ArrowRight size={12}/></button>
+              <button onClick={() => setViewAllModal('competitiveOpps')} className="text-[#00A1E0] text-xs font-bold flex items-center gap-1 hover:underline">View all <ArrowRight size={12}/></button>
             </div>
             <div className="p-4 flex-1 overflow-y-auto">
               <table className="w-full text-left text-xs">
@@ -191,7 +192,7 @@ export default function RevenueDashboardsManagerView() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
             <div className="p-4 flex justify-between items-start border-b border-gray-100">
               <h3 className="text-[13px] font-bold text-gray-900 max-w-[200px] leading-snug">Closing opps without VP / executive participation</h3>
-              <button className="text-[#00A1E0] text-xs font-bold flex items-center gap-1 hover:underline">View all <ArrowRight size={12}/></button>
+              <button onClick={() => setViewAllModal('closingNoVP')} className="text-[#00A1E0] text-xs font-bold flex items-center gap-1 hover:underline">View all <ArrowRight size={12}/></button>
             </div>
             <div className="p-4 flex-1">
               <table className="w-full text-left text-xs mb-4">
@@ -426,7 +427,7 @@ export default function RevenueDashboardsManagerView() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
             <div className="px-4 py-3 flex justify-between items-center border-b border-gray-100">
               <h3 className="text-[13px] font-bold text-gray-900">Competitive opps closing this Q</h3>
-              <button className="text-[#e91e8c] text-[11px] font-bold flex items-center gap-1 hover:underline">
+              <button onClick={() => setViewAllModal('competitiveAnalysisOpps')} className="text-[#e91e8c] text-[11px] font-bold flex items-center gap-1 hover:underline">
                 View all <ArrowRight size={11}/>
               </button>
             </div>
@@ -1539,6 +1540,131 @@ export default function RevenueDashboardsManagerView() {
         )}
 
       </div>
+
+      {/* View All Modal */}
+      {viewAllModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setViewAllModal(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-[15px] font-extrabold text-gray-900">
+                {viewAllModal === 'competitiveOpps' && 'Competitive opps closing this Q — All'}
+                {viewAllModal === 'closingNoVP' && 'Closing opps without VP / executive participation — All'}
+                {viewAllModal === 'competitiveAnalysisOpps' && 'Competitive opps closing this Q — All'}
+              </h2>
+              <button
+                onClick={() => setViewAllModal(null)}
+                className="text-gray-400 hover:text-gray-700 text-xl font-bold leading-none px-1"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="overflow-y-auto flex-1 px-6 py-4">
+              {viewAllModal === 'competitiveOpps' && (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-100">
+                      <th className="pb-3 font-semibold">Account</th>
+                      <th className="pb-3 font-semibold">Competitor</th>
+                      <th className="pb-3 font-semibold text-center">Amount</th>
+                      <th className="pb-3 font-semibold text-center">Stage</th>
+                      <th className="pb-3 font-semibold text-right">Close date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-900">
+                    {(data?.competitiveOpportunities ?? []).map((opp: any) => (
+                      <tr key={opp.id} className="border-b border-gray-50 last:border-0">
+                        <td className="py-3 font-bold">{opp.account}</td>
+                        <td className="py-3">{renderCompetitorBadge(opp.competitor)}</td>
+                        <td className="py-3 font-semibold text-center">{opp.amount}</td>
+                        <td className="py-3 text-center">{renderStageBadge(opp.stage)}</td>
+                        <td className="py-3 text-right font-semibold">{opp.closeDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {viewAllModal === 'closingNoVP' && (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-100">
+                      <th className="pb-3 font-semibold">Account</th>
+                      <th className="pb-3 font-semibold text-center">Amount</th>
+                      <th className="pb-3 font-semibold text-center">Stage</th>
+                      <th className="pb-3 font-semibold text-center">Close</th>
+                      <th className="pb-3 font-semibold text-right">Contacts</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-900">
+                    {(data?.closingNoVP ?? []).map((opp: any) => (
+                      <tr key={opp.id} className="border-b border-gray-50 last:border-0">
+                        <td className="py-3 font-bold">{opp.account}</td>
+                        <td className="py-3 font-semibold text-center">{opp.amount}</td>
+                        <td className="py-3 text-center">{renderStageBadge(opp.stage)}</td>
+                        <td className="py-3 font-semibold text-center">{opp.closeDate}</td>
+                        <td className="py-3 text-right">
+                          <span className="bg-rose-50 text-rose-500 px-2 py-0.5 rounded-full font-bold text-[10px]">
+                            {opp.contacts} contact{opp.contacts > 1 ? 's' : ''}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {viewAllModal === 'competitiveAnalysisOpps' && (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-100 bg-gray-50">
+                      <th className="px-4 py-2.5 font-semibold">Account</th>
+                      <th className="px-4 py-2.5 font-semibold">Competitor mentioned</th>
+                      <th className="px-4 py-2.5 font-semibold text-right">Amount</th>
+                      <th className="px-4 py-2.5 font-semibold text-center">Stage</th>
+                      <th className="px-4 py-2.5 font-semibold text-right">Close</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-900 divide-y divide-gray-50">
+                    {(data?.competitiveOpportunities ?? []).length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-400">No competitive opportunities</td>
+                      </tr>
+                    ) : (
+                      (data?.competitiveOpportunities ?? []).map((opp: any) => (
+                        <tr key={opp.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 font-bold text-gray-900">{opp.account}</td>
+                          <td className="px-4 py-3">{renderCompetitorBadge(opp.competitor)}</td>
+                          <td className="px-4 py-3 text-right font-semibold">{opp.amount}</td>
+                          <td className="px-4 py-3 text-center">{renderStageBadge(opp.stage)}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-gray-600 whitespace-nowrap">{opp.closeDate}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="px-6 py-3 border-t border-gray-100 text-right">
+              <button
+                onClick={() => setViewAllModal(null)}
+                className="px-4 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

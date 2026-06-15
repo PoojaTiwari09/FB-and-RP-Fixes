@@ -179,6 +179,8 @@ class ActivityResponseDto {
     contactName;
     activityDate;
     durationMinutes;
+    duration;
+    direction;
     crmActivityId;
     crmData;
     createdAt;
@@ -248,6 +250,20 @@ __decorate([
     }),
     __metadata("design:type", Number)
 ], ActivityResponseDto.prototype, "durationMinutes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Duration in minutes (alias)',
+        example: 30,
+    }),
+    __metadata("design:type", Number)
+], ActivityResponseDto.prototype, "duration", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Direction of activity (inbound or outbound)',
+        example: 'inbound',
+    }),
+    __metadata("design:type", String)
+], ActivityResponseDto.prototype, "direction", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'CRM activity ID',
