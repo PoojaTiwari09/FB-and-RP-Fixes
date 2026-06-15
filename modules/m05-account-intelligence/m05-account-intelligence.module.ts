@@ -16,6 +16,7 @@ import { WebhookController } from './controllers/webhook.controller';
 import { AiController } from './controllers/ai.controller';
 import { M05FrontendAccountsController } from './controllers/m05-frontend-accounts.controller';
 import { M05FrontendDealsController } from './controllers/m05-frontend-deals.controller';
+import { CoachingController } from './controllers/coaching.controller';
 
 import { M05AccountIntelligenceService } from './services/m05.service';
 import { AccountsService } from './services/accounts.service';
@@ -53,6 +54,7 @@ import { EventPublisherModule } from '../platform-core/events/event-publisher.mo
     AiController,
     M05FrontendAccountsController,
     M05FrontendDealsController,
+    CoachingController,
   ],
   providers: [
     M05AccountIntelligenceService,

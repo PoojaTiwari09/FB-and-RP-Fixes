@@ -1,6 +1,6 @@
 // ============================================================
 // Revenue / Coaching Insights — Real API Service
-// Endpoints from: final-api-endpoints_1.md (/api/manager/coaching/...)
+// Endpoints pointing to m05-account-intelligence
 // Base URL: process.env.NEXT_PUBLIC_API_BASE_URL
 // ============================================================
 
@@ -44,7 +44,7 @@ function buildQuery(params: Record<string, unknown>): string {
 
 // ─── Page Filters ─────────────────────────────────────────────
 export async function getCoachingFilters(): Promise<CoachingFilters> {
-  return apiFetch<CoachingFilters>('/api/manager/coaching/filters');
+  return apiFetch<CoachingFilters>('/api/v1/account-intelligence/coaching/filters');
 }
 
 // ─── Tab 1 — Activity ─────────────────────────────────────────
@@ -52,7 +52,7 @@ export async function getCoachingActivity(
   params: CoachingParams,
 ): Promise<ActivityResponse> {
   const q = buildQuery(params as Record<string, unknown>);
-  return apiFetch<ActivityResponse>(`/api/manager/coaching/activity${q}`);
+  return apiFetch<ActivityResponse>(`/api/v1/account-intelligence/coaching/activity${q}`);
 }
 
 // ─── Tab 2 — Interaction ──────────────────────────────────────
@@ -60,7 +60,7 @@ export async function getCoachingInteraction(
   params: CoachingParams,
 ): Promise<InteractionResponse> {
   const q = buildQuery(params as Record<string, unknown>);
-  return apiFetch<InteractionResponse>(`/api/manager/coaching/interaction${q}`);
+  return apiFetch<InteractionResponse>(`/api/v1/account-intelligence/coaching/interaction${q}`);
 }
 
 // ─── Tab 3 — Responsiveness ───────────────────────────────────
@@ -68,7 +68,7 @@ export async function getCoachingResponsiveness(
   params: CoachingParams,
 ): Promise<ResponsivenessResponse> {
   const q = buildQuery(params as Record<string, unknown>);
-  return apiFetch<ResponsivenessResponse>(`/api/manager/coaching/responsiveness${q}`);
+  return apiFetch<ResponsivenessResponse>(`/api/v1/account-intelligence/coaching/responsiveness${q}`);
 }
 
 // ─── Tab 4 — Scorecards ───────────────────────────────────────
@@ -76,7 +76,7 @@ export async function getCoachingScorecards(
   params: CoachingParams,
 ): Promise<ScorecardsResponse> {
   const q = buildQuery(params as Record<string, unknown>);
-  return apiFetch<ScorecardsResponse>(`/api/manager/coaching/scorecards${q}`);
+  return apiFetch<ScorecardsResponse>(`/api/v1/account-intelligence/coaching/scorecards${q}`);
 }
 
 // ─── Right Panel — AI Insights ────────────────────────────────
@@ -84,7 +84,7 @@ export async function getAiInsights(
   params: CoachingParams,
 ): Promise<AiInsightsResponse> {
   const q = buildQuery(params as Record<string, unknown>);
-  return apiFetch<AiInsightsResponse>(`/api/manager/coaching/ai-insights${q}`);
+  return apiFetch<AiInsightsResponse>(`/api/v1/account-intelligence/coaching/ai-insights${q}`);
 }
 
 // ─── Right Panel — Team vs Benchmark ─────────────────────────
@@ -92,11 +92,11 @@ export async function getTeamVsBenchmark(
   params: CoachingParams,
 ): Promise<TeamVsBenchmarkResponse> {
   const q = buildQuery(params as Record<string, unknown>);
-  return apiFetch<TeamVsBenchmarkResponse>(`/api/manager/coaching/team-vs-benchmark${q}`);
+  return apiFetch<TeamVsBenchmarkResponse>(`/api/v1/account-intelligence/coaching/team-vs-benchmark${q}`);
 }
 
 // ─── Rep Details ─────────────────────────────────────────────
 export async function getCoachingRepDetails(repId: string): Promise<any> {
-  return apiFetch<any>(`/api/manager/coaching/rep/${repId}`);
+  return apiFetch<any>(`/api/v1/account-intelligence/coaching/rep/${repId}`);
 }
 
